@@ -6,14 +6,18 @@ import { Features } from "@/components/site/Features";
 import { Courses } from "@/components/site/Courses";
 import { Footer } from "@/components/site/Footer";
 import { ScrollProgress } from "@/components/site/ScrollProgress";
+import { CustomCursor } from "@/components/site/CustomCursor";
+import { Marquee } from "@/components/site/Marquee";
 
 const Index = () => {
   return (
     <LanguageProvider>
       <ScrollProgress />
+      <CustomCursor />
       <Navbar />
       <main>
         <Hero />
+        <Marquee />
         <About />
         <Features />
         <Courses />
@@ -24,3 +28,4 @@ const Index = () => {
 };
 
 export default Index;
+
