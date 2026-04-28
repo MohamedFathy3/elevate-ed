@@ -1,133 +1,168 @@
-import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
+import { motion } from "framer-motion";
 import { useLang } from "@/i18n/LanguageContext";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, ArrowLeft, Sparkles } from "lucide-react";
-import { SplitText } from "./SplitText";
+import { Zap, ArrowRight, ArrowLeft, Lightbulb, Atom, Sparkles, CheckCircle2 } from "lucide-react";
+import teacherImg from "@/assets/teacher.jpg";
 
 export const Hero = () => {
   const { t, dir } = useLang();
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
-  const y = useTransform(scrollYProgress, [0, 1], [0, 200]);
-  const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 0.92]);
 
   return (
-    <section ref={ref} className="relative min-h-screen flex items-center pt-24 pb-16 overflow-hidden gradient-hero-bg">
-      {/* Animated gradient blobs */}
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <motion.div
-          animate={{ x: [0, 80, -40, 0], y: [0, -60, 30, 0], scale: [1, 1.2, 0.9, 1] }}
-          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-1/4 left-1/4 w-[600px] h-[600px] rounded-full bg-accent/15 blur-3xl"
-        />
-        <motion.div
-          animate={{ x: [0, -90, 50, 0], y: [0, 70, -40, 0], scale: [1, 0.85, 1.15, 1] }}
-          transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] rounded-full bg-foreground/5 blur-3xl"
-        />
-        <motion.div
-          animate={{ x: [0, 60, 0], y: [0, 60, 0] }}
-          transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-1/2 right-1/3 w-[300px] h-[300px] rounded-full bg-accent/10 blur-3xl"
-        />
-      </div>
-
-      {/* Floating geometric shapes */}
-      <motion.div
-        animate={{ y: [0, -25, 0], rotate: [0, 12, 0] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-32 right-[8%] w-16 h-16 rounded-2xl border border-foreground/15 hidden lg:block"
-      />
-      <motion.div
-        animate={{ y: [0, 30, 0], rotate: [0, -18, 0] }}
-        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        className="absolute bottom-40 left-[6%] w-12 h-12 rounded-full border border-accent/40 hidden lg:block"
-      />
-      <motion.div
-        animate={{ y: [0, -20, 0], rotate: [0, 25, 0] }}
-        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-        className="absolute top-1/2 left-[10%] w-8 h-8 bg-accent/20 rounded-md hidden lg:block"
-      />
-
-      {/* Subtle grid */}
+    <section className="relative min-h-screen flex items-center pt-32 pb-20 overflow-hidden gradient-hero-bg">
+      {/* Grid background */}
       <div
-        className="absolute inset-0 -z-10 opacity-[0.025]"
+        className="absolute inset-0 opacity-[0.4] pointer-events-none"
         style={{
           backgroundImage:
-            "linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)",
-          backgroundSize: "60px 60px",
+            "linear-gradient(hsl(var(--primary) / 0.08) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary) / 0.08) 1px, transparent 1px)",
+          backgroundSize: "70px 70px",
+          maskImage: "radial-gradient(ellipse at center, black 30%, transparent 75%)",
         }}
       />
 
-      <motion.div style={{ y, opacity, scale }} className="container-tight relative">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border bg-background/60 backdrop-blur-sm text-xs font-medium text-muted-foreground mb-8"
-        >
-          <Sparkles className="w-3 h-3 text-accent" />
-          {t("hero.eyebrow")}
-        </motion.div>
-
-        <h1 className="font-display font-bold tracking-tight text-5xl sm:text-6xl md:text-7xl lg:text-8xl leading-[1.02] text-balance max-w-5xl overflow-hidden">
-          <span className="block overflow-hidden">
-            <SplitText text={t("hero.title")} delay={0.2} />
-          </span>
-          <span className="block overflow-hidden text-muted-foreground/60">
-            <SplitText text={t("hero.title2")} delay={0.6} />
-          </span>
-        </h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 1.1 }}
-          className="mt-8 max-w-xl text-lg md:text-xl text-muted-foreground leading-relaxed"
-        >
-          {t("hero.subtitle")}
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 1.3 }}
-          className="mt-10 flex flex-wrap items-center gap-3"
-        >
-          <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400 }}>
-            <Button size="lg" className="rounded-full h-12 px-7 text-base group relative overflow-hidden">
-              <span className="relative z-10 flex items-center gap-2">
-                {t("hero.cta")}
-                <Arrow className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
-              </span>
-              <span className="absolute inset-0 gradient-accent translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
-            </Button>
-          </motion.div>
-          <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400 }}>
-            <Button size="lg" variant="ghost" className="rounded-full h-12 px-6 text-base">
-              {t("hero.cta2")}
-            </Button>
-          </motion.div>
-        </motion.div>
-
-        {/* Scroll hint */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.8, duration: 1 }}
-          className="absolute -bottom-2 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2"
-        >
-          <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">scroll</span>
-          <motion.div
-            animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-            className="w-px h-10 bg-gradient-to-b from-foreground/40 to-transparent"
-          />
-        </motion.div>
+      {/* Floating physics doodles */}
+      <motion.div
+        animate={{ y: [0, -20, 0], rotate: [0, 8, 0] }}
+        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-1/4 left-[5%] w-32 h-32 rounded-full border-2 border-primary/15 hidden md:block"
+      />
+      <motion.div
+        animate={{ y: [0, 25, 0] }}
+        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute bottom-1/4 left-[12%] w-20 h-20 rounded-full border-2 border-accent/20 hidden md:block"
+      />
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+        className="absolute top-[15%] right-[3%] w-24 h-24 hidden md:block"
+      >
+        <Atom className="w-full h-full text-primary/15" strokeWidth={1} />
       </motion.div>
+
+      <div className="container-tight relative grid lg:grid-cols-2 gap-12 items-center">
+        {/* LEFT — copy */}
+        <div>
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="inline-flex items-center gap-2 mb-6 text-primary font-semibold text-sm"
+          >
+            <Sparkles className="w-4 h-4" fill="currentColor" />
+            {t("hero.welcome")}
+          </motion.div>
+
+          <h1 className="font-display font-black tracking-tight text-5xl md:text-6xl lg:text-7xl leading-[1.05] text-balance">
+            <motion.span
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.15 }}
+              className="block text-gradient"
+            >
+              {t("hero.title")}
+            </motion.span>
+          </h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.35 }}
+            className="mt-6 text-lg md:text-xl text-foreground/70 leading-relaxed max-w-xl"
+          >
+            {t("hero.subtitle")}
+          </motion.p>
+
+          {/* Quote card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            className="mt-8 p-5 md:p-6 rounded-3xl bg-white/70 backdrop-blur-md border border-white shadow-soft max-w-xl"
+          >
+            <div className="flex gap-4">
+              <div className="shrink-0 w-9 h-9 rounded-full gradient-accent grid place-items-center shadow-soft">
+                <CheckCircle2 className="w-5 h-5 text-white" />
+              </div>
+              <p className="text-sm md:text-base text-foreground/75 leading-relaxed">{t("hero.body")}</p>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.65 }}
+            className="mt-8"
+          >
+            <a
+              href="#courses"
+              className="group inline-flex items-center gap-3 px-6 md:px-8 py-4 md:py-5 rounded-2xl gradient-accent text-white font-bold text-base md:text-lg shadow-elegant hover:shadow-glow transition-all hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto justify-center"
+            >
+              <Zap className="w-5 h-5" fill="white" />
+              <span>{t("hero.cta")}</span>
+              <Arrow className="w-5 h-5 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
+            </a>
+          </motion.div>
+        </div>
+
+        {/* RIGHT — teacher portrait with orbital rings */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.9, delay: 0.2, ease: [0.4, 0, 0.2, 1] }}
+          className="relative aspect-square max-w-lg mx-auto w-full"
+        >
+          {/* Orbital rings */}
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-0 rounded-full border-2 border-primary/20"
+          />
+          <motion.div
+            animate={{ rotate: -360 }}
+            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-6 rounded-full border-2 border-primary/15"
+          />
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-12 rounded-full border border-primary/10"
+          />
+
+          {/* Portrait circle */}
+          <div className="absolute inset-16 rounded-full bg-white shadow-glow overflow-hidden">
+            <img
+              src={teacherImg}
+              alt="Mr. Abdelmaseeh Isaac"
+              width={1024}
+              height={1024}
+              className="w-full h-full object-cover"
+            />
+          </div>
+
+          {/* Floating badges */}
+          <motion.div
+            animate={{ y: [0, -12, 0] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-6 right-2 md:right-0 w-16 h-16 rounded-2xl bg-white shadow-card grid place-items-center"
+          >
+            <Zap className="w-7 h-7 text-accent" fill="currentColor" />
+          </motion.div>
+          <motion.div
+            animate={{ y: [0, 12, 0] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+            className="absolute bottom-12 left-2 md:left-0 w-16 h-16 rounded-2xl bg-white shadow-card grid place-items-center"
+          >
+            <Lightbulb className="w-7 h-7 text-amber-400" fill="currentColor" />
+          </motion.div>
+          <motion.div
+            animate={{ y: [0, -10, 0] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+            className="absolute top-1/2 left-0 md:-left-4 w-14 h-14 rounded-2xl gradient-primary shadow-card grid place-items-center"
+          >
+            <Atom className="w-7 h-7 text-white" />
+          </motion.div>
+        </motion.div>
+      </div>
     </section>
   );
 };
