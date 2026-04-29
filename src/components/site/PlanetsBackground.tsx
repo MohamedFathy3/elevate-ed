@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { motion, useMotionValue, useScroll, useSpring, useTransform } from "framer-motion";
 
 interface Planet {
   size: number;
@@ -20,14 +20,23 @@ const PLANETS: Planet[] = [
   { size: 40, top: "35%", left: "20%", depth: 6, gradient: "radial-gradient(circle at 30% 30%, hsl(220 20% 92%), hsl(220 25% 70%))", glow: "hsl(220 30% 70% / 0.35)" },
 ];
 
-const PlanetEl = ({ p, mx, my }: { p: Planet; mx: any; my: any }) => {
-  const tx = useTransform(mx, (v: number) => v * p.depth * 8);
-  const ty = useTransform(my, (v: number) => v * p.depth * 8);
+const PlanetEl = ({ p, mx, my, scrollY }: { p: Planet; mx: any; my: any; scrollY: any }) => {
+  // mouse parallax
+  const mxT = useTransform(mx, (v: number) => v * p.depth * 8);
+  const myT = useTransform(my, (v: number) => v * p.depth * 8);
+  // scroll parallax — deeper planets move slower (smaller multiplier), closer ones drift more
+  const scrollOffset = useTransform(scrollY, (v: number) => -v * (p.depth * 0.08));
+  // shrink as user scrolls (more for top/closer planets)
+  const isTop = parseFloat(p.top) < 50;
+  const shrinkFactor = isTop ? 0.0008 : 0.0003;
+  const scale = useTransform(scrollY, (v: number) => Math.max(0.5, 1 - v * shrinkFactor));
+  // combine mouse + scroll on Y
+  const ty = useTransform([myT, scrollOffset], ([m, s]: any) => m + s);
 
   return (
     <motion.div
-      style={{ x: tx, y: ty, top: p.top, left: p.left, width: p.size, height: p.size }}
-      className="absolute pointer-events-none"
+      style={{ x: mxT, y: ty, scale, top: p.top, left: p.left, width: p.size, height: p.size }}
+      className="absolute pointer-events-none origin-center"
     >
       <motion.div
         animate={{ y: [0, -15, 0] }}
@@ -43,7 +52,7 @@ const PlanetEl = ({ p, mx, my }: { p: Planet; mx: any; my: any }) => {
         />
         {p.ring && (
           <div
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-[6px] border-white/30"
+            className="absolute left-1/2 top-1/2 rounded-full border-[6px]"
             style={{
               width: p.size * 1.6,
               height: p.size * 0.4,
@@ -72,6 +81,8 @@ export const PlanetsBackground = () => {
   const myRaw = useMotionValue(0);
   const mx = useSpring(mxRaw, { stiffness: 40, damping: 20, mass: 1 });
   const my = useSpring(myRaw, { stiffness: 40, damping: 20, mass: 1 });
+  const { scrollY: scrollYRaw } = useScroll();
+  const scrollY = useSpring(scrollYRaw, { stiffness: 60, damping: 25, mass: 0.8 });
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
@@ -113,7 +124,7 @@ export const PlanetsBackground = () => {
       {/* Planets */}
       <div className="absolute inset-0 opacity-60 dark:opacity-90">
         {PLANETS.map((p, i) => (
-          <PlanetEl key={i} p={p} mx={mx} my={my} />
+          <PlanetEl key={i} p={p} mx={mx} my={my} scrollY={scrollY} />
         ))}
       </div>
 
