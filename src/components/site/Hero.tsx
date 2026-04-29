@@ -115,17 +115,29 @@ export const Hero = () => {
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-            className="absolute inset-0 rounded-full border-2 border-primary/20"
-          />
+            className="absolute inset-0 rounded-full border-2 border-primary/25"
+          >
+            <span className="absolute -top-2 left-1/2 w-4 h-4 rounded-full gradient-accent shadow-glow" />
+            <span className="absolute top-1/2 -right-2 w-3 h-3 rounded-full bg-[hsl(var(--cyan))] shadow-glow" />
+          </motion.div>
           <motion.div
             animate={{ rotate: -360 }}
             transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-            className="absolute inset-6 rounded-full border-2 border-primary/15"
-          />
+            className="absolute inset-6 rounded-full border-2 border-[hsl(var(--pink))]/30"
+          >
+            <span className="absolute -bottom-1.5 left-1/3 w-3 h-3 rounded-full bg-[hsl(var(--pink))] shadow-glow" />
+          </motion.div>
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
-            className="absolute inset-12 rounded-full border border-primary/10"
+            className="absolute inset-12 rounded-full border border-primary/15"
+          />
+
+          {/* Pulsing glow behind portrait */}
+          <motion.div
+            animate={{ scale: [1, 1.08, 1], opacity: [0.5, 0.8, 0.5] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute inset-16 rounded-full gradient-primary blur-2xl"
           />
 
           {/* Portrait circle */}
