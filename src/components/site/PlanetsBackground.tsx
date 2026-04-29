@@ -81,6 +81,8 @@ export const PlanetsBackground = () => {
   const myRaw = useMotionValue(0);
   const mx = useSpring(mxRaw, { stiffness: 40, damping: 20, mass: 1 });
   const my = useSpring(myRaw, { stiffness: 40, damping: 20, mass: 1 });
+  const { scrollY: scrollYRaw } = useScroll();
+  const scrollY = useSpring(scrollYRaw, { stiffness: 60, damping: 25, mass: 0.8 });
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
@@ -122,7 +124,7 @@ export const PlanetsBackground = () => {
       {/* Planets */}
       <div className="absolute inset-0 opacity-60 dark:opacity-90">
         {PLANETS.map((p, i) => (
-          <PlanetEl key={i} p={p} mx={mx} my={my} />
+          <PlanetEl key={i} p={p} mx={mx} my={my} scrollY={scrollY} />
         ))}
       </div>
 
