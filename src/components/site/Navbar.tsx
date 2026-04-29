@@ -1,10 +1,12 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useLang } from "@/i18n/LanguageContext";
-import { Zap, ArrowRight, ArrowLeft, Menu, X } from "lucide-react";
+import { useTheme } from "./ThemeProvider";
+import { Zap, ArrowRight, ArrowLeft, Menu, X, Sun, Moon } from "lucide-react";
 
 export const Navbar = () => {
   const { t, lang, setLang, dir } = useLang();
+  const { theme, toggle } = useTheme();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
@@ -62,9 +64,41 @@ export const Navbar = () => {
 
         {/* Right cluster */}
         <div className="flex items-center gap-2">
+          <motion.button
+            onClick={toggle}
+            whileTap={{ scale: 0.9, rotate: 180 }}
+            aria-label="Toggle theme"
+            className="relative w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center hover:border-primary/40 transition-colors overflow-hidden"
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              {theme === "dark" ? (
+                <motion.span
+                  key="sun"
+                  initial={{ y: -20, opacity: 0, rotate: -90 }}
+                  animate={{ y: 0, opacity: 1, rotate: 0 }}
+                  exit={{ y: 20, opacity: 0, rotate: 90 }}
+                  transition={{ duration: 0.3 }}
+                  className="absolute"
+                >
+                  <Sun className="w-4 h-4 text-accent" />
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="moon"
+                  initial={{ y: -20, opacity: 0, rotate: -90 }}
+                  animate={{ y: 0, opacity: 1, rotate: 0 }}
+                  exit={{ y: 20, opacity: 0, rotate: 90 }}
+                  transition={{ duration: 0.3 }}
+                  className="absolute"
+                >
+                  <Moon className="w-4 h-4 text-primary" />
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </motion.button>
           <button
             onClick={() => setLang(lang === "ar" ? "en" : "ar")}
-            className="hidden sm:flex w-10 h-10 rounded-full bg-white border border-border items-center justify-center text-xs font-bold hover:border-primary/40 transition-colors"
+            className="hidden sm:flex w-10 h-10 rounded-full bg-card border border-border items-center justify-center text-xs font-bold hover:border-primary/40 transition-colors"
           >
             {lang === "ar" ? "EN" : "AR"}
           </button>
@@ -84,7 +118,7 @@ export const Navbar = () => {
           </a>
           <button
             onClick={() => setOpen(!open)}
-            className="lg:hidden w-10 h-10 grid place-items-center rounded-full bg-white border border-border"
+            className="lg:hidden w-10 h-10 grid place-items-center rounded-full bg-card border border-border"
           >
             {open ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </button>

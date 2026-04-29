@@ -64,7 +64,7 @@ export const Footer = () => {
                 <a
                   key={i}
                   href="#"
-                  className="w-10 h-10 rounded-full bg-white border border-border grid place-items-center hover:gradient-primary hover:text-white hover:border-transparent transition-all"
+                  className="w-10 h-10 rounded-full bg-card border border-border grid place-items-center hover:gradient-primary hover:text-white hover:border-transparent transition-all"
                 >
                   <Icon className="w-4 h-4" />
                 </a>

@@ -39,6 +39,9 @@
     --input: 252 40% 90%;
     --ring: 262 83% 58%;
 
+    --surface: 0 0% 100%;
+    --surface-2: 0 0% 100% / 0.7;
+
     --radius: 1rem;
 
     --gradient-primary: linear-gradient(135deg, hsl(262 83% 58%), hsl(290 90% 65%), hsl(330 90% 62%));
@@ -46,12 +49,46 @@
     --gradient-cool: linear-gradient(135deg, hsl(190 95% 55%), hsl(250 90% 65%));
     --gradient-rainbow: linear-gradient(90deg, hsl(262 83% 58%), hsl(330 90% 62%), hsl(18 100% 60%), hsl(190 95% 55%), hsl(262 83% 58%));
     --gradient-hero: radial-gradient(ellipse at top right, hsl(262 83% 58% / 0.18), transparent 55%),
-                     radial-gradient(ellipse at bottom left, hsl(18 100% 60% / 0.12), transparent 55%),
-                     radial-gradient(ellipse at center, hsl(190 95% 55% / 0.06), transparent 60%);
+                     radial-gradient(ellipse at bottom left, hsl(18 100% 60% / 0.12), transparent 55%);
     --shadow-elegant: 0 25px 70px -20px hsl(262 60% 50% / 0.35);
     --shadow-glow: 0 0 80px hsl(280 95% 70% / 0.5);
     --shadow-soft: 0 4px 24px -4px hsl(262 40% 40% / 0.12);
     --shadow-card: 0 12px 45px -10px hsl(262 50% 50% / 0.18);
+  }
+
+  .dark {
+    --background: 250 50% 6%;
+    --foreground: 250 30% 96%;
+
+    --card: 250 40% 12%;
+    --card-foreground: 250 30% 96%;
+
+    --popover: 250 40% 12%;
+    --popover-foreground: 250 30% 96%;
+
+    --primary: 280 95% 70%;
+    --primary-foreground: 250 50% 8%;
+    --primary-glow: 290 100% 78%;
+
+    --secondary: 250 35% 16%;
+    --secondary-foreground: 250 30% 96%;
+
+    --muted: 250 30% 14%;
+    --muted-foreground: 250 20% 70%;
+
+    --accent: 30 100% 65%;
+    --accent-foreground: 250 50% 8%;
+
+    --border: 250 30% 20%;
+    --input: 250 30% 20%;
+    --ring: 280 95% 70%;
+
+    --surface: 250 40% 12%;
+
+    --shadow-elegant: 0 25px 70px -20px hsl(280 80% 30% / 0.5);
+    --shadow-glow: 0 0 80px hsl(280 95% 60% / 0.6);
+    --shadow-soft: 0 4px 24px -4px #000000aa;
+    --shadow-card: 0 12px 45px -10px #00000099;
   }
 }
 
@@ -93,9 +130,21 @@
   }
   .container-tight { @apply max-w-7xl mx-auto px-5 md:px-8; }
   .glass {
-    background: hsl(0 0% 100% / 0.7);
+    background: hsl(var(--surface) / 0.7);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+  }
+  .dark .glass {
+    background: hsl(250 40% 12% / 0.6);
+    border: 1px solid hsl(280 50% 50% / 0.15);
+  }
+  .surface-card {
+    background: hsl(var(--card) / 0.85);
+    backdrop-filter: blur(12px);
+  }
+  .dark .surface-card {
+    background: hsl(250 40% 14% / 0.75);
+    border-color: hsl(280 50% 50% / 0.15);
   }
 
   /* Animated aurora background blobs */
