@@ -9,7 +9,7 @@ const FeatureCard = ({ icon: Icon, title, body, index, color }: { icon: LucideIc
     viewport={{ once: true, margin: "-60px" }}
     transition={{ duration: 0.6, delay: index * 0.08 }}
     whileHover={{ y: -8, rotate: -1 }}
-    className="group relative bg-white rounded-3xl p-7 shadow-card hover:shadow-elegant transition-all duration-500 overflow-hidden"
+    className="group relative bg-card rounded-3xl p-7 shadow-card hover:shadow-elegant transition-all duration-500 overflow-hidden"
   >
     {/* Gradient glow on hover */}
     <div className={`absolute -inset-px rounded-3xl ${color} opacity-0 group-hover:opacity-100 blur-2xl transition-opacity duration-500 -z-0`} />

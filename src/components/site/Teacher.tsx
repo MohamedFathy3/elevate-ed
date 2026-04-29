@@ -70,7 +70,7 @@ export const Teacher = () => {
             <motion.div
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-white rounded-2xl px-5 py-3 shadow-card flex items-center gap-3"
+              className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-card rounded-2xl px-5 py-3 shadow-card flex items-center gap-3"
             >
               <div className="w-10 h-10 rounded-xl gradient-accent grid place-items-center">
                 <GraduationCap className="w-5 h-5 text-white" />
@@ -111,7 +111,7 @@ export const Teacher = () => {
                     viewport={{ once: true }}
                     transition={{ duration: 0.5, delay: i * 0.1 }}
                     whileHover={{ y: -6, scale: 1.03 }}
-                    className="group bg-white rounded-2xl p-5 shadow-soft border border-border hover:shadow-card hover:border-primary/30 transition-all"
+                    className="group bg-card rounded-2xl p-5 shadow-soft border border-border hover:shadow-card hover:border-primary/30 transition-all"
                   >
                     <motion.div
                       whileHover={{ rotate: 360 }}

@@ -118,7 +118,7 @@ export const Navbar = () => {
           </a>
           <button
             onClick={() => setOpen(!open)}
-            className="lg:hidden w-10 h-10 grid place-items-center rounded-full bg-white border border-border"
+            className="lg:hidden w-10 h-10 grid place-items-center rounded-full bg-card border border-border"
           >
             {open ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </button>

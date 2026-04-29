@@ -77,7 +77,7 @@ export const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
-            className="mt-8 p-5 md:p-6 rounded-3xl bg-white/70 backdrop-blur-md border border-white shadow-soft max-w-xl"
+            className="mt-8 p-5 md:p-6 rounded-3xl surface-card border border-border shadow-soft max-w-xl"
           >
             <div className="flex gap-4">
               <div className="shrink-0 w-9 h-9 rounded-full gradient-accent grid place-items-center shadow-soft">

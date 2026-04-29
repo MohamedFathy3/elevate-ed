@@ -23,7 +23,7 @@ const CourseCard = ({ c, index }: { c: Course; index: number }) => {
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.6, delay: index * 0.1, ease: [0.4, 0, 0.2, 1] }}
       whileHover={{ y: -8 }}
-      className="group relative bg-white rounded-3xl p-6 shadow-card hover:shadow-elegant transition-shadow duration-500 overflow-hidden"
+      className="group relative bg-card rounded-3xl p-6 shadow-card hover:shadow-elegant transition-shadow duration-500 overflow-hidden"
     >
       {/* Top decorative panel */}
       <div className={`relative -mx-6 -mt-6 mb-5 h-32 ${c.color} overflow-hidden`}>
