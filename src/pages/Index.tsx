@@ -10,6 +10,7 @@ import { ScrollProgress } from "@/components/site/ScrollProgress";
 const Index = () => {
   return (
     <LanguageProvider>
+      <div className="aurora"><div className="aurora-3" /></div>
       <ScrollProgress />
       <Navbar />
       <main>
