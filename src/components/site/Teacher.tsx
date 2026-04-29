@@ -110,12 +110,17 @@ export const Teacher = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.5, delay: i * 0.1 }}
-                    className="bg-white rounded-2xl p-5 shadow-soft border border-border"
+                    whileHover={{ y: -6, scale: 1.03 }}
+                    className="group bg-white rounded-2xl p-5 shadow-soft border border-border hover:shadow-card hover:border-primary/30 transition-all"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 grid place-items-center mb-3">
-                      <Icon className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="font-display font-black text-2xl md:text-3xl text-foreground">
+                    <motion.div
+                      whileHover={{ rotate: 360 }}
+                      transition={{ duration: 0.6 }}
+                      className="w-10 h-10 rounded-xl gradient-primary grid place-items-center mb-3 shadow-soft"
+                    >
+                      <Icon className="w-5 h-5 text-white" />
+                    </motion.div>
+                    <div className="font-display font-black text-2xl md:text-3xl text-gradient">
                       <Counter value={s.num} suffix={s.suffix} />
                     </div>
                     <div className="text-xs text-foreground/60 mt-1 font-medium">{s.label}</div>
