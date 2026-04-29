@@ -94,7 +94,7 @@ export const Teacher = () => {
               {t("teacher.eyebrow")}
             </div>
             <h2 className="font-display font-black text-4xl md:text-5xl lg:text-6xl tracking-tight">
-              {t("teacher.title")}
+              <span className="text-gradient-rainbow">{t("teacher.title")}</span>
             </h2>
             <p className="mt-5 text-lg text-foreground/65 leading-relaxed max-w-xl">
               {t("teacher.body")}
