@@ -57,7 +57,7 @@ export const Hero = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.15 }}
-              className="block text-gradient"
+              className="block text-gradient-rainbow"
             >
               {t("hero.title")}
             </motion.span>
