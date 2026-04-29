@@ -130,9 +130,21 @@
   }
   .container-tight { @apply max-w-7xl mx-auto px-5 md:px-8; }
   .glass {
-    background: hsl(0 0% 100% / 0.7);
+    background: hsl(var(--surface) / 0.7);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+  }
+  .dark .glass {
+    background: hsl(250 40% 12% / 0.6);
+    border: 1px solid hsl(280 50% 50% / 0.15);
+  }
+  .surface-card {
+    background: hsl(var(--card) / 0.85);
+    backdrop-filter: blur(12px);
+  }
+  .dark .surface-card {
+    background: hsl(250 40% 14% / 0.75);
+    border-color: hsl(280 50% 50% / 0.15);
   }
 
   /* Animated aurora background blobs */
