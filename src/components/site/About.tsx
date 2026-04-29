@@ -58,7 +58,7 @@ export const About = () => {
             transition={{ duration: 0.6 }}
             className="font-display font-black text-4xl md:text-5xl lg:text-6xl tracking-tight"
           >
-            {t("about.title")}
+            <span className="text-gradient-rainbow">{t("about.title")}</span>
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 16 }}
