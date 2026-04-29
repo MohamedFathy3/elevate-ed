@@ -12,12 +12,12 @@ interface Planet {
 }
 
 const PLANETS: Planet[] = [
-  { size: 280, top: "8%", left: "6%", depth: 1.5, gradient: "radial-gradient(circle at 30% 30%, hsl(280 95% 75%), hsl(262 83% 45%) 60%, hsl(250 60% 20%))", glow: "hsl(262 83% 58% / 0.5)" },
-  { size: 180, top: "65%", left: "82%", depth: 3, gradient: "radial-gradient(circle at 35% 30%, hsl(35 100% 70%), hsl(18 100% 50%) 55%, hsl(10 80% 25%))", ring: true, glow: "hsl(18 100% 60% / 0.5)" },
-  { size: 120, top: "75%", left: "8%", depth: 4, gradient: "radial-gradient(circle at 30% 30%, hsl(190 100% 75%), hsl(190 95% 45%) 60%, hsl(210 80% 20%))", glow: "hsl(190 95% 55% / 0.6)" },
-  { size: 90, top: "20%", left: "78%", depth: 5, gradient: "radial-gradient(circle at 30% 30%, hsl(330 100% 78%), hsl(330 90% 55%) 55%, hsl(320 80% 25%))", glow: "hsl(330 90% 62% / 0.6)" },
-  { size: 60, top: "45%", left: "45%", depth: 2.5, gradient: "radial-gradient(circle at 30% 30%, hsl(50 100% 80%), hsl(40 100% 55%) 60%, hsl(30 80% 25%))", glow: "hsl(40 100% 60% / 0.5)" },
-  { size: 40, top: "35%", left: "20%", depth: 6, gradient: "radial-gradient(circle at 30% 30%, #fff, hsl(220 30% 70%))", glow: "hsl(220 50% 70% / 0.5)" },
+  { size: 280, top: "8%", left: "6%", depth: 1.5, gradient: "radial-gradient(circle at 30% 30%, hsl(220 50% 70%), hsl(220 55% 45%) 60%, hsl(222 40% 18%))", glow: "hsl(220 55% 52% / 0.35)" },
+  { size: 180, top: "65%", left: "82%", depth: 3, gradient: "radial-gradient(circle at 35% 30%, hsl(30 50% 70%), hsl(25 55% 50%) 55%, hsl(20 40% 25%))", ring: true, glow: "hsl(25 55% 55% / 0.35)" },
+  { size: 120, top: "75%", left: "8%", depth: 4, gradient: "radial-gradient(circle at 30% 30%, hsl(175 45% 65%), hsl(175 50% 40%) 60%, hsl(195 40% 20%))", glow: "hsl(175 50% 50% / 0.4)" },
+  { size: 90, top: "20%", left: "78%", depth: 5, gradient: "radial-gradient(circle at 30% 30%, hsl(340 50% 75%), hsl(340 50% 55%) 55%, hsl(330 40% 25%))", glow: "hsl(340 55% 60% / 0.35)" },
+  { size: 60, top: "45%", left: "45%", depth: 2.5, gradient: "radial-gradient(circle at 30% 30%, hsl(45 55% 75%), hsl(40 55% 55%) 60%, hsl(30 40% 25%))", glow: "hsl(40 55% 60% / 0.35)" },
+  { size: 40, top: "35%", left: "20%", depth: 6, gradient: "radial-gradient(circle at 30% 30%, hsl(220 20% 92%), hsl(220 25% 70%))", glow: "hsl(220 30% 70% / 0.35)" },
 ];
 
 const PlanetEl = ({ p, mx, my }: { p: Planet; mx: any; my: any }) => {
