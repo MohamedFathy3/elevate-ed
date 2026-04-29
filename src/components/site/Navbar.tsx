@@ -1,7 +1,8 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useLang } from "@/i18n/LanguageContext";
-import { Zap, ArrowRight, ArrowLeft, Menu, X } from "lucide-react";
+import { useTheme } from "./ThemeProvider";
+import { Zap, ArrowRight, ArrowLeft, Menu, X, Sun, Moon } from "lucide-react";
 
 export const Navbar = () => {
   const { t, lang, setLang, dir } = useLang();
