@@ -6,6 +6,7 @@ import { Zap, ArrowRight, ArrowLeft, Menu, X, Sun, Moon } from "lucide-react";
 
 export const Navbar = () => {
   const { t, lang, setLang, dir } = useLang();
+  const { theme, toggle } = useTheme();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
