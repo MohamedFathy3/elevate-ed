@@ -8,14 +8,22 @@ const FeatureCard = ({ icon: Icon, title, body, index, color }: { icon: LucideIc
     whileInView={{ opacity: 1, y: 0 }}
     viewport={{ once: true, margin: "-60px" }}
     transition={{ duration: 0.6, delay: index * 0.08 }}
-    whileHover={{ y: -6 }}
-    className="group relative bg-white rounded-3xl p-7 shadow-card hover:shadow-elegant transition-shadow duration-500"
+    whileHover={{ y: -8, rotate: -1 }}
+    className="group relative bg-white rounded-3xl p-7 shadow-card hover:shadow-elegant transition-all duration-500 overflow-hidden"
   >
-    <div className={`w-14 h-14 rounded-2xl ${color} grid place-items-center mb-5 shadow-soft group-hover:scale-110 transition-transform`}>
-      <Icon className="w-6 h-6 text-white" strokeWidth={2} />
+    {/* Gradient glow on hover */}
+    <div className={`absolute -inset-px rounded-3xl ${color} opacity-0 group-hover:opacity-100 blur-2xl transition-opacity duration-500 -z-0`} />
+    <div className="relative z-10">
+      <motion.div
+        whileHover={{ rotate: [0, -10, 10, 0] }}
+        transition={{ duration: 0.5 }}
+        className={`w-14 h-14 rounded-2xl ${color} grid place-items-center mb-5 shadow-soft group-hover:scale-110 transition-transform`}
+      >
+        <Icon className="w-6 h-6 text-white" strokeWidth={2} />
+      </motion.div>
+      <h3 className="font-bold text-xl mb-2">{title}</h3>
+      <p className="text-sm text-foreground/65 leading-relaxed">{body}</p>
     </div>
-    <h3 className="font-bold text-xl mb-2">{title}</h3>
-    <p className="text-sm text-foreground/65 leading-relaxed">{body}</p>
   </motion.div>
 );
 
