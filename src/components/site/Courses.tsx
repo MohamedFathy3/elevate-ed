@@ -1,32 +1,37 @@
 import { motion } from "framer-motion";
 import { useLang } from "@/i18n/LanguageContext";
-import { ArrowRight, ArrowLeft, Clock, BookOpen, Atom, Zap } from "lucide-react";
+import { useTeacher } from "@/context/TeacherContext";
+import { ArrowRight, ArrowLeft, Clock, BookOpen, Atom, Zap, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
+import { CourseItem } from "@/data/teachers";
 
-interface Course {
-  grade: string;
-  title: string;
-  body: string;
-  price: string;
-  color: string;
-  icon: typeof Atom;
-}
+const ICONS = [Atom, Zap, BookOpen, Sparkles];
+const COLORS = [
+  "gradient-primary",
+  "bg-gradient-to-br from-orange-400 to-pink-500",
+  "bg-gradient-to-br from-blue-500 to-indigo-600",
+  "bg-gradient-to-br from-emerald-400 to-teal-600",
+  "bg-gradient-to-br from-purple-500 to-fuchsia-600",
+  "bg-gradient-to-br from-rose-400 to-red-500",
+];
 
-const CourseCard = ({ c, index }: { c: Course; index: number }) => {
-  const { t, dir } = useLang();
+export const CourseCard = ({ c, index, slug }: { c: CourseItem; index: number; slug: string }) => {
+  const { dir, lang } = useLang();
+  const { pick } = useTeacher();
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
-  const Icon = c.icon;
+  const Icon = ICONS[index % ICONS.length];
+  const color = COLORS[index % COLORS.length];
 
   return (
     <motion.article
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: 0.6, delay: index * 0.1, ease: [0.4, 0, 0.2, 1] }}
+      transition={{ duration: 0.6, delay: index * 0.08, ease: [0.4, 0, 0.2, 1] }}
       whileHover={{ y: -8 }}
-      className="group relative bg-card rounded-3xl p-6 shadow-card hover:shadow-elegant transition-shadow duration-500 overflow-hidden"
+      className="group relative bg-card rounded-3xl p-6 shadow-card hover:shadow-elegant transition-shadow duration-500 overflow-hidden flex flex-col"
     >
-      {/* Top decorative panel */}
-      <div className={`relative -mx-6 -mt-6 mb-5 h-32 ${c.color} overflow-hidden`}>
+      <div className={`relative -mx-6 -mt-6 mb-5 h-32 ${color} overflow-hidden`}>
         <motion.div
           className="absolute inset-0"
           style={{
@@ -43,58 +48,50 @@ const CourseCard = ({ c, index }: { c: Course; index: number }) => {
           <Icon className="w-32 h-32 text-white" strokeWidth={1} />
         </motion.div>
 
-        {/* Top tags */}
         <div className="absolute top-4 left-4 rtl:left-auto rtl:right-4 flex gap-2">
           <span className="px-3 py-1 rounded-full bg-white/95 text-foreground text-xs font-bold">
-            {c.grade}
+            {pick(c.level, c.level_ar)}
           </span>
-          <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur text-white text-xs font-semibold inline-flex items-center gap-1">
-            <BookOpen className="w-3 h-3" />
-            {t("courses.individual")}
-          </span>
+        </div>
+        <div className="absolute top-4 right-4 rtl:right-auto rtl:left-4 px-2.5 py-1 rounded-full bg-white/95 text-[10px] font-bold inline-flex items-center gap-1 shadow-soft">
+          <Atom className="w-3 h-3 text-primary" />
+          {pick(c.subject, c.subject_ar)}
         </div>
       </div>
 
-      <h3 className="font-bold text-lg leading-snug min-h-[3.5rem]">{c.title}</h3>
+      <h3 className="font-bold text-lg leading-snug min-h-[3.5rem]">{pick(c.title, c.title_ar)}</h3>
       <p className="mt-2 text-sm text-foreground/60 leading-relaxed line-clamp-2 min-h-[2.5rem]">
-        {c.body}
+        {pick(c.description, c.description_ar)}
       </p>
 
       <div className="mt-4 flex items-center gap-2 text-xs text-foreground/60">
         <Clock className="w-3.5 h-3.5" />
-        {t("courses.access")}
+        {lang === "ar" ? `وصول ${c.duration_days} يوم` : `${c.duration_days} days access`}
       </div>
 
-      <div className="mt-5 pt-5 border-t border-border flex items-center justify-between gap-3">
+      <div className="mt-5 pt-5 border-t border-border flex items-center justify-between gap-3 mt-auto">
         <div>
           <div className="text-2xl font-black text-foreground">{c.price}</div>
           <div className="text-[10px] text-foreground/50 font-medium">EGP</div>
         </div>
 
-        <button className="group/btn inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl gradient-accent text-white font-semibold text-sm shadow-soft hover:shadow-glow transition-all hover:scale-105 active:scale-95">
-          {t("courses.cta")}
+        <Link
+          to={`/${slug}/courses/${c.id}`}
+          className="group/btn inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl gradient-accent text-white font-semibold text-sm shadow-soft hover:shadow-glow transition-all hover:scale-105 active:scale-95"
+        >
+          {lang === "ar" ? "اعرف التفاصيل" : "View details"}
           <Arrow className="w-4 h-4 transition-transform group-hover/btn:translate-x-0.5 rtl:group-hover/btn:-translate-x-0.5" />
-        </button>
-      </div>
-
-      {/* Subject ribbon */}
-      <div className="absolute top-4 right-4 rtl:right-auto rtl:left-4 px-2.5 py-1 rounded-full bg-white/95 text-[10px] font-bold inline-flex items-center gap-1 shadow-soft">
-        <Atom className="w-3 h-3 text-primary" />
-        {t("courses.subject")}
+        </Link>
       </div>
     </motion.article>
   );
 };
 
-export const Courses = () => {
-  const { t } = useLang();
-
-  const courses: Course[] = [
-    { grade: t("c1.grade"), title: t("c1.title"), body: t("c1.body"), price: "70.00", color: "gradient-primary", icon: Atom },
-    { grade: t("c2.grade"), title: t("c2.title"), body: t("c2.body"), price: "70.00", color: "bg-gradient-to-br from-orange-400 to-pink-500", icon: Zap },
-    { grade: t("c3.grade"), title: t("c3.title"), body: t("c3.body"), price: "85.00", color: "bg-gradient-to-br from-blue-500 to-indigo-600", icon: BookOpen },
-    { grade: t("c4.grade"), title: t("c4.title"), body: t("c4.body"), price: "75.00", color: "bg-gradient-to-br from-emerald-400 to-teal-600", icon: Atom },
-  ];
+export const Courses = ({ limit }: { limit?: number }) => {
+  const { lang, dir } = useLang();
+  const { teacher, slug } = useTeacher();
+  const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
+  const courses = limit ? teacher.website.courses.slice(0, limit) : teacher.website.courses;
 
   return (
     <section id="courses" className="py-24 md:py-32 relative">
@@ -108,7 +105,7 @@ export const Courses = () => {
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary font-semibold text-sm mb-5"
           >
             <BookOpen className="w-4 h-4" />
-            {t("courses.eyebrow")}
+            {lang === "ar" ? "أحدث الكورسات" : "Latest Courses"}
           </motion.div>
           <motion.h2
             initial={{ opacity: 0, y: 16 }}
@@ -117,15 +114,27 @@ export const Courses = () => {
             transition={{ duration: 0.6 }}
             className="font-display font-black text-4xl md:text-5xl lg:text-6xl tracking-tight text-balance leading-[1.1]"
           >
-            {t("courses.title")}
+            {lang === "ar" ? "اكتشف محتوى يساعدك تتفوق" : "Discover content that helps you excel"}
           </motion.h2>
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
           {courses.map((c, i) => (
-            <CourseCard key={i} c={c} index={i} />
+            <CourseCard key={c.id} c={c} index={i} slug={slug} />
           ))}
         </div>
+
+        {limit && teacher.website.courses.length > limit && (
+          <div className="mt-12 text-center">
+            <Link
+              to={`/${slug}/courses`}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl gradient-primary text-white font-semibold shadow-soft hover:shadow-glow transition-all hover:scale-105"
+            >
+              {lang === "ar" ? "كل الكورسات" : "View all courses"}
+              <Arrow className="w-4 h-4" />
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   );
