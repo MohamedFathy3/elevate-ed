@@ -104,6 +104,32 @@ export const useCourseDetails = (courseId?: number) => {
   });
 };
 
+export const useSubjectCourses = (subjectId?: number, teacherId?: number) => {
+  return useQuery({
+    queryKey: ['subject-courses', subjectId, teacherId],
+    queryFn: async () => {
+      const filters: any = {};
+      if (subjectId) filters.subject_id = subjectId;
+      if (teacherId) filters.teacher_id = teacherId;
+      
+      console.log("📚 Fetching subject courses with filters:", filters);
+      
+      const { data } = await api.post<CoursesResponse>('/course/index', {
+        filters,
+        orderBy: "id",
+        orderByDirection: "asc",
+        perPage: 100,
+        paginate: false,
+        delete: false
+      });
+      
+      console.log("📚 Subject courses response:", data);
+      return data.data;
+    },
+    enabled: !!subjectId,
+    staleTime: 5 * 60 * 1000,
+  });
+};
 
 export const useSemesterCourses = (semesterId: number) => {
   const token = Cookies.get('student_token');

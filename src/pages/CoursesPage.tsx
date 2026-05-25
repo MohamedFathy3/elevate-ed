@@ -1,47 +1,85 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { motion } from "framer-motion";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useLang } from "@/i18n/LanguageContext";
 import { useSafeTeacherData } from "@/hooks/useSafeTeacherData";
+import { useCourses, useSubjectCourses } from "@/hooks/useCourses";
 import { useBuyCourse } from "@/hooks/useEnroll";
-import { Search, BookOpen, Filter, X, Clock, Users, Calendar, GraduationCap, BookMarked, ShoppingCart, Loader2, AlertCircle } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useSearchParams, Link, useParams } from "react-router-dom";
+import { Search, BookOpen, Filter, X, Clock, Users, Calendar, GraduationCap, BookMarked, ShoppingCart, Loader2, AlertCircle, ArrowLeft, ArrowRight } from "lucide-react";
 import DOMPurify from "dompurify";
 
 const CoursesPage = () => {
   const { lang, dir } = useLang();
-  const { courses, slug, pick, isLoading } = useSafeTeacherData();
+  const { slug } = useParams();
+  const { teacher, pick, isLoading: teacherLoading } = useSafeTeacherData();
+  const [searchParams] = useSearchParams();
+  const semesterId = searchParams.get('semester_id');
+  const semesterName = searchParams.get('semester_name');
+  const subjectId = searchParams.get('subject_id');
+  const subjectName = searchParams.get('subject_name');
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<string>("all");
   const [selectedType, setSelectedType] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
-
-  // الحصول على جميع المستويات والأنواع المتاحة
+  
+  const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
+  
+  // ✅ جلب الكورسات حسب semester_id لو موجود
+  const { data: semesterCourses, isLoading: semesterLoading } = useCourses(
+    semesterId ? parseInt(semesterId) : undefined,
+    teacher?.id
+  );
+  
+  // ✅ جلب الكورسات حسب subject_id لو موجود
+  const { data: subjectCoursesData, isLoading: subjectLoading } = useSubjectCourses(
+    subjectId ? parseInt(subjectId) : undefined,
+    teacher?.id
+  );
+  
+  // ✅ الكورسات العامة من الـ Context (عند عدم وجود فلتر)
+  const { courses: allCourses, isLoading: allCoursesLoading } = useSafeTeacherData();
+  
+  // تحديد الكورسات المعروضة بناءً على الفلتر
+  const displayCourses = useMemo(() => {
+    if (semesterId && semesterCourses) {
+      return semesterCourses;
+    }
+    if (subjectId && subjectCoursesData) {
+      return subjectCoursesData;
+    }
+    return allCourses;
+  }, [semesterId, semesterCourses, subjectId, subjectCoursesData, allCourses]);
+  
+  const isLoading = teacherLoading || semesterLoading || subjectLoading || allCoursesLoading;
+  
+  // الحصول على جميع المستويات والأنواع المتاحة من الكورسات المعروضة
   const levels = useMemo(() => {
     const set = new Set<string>();
-    if (Array.isArray(courses)) {
-      courses.forEach((c: any) => {
+    if (Array.isArray(displayCourses)) {
+      displayCourses.forEach((c: any) => {
         if (c?.level) set.add(c.level);
       });
     }
     return ["all", ...Array.from(set)];
-  }, [courses]);
-
+  }, [displayCourses]);
+  
   const types = useMemo(() => {
     const set = new Set<string>();
-    if (Array.isArray(courses)) {
-      courses.forEach((c: any) => {
+    if (Array.isArray(displayCourses)) {
+      displayCourses.forEach((c: any) => {
         if (c?.type) set.add(c.type);
       });
     }
     return ["all", ...Array.from(set)];
-  }, [courses]);
-
+  }, [displayCourses]);
+  
   // فلترة الكورسات
   const filteredCourses = useMemo(() => {
-    if (!Array.isArray(courses)) return [];
+    if (!Array.isArray(displayCourses)) return [];
     
-    return courses.filter((c: any) => {
+    return displayCourses.filter((c: any) => {
       const title = pick(c?.title, c?.title_ar) || "";
       const description = pick(c?.description, c?.description_ar) || "";
       
@@ -54,11 +92,34 @@ const CoursesPage = () => {
       
       return matchesSearch && matchesLevel && matchesType;
     });
-  }, [courses, searchQuery, selectedLevel, selectedType, pick]);
+  }, [displayCourses, searchQuery, selectedLevel, selectedType, pick]);
 
   if (isLoading) {
     return <CoursesPageSkeleton />;
   }
+
+  // عنوان الصفحة حسب الفلتر
+  const getPageTitle = () => {
+    if (semesterName) return semesterName;
+    if (subjectName) return subjectName;
+    return lang === "ar" ? "جميع الكورسات" : "All Courses";
+  };
+  
+  const getPageDescription = () => {
+    if (semesterName) {
+      return lang === "ar" 
+        ? `استعرض جميع الكورسات المتاحة في ${semesterName}`
+        : `Browse all courses available in ${semesterName}`;
+    }
+    if (subjectName) {
+      return lang === "ar"
+        ? `استعرض جميع الكورسات المتاحة في مادة ${subjectName}`
+        : `Browse all courses available in ${subjectName}`;
+    }
+    return lang === "ar"
+      ? "تصفح جميع الكورسات المتاحة واختر ما يناسب احتياجاتك التعليمية"
+      : "Browse all available courses and choose what suits your educational needs";
+  };
 
   return (
     <section className="pt-36 md:pt-40 pb-24 min-h-screen relative overflow-hidden">
@@ -69,6 +130,34 @@ const CoursesPage = () => {
       </div>
 
       <div className="container-tight relative">
+        {/* Back Button (if filtered) */}
+        {(semesterId || subjectId) && (
+          <div className="mb-6">
+            <Link 
+              to={`/${slug}/courses`}
+              className="inline-flex items-center gap-2 text-sm text-foreground/60 hover:text-primary transition-colors"
+            >
+              <Arrow className="w-4 h-4" />
+              {lang === "ar" ? "جميع الكورسات" : "All Courses"}
+            </Link>
+          </div>
+        )}
+        
+        {/* Breadcrumb (if filtered) */}
+        {(semesterId || subjectId) && (
+          <div className="flex items-center gap-2 text-sm text-foreground/60 mb-4 flex-wrap">
+            <Link to={`/${slug}`} className="hover:text-primary transition-colors">
+              {lang === "ar" ? "الرئيسية" : "Home"}
+            </Link>
+            <ChevronRight className="w-4 h-4" />
+            <Link to={`/${slug}/courses`} className="hover:text-primary transition-colors">
+              {lang === "ar" ? "الكورسات" : "Courses"}
+            </Link>
+            <ChevronRight className="w-4 h-4" />
+            <span className="text-foreground">{getPageTitle()}</span>
+          </div>
+        )}
+
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -81,13 +170,11 @@ const CoursesPage = () => {
           </div>
           <h1 className="font-display font-black text-4xl md:text-5xl lg:text-6xl tracking-tight">
             <span className="bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent">
-              {lang === "ar" ? "اختر الكورس المناسب لك" : "Choose the right course for you"}
+              {getPageTitle()}
             </span>
           </h1>
           <p className="mt-4 text-foreground/60 max-w-2xl mx-auto">
-            {lang === "ar"
-              ? "تصفح جميع الكورسات المتاحة واختر ما يناسب احتياجاتك التعليمية"
-              : "Browse all available courses and choose what suits your educational needs"}
+            {getPageDescription()}
           </p>
         </motion.div>
 
@@ -191,7 +278,7 @@ const CoursesPage = () => {
               <CourseCardFull
                 key={course?.id}
                 course={course}
-                slug={slug}
+                slug={slug!}
                 pick={pick}
                 lang={lang}
                 dir={dir}
@@ -204,24 +291,21 @@ const CoursesPage = () => {
   );
 };
 
-// 🟢 Course Card Component with Image + Buy Button
+// 🟢 Course Card Component with Image + Buy Button (نفس الكود السابق)
 const CourseCardFull = ({ course, slug, pick, lang, dir }: any) => {
   const [isBuying, setIsBuying] = useState(false);
   const { buyCourse } = useBuyCourse();
   
   if (!course) return null;
   
-  // حساب الخصم
   const originalPrice = parseFloat(course?.price) || 0;
   const discountPercent = parseFloat(course?.discount) || 0;
   const finalPrice = originalPrice - (originalPrice * discountPercent / 100);
   const hasDiscount = discountPercent > 0;
   
-  // ✅ معالجة الصورة - الرابط الكامل
   const getImageUrl = () => {
     if (course?.image?.fullUrl) return course.image.fullUrl;
     if (course?.imageUrl) return course.imageUrl;
-    // لو الصورة مبتدأش بـ https، أضف الـ base URL
     if (course?.image?.previewUrl) {
       if (course.image.previewUrl.startsWith('http')) return course.image.previewUrl;
       return `https://lms.dentin.cloud${course.image.previewUrl}`;
@@ -230,8 +314,6 @@ const CourseCardFull = ({ course, slug, pick, lang, dir }: any) => {
   };
   
   const courseImage = getImageUrl();
-  
-  // البيانات
   const courseTitle = pick(course?.title, course?.title_ar) || "Course";
   const courseDescription = pick(course?.description, course?.description_ar) || "";
   const stageName = pick(course?.stage?.name, course?.stage?.name_ar) || "";
@@ -240,12 +322,10 @@ const CourseCardFull = ({ course, slug, pick, lang, dir }: any) => {
   const lessonsCount = course?.details?.length || 0;
   const studentsCount = course?.count_student || 0;
   
-  // تنظيف الـ HTML
   const sanitizeHTML = (html: string) => {
     return { __html: DOMPurify.sanitize(html, { ALLOWED_TAGS: ['p', 'br', 'strong', 'b', 'em', 'i'] }) };
   };
   
-  // معالجة الشراء
   const handleBuy = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -265,7 +345,6 @@ const CourseCardFull = ({ course, slug, pick, lang, dir }: any) => {
       whileHover={{ y: -5 }}
       className="group relative bg-card rounded-xl border border-border hover:border-primary/40 transition-all duration-300 overflow-hidden flex flex-col h-full"
     >
-      {/* ✅ Image Section مع fallback */}
       <div className="relative h-44 overflow-hidden bg-gradient-to-br from-primary/20 to-accent/20">
         <img
           src={courseImage}
@@ -277,21 +356,18 @@ const CourseCardFull = ({ course, slug, pick, lang, dir }: any) => {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
         
-        {/* Discount Badge */}
         {hasDiscount && (
           <div className="absolute top-3 left-3 flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500 text-white text-xs font-bold shadow-lg z-10">
             🔥 {discountPercent}% OFF
           </div>
         )}
         
-        {/* Type Badge */}
         <div className="absolute top-3 right-3 px-2 py-1 rounded-lg bg-black/50 backdrop-blur-sm text-white text-xs font-medium z-10">
           {course?.type === "online" 
             ? (lang === "ar" ? "💻 أونلاين" : "💻 Online")
             : (lang === "ar" ? "🏢 مركز" : "🏢 Center")}
         </div>
         
-        {/* Price Overlay */}
         <div className="absolute bottom-3 left-3 right-3 z-10">
           {hasDiscount ? (
             <div className="flex items-baseline gap-2">
@@ -304,9 +380,7 @@ const CourseCardFull = ({ course, slug, pick, lang, dir }: any) => {
         </div>
       </div>
       
-      {/* Content */}
       <div className="p-4 flex-1 flex flex-col">
-        {/* Stage, Subject, Semester Tags */}
         <div className="flex flex-wrap gap-1 mb-3">
           {stageName && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs">
@@ -328,12 +402,10 @@ const CourseCardFull = ({ course, slug, pick, lang, dir }: any) => {
           )}
         </div>
         
-        {/* Title */}
         <h3 className="font-bold text-base mb-2 line-clamp-2 group-hover:text-primary transition-colors min-h-[48px]">
           {courseTitle}
         </h3>
         
-        {/* Description */}
         {courseDescription && (
           <div 
             className="text-xs text-foreground/60 line-clamp-2 mb-3"
@@ -341,7 +413,6 @@ const CourseCardFull = ({ course, slug, pick, lang, dir }: any) => {
           />
         )}
         
-        {/* Stats */}
         <div className="flex flex-wrap gap-3 mb-4 text-xs text-foreground/50">
           {lessonsCount > 0 && (
             <div className="flex items-center gap-1">
@@ -361,7 +432,6 @@ const CourseCardFull = ({ course, slug, pick, lang, dir }: any) => {
           </div>
         </div>
         
-        {/* ✅ Buy Button + Details Link */}
         <div className="mt-auto pt-3 border-t border-border">
           <div className="flex items-center gap-2">
             <button
@@ -390,7 +460,7 @@ const CourseCardFull = ({ course, slug, pick, lang, dir }: any) => {
   );
 };
 
-// 🟢 Empty State
+// 🟢 Empty State (نفس الكود السابق)
 const EmptyState = ({ lang }: { lang: string }) => {
   return (
     <div className="text-center py-20">
@@ -409,7 +479,7 @@ const EmptyState = ({ lang }: { lang: string }) => {
   );
 };
 
-// 🟢 Skeleton Component
+// 🟢 Skeleton Component (نفس الكود السابق)
 const CoursesPageSkeleton = () => {
   return (
     <section className="pt-36 md:pt-40 pb-24 min-h-screen">
@@ -441,5 +511,11 @@ const CoursesPageSkeleton = () => {
     </section>
   );
 };
+
+const ChevronRight = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+  </svg>
+);
 
 export default CoursesPage;

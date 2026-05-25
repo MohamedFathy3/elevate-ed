@@ -13,10 +13,12 @@ import {
 import { Link } from "react-router-dom";
 import { useLang } from "@/i18n/LanguageContext";
 import { useSafeTeacher } from "@/context/TeacherContext";
+import { useStudentAuth } from "@/context/StudentAuthContext";
 
 export const Footer = () => {
   const { lang } = useLang();
   const { teacher, slug, pick } = useSafeTeacher();
+  const { isAuthenticated } = useStudentAuth();
 
   const footer = teacher?.website?.footer || {};
 
@@ -48,6 +50,12 @@ export const Footer = () => {
       href: footer.whatsapp_link,
     },
   ].filter((x) => x.href);
+
+  // ✅ تحديد الوجهة حسب حالة المستخدم
+  const ctaLink = isAuthenticated ? `/${slug}/courses` : `/${slug}/register`;
+  const ctaText = isAuthenticated 
+    ? (lang === "ar" ? "استعرض الكورسات" : "Browse Courses")
+    : (lang === "ar" ? "ابدأ الآن" : "Start Now");
 
   return (
     <footer className="relative overflow-hidden border-t border-white/10 bg-black text-white">
@@ -148,9 +156,9 @@ export const Footer = () => {
               transition={{ delay: 0.2 }}
               className="mx-auto max-w-4xl text-5xl font-black leading-tight tracking-tight md:text-7xl"
             >
-              {lang === "ar"
-                ? "ابدأ التعلم بمستوى جديد"
-                : "Enter The Future Of Learning"}
+              {isAuthenticated 
+                ? (lang === "ar" ? "واصل رحلة التعلم" : "Continue Your Learning Journey")
+                : (lang === "ar" ? "ابدأ التعلم بمستوى جديد" : "Enter The Future Of Learning")}
             </motion.h2>
 
             {/* Desc */}
@@ -163,7 +171,7 @@ export const Footer = () => {
               {description}
             </motion.p>
 
-            {/* Button */}
+            {/* Button - ✅ يوجه حسب حالة المستخدم */}
             <motion.div
               whileHover={{
                 scale: 1.05,
@@ -174,12 +182,10 @@ export const Footer = () => {
               className="mt-12"
             >
               <Link
-                to={`/${slug}/register`}
+                to={ctaLink}
                 className="group inline-flex items-center gap-4 rounded-full border border-white/10 bg-white px-10 py-5 text-lg font-bold text-black transition-all hover:shadow-[0_0_60px_rgba(255,255,255,0.35)]"
               >
-                {lang === "ar"
-                  ? "ابدأ الآن"
-                  : "Start Now"}
+                {ctaText}
 
                 <ArrowUpRight className="transition-transform duration-300 group-hover:rotate-45" />
               </Link>

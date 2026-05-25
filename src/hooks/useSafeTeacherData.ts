@@ -2,7 +2,7 @@
 import { useTeacher } from "@/context/TeacherContext";
 
 export const useSafeTeacherData = () => {
-  const { teacher, slug, pick, isLoading, error } = useTeacher();
+  const { teacher, slug, pick, isLoading, error,centerHours  } = useTeacher();
   
   // Safe access with fallbacks
   const safeData = {
@@ -13,6 +13,7 @@ export const useSafeTeacherData = () => {
     about: teacher?.website?.about || null,
       future: teacher?.website?.future || [], 
     stats: teacher?.website?.about?.stats || [],
+     centerHours: centerHours || [], 
   };
   
   return {

@@ -35,6 +35,7 @@ export interface TeacherWebsiteData {
     books: any[];
     footer: any;
     future?: any[];
+    centerHours?: any[]; // ✅ إضافة centerHours
   };
   createdAt: string;
 }
@@ -54,6 +55,7 @@ interface TeacherContextValue {
   footer: any;
   future: any[];
   home: any;
+  centerHours: any[]; // ✅ إضافة centerHours
 }
 
 const TeacherContext = createContext<TeacherContextValue | undefined>(undefined);
@@ -87,11 +89,8 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
   const { pathname } = useLocation();
   const { lang } = useLang();
   
-  // ✅ login و register مش في STATIC_PAGES، فهيجب البيانات
   const currentPath = pathname.split('/').pop() || '';
   const isStaticPage = STATIC_PAGES.includes(currentPath);
-  
-  // ✅ نجيب البيانات في كل الصفحات ما عدا forgot-password و reset-password
   const shouldFetch = !!slug && !isStaticPage;
   
   console.log("=========================================");
@@ -120,7 +119,7 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
     return en || ar || "";
   };
 
-  // ✅ بيانات آمنة
+  // ✅ بيانات آمنة مع centerHours
   const safeData = {
     stages: teacher?.website?.stages || [],
     courses: teacher?.website?.courses || [],
@@ -130,6 +129,7 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
     footer: teacher?.website?.footer || null,
     future: teacher?.website?.future || [],
     home: teacher?.website?.home || null,
+    centerHours: teacher?.website?.centerHours || [], // ✅ إضافة centerHours
   };
 
   // Show loading state
@@ -210,6 +210,7 @@ export const useSafeTeacher = () => {
       footer: null,
       future: [],
       home: null,
+      centerHours: [], // ✅ إضافة fallback
     };
   }
 };

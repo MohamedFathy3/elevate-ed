@@ -23,11 +23,12 @@ const CourseDetail = () => {
   const navigate = useNavigate();
   const { isAuthenticated, student } = useStudentAuth();
   const { data: courseData, isLoading: detailsLoading, refetch: refetchDetails } = useCourseDetails(parseInt(courseId || '0'));
-  const { buyLesson, isLoading: buying } = useBuyCourse();
+  const { buyCourse, buyLesson, isLoading: buying } = useBuyCourse();
   const videoRef = useRef<HTMLVideoElement>(null);
   
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
   const [buyingLessonId, setBuyingLessonId] = useState<number | null>(null);
+  const [buyingFullCourse, setBuyingFullCourse] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<any>(null);
   const [showProtectionWarning, setShowProtectionWarning] = useState(false);
   const [isAuthChecked, setIsAuthChecked] = useState(false);
@@ -66,8 +67,8 @@ const CourseDetail = () => {
   const finalPrice = originalPrice - (originalPrice * discountPercent / 100);
   const hasDiscount = discountPercent > 0;
 
-  // التحقق من المصادقة قبل الشراء
-  const checkAuthAndRedirect = () => {
+  // شراء الكورس كاملاً
+  const handleBuyFullCourse = async () => {
     const token = Cookies.get('student_token');
     if (!token) {
       toast.error(lang === "ar" ? "الرجاء تسجيل الدخول أولاً" : "Please login first", {
@@ -77,9 +78,28 @@ const CourseDetail = () => {
       setTimeout(() => {
         navigate(`/${slug}/login?redirect=${encodeURIComponent(window.location.pathname)}`);
       }, 1500);
-      return false;
+      return;
     }
-    return true;
+    
+    setBuyingFullCourse(true);
+    try {
+      await buyCourse(parseInt(courseId || '0'), finalPrice);
+      toast.success(lang === "ar" ? "تم شراء الكورس بنجاح!" : "Course purchased successfully!");
+      // إعادة تحميل بيانات الدروس لتحديث حالة attendance
+      setTimeout(() => {
+        refetchDetails();
+      }, 1000);
+    } catch (error: any) {
+      console.error("Purchase error:", error);
+      if (error.message?.includes("authenticated") || error.response?.status === 401) {
+        toast.error(lang === "ar" ? "انتهت صلاحية الجلسة، الرجاء تسجيل الدخول مرة أخرى" : "Session expired, please login again");
+        setTimeout(() => {
+          navigate(`/${slug}/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+        }, 2000);
+      }
+    } finally {
+      setBuyingFullCourse(false);
+    }
   };
 
   // شراء درس فردي
@@ -102,7 +122,6 @@ const CourseDetail = () => {
     try {
       await buyLesson(lessonId, price);
       toast.success(lang === "ar" ? "تم شراء الدرس بنجاح!" : "Lesson purchased successfully!");
-      // إعادة تحميل بيانات الدروس لتحديث حالة attendance
       setTimeout(() => {
         refetchDetails();
       }, 1000);
@@ -117,24 +136,6 @@ const CourseDetail = () => {
     } finally {
       setBuyingLessonId(null);
     }
-  };
-
-  // شراء الكورس كاملاً
-  const handleBuyFullCourse = () => {
-    const token = Cookies.get('student_token');
-    if (!token) {
-      toast.error(lang === "ar" ? "الرجاء تسجيل الدخول أولاً" : "Please login first", {
-        duration: 3000,
-        position: "top-center",
-      });
-      setTimeout(() => {
-        navigate(`/${slug}/login?redirect=${encodeURIComponent(window.location.pathname)}`);
-      }, 1500);
-      return;
-    }
-    
-    // TODO: Implement full course purchase
-    toast.info(lang === "ar" ? "سيتم إضافة شراء الكورس كاملاً قريباً" : "Full course purchase coming soon");
   };
 
   // تشغيل الفيديو مع حماية
@@ -351,13 +352,18 @@ const CourseDetail = () => {
                 </div>
               </div>
 
-              {/* Purchase Buttons */}
+              {/* ✅ Purchase Buttons - Buy Full Course */}
               <div className="mt-6 space-y-3">
                 <button
                   onClick={handleBuyFullCourse}
-                  className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl gradient-primary text-white font-bold shadow-soft hover:shadow-glow transition-all hover:scale-[1.02] active:scale-95"
+                  disabled={buyingFullCourse}
+                  className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl gradient-primary text-white font-bold shadow-soft hover:shadow-glow transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <ShoppingCart className="w-5 h-5" />
+                  {buyingFullCourse ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <ShoppingCart className="w-5 h-5" />
+                  )}
                   {lang === "ar" ? "شراء الكورس كاملاً" : "Buy Full Course"}
                 </button>
                 

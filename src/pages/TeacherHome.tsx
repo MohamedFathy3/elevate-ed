@@ -4,6 +4,8 @@ import { Future } from "@/components/site/Future";
 import { Courses } from "@/components/site/Courses";
 import { Books } from "@/components/site/Books";
 import { About } from "@/components/site/About";
+import { CenterHours } from "@/components/site/CenterHours";
+
 
 const TeacherHome = () => (
   <>
@@ -11,6 +13,8 @@ const TeacherHome = () => (
     <Stage />
     {/* <Future /> */}
     <Courses limit={4} />
+    <CenterHours  />
+
     <Books />
     <About />
   </>
