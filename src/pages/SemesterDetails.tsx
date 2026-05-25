@@ -1,17 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // pages/SemesterDetails.tsx
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useLang } from "@/i18n/LanguageContext";
 import { useTeacher } from "@/context/TeacherContext";
 import { useSemesterCourses } from "@/hooks/useCourses";
 import { useStudentAuth } from "@/context/StudentAuthContext";
+import { useBuyCourse } from "@/hooks/useEnroll";
 import { motion } from "framer-motion";
 import { 
   ArrowLeft, ArrowRight, BookOpen, Clock, Award, 
   Users, Calendar, ChevronRight, Lock, Unlock,
   PlayCircle, FileQuestion, ClipboardList, CheckCircle,
-  Loader2, GraduationCap, DollarSign, Percent, ShoppingCart
+  Loader2, GraduationCap, DollarSign, Percent, ShoppingCart,
+  Eye, XCircle
 } from "lucide-react";
 import { Link as RouterLink } from "react-router-dom";
 import { toast } from "sonner";
@@ -21,7 +23,9 @@ const SemesterDetails = () => {
   const { slug, semesterId } = useParams();
   const { teacher, pick } = useTeacher();
   const { isAuthenticated, student } = useStudentAuth();
-  const { data: coursesData, isLoading } = useSemesterCourses(parseInt(semesterId || '0'));
+  const { data: coursesData, isLoading, refetch: refetchCourses } = useSemesterCourses(parseInt(semesterId || '0'));
+  const { buyCourse, isLoading: buying } = useBuyCourse();
+  const navigate = useNavigate();
   
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
   const semester = teacher?.website?.semesters?.find((s: any) => s.id === parseInt(semesterId || '0'));
@@ -75,7 +79,6 @@ const SemesterDetails = () => {
             value={courses.length}
             color="from-blue-500 to-indigo-600"
           />
-         
         </div>
         
         {/* Courses List */}
@@ -100,6 +103,7 @@ const SemesterDetails = () => {
                 pick={pick}
                 isAuthenticated={isAuthenticated}
                 studentId={student?.id}
+                navigate={navigate}
               />
             ))}
           </div>
@@ -110,8 +114,10 @@ const SemesterDetails = () => {
 };
 
 // 🟢 Course Section Component
-const CourseSection = ({ course, index, slug, lang, pick, isAuthenticated, studentId }: any) => {
+const CourseSection = ({ course, index, slug, lang, pick, isAuthenticated, studentId, navigate }: any) => {
   const [expanded, setExpanded] = useState(false);
+  const [buying, setBuying] = useState(false);
+  const { buyCourse } = useBuyCourse();
   
   const courseTitle = pick(course.title, course.title_ar) || "Course";
   const courseImage = course.image?.fullUrl || course.imageUrl || "/default-course.jpg";
@@ -120,7 +126,31 @@ const CourseSection = ({ course, index, slug, lang, pick, isAuthenticated, stude
   const finalPrice = originalPrice - (originalPrice * discount / 100);
   const hasDiscount = discount > 0;
   const lessons = course.details || [];
-  const hasPurchased = isAuthenticated; // للتبسيط، بعدين نضيف التحقق الفعلي
+  const hasPurchased = isAuthenticated;
+  
+  const handleBuyCourse = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      toast.error(lang === "ar" ? "الرجاء تسجيل الدخول أولاً" : "Please login first");
+      setTimeout(() => navigate(`/${slug}/login?redirect=${encodeURIComponent(window.location.pathname)}`), 1500);
+      return;
+    }
+    
+    setBuying(true);
+    try {
+      await buyCourse(course.id, finalPrice);
+      toast.success(lang === "ar" ? "تم شراء الكورس بنجاح!" : "Course purchased successfully!");
+    } catch (error) {
+      console.error("Purchase error:", error);
+    } finally {
+      setBuying(false);
+    }
+  };
+  
+  // التوجيه لصفحة تفاصيل الكورس
+  const goToCourseDetails = () => {
+    navigate(`/${slug}/courses/${course.id}`);
+  };
   
   return (
     <motion.div
@@ -192,14 +222,14 @@ const CourseSection = ({ course, index, slug, lang, pick, isAuthenticated, stude
               <ChevronRight className="w-5 h-5 text-foreground/40" />
             </div>
             {!hasPurchased && (
-              <RouterLink
-                to={`/${slug}/register`}
-                onClick={(e) => e.stopPropagation()}
+              <button
+                onClick={handleBuyCourse}
+                disabled={buying}
                 className="px-3 py-1.5 rounded-lg gradient-primary text-white text-xs font-semibold flex items-center gap-1"
               >
-                <ShoppingCart className="w-3 h-3" />
+                {buying ? <Loader2 className="w-3 h-3 animate-spin" /> : <ShoppingCart className="w-3 h-3" />}
                 {lang === "ar" ? "شراء" : "Buy"}
-              </RouterLink>
+              </button>
             )}
           </div>
         </div>
@@ -220,7 +250,7 @@ const CourseSection = ({ course, index, slug, lang, pick, isAuthenticated, stude
             </h4>
             
             <div className="space-y-3">
-              {lessons.map((lesson: any, idx: number) => (
+              {lessons.slice(0, 3).map((lesson: any, idx: number) => (
                 <LessonItem
                   key={lesson.id}
                   lesson={lesson}
@@ -232,15 +262,15 @@ const CourseSection = ({ course, index, slug, lang, pick, isAuthenticated, stude
               ))}
             </div>
             
-            {/* View All Button */}
+            {/* View All Button - يودي على صفحة تفاصيل الكورس */}
             <div className="mt-4 text-center">
-              <RouterLink
-                to={`/${slug}/courses/${course.id}`}
+              <button
+                onClick={goToCourseDetails}
                 className="inline-flex items-center gap-1 text-primary text-sm hover:underline"
               >
                 {lang === "ar" ? "عرض كل التفاصيل" : "View all details"}
                 <ChevronRight className="w-4 h-4" />
-              </RouterLink>
+              </button>
             </div>
           </div>
         </motion.div>
@@ -252,10 +282,15 @@ const CourseSection = ({ course, index, slug, lang, pick, isAuthenticated, stude
 // 🟢 Lesson Item Component
 const LessonItem = ({ lesson, index, slug, lang, isAuthenticated }: any) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const navigate = useNavigate();
   const lessonTitle = lang === "ar" && lesson.title_ar ? lesson.title_ar : lesson.title;
-  const isPurchased = isAuthenticated; // للتبسيط
+  const isPurchased = isAuthenticated;
   const isFree = parseFloat(lesson.price) === 0;
   const canWatch = isPurchased || isFree;
+  
+  const handleWatch = () => {
+    navigate(`/${slug}/lesson/${lesson.id}`);
+  };
   
   return (
     <div className="bg-card rounded-xl border border-border overflow-hidden">
@@ -280,16 +315,17 @@ const LessonItem = ({ lesson, index, slug, lang, isAuthenticated }: any) => {
           {!isFree && !isPurchased && (
             <span className="text-sm font-bold text-primary">{parseFloat(lesson.price).toFixed(2)} EGP</span>
           )}
+          
           {canWatch && (
-            <RouterLink
-              to={`/${slug}/lesson/${lesson.id}`}
-              onClick={(e) => e.stopPropagation()}
+            <button
+              onClick={handleWatch}
               className="px-3 py-1.5 rounded-lg gradient-primary text-white text-xs font-semibold flex items-center gap-1"
             >
               <PlayCircle className="w-3 h-3" />
               {lang === "ar" ? "مشاهدة" : "Watch"}
-            </RouterLink>
+            </button>
           )}
+          
           {!canWatch && !isFree && (
             <div className="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-foreground/40 text-xs font-semibold flex items-center gap-1">
               <Lock className="w-3 h-3" />

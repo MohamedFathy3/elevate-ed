@@ -3,10 +3,12 @@
 import { motion } from "framer-motion";
 import { useLang } from "@/i18n/LanguageContext";
 import { useStudentProfile, useStudentLearning, useCurrentStudent } from "@/hooks/useStudent";
-import { BookOpen, Clock, Award, Calendar, ChevronRight, User, Phone, Mail, GraduationCap, FileQuestion, ClipboardList, CheckCircle, XCircle, TrendingUp, Eye } from "lucide-react";
+import { useWalletBalance, useCreateRechargeCode, useRechargeWallet } from "@/hooks/useWallet";
+import { BookOpen, Clock, Award, Calendar, ChevronRight, User, Phone, Mail, GraduationCap, FileQuestion, ClipboardList, CheckCircle, XCircle, TrendingUp, Eye, Wallet, CreditCard, Copy, RefreshCw, Loader2, Zap } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
+import { toast } from "sonner";
 
 const StudentDashboard = () => {
   const { lang } = useLang();
@@ -14,7 +16,13 @@ const StudentDashboard = () => {
   const { student, logout, isAuthenticated } = useCurrentStudent();
   const { data: profile, isLoading: profileLoading, refetch: refetchProfile } = useStudentProfile();
   const { data: learning, isLoading: learningLoading, refetch: refetchLearning } = useStudentLearning();
+  const { data: walletData, isLoading: walletLoading, refetch: refetchWallet } = useWalletBalance();
+  const { mutate: createRechargeCode, isPending: creatingCode } = useCreateRechargeCode();
+  const { mutate: rechargeWallet, isPending: recharging } = useRechargeWallet();
   
+  const [rechargeCode, setRechargeCode] = useState("");
+  const [showRechargeModal, setShowRechargeModal] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -23,36 +31,53 @@ const StudentDashboard = () => {
     if (token) {
       refetchProfile();
       refetchLearning();
+      refetchWallet();
     }
   }, []);
 
-  // ✅ استخراج البيانات من learning.data (المصدر الصحيح)
   const learningData = learning?.data || {};
   const profileData = profile?.data || {};
   
-  // ✅ دمج البيانات - الأهم من learning.data
   const studentInfo = learningData?.student || profileData?.student || student;
   const semesters = learningData?.semesters || profileData?.semesters || [];
   const courses = learningData?.courses || profileData?.courses || [];
   const lessons = learningData?.lessons || profileData?.lessons || [];
-  
-  // ✅ استخراج الامتحانات والواجبات من learning.data.student
   const examsList = learningData?.student?.exams || profileData?.student?.exams || [];
   const assignmentsList = learningData?.student?.assignments || profileData?.student?.assignments || [];
+  
+  const walletBalance = profileData?.balance || 0;
 
-  console.log("🔍 Dashboard Debug:", {
-    learningExists: !!learning,
-    learningDataKeys: Object.keys(learningData),
-    hasStudentExams: !!learningData?.student?.exams,
-    examsCount: examsList.length,
-    assignmentsCount: assignmentsList.length,
-    semestersCount: semesters.length,
-    coursesCount: courses.length,
-    lessonsCount: lessons.length,
-    firstExam: examsList[0]
-  });
+  const handleCreateCode = () => {
+    createRechargeCode(undefined, {
+      onSuccess: (data) => {
+        if (data.code) {
+          setGeneratedCode(data.code);
+          toast.success(lang === "ar" ? "تم إنشاء كود الشحن بنجاح" : "Recharge code created successfully");
+        }
+      }
+    });
+  };
 
-  if (profileLoading || learningLoading) {
+  const handleRecharge = () => {
+    if (!rechargeCode.trim()) {
+      toast.error(lang === "ar" ? "الرجاء إدخال كود الشحن" : "Please enter recharge code");
+      return;
+    }
+    rechargeWallet(rechargeCode, {
+      onSuccess: () => {
+        setRechargeCode("");
+        setShowRechargeModal(false);
+        setGeneratedCode(null);
+      }
+    });
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success(lang === "ar" ? "تم نسخ الكود" : "Code copied!");
+  };
+
+  if (profileLoading || learningLoading || walletLoading) {
     return <DashboardSkeleton />;
   }
 
@@ -112,12 +137,94 @@ const StudentDashboard = () => {
             color="from-emerald-500 to-teal-600"
           />
           <StatCard
-            icon={<Award className="w-5 h-5" />}
+            icon={<TrendingUp className="w-5 h-5" />}
             label={lang === "ar" ? "إجمالي الدرجات" : "Total Marks"}
             value={[...examsList, ...assignmentsList].reduce((sum, item) => sum + (item.student_mark || 0), 0)}
             color="from-purple-500 to-pink-600"
           />
         </div>
+
+        {/* Wallet Section */}
+        <div className="bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl p-6 mb-8 text-white shadow-xl">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                <Wallet className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-white/80 text-sm">{lang === "ar" ? "رصيد المحفظة" : "Wallet Balance"}</p>
+                <p className="text-3xl font-black">{walletBalance} EGP</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowRechargeModal(true)}
+                className="px-5 py-2.5 rounded-xl bg-white text-orange-600 font-semibold flex items-center gap-2 hover:scale-105 transition-all"
+              >
+                <CreditCard className="w-4 h-4" />
+                {lang === "ar" ? "شحن المحفظة" : "Recharge"}
+              </button>
+             
+            </div>
+          </div>
+          
+          {/* Generated Code Display */}
+          {generatedCode && (
+            <div className="mt-4 p-3 bg-white/20 rounded-xl flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <Zap className="w-5 h-5" />
+                <span className="font-mono text-lg tracking-wider">{generatedCode}</span>
+              </div>
+              <button
+                onClick={() => copyToClipboard(generatedCode)}
+                className="px-3 py-1.5 rounded-lg bg-white/30 hover:bg-white/40 transition-all text-sm flex items-center gap-1"
+              >
+                <Copy className="w-3 h-3" />
+                {lang === "ar" ? "نسخ" : "Copy"}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Recharge Modal */}
+        {showRechargeModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-card rounded-2xl p-6 max-w-md w-full mx-4 border border-border"
+            >
+              <h3 className="text-xl font-bold mb-4">{lang === "ar" ? "شحن المحفظة" : "Recharge Wallet"}</h3>
+              <p className="text-foreground/60 text-sm mb-4">
+                {lang === "ar" 
+                  ? "أدخل كود الشحن لشحن رصيد محفظتك"
+                  : "Enter the recharge code to add balance to your wallet"}
+              </p>
+              <input
+                type="text"
+                value={rechargeCode}
+                onChange={(e) => setRechargeCode(e.target.value.toUpperCase())}
+                placeholder={lang === "ar" ? "أدخل كود الشحن" : "Enter recharge code"}
+                className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary/50 mb-4 font-mono tracking-wider"
+              />
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowRechargeModal(false)}
+                  className="flex-1 px-4 py-2 rounded-xl bg-secondary text-foreground font-semibold"
+                >
+                  {lang === "ar" ? "إلغاء" : "Cancel"}
+                </button>
+                <button
+                  onClick={handleRecharge}
+                  disabled={recharging}
+                  className="flex-1 px-4 py-2 rounded-xl gradient-primary text-white font-semibold disabled:opacity-50"
+                >
+                  {recharging ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : (lang === "ar" ? "شحن" : "Recharge")}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
         
         {/* Student Info Section */}
         {studentInfo && (
@@ -152,7 +259,7 @@ const StudentDashboard = () => {
           </div>
         )}
         
-        {/* ✅ Exams Section - الامتحانات */}
+        {/* Exams Section */}
         {examsList.length > 0 && (
           <div className="mb-8">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
@@ -172,7 +279,7 @@ const StudentDashboard = () => {
           </div>
         )}
         
-        {/* ✅ Assignments Section - الواجبات */}
+        {/* Assignments Section */}
         {assignmentsList.length > 0 && (
           <div className="mb-8">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
@@ -273,7 +380,7 @@ const StudentDashboard = () => {
   );
 };
 
-// 🟢 Exam Result Card Component مع تفاصيل كاملة
+// 🟢 Exam Result Card Component
 const ExamResultCard = ({ examItem, lang, slug }: any) => {
   const [expanded, setExpanded] = useState(false);
   const exam = examItem.exam;
@@ -341,7 +448,6 @@ const ExamResultCard = ({ examItem, lang, slug }: any) => {
         </div>
       </div>
       
-      {/* Expanded Questions Details */}
       {expanded && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
@@ -469,6 +575,7 @@ const AssignmentResultCard = ({ assignmentItem, lang, slug }: any) => {
   );
 };
 
+// 🟢 Stat Card Component
 const StatCard = ({ icon, label, value, color }: any) => (
   <motion.div
     whileHover={{ y: -5 }}
@@ -482,6 +589,7 @@ const StatCard = ({ icon, label, value, color }: any) => (
   </motion.div>
 );
 
+// 🟢 Semester Card Component
 const SemesterCard = ({ semester, slug, lang }: any) => (
   <Link to={`/${slug}/semester/${semester.id}`}>
     <motion.div
@@ -503,6 +611,7 @@ const SemesterCard = ({ semester, slug, lang }: any) => (
   </Link>
 );
 
+// 🟢 Course Card Component
 const CourseCard = ({ course, slug, lang }: any) => (
   <Link to={`/${slug}/courses/${course.id}`}>
     <motion.div
@@ -527,6 +636,7 @@ const CourseCard = ({ course, slug, lang }: any) => (
   </Link>
 );
 
+// 🟢 Lesson Card Component
 const LessonCard = ({ lesson, slug, lang }: any) => (
   <motion.div
     whileHover={{ x: 5 }}
@@ -555,6 +665,7 @@ const LessonCard = ({ lesson, slug, lang }: any) => (
   </motion.div>
 );
 
+// 🟢 Dashboard Skeleton
 const DashboardSkeleton = () => (
   <div className="min-h-screen pt-32 pb-20">
     <div className="container-tight">
@@ -564,6 +675,7 @@ const DashboardSkeleton = () => (
           <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
         ))}
       </div>
+      <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-2xl mb-8 animate-pulse" />
       <div className="h-40 bg-gray-200 dark:bg-gray-700 rounded-2xl mb-8 animate-pulse" />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {[1,2].map(i => (

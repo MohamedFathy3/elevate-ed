@@ -9,7 +9,8 @@ import { useStudentAuth } from "@/context/StudentAuthContext";
 import { 
   Clock, Atom, ArrowLeft, ArrowRight, CheckCircle2, 
   PlayCircle, ShoppingCart, Lock, Calendar, 
-  Loader2, Video, ExternalLink, Shield, EyeOff
+  Loader2, Video, ExternalLink, Shield, EyeOff,
+  XCircle
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
@@ -31,16 +32,20 @@ const CourseDetail = () => {
   const [buyingFullCourse, setBuyingFullCourse] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<any>(null);
   const [showProtectionWarning, setShowProtectionWarning] = useState(false);
-  const [isAuthChecked, setIsAuthChecked] = useState(false);
+  const [hasPurchasedFullCourse, setHasPurchasedFullCourse] = useState(false);
 
-  // التحقق من المصادقة
+  // التحقق من المصادقة وشراء الكورس
   useEffect(() => {
     const token = Cookies.get('student_token');
     console.log("🔐 CourseDetail - Token exists:", !!token);
     console.log("🔐 CourseDetail - isAuthenticated:", isAuthenticated);
-    console.log("🔐 CourseDetail - Student:", student);
-    setIsAuthChecked(true);
-  }, [isAuthenticated, student]);
+    
+    // ✅ التحقق إذا كان المستخدم اشترى الكورس (أي درس من الدروس purchased)
+    if (courseData?.data && courseData.data.length > 0) {
+      const anyLessonPurchased = courseData.data.some((lesson: any) => lesson.attended === true);
+      setHasPurchasedFullCourse(anyLessonPurchased);
+    }
+  }, [isAuthenticated, student, courseData]);
 
   // تفعيل الحماية عند تحميل الصفحة
   useEffect(() => {
@@ -71,13 +76,8 @@ const CourseDetail = () => {
   const handleBuyFullCourse = async () => {
     const token = Cookies.get('student_token');
     if (!token) {
-      toast.error(lang === "ar" ? "الرجاء تسجيل الدخول أولاً" : "Please login first", {
-        duration: 3000,
-        position: "top-center",
-      });
-      setTimeout(() => {
-        navigate(`/${slug}/login?redirect=${encodeURIComponent(window.location.pathname)}`);
-      }, 1500);
+      toast.error(lang === "ar" ? "الرجاء تسجيل الدخول أولاً" : "Please login first");
+      setTimeout(() => navigate(`/${slug}/login?redirect=${encodeURIComponent(window.location.pathname)}`), 1500);
       return;
     }
     
@@ -85,17 +85,13 @@ const CourseDetail = () => {
     try {
       await buyCourse(parseInt(courseId || '0'), finalPrice);
       toast.success(lang === "ar" ? "تم شراء الكورس بنجاح!" : "Course purchased successfully!");
-      // إعادة تحميل بيانات الدروس لتحديث حالة attendance
-      setTimeout(() => {
-        refetchDetails();
-      }, 1000);
+      setHasPurchasedFullCourse(true);
+      setTimeout(() => refetchDetails(), 1000);
     } catch (error: any) {
       console.error("Purchase error:", error);
       if (error.message?.includes("authenticated") || error.response?.status === 401) {
         toast.error(lang === "ar" ? "انتهت صلاحية الجلسة، الرجاء تسجيل الدخول مرة أخرى" : "Session expired, please login again");
-        setTimeout(() => {
-          navigate(`/${slug}/login?redirect=${encodeURIComponent(window.location.pathname)}`);
-        }, 2000);
+        setTimeout(() => navigate(`/${slug}/login?redirect=${encodeURIComponent(window.location.pathname)}`), 2000);
       }
     } finally {
       setBuyingFullCourse(false);
@@ -104,17 +100,10 @@ const CourseDetail = () => {
 
   // شراء درس فردي
   const handleBuyLesson = async (lessonId: number, price: number) => {
-    console.log("🛒 handleBuyLesson called - isAuthenticated:", isAuthenticated);
-    
     const token = Cookies.get('student_token');
     if (!token) {
-      toast.error(lang === "ar" ? "الرجاء تسجيل الدخول أولاً" : "Please login first", {
-        duration: 3000,
-        position: "top-center",
-      });
-      setTimeout(() => {
-        navigate(`/${slug}/login?redirect=${encodeURIComponent(window.location.pathname)}`);
-      }, 1500);
+      toast.error(lang === "ar" ? "الرجاء تسجيل الدخول أولاً" : "Please login first");
+      setTimeout(() => navigate(`/${slug}/login?redirect=${encodeURIComponent(window.location.pathname)}`), 1500);
       return;
     }
     
@@ -122,31 +111,17 @@ const CourseDetail = () => {
     try {
       await buyLesson(lessonId, price);
       toast.success(lang === "ar" ? "تم شراء الدرس بنجاح!" : "Lesson purchased successfully!");
-      setTimeout(() => {
-        refetchDetails();
-      }, 1000);
+      setTimeout(() => refetchDetails(), 1000);
     } catch (error: any) {
       console.error("Purchase error:", error);
-      if (error.message?.includes("authenticated") || error.response?.status === 401) {
-        toast.error(lang === "ar" ? "انتهت صلاحية الجلسة، الرجاء تسجيل الدخول مرة أخرى" : "Session expired, please login again");
-        setTimeout(() => {
-          navigate(`/${slug}/login?redirect=${encodeURIComponent(window.location.pathname)}`);
-        }, 2000);
-      }
     } finally {
       setBuyingLessonId(null);
     }
   };
 
-  // تشغيل الفيديو مع حماية
-  const playLesson = (lesson: any) => {
-    setSelectedLesson(lesson);
-    setTimeout(() => {
-      if (videoRef.current) {
-        preventVideoDownload(videoRef.current);
-        disablePictureInPicture(videoRef.current);
-      }
-    }, 100);
+  // ✅ التوجيه لصفحة الدرس
+  const goToLesson = (lessonId: number) => {
+    navigate(`/${slug}/lesson/${lessonId}`);
   };
 
   if (detailsLoading) {
@@ -199,10 +174,7 @@ const CourseDetail = () => {
                     disablePictureInPicture
                     onContextMenu={(e) => e.preventDefault()}
                   />
-                  <div 
-                    className="absolute inset-0 bg-black hidden items-center justify-center z-10 recording-overlay"
-                    style={{ display: 'none' }}
-                  >
+                  <div className="absolute inset-0 bg-black hidden items-center justify-center z-10 recording-overlay" style={{ display: 'none' }}>
                     <div className="text-center text-white p-8">
                       <EyeOff className="w-16 h-16 mx-auto mb-4 opacity-50" />
                       <p className="text-lg font-semibold">{lang === "ar" ? "تم اكتشاف تسجيل شاشة" : "Screen Recording Detected"}</p>
@@ -213,11 +185,15 @@ const CourseDetail = () => {
               ) : (
                 <div 
                   className="aspect-video bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center cursor-pointer"
-                  onClick={() => lessons[0] && playLesson(lessons[0])}
+                  onClick={() => lessons[0] && hasPurchasedFullCourse && goToLesson(lessons[0].id)}
                 >
                   <div className="text-center">
                     <PlayCircle className="w-20 h-20 text-primary mx-auto mb-4 opacity-70" />
-                    <p className="text-foreground/60">{lang === "ar" ? "اختر درساً للمشاهدة" : "Select a lesson to watch"}</p>
+                    <p className="text-foreground/60">
+                      {hasPurchasedFullCourse 
+                        ? (lang === "ar" ? "اختر درساً للمشاهدة" : "Select a lesson to watch")
+                        : (lang === "ar" ? "اشتر الكورس لمشاهدة الدروس" : "Buy the course to watch lessons")}
+                    </p>
                   </div>
                 </div>
               )}
@@ -225,11 +201,7 @@ const CourseDetail = () => {
 
             {/* Selected Lesson Info */}
             {selectedLesson && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-6 p-5 bg-secondary/30 rounded-2xl"
-              >
+              <motion.div className="mt-6 p-5 bg-secondary/30 rounded-2xl">
                 <h3 className="font-bold text-xl">
                   {lang === "ar" && selectedLesson.title_ar ? selectedLesson.title_ar : selectedLesson.title}
                 </h3>
@@ -240,12 +212,7 @@ const CourseDetail = () => {
             )}
 
             {/* Course Info */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="mt-8"
-            >
+            <motion.div className="mt-8">
               <div className="flex flex-wrap gap-2 mb-4">
                 <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold">
                   {course?.type === "online" ? (lang === "ar" ? "أونلاين" : "Online") : (lang === "ar" ? "سنتر" : "Center")}
@@ -259,29 +226,16 @@ const CourseDetail = () => {
                   {course?.hour_time_course || (lang === "ar" ? "مرن" : "Flexible")}
                 </span>
               </div>
-
-              <h1 className="font-display font-black text-3xl md:text-5xl tracking-tight">
-                {courseTitle}
-              </h1>
-              
-              <div 
-                className="mt-4 text-lg text-foreground/70 leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: courseDescription }}
-              />
+              <h1 className="font-display font-black text-3xl md:text-5xl tracking-tight">{courseTitle}</h1>
+              <div className="mt-4 text-lg text-foreground/70 leading-relaxed" dangerouslySetInnerHTML={{ __html: courseDescription }} />
             </motion.div>
 
             {/* Lessons List */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="mt-10"
-            >
+            <motion.div className="mt-10">
               <h2 className="text-2xl font-bold mb-6">
                 {lang === "ar" ? "محتويات الكورس" : "Course Content"}
                 <span className="text-sm text-foreground/50 ml-2">({lessons.length} {lang === "ar" ? "دروس" : "lessons"})</span>
               </h2>
-              
               <div className="space-y-3">
                 {lessons.map((lesson: any, index: number) => (
                   <LessonCard
@@ -291,192 +245,159 @@ const CourseDetail = () => {
                     lang={lang}
                     slug={slug!}
                     isAuthenticated={!!Cookies.get('student_token')}
+                    hasPurchasedFullCourse={hasPurchasedFullCourse}
                     onBuy={() => handleBuyLesson(lesson.id, parseFloat(lesson.price))}
-                    onPlay={() => playLesson(lesson)}
+                    onWatch={() => goToLesson(lesson.id)}
                     isBuying={buyingLessonId === lesson.id}
-                    isSelected={selectedLesson?.id === lesson.id}
                   />
                 ))}
               </div>
             </motion.div>
           </div>
 
-          {/* Sidebar - Purchase Card */}
-          <motion.aside
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="lg:col-span-1"
-          >
-            <div className="sticky top-28 bg-card rounded-3xl p-6 shadow-card border border-border">
-              {/* Course Price */}
-              <div className="mb-6">
-                <div className="flex items-baseline gap-2">
-                  {hasDiscount ? (
-                    <>
-                      <span className="text-3xl font-black text-gradient">{finalPrice.toFixed(2)}</span>
-                      <span className="text-sm text-foreground/60 line-through">{originalPrice.toFixed(2)}</span>
-                      <span className="text-xs text-red-500">-{discountPercent}%</span>
-                    </>
-                  ) : (
-                    <span className="text-3xl font-black text-gradient">{originalPrice.toFixed(2)}</span>
-                  )}
-                  <span className="text-sm text-foreground/60 font-semibold">EGP</span>
+          {/* Sidebar - Purchase Card (يظهر فقط إذا لم يتم شراء الكورس) */}
+          {!hasPurchasedFullCourse && (
+            <motion.aside className="lg:col-span-1">
+              <div className="sticky top-28 bg-card rounded-3xl p-6 shadow-card border border-border">
+                <div className="mb-6">
+                  <div className="flex items-baseline gap-2">
+                    {hasDiscount ? (
+                      <>
+                        <span className="text-3xl font-black text-gradient">{finalPrice.toFixed(2)}</span>
+                        <span className="text-sm text-foreground/60 line-through">{originalPrice.toFixed(2)}</span>
+                        <span className="text-xs text-red-500">-{discountPercent}%</span>
+                      </>
+                    ) : (
+                      <span className="text-3xl font-black text-gradient">{originalPrice.toFixed(2)}</span>
+                    )}
+                    <span className="text-sm text-foreground/60 font-semibold">EGP</span>
+                  </div>
+                  <p className="text-xs text-foreground/50 mt-1">
+                    {lang === "ar" ? "دفعة واحدة - وصول مدى الحياة" : "One-time payment - lifetime access"}
+                  </p>
                 </div>
-                <p className="text-xs text-foreground/50 mt-1">
-                  {lang === "ar" ? "دفعة واحدة - وصول مدى الحياة" : "One-time payment - lifetime access"}
-                </p>
-              </div>
 
-              {/* Info List */}
-              <div className="space-y-3 text-sm border-t border-border pt-4">
-                <div className="flex justify-between">
-                  <span className="text-foreground/60">{lang === "ar" ? "المرحلة" : "Stage"}</span>
-                  <span className="font-semibold">{pick(course?.stage?.name, course?.stage?.name_ar)}</span>
+                <div className="space-y-3 text-sm border-t border-border pt-4">
+                  <div className="flex justify-between">
+                    <span className="text-foreground/60">{lang === "ar" ? "المرحلة" : "Stage"}</span>
+                    <span className="font-semibold">{pick(course?.stage?.name, course?.stage?.name_ar)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-foreground/60">{lang === "ar" ? "المادة" : "Subject"}</span>
+                    <span className="font-semibold">{pick(course?.subject?.name, course?.subject?.name_ar)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-foreground/60">{lang === "ar" ? "الترم" : "Semester"}</span>
+                    <span className="font-semibold">{pick(course?.semester?.name, course?.semester?.name_ar)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-foreground/60">{lang === "ar" ? "عدد الدروس" : "Lessons"}</span>
+                    <span className="font-semibold">{lessons.length}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-foreground/60">{lang === "ar" ? "المادة" : "Subject"}</span>
-                  <span className="font-semibold">{pick(course?.subject?.name, course?.subject?.name_ar)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-foreground/60">{lang === "ar" ? "الترم" : "Semester"}</span>
-                  <span className="font-semibold">{pick(course?.semester?.name, course?.semester?.name_ar)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-foreground/60">{lang === "ar" ? "عدد الدروس" : "Lessons"}</span>
-                  <span className="font-semibold">{lessons.length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-foreground/60">{lang === "ar" ? "عدد الطلاب" : "Students"}</span>
-                  <span className="font-semibold">{course?.count_student || 0}</span>
-                </div>
-              </div>
 
-              {/* ✅ Purchase Buttons - Buy Full Course */}
-              <div className="mt-6 space-y-3">
-                <button
-                  onClick={handleBuyFullCourse}
-                  disabled={buyingFullCourse}
-                  className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl gradient-primary text-white font-bold shadow-soft hover:shadow-glow transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {buyingFullCourse ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <ShoppingCart className="w-5 h-5" />
-                  )}
-                  {lang === "ar" ? "شراء الكورس كاملاً" : "Buy Full Course"}
-                </button>
-                
-                {!Cookies.get('student_token') && (
-                  <Link
-                    to={`/${slug}/login?redirect=${encodeURIComponent(window.location.pathname)}`}
-                    className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-secondary text-sm font-semibold hover:bg-primary/10 transition"
+                <div className="mt-6 space-y-3">
+                  <button
+                    onClick={handleBuyFullCourse}
+                    disabled={buyingFullCourse}
+                    className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl gradient-primary text-white font-bold shadow-soft hover:shadow-glow transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
                   >
-                    {lang === "ar" ? "لديك حساب؟ سجل دخول" : "Already have an account? Login"}
-                  </Link>
-                )}
+                    {buyingFullCourse ? <Loader2 className="w-5 h-5 animate-spin" /> : <ShoppingCart className="w-5 h-5" />}
+                    {lang === "ar" ? "شراء الكورس كاملاً" : "Buy Full Course"}
+                  </button>
+                  
+                  {!Cookies.get('student_token') && (
+                    <Link to={`/${slug}/login?redirect=${encodeURIComponent(window.location.pathname)}`} className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-secondary text-sm font-semibold hover:bg-primary/10 transition">
+                      {lang === "ar" ? "لديك حساب؟ سجل دخول" : "Already have an account? Login"}
+                    </Link>
+                  )}
+                </div>
               </div>
-            </div>
-          </motion.aside>
+            </motion.aside>
+          )}
+
+          {/* ✅ إذا تم شراء الكورس، اعرض رسالة نجاح */}
+          {hasPurchasedFullCourse && (
+            <motion.aside className="lg:col-span-1">
+              <div className="sticky top-28 bg-green-500/10 rounded-3xl p-6 border border-green-500/30 text-center">
+                <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-3" />
+                <h3 className="text-xl font-bold text-green-600 dark:text-green-400 mb-2">
+                  {lang === "ar" ? "تم شراء الكورس بنجاح" : "Course Purchased"}
+                </h3>
+                <p className="text-sm text-foreground/60">
+                  {lang === "ar" 
+                    ? "يمكنك الآن مشاهدة جميع الدروس والامتحانات"
+                    : "You can now watch all lessons and exams"}
+                </p>
+                <Link to={`/${slug}/dashboard`} className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500 text-white text-sm font-semibold">
+                  {lang === "ar" ? "الذهاب للوحة التحكم" : "Go to Dashboard"}
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </motion.aside>
+          )}
         </div>
       </div>
       
       <style>{`
-        .recording-detected {
-          filter: blur(40px) !important;
-          opacity: 0.2 !important;
-          transition: all 0.3s ease;
-        }
-        video::-webkit-media-controls-download-button {
-          display: none !important;
-        }
-        video::-webkit-media-controls-enclosure {
-          overflow: hidden;
-        }
-        video::-webkit-media-controls-panel {
-          width: calc(100% + 30px);
-        }
+        .recording-detected { filter: blur(40px) !important; opacity: 0.2 !important; transition: all 0.3s ease; }
+        video::-webkit-media-controls-download-button { display: none !important; }
+        video::-webkit-media-controls-enclosure { overflow: hidden; }
+        video::-webkit-media-controls-panel { width: calc(100% + 30px); }
       `}</style>
     </section>
   );
 };
 
-// 🟢 Lesson Card Component
-const LessonCard = ({ lesson, index, lang, slug, isAuthenticated, onBuy, onPlay, isBuying, isSelected }: any) => {
+// 🟢 Updated Lesson Card Component
+const LessonCard = ({ lesson, index, lang, slug, isAuthenticated, hasPurchasedFullCourse, onBuy, onWatch, isBuying }: any) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  
   const lessonTitle = lang === "ar" && lesson.title_ar ? lesson.title_ar : lesson.title;
   const lessonDesc = lang === "ar" && lesson.description_ar ? lesson.description_ar : lesson.description;
   const isFree = parseFloat(lesson.price) === 0;
-  const isPurchased = lesson.attended;
+  const isPurchased = hasPurchasedFullCourse || lesson.attended;
   
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
-      className={`bg-card border rounded-2xl overflow-hidden hover:border-primary/30 transition-all ${
-        isSelected ? 'border-primary shadow-glow' : 'border-border'
-      }`}
+      className="bg-card border rounded-2xl overflow-hidden hover:border-primary/30 transition-all"
     >
-      <div 
-        className="p-4 flex items-center justify-between cursor-pointer hover:bg-primary/5 transition-colors"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
+      <div className="p-4 flex items-center justify-between cursor-pointer hover:bg-primary/5 transition-colors" onClick={() => setIsExpanded(!isExpanded)}>
         <div className="flex items-center gap-4 flex-1">
-          <div className="w-10 h-10 rounded-xl gradient-primary grid place-items-center text-white font-bold">
-            {index + 1}
-          </div>
+          <div className="w-10 h-10 rounded-xl gradient-primary grid place-items-center text-white font-bold">{index + 1}</div>
           <div className="flex-1">
             <h3 className="font-semibold">{lessonTitle}</h3>
             <div className="flex items-center gap-3 text-xs text-foreground/50 mt-1">
-              <span className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                {new Date(lesson.lession_date).toLocaleDateString()}
-              </span>
-              <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {lesson.lession_time}
-              </span>
+              <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{new Date(lesson.lession_date).toLocaleDateString()}</span>
+              <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{lesson.lession_time}</span>
             </div>
           </div>
         </div>
         
         <div className="flex items-center gap-3">
-          {!isFree && !isPurchased && (
-            <span className="text-lg font-bold text-primary">{parseFloat(lesson.price).toFixed(2)} EGP</span>
-          )}
+          {!isFree && !isPurchased && <span className="text-lg font-bold text-primary">{parseFloat(lesson.price).toFixed(2)} EGP</span>}
           
           {isPurchased && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onPlay();
-              }}
-              className="px-4 py-2 rounded-xl gradient-primary text-white text-sm font-semibold"
-            >
-              <PlayCircle className="w-4 h-4 inline mr-1" />
-              {lang === "ar" ? "مشاهدة" : "Watch"}
+            <button onClick={(e) => { e.stopPropagation(); onWatch(); }} className="px-4 py-2 rounded-xl gradient-primary text-white text-sm font-semibold">
+              <PlayCircle className="w-4 h-4 inline mr-1" /> {lang === "ar" ? "مشاهدة" : "Watch"}
             </button>
           )}
           
-          {!isFree && !isPurchased && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onBuy();
-              }}
-              disabled={isBuying || !isAuthenticated}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-sm font-semibold disabled:opacity-50"
-            >
+          {!isFree && !isPurchased && isAuthenticated && !hasPurchasedFullCourse && (
+            <button onClick={(e) => { e.stopPropagation(); onBuy(); }} disabled={isBuying} className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-sm font-semibold disabled:opacity-50">
               {isBuying ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
             </button>
           )}
           
-          <svg 
-            className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-            fill="none" stroke="currentColor" viewBox="0 0 24 24"
-          >
+          {!isAuthenticated && !hasPurchasedFullCourse && (
+            <div className="px-4 py-2 rounded-xl bg-gray-200 dark:bg-gray-700 text-foreground/40 text-sm font-semibold flex items-center gap-1">
+              <Lock className="w-3 h-3" /> {lang === "ar" ? "مقفل" : "Locked"}
+            </div>
+          )}
+          
+          <svg className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </div>
@@ -484,14 +405,10 @@ const LessonCard = ({ lesson, index, lang, slug, isAuthenticated, onBuy, onPlay,
       
       {isExpanded && (
         <div className="p-4 pt-0 border-t border-border mt-2">
-          {lessonDesc && (
-            <p className="text-sm text-foreground/60 mb-3">{lessonDesc}</p>
-          )}
-          
+          {lessonDesc && <p className="text-sm text-foreground/60 mb-3">{lessonDesc}</p>}
           {lesson.must_pass_to_unlock && !isPurchased && (
             <div className="mt-3 flex items-center gap-2 text-amber-600 text-sm">
-              <Lock className="w-4 h-4" />
-              {lang === "ar" ? "يجب اجتياز الامتحان السابق" : "Must pass previous exam"}
+              <Lock className="w-4 h-4" /> {lang === "ar" ? "يجب اجتياز الامتحان السابق" : "Must pass previous exam"}
             </div>
           )}
         </div>
@@ -500,27 +417,24 @@ const LessonCard = ({ lesson, index, lang, slug, isAuthenticated, onBuy, onPlay,
   );
 };
 
-// 🟢 Skeleton Component
-const CourseDetailSkeleton = () => {
-  return (
-    <section className="pt-36 md:pt-40 pb-24">
-      <div className="container-tight">
-        <div className="grid lg:grid-cols-3 gap-10">
-          <div className="lg:col-span-2">
-            <div className="aspect-video bg-gray-200 dark:bg-gray-700 rounded-3xl animate-pulse" />
-            <div className="mt-8 space-y-4">
-              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-lg w-3/4 animate-pulse" />
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-lg w-full animate-pulse" />
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-lg w-2/3 animate-pulse" />
-            </div>
-          </div>
-          <div className="lg:col-span-1">
-            <div className="h-96 bg-gray-200 dark:bg-gray-700 rounded-3xl animate-pulse" />
+const CourseDetailSkeleton = () => (
+  <section className="pt-36 md:pt-40 pb-24">
+    <div className="container-tight">
+      <div className="grid lg:grid-cols-3 gap-10">
+        <div className="lg:col-span-2">
+          <div className="aspect-video bg-gray-200 dark:bg-gray-700 rounded-3xl animate-pulse" />
+          <div className="mt-8 space-y-4">
+            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-lg w-3/4 animate-pulse" />
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-lg w-full animate-pulse" />
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-lg w-2/3 animate-pulse" />
           </div>
         </div>
+        <div className="lg:col-span-1">
+          <div className="h-96 bg-gray-200 dark:bg-gray-700 rounded-3xl animate-pulse" />
+        </div>
       </div>
-    </section>
-  );
-};
+    </div>
+  </section>
+);
 
 export default CourseDetail;

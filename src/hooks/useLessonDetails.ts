@@ -1,9 +1,9 @@
-// hooks/useCourseDetails.ts
+// hooks/useLessonDetails.ts
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 import Cookies from "js-cookie";
 
-export interface CourseDetail {
+export interface LessonDetail {
   id: number;
   course_id: number;
   title: string;
@@ -30,27 +30,17 @@ export interface CourseDetail {
   };
 }
 
-export const useCourseDetails = (courseId: number) => {
+export const useLessonDetails = (lessonId: number) => {
   const token = Cookies.get('student_token');
   
   return useQuery({
-    queryKey: ['course-details', courseId],
+    queryKey: ['lesson-details', lessonId],
     queryFn: async () => {
-      const response = await api.post('/course-detail/index', {
-        filters: {
-          course_id: courseId
-        },
-        orderBy: "id",
-        orderByDirection: "asc",
-        perPage: 100,
-        paginate: false,
-        delete: false
-      });
-      console.log("📚 Course details response:", response.data);
+      const response = await api.get(`/course-detail/${lessonId}`);
+      console.log("📚 Lesson details response:", response.data);
       return response.data;
     },
-    enabled: !!courseId,
+    enabled: !!lessonId && !!token,
     staleTime: 5 * 60 * 1000,
   });
 };
-

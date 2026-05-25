@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useLang } from "@/i18n/LanguageContext";
-import { useStudentLearning, useLessonAttendance } from "@/hooks/useStudent";
-import { useLessonExams, useExamResult } from "@/hooks/useExams";
+import { useLessonDetails } from "@/hooks/useLessonDetails";
+import { useExamResult } from "@/hooks/useExams";
 import { useCurrentStudent } from "@/hooks/useStudent";
 import { motion } from "framer-motion";
 import { 
@@ -21,76 +21,92 @@ const LessonPage = () => {
   const { slug, lessonId } = useParams();
   const navigate = useNavigate();
   const { student } = useCurrentStudent();
-  const { data: learning, isLoading, refetch } = useStudentLearning();
-  const { mutate: markAttendance, isPending: attendanceLoading } = useLessonAttendance();
-  const { data: examsData, isLoading: examsLoading } = useLessonExams(parseInt(lessonId || '0'));
+  
+  const { data: lessonData, isLoading: lessonLoading, refetch: refetchLesson } = useLessonDetails(parseInt(lessonId || '0'));
   
   const [lesson, setLesson] = useState<any>(null);
   const [attended, setAttended] = useState(false);
   const [showTranscript, setShowTranscript] = useState(false);
-  const [exams, setExams] = useState<any[]>([]);
-  const [assignments, setAssignments] = useState<any[]>([]);
   const [videoError, setVideoError] = useState(false);
+  const [requiredExam, setRequiredExam] = useState<any>(null);
+  const [examPassed, setExamPassed] = useState(false);
+  const [examsList, setExamsList] = useState<any[]>([]);
   
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
   
+  // ✅ تعيين بيانات الدرس من الـ API
   useEffect(() => {
-    if (learning?.data?.lessons) {
-      const foundLesson = learning.data.lessons.find((l: any) => l.id === parseInt(lessonId || '0'));
-      setLesson(foundLesson);
-      setAttended(foundLesson?.attended || false);
-    }
-  }, [learning, lessonId]);
-  
-  useEffect(() => {
-    if (examsData?.data) {
-      const examList = examsData.data.filter((e: any) => e.type === 'exam');
-      const assignmentList = examsData.data.filter((e: any) => e.type === 'assignment');
-      setExams(examList);
-      setAssignments(assignmentList);
-    }
-  }, [examsData]);
-  
-  const handleMarkAttendance = () => {
-    markAttendance(parseInt(lessonId || '0'), {
-      onSuccess: () => {
-        setAttended(true);
-        refetch();
-        toast.success(lang === "ar" ? "تم تسجيل حضورك بنجاح!" : "Attendance recorded successfully!");
+    if (lessonData?.data) {
+      const lessonInfo = lessonData.data;
+      setLesson(lessonInfo);
+      setAttended(lessonInfo.attended || false);
+      
+      // ✅ جلب الامتحانات من بيانات الدرس مباشرة
+      if (lessonInfo.exams && lessonInfo.exams.length > 0) {
+        setExamsList(lessonInfo.exams);
+        // تعيين أول امتحان كامتحان مطلوب لفتح المحتوى
+        setRequiredExam(lessonInfo.exams[0]);
       }
-    });
-  };
+      
+      console.log("📚 Lesson data loaded:", {
+        title: lessonInfo.title,
+        must_pass_to_unlock: lessonInfo.must_pass_to_unlock,
+        hasExams: lessonInfo.exams?.length > 0,
+        examCount: lessonInfo.exams?.length,
+        attended: lessonInfo.attended
+      });
+    }
+  }, [lessonData]);
+  
+  // ✅ التحقق من اجتياز الامتحان المطلوب
+  const { data: examResultData, refetch: refetchExamResult } = useExamResult(
+    requiredExam?.id || 0, 
+    student?.id || 0
+  );
+  
+  useEffect(() => {
+    if (requiredExam && examResultData) {
+      const hasPassed = examResultData.status === true;
+      setExamPassed(hasPassed);
+      console.log(`📊 Exam ${requiredExam.id} result:`, {
+        passed: hasPassed,
+        status: examResultData.status,
+        data: examResultData
+      });
+    }
+  }, [examResultData, requiredExam]);
+  
+  // ✅ المنطق الصحيح لقفل المحتوى
+  const needsExamToUnlock = lesson?.must_pass_to_unlock === true && !examPassed && !attended;
+  const isContentLocked = needsExamToUnlock;
+  const canWatch = !isContentLocked;
   
   const handleStartExam = (exam: any) => {
-    if (!attended) {
-      toast.error(lang === "ar" ? "يجب تسجيل الحضور أولاً" : "Please mark attendance first");
-      return;
-    }
-    navigate(`/${slug}/exam/${exam.id}`);
+    navigate(`/${slug}/exam/${exam.id}?redirect=${encodeURIComponent(window.location.pathname)}`);
   };
   
-  // معالجة رابط يوتيوب بشكل صحيح
+  const handleMarkAttendance = () => {
+    setAttended(true);
+    toast.success(lang === "ar" ? "تم تسجيل حضورك بنجاح!" : "Attendance recorded successfully!");
+  };
+  
   const getYouTubeEmbedUrl = (url: string) => {
     if (!url) return null;
-    
-    // youtube.com/watch?v=xxx
     if (url.includes('youtube.com/watch?v=')) {
       const videoId = url.split('v=')[1]?.split('&')[0];
       return `https://www.youtube.com/embed/${videoId}?enablejsapi=1&origin=${window.location.origin}`;
     }
-    // youtu.be/xxx
     if (url.includes('youtu.be/')) {
       const videoId = url.split('youtu.be/')[1]?.split('?')[0];
       return `https://www.youtube.com/embed/${videoId}?enablejsapi=1&origin=${window.location.origin}`;
     }
-    // youtube.com/embed/xxx
     if (url.includes('youtube.com/embed/')) {
       return url;
     }
     return url;
   };
   
-  if (isLoading || examsLoading) {
+  if (lessonLoading) {
     return <LessonSkeleton />;
   }
   
@@ -115,8 +131,6 @@ const LessonPage = () => {
   const isVideo = lesson.content_link?.includes('youtube.com') || lesson.content_link?.includes('youtu.be');
   const isPdf = lesson.content_link?.endsWith('.pdf');
   const isExternal = !isVideo && !isPdf;
-  const hasExams = exams.length > 0;
-  const hasAssignments = assignments.length > 0;
   const embedUrl = isVideo ? getYouTubeEmbedUrl(lesson.content_link) : null;
   
   return (
@@ -144,9 +158,30 @@ const LessonPage = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-card rounded-2xl border border-border overflow-hidden shadow-card"
+              className="relative bg-card rounded-2xl border border-border overflow-hidden shadow-card"
             >
-              {isVideo && embedUrl ? (
+              {isContentLocked ? (
+                <div className="aspect-video bg-gradient-to-br from-gray-900 to-gray-800 flex flex-col items-center justify-center p-8 text-center">
+                  <Lock className="w-20 h-20 text-white/30 mb-4" />
+                  <h3 className="text-xl font-bold text-white mb-2">
+                    {lang === "ar" ? "هذا الدرس مقفل" : "This lesson is locked"}
+                  </h3>
+                  <p className="text-white/60 text-sm mb-6 max-w-md">
+                    {lang === "ar" 
+                      ? "يجب اجتياز الامتحان التالي لفتح هذا الدرس"
+                      : "You must pass the following exam to unlock this lesson"}
+                  </p>
+                  {requiredExam && (
+                    <button
+                      onClick={() => handleStartExam(requiredExam)}
+                      className="px-6 py-2 rounded-xl gradient-primary text-white font-semibold flex items-center gap-2"
+                    >
+                      <FileQuestion className="w-4 h-4" />
+                      {lang === "ar" ? "ابدأ الامتحان" : "Start Exam"}
+                    </button>
+                  )}
+                </div>
+              ) : isVideo && embedUrl ? (
                 <div className="aspect-video bg-black">
                   <iframe
                     key={embedUrl}
@@ -244,102 +279,122 @@ const LessonPage = () => {
                     <span>{lesson.price} EGP</span>
                   </div>
                 )}
+                {lesson.must_pass_to_unlock === true && !examPassed && !attended && (
+                  <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/20 text-amber-600 text-xs">
+                    <Lock className="w-3 h-3" />
+                    {lang === "ar" ? "يتطلب اجتياز امتحان" : "Requires exam"}
+                  </div>
+                )}
+                {lesson.must_pass_to_unlock === false && (
+                  <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-500/20 text-green-600 text-xs">
+                    <Unlock className="w-3 h-3" />
+                    {lang === "ar" ? "متاح مباشرة" : "Direct access"}
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>
           
           {/* Sidebar - Info & Actions */}
           <div className="space-y-6">
-            {/* Attendance Card */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-card rounded-2xl border border-border p-6"
-            >
-              <h3 className="font-bold mb-4 flex items-center gap-2">
-                <Users className="w-5 h-5 text-primary" />
-                {lang === "ar" ? "تسجيل الحضور" : "Attendance"}
-              </h3>
-              
-              {attended ? (
-                <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
-                  <CheckCircle className="w-5 h-5" />
-                  <span>{lang === "ar" ? "تم تسجيل حضورك" : "Attendance recorded"}</span>
-                </div>
-              ) : (
-                <>
-                  <p className="text-sm text-foreground/60 mb-4">
-                    {lang === "ar" 
-                      ? "يرجى تأكيد حضورك بعد مشاهدة الدرس"
-                      : "Please confirm your attendance after watching the lesson"}
-                  </p>
-                  <button
-                    onClick={handleMarkAttendance}
-                    disabled={attendanceLoading}
-                    className="w-full py-3 rounded-xl gradient-primary text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    {attendanceLoading ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <ThumbsUp className="w-5 h-5" />
-                    )}
-                    {lang === "ar" ? "تأكيد الحضور" : "Confirm Attendance"}
-                  </button>
-                </>
-              )}
-            </motion.div>
-            
-            {/* Exams Section */}
-            {hasExams && (
+            {/* Required Exam Card */}
+            {isContentLocked && requiredExam && (
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-card rounded-2xl border border-border p-6"
+                className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-2xl border border-amber-500/30 p-6"
               >
-                <h3 className="font-bold mb-4 flex items-center gap-2">
-                  <FileQuestion className="w-5 h-5 text-primary" />
-                  {lang === "ar" ? "الامتحانات" : "Exams"}
-                </h3>
-                <div className="space-y-3">
-                  {exams.map((exam: any) => (
-                    <ExamCard
-                      key={exam.id}
-                      exam={exam}
-                      lang={lang}
-                      attended={attended}
-                      studentId={student?.id}
-                      onStart={() => handleStartExam(exam)}
-                    />
-                  ))}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                    <FileQuestion className="w-5 h-5 text-amber-500" />
+                  </div>
+                  <h3 className="font-bold text-lg">
+                    {lang === "ar" ? "الامتحان المطلوب" : "Required Exam"}
+                  </h3>
                 </div>
+                
+                <div className="mb-4">
+                  <p className="font-semibold">{requiredExam.title}</p>
+                  <p className="text-sm text-foreground/60 mt-1">{requiredExam.description}</p>
+                  <div className="flex items-center gap-4 mt-3 text-xs text-foreground/50">
+                    <span><HelpCircle className="w-3 h-3 inline" /> {requiredExam.questions?.length || 0} {lang === "ar" ? "سؤال" : "questions"}</span>
+                    <span><Award className="w-3 h-3 inline" /> {requiredExam.total_marks} {lang === "ar" ? "درجة" : "marks"}</span>
+                    <span><Clock className="w-3 h-3 inline" /> {requiredExam.duration_minutes} {lang === "ar" ? "دقيقة" : "min"}</span>
+                  </div>
+                </div>
+                
+                <button
+                  onClick={() => handleStartExam(requiredExam)}
+                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold flex items-center justify-center gap-2"
+                >
+                  <Play className="w-4 h-4" />
+                  {lang === "ar" ? "ابدأ الامتحان" : "Start Exam"}
+                </button>
               </motion.div>
             )}
             
-            {/* Assignments Section */}
-            {hasAssignments && (
+            {/* After Passing Exam */}
+            {lesson?.must_pass_to_unlock === true && examPassed && !attended && (
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.15 }}
+                className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-2xl border border-green-500/30 p-6"
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                  </div>
+                  <h3 className="font-bold text-lg">
+                    {lang === "ar" ? "تم اجتياز الامتحان" : "Exam Passed"}
+                  </h3>
+                </div>
+                <p className="text-sm text-foreground/60">
+                  {lang === "ar" 
+                    ? "تهانينا! لقد اجتزت الامتحان بنجاح. يمكنك الآن مشاهدة الدرس."
+                    : "Congratulations! You have passed the exam. You can now watch the lesson."}
+                </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="mt-4 w-full py-2 rounded-xl bg-green-500 text-white font-semibold"
+                >
+                  {lang === "ar" ? "تحديث الصفحة" : "Refresh Page"}
+                </button>
+              </motion.div>
+            )}
+            
+            {/* Attendance Card (يظهر فقط إذا المحتوى مفتوح) */}
+            {canWatch && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
                 className="bg-card rounded-2xl border border-border p-6"
               >
                 <h3 className="font-bold mb-4 flex items-center gap-2">
-                  <ClipboardList className="w-5 h-5 text-accent" />
-                  {lang === "ar" ? "الواجبات" : "Assignments"}
+                  <Users className="w-5 h-5 text-primary" />
+                  {lang === "ar" ? "تسجيل الحضور" : "Attendance"}
                 </h3>
-                <div className="space-y-3">
-                  {assignments.map((assignment: any) => (
-                    <AssignmentCard
-                      key={assignment.id}
-                      assignment={assignment}
-                      lang={lang}
-                      attended={attended}
-                      studentId={student?.id}
-                      onStart={() => handleStartExam(assignment)}
-                    />
-                  ))}
-                </div>
+                
+                {attended ? (
+                  <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                    <CheckCircle className="w-5 h-5" />
+                    <span>{lang === "ar" ? "تم تسجيل حضورك" : "Attendance recorded"}</span>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm text-foreground/60 mb-4">
+                      {lang === "ar" 
+                        ? "يرجى تأكيد حضورك بعد مشاهدة الدرس"
+                        : "Please confirm your attendance after watching the lesson"}
+                    </p>
+                    <button
+                      onClick={handleMarkAttendance}
+                      className="w-full py-3 rounded-xl gradient-primary text-white font-semibold flex items-center justify-center gap-2"
+                    >
+                      <ThumbsUp className="w-5 h-5" />
+                      {lang === "ar" ? "تأكيد الحضور" : "Confirm Attendance"}
+                    </button>
+                  </>
+                )}
               </motion.div>
             )}
             
@@ -360,144 +415,6 @@ const LessonPage = () => {
   );
 };
 
-// 🟢 Exam Card Component مع عرض النتيجة
-const ExamCard = ({ exam, lang, attended, studentId, onStart }: any) => {
-  const { data: resultData } = useExamResult(exam.id, studentId || 0);
-  const hasResult = resultData?.status === true;
-  const earnedMarks = hasResult ? resultData?.data?.reduce((sum: number, item: any) => sum + (parseFloat(item.mark) || 0), 0) : 0;
-  const totalMarks = exam.total_marks;
-  const percentage = totalMarks > 0 ? (earnedMarks / totalMarks) * 100 : 0;
-  const passed = percentage >= 50;
-  
-  return (
-    <motion.div
-      whileHover={{ scale: 1.02 }}
-      className={`p-4 rounded-xl border transition-all cursor-pointer ${
-        attended 
-          ? 'border-primary/30 hover:border-primary bg-primary/5' 
-          : 'border-border bg-gray-50 dark:bg-gray-800/50 opacity-70'
-      }`}
-      onClick={attended ? onStart : undefined}
-    >
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-              attended ? 'bg-primary/20' : 'bg-gray-200 dark:bg-gray-700'
-            }`}>
-              <FileQuestion className={`w-4 h-4 ${attended ? 'text-primary' : 'text-foreground/40'}`} />
-            </div>
-            <h4 className="font-semibold">{exam.title}</h4>
-          </div>
-          
-          {/* ✅ عرض النتيجة لو تم الحل */}
-          {hasResult && (
-            <div className={`inline-flex items-center gap-2 px-2 py-1 rounded-lg text-xs mb-2 ${
-              passed ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-            }`}>
-              <Award className="w-3 h-3" />
-              <span>{earnedMarks}/{totalMarks} ({percentage.toFixed(0)}%)</span>
-              {passed ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-            </div>
-          )}
-          
-          <p className="text-xs text-foreground/50 line-clamp-2 mb-2">{exam.description}</p>
-          <div className="flex items-center gap-3 text-xs text-foreground/40">
-            <span className="flex items-center gap-1">
-              <HelpCircle className="w-3 h-3" />
-              {exam.questions?.length || 0} {lang === "ar" ? "سؤال" : "questions"}
-            </span>
-            <span className="flex items-center gap-1">
-              <TrendingUp className="w-3 h-3" />
-              {exam.total_marks} {lang === "ar" ? "درجة" : "marks"}
-            </span>
-            <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {exam.duration_minutes} {lang === "ar" ? "دقيقة" : "min"}
-            </span>
-          </div>
-        </div>
-        {attended ? (
-          <button className="px-3 py-1.5 rounded-lg gradient-primary text-white text-xs font-semibold whitespace-nowrap">
-            {hasResult ? (lang === "ar" ? "عرض النتيجة" : "View Result") : (lang === "ar" ? "ابدأ الامتحان" : "Start Exam")}
-          </button>
-        ) : (
-          <div className="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-foreground/40 text-xs font-semibold flex items-center gap-1 whitespace-nowrap">
-            <Lock className="w-3 h-3" />
-            {lang === "ar" ? "مقفل" : "Locked"}
-          </div>
-        )}
-      </div>
-    </motion.div>
-  );
-};
-
-// 🟢 Assignment Card Component مع عرض النتيجة
-const AssignmentCard = ({ assignment, lang, attended, studentId, onStart }: any) => {
-  const { data: resultData } = useExamResult(assignment.id, studentId || 0);
-  const hasResult = resultData?.status === true;
-  const earnedMarks = hasResult ? resultData?.data?.reduce((sum: number, item: any) => sum + (parseFloat(item.mark) || 0), 0) : 0;
-  const totalMarks = assignment.total_marks;
-  const percentage = totalMarks > 0 ? (earnedMarks / totalMarks) * 100 : 0;
-  
-  return (
-    <motion.div
-      whileHover={{ scale: 1.02 }}
-      className={`p-4 rounded-xl border transition-all cursor-pointer ${
-        attended 
-          ? 'border-accent/30 hover:border-accent bg-accent/5' 
-          : 'border-border bg-gray-50 dark:bg-gray-800/50 opacity-70'
-      }`}
-      onClick={attended ? onStart : undefined}
-    >
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-              attended ? 'bg-accent/20' : 'bg-gray-200 dark:bg-gray-700'
-            }`}>
-              <ClipboardList className={`w-4 h-4 ${attended ? 'text-accent' : 'text-foreground/40'}`} />
-            </div>
-            <h4 className="font-semibold">{assignment.title}</h4>
-          </div>
-          
-          {/* ✅ عرض نتيجة الواجب لو تم الحل */}
-          {hasResult && (
-            <div className={`inline-flex items-center gap-2 px-2 py-1 rounded-lg text-xs mb-2 ${
-              percentage >= 50 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-            }`}>
-              <Award className="w-3 h-3" />
-              <span>{earnedMarks}/{totalMarks} ({percentage.toFixed(0)}%)</span>
-            </div>
-          )}
-          
-          <p className="text-xs text-foreground/50 line-clamp-2 mb-2">{assignment.description}</p>
-          <div className="flex items-center gap-3 text-xs text-foreground/40">
-            <span className="flex items-center gap-1">
-              <HelpCircle className="w-3 h-3" />
-              {assignment.questions?.length || 0} {lang === "ar" ? "سؤال" : "questions"}
-            </span>
-            <span className="flex items-center gap-1">
-              <BarChart className="w-3 h-3" />
-              {assignment.total_marks} {lang === "ar" ? "درجة" : "marks"}
-            </span>
-          </div>
-        </div>
-        {attended ? (
-          <button className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-accent to-pink-500 text-white text-xs font-semibold whitespace-nowrap">
-            {hasResult ? (lang === "ar" ? "عرض النتيجة" : "View Result") : (lang === "ar" ? "حل الواجب" : "Solve Assignment")}
-          </button>
-        ) : (
-          <div className="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-foreground/40 text-xs font-semibold flex items-center gap-1 whitespace-nowrap">
-            <Lock className="w-3 h-3" />
-            {lang === "ar" ? "مقفل" : "Locked"}
-          </div>
-        )}
-      </div>
-    </motion.div>
-  );
-};
-
 // 🟢 Skeleton Component
 const LessonSkeleton = () => {
   return (
@@ -514,7 +431,6 @@ const LessonSkeleton = () => {
           </div>
           <div className="space-y-6">
             <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded-2xl animate-pulse" />
-            <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-2xl animate-pulse" />
             <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-2xl animate-pulse" />
           </div>
         </div>
