@@ -1,0 +1,174 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// hooks/useEnroll.ts
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "@/lib/api";
+import { toast } from "sonner";
+import Cookies from "js-cookie";
+import { useNavigate } from "react-router-dom";
+
+export type EnrollType = 'course' | 'semester' | 'lesson';
+
+interface EnrollRequest {
+  type: EnrollType;
+  course_id?: number | null;
+  semester_id?: number | null;
+  course_detail_id?: number | null;
+  price: number;
+}
+
+interface EnrollResponse {
+  result: string;
+  message: string;
+  status: number;
+  data?: {
+    enrolled: boolean;
+    balance?: number;
+    order_id?: number;
+  };
+}
+
+export const useEnroll = () => {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const token = Cookies.get('student_token');
+  
+  return useMutation({
+    mutationFn: async (enrollData: EnrollRequest): Promise<EnrollResponse> => {
+      // ✅ التحقق من وجود توكن
+      const token = Cookies.get('student_token');
+      if (!token) {
+        throw new Error("No authentication token found. Please login again.");
+      }
+      
+      console.log("📦 Enroll request:", enrollData);
+      console.log("🔐 Using token:", token ? "Yes" : "No");
+      
+      const { data } = await api.post('/enroll/request', enrollData);
+      console.log("✅ Enroll response:", data);
+      return data;
+    },
+    onSuccess: (data, variables) => {
+      if (data.status === 200) {
+        toast.success(data.message || "تم التسجيل بنجاح!", {
+          duration: 4000,
+          position: "top-center",
+        });
+        // تحديث الكاش
+        queryClient.invalidateQueries({ queryKey: ['courses'] });
+        queryClient.invalidateQueries({ queryKey: ['semesters'] });
+        queryClient.invalidateQueries({ queryKey: ['course-details'] });
+        queryClient.invalidateQueries({ queryKey: ['student-learning'] });
+      } else if (data.status === 401) {
+        toast.error("انتهت صلاحية الجلسة، الرجاء تسجيل الدخول مرة أخرى", {
+          duration: 5000,
+          position: "top-center",
+        });
+        Cookies.remove('student_token');
+        Cookies.remove('student_data');
+        const slug = window.location.pathname.split('/')[1];
+        setTimeout(() => navigate(`/${slug}/login`), 2000);
+      } else if (data.status === 402) {
+        toast.error("رصيد غير كافٍ! يرجى شحن الرصيد", {
+          duration: 5000,
+          position: "top-center",
+        });
+      } else {
+        toast.error(data.message || "فشل عملية التسجيل", {
+          duration: 4000,
+          position: "top-center",
+        });
+      }
+    },
+    onError: (error: any) => {
+      console.error("❌ Enroll error:", error);
+      
+      // ✅ معالجة أخطاء المصادقة
+      if (error.response?.status === 401) {
+        toast.error("الرجاء تسجيل الدخول أولاً", {
+          duration: 4000,
+          position: "top-center",
+        });
+        Cookies.remove('student_token');
+        Cookies.remove('student_data');
+        const slug = window.location.pathname.split('/')[1];
+        setTimeout(() => navigate(`/${slug}/login`), 2000);
+      } else {
+        const message = error.response?.data?.message || "حدث خطأ ما، يرجى المحاولة مرة أخرى";
+        toast.error(message, {
+          duration: 4000,
+          position: "top-center",
+        });
+      }
+    },
+  });
+};
+
+// 🟢 Hook للشراء مع حالة التحميل والتحقق من المصادقة
+export const useBuyCourse = () => {
+  const enroll = useEnroll();
+  const token = Cookies.get('student_token');
+  const navigate = useNavigate();
+  const slug = window.location.pathname.split('/')[1];
+  
+  const buyCourse = (courseId: number, price: number) => {
+    // ✅ التحقق من المصادقة قبل الشراء
+    if (!token) {
+      toast.error("الرجاء تسجيل الدخول أولاً", {
+        duration: 3000,
+        position: "top-center",
+      });
+      setTimeout(() => navigate(`/${slug}/login`), 1500);
+      return Promise.reject(new Error("Not authenticated"));
+    }
+    
+    return enroll.mutateAsync({
+      type: 'course',
+      course_id: courseId,
+      price: price,
+    });
+  };
+  
+  const buySemester = (semesterId: number, price: number) => {
+    if (!token) {
+      toast.error("الرجاء تسجيل الدخول أولاً", {
+        duration: 3000,
+        position: "top-center",
+      });
+      setTimeout(() => navigate(`/${slug}/login`), 1500);
+      return Promise.reject(new Error("Not authenticated"));
+    }
+    
+    return enroll.mutateAsync({
+      type: 'semester',
+      semester_id: semesterId,
+      price: price,
+    });
+  };
+  
+  const buyLesson = (lessonId: number, price: number) => {
+    if (!token) {
+      toast.error("الرجاء تسجيل الدخول أولاً", {
+        duration: 3000,
+        position: "top-center",
+      });
+      setTimeout(() => navigate(`/${slug}/login`), 1500);
+      return Promise.reject(new Error("Not authenticated"));
+    }
+    
+    return enroll.mutateAsync({
+      type: 'lesson',
+      course_detail_id: lessonId,
+      price: price,
+    });
+  };
+  
+  return {
+    buyCourse,
+    buySemester,
+    buyLesson,
+    isLoading: enroll.isPending,
+    isSuccess: enroll.isSuccess,
+    isError: enroll.isError,
+    error: enroll.error,
+  };
+};

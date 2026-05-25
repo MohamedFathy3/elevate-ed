@@ -1,86 +1,169 @@
-import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+// pages/Login.tsx
 import { useState } from "react";
 import { useLang } from "@/i18n/LanguageContext";
+import { useParams, Link } from "react-router-dom";
 import { useTeacher } from "@/context/TeacherContext";
-import { Zap, Mail, Lock } from "lucide-react";
+import { useStudentLogin } from "@/hooks/useStudent";
+import { Zap, Phone, Lock, Eye, EyeOff, ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 
 const Login = () => {
-  const { lang } = useLang();
-  const { teacher, slug, pick } = useTeacher();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { lang, dir } = useLang();
+  const { slug } = useParams();
+  const { teacher } = useTeacher();
+  const { mutate: login, isPending } = useStudentLogin();
+  
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    phone: "",
+    password: "",
+    type: "student",
+  });
 
-  const onSubmit = (e: React.FormEvent) => {
+  const Arrow = dir === "rtl" ? ArrowRight : ArrowLeft;
+  const teacherName = teacher?.name || (lang === "ar" ? "المعلم" : "Teacher");
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert(lang === "ar" ? "تسجيل دخول وهمي (بدون backend)" : "Mock login (no backend)");
+    login({
+      phone: formData.phone,
+      password: formData.password,
+      type: formData.type as 'student' | 'parent',
+    });
   };
 
   return (
-    <section className="pt-36 md:pt-40 pb-24 min-h-screen grid place-items-center">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md mx-auto px-5"
-      >
-        <div className="bg-card rounded-3xl p-8 md:p-10 shadow-elegant border border-border">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-2xl gradient-primary grid place-items-center shadow-soft">
-              <Zap className="w-6 h-6 text-white" fill="white" />
-            </div>
-            <div>
-              <h1 className="font-display font-black text-2xl">{lang === "ar" ? "أهلاً بعودتك" : "Welcome back"}</h1>
-              <p className="text-xs text-foreground/60">{pick(teacher.brand.logoText, teacher.brand.logoText_ar)}</p>
-            </div>
+    <div className="min-h-screen flex items-center justify-center py-20 px-4">
+      <div className="w-full max-w-md">
+        {/* Back to Home Link */}
+        <Link 
+          to={`/${slug}`} 
+          className="inline-flex items-center gap-2 text-sm text-foreground/60 hover:text-primary mb-6 transition-colors"
+        >
+          <Arrow className="w-4 h-4" />
+          {lang === "ar" ? "العودة للرئيسية" : "Back to Home"}
+        </Link>
+
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-primary shadow-lg mb-4">
+            <Zap className="w-8 h-8 text-white" fill="white" />
           </div>
-
-          <form onSubmit={onSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold mb-1.5">{lang === "ar" ? "البريد الإلكتروني" : "Email"}</label>
-              <div className="relative">
-                <Mail className="absolute top-1/2 -translate-y-1/2 left-3 rtl:left-auto rtl:right-3 w-4 h-4 text-foreground/50" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-background border border-border rounded-2xl pl-10 rtl:pl-4 rtl:pr-10 pr-4 py-3 text-sm focus:outline-none focus:border-primary/50"
-                  placeholder="you@example.com"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold mb-1.5">{lang === "ar" ? "كلمة السر" : "Password"}</label>
-              <div className="relative">
-                <Lock className="absolute top-1/2 -translate-y-1/2 left-3 rtl:left-auto rtl:right-3 w-4 h-4 text-foreground/50" />
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-background border border-border rounded-2xl pl-10 rtl:pl-4 rtl:pr-10 pr-4 py-3 text-sm focus:outline-none focus:border-primary/50"
-                  placeholder="••••••••"
-                />
-              </div>
-            </div>
-            <button
-              type="submit"
-              className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl gradient-primary text-white font-bold shadow-soft hover:shadow-glow transition-all hover:scale-[1.02] active:scale-95"
-            >
-              {lang === "ar" ? "تسجيل الدخول" : "Login"}
-            </button>
-          </form>
-
-          <p className="mt-6 text-sm text-center text-foreground/65">
-            {lang === "ar" ? "مفيش حساب؟ " : "Don't have an account? "}
-            <Link to={`/${slug}/register`} className="text-primary font-semibold hover:underline">
-              {lang === "ar" ? "سجّل دلوقتي" : "Register"}
-            </Link>
+          <h1 className="text-2xl font-bold">
+            {lang === "ar" ? "تسجيل دخول الطالب" : "Student Login"}
+          </h1>
+          <p className="text-foreground/60 mt-2">
+            {lang === "ar" 
+              ? `مرحباً بعودتك إلى منصة ${teacherName}` 
+              : `Welcome back to ${teacherName}'s platform`}
           </p>
         </div>
-      </motion.div>
-    </section>
+
+        {/* Type Selector */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <button
+            type="button"
+            onClick={() => setFormData({ ...formData, type: "student" })}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+              formData.type === "student"
+                ? "gradient-primary text-white shadow-soft"
+                : "bg-card border border-border hover:border-primary/40"
+            }`}
+          >
+            {lang === "ar" ? "طالب" : "Student"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setFormData({ ...formData, type: "parent" })}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+              formData.type === "parent"
+                ? "gradient-primary text-white shadow-soft"
+                : "bg-card border border-border hover:border-primary/40"
+            }`}
+          >
+            {lang === "ar" ? "ولي أمر" : "Parent"}
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="bg-card rounded-2xl p-6 shadow-card border border-border">
+          <div className="space-y-4">
+            {/* Phone */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                {lang === "ar" ? "رقم الهاتف" : "Phone Number"}
+              </label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/50" />
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="w-full bg-background border border-border rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-primary/50 transition-colors"
+                  placeholder="01000000000"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                {lang === "ar" ? "كلمة المرور" : "Password"}
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/50" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="w-full bg-background border border-border rounded-xl pl-10 pr-12 py-3 text-sm focus:outline-none focus:border-primary/50 transition-colors"
+                  placeholder="••••••••"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4 text-foreground/50" />
+                  ) : (
+                    <Eye className="w-4 h-4 text-foreground/50" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isPending}
+              className="w-full py-3 rounded-xl gradient-primary text-white font-semibold shadow-soft hover:shadow-glow transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isPending ? (
+                <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+              ) : (
+                lang === "ar" ? "تسجيل الدخول" : "Login"
+              )}
+            </button>
+          </div>
+        </form>
+
+        {/* Register Link */}
+        <p className="text-center text-sm text-foreground/60 mt-6">
+          {lang === "ar" ? "ليس لديك حساب؟" : "Don't have an account?"}{" "}
+          <Link to={`/${slug}/register`} className="text-primary font-semibold hover:underline">
+            {lang === "ar" ? "إنشاء حساب" : "Sign up"}
+          </Link>
+        </p>
+      </div>
+    </div>
   );
 };
 

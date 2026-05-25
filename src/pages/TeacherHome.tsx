@@ -9,7 +9,7 @@ const TeacherHome = () => (
   <>
     <Hero />
     <Stage />
-    <Future />
+    {/* <Future /> */}
     <Courses limit={4} />
     <Books />
     <About />

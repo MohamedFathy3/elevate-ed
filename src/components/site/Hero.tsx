@@ -1,17 +1,49 @@
+// components/site/Hero.tsx
 import { motion } from "framer-motion";
 import { useLang } from "@/i18n/LanguageContext";
 import { useTeacher } from "@/context/TeacherContext";
 import { Zap, ArrowRight, ArrowLeft, Lightbulb, Atom, Sparkles, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
+// ✅ تعريف الـ Type للـ Home data
+interface HomeData {
+  title?: string;
+  title_ar?: string;
+  sub_title?: string;
+  sub_title_ar?: string;
+  description?: string;
+  description_ar?: string;
+  imageUrl?: string;
+  image?: {
+    fullUrl?: string;
+  };
+}
+
 export const Hero = () => {
   const { dir, lang } = useLang();
-  const { teacher, slug, pick } = useTeacher();
+  const { teacher, slug, pick, isLoading } = useTeacher();
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
-  const home = teacher.website.home;
+
+  // ✅ Safe access with proper typing
+  const home = teacher?.website?.home as HomeData || {};
+  
+  // ✅ Fallback values لو البيانات مش موجودة
+  const heroTitle = pick(home.title, home.title_ar) || teacher?.name || (lang === "ar" ? "مرحباً بك" : "Welcome");
+  const heroSubTitle = pick(home.sub_title, home.sub_title_ar) || (lang === "ar" ? "تعلم مع أفضل المعلمين" : "Learn with the best teachers");
+  const heroDescription = pick(home.description, home.description_ar) || (lang === "ar" 
+    ? "انضم إلينا اليوم وابدأ رحلتك التعليمية" 
+    : "Join us today and start your learning journey");
+  const heroImage = home.imageUrl || home.image?.fullUrl || teacher?.website?.home?.image?.fullUrl || "/default-hero.jpg";
+  const teacherName = teacher?.name || (lang === "ar" ? "المعلم" : "Teacher");
+
+  // ✅ لو لسه بيجيب البيانات
+  if (isLoading) {
+    return <HeroSkeleton />;
+  }
 
   return (
     <section className="relative min-h-screen flex items-center pt-32 pb-20 overflow-hidden gradient-hero-bg">
+      {/* Background pattern */}
       <div
         className="absolute inset-0 opacity-[0.4] pointer-events-none"
         style={{
@@ -22,6 +54,7 @@ export const Hero = () => {
         }}
       />
 
+      {/* Animated decorative elements */}
       <motion.div
         animate={{ y: [0, -20, 0], rotate: [0, 8, 0] }}
         transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
@@ -36,6 +69,7 @@ export const Hero = () => {
       </motion.div>
 
       <div className="container-tight relative grid lg:grid-cols-2 gap-12 items-center">
+        {/* Left side - Content */}
         <div>
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -54,7 +88,7 @@ export const Hero = () => {
               transition={{ duration: 0.7, delay: 0.15 }}
               className="block text-gradient-rainbow"
             >
-              {pick(home.title, home.title_ar)}
+              {heroTitle}
             </motion.span>
           </h1>
 
@@ -64,7 +98,7 @@ export const Hero = () => {
             transition={{ duration: 0.6, delay: 0.35 }}
             className="mt-6 text-lg md:text-xl text-foreground/70 leading-relaxed max-w-xl"
           >
-            {pick(home.sub_title, home.sub_title_ar)}
+            {heroSubTitle}
           </motion.p>
 
           <motion.div
@@ -78,7 +112,7 @@ export const Hero = () => {
                 <CheckCircle2 className="w-5 h-5 text-white" />
               </div>
               <p className="text-sm md:text-base text-foreground/75 leading-relaxed">
-                {pick(home.description, home.description_ar)}
+                {heroDescription}
               </p>
             </div>
           </motion.div>
@@ -106,6 +140,7 @@ export const Hero = () => {
           </motion.div>
         </div>
 
+        {/* Right side - Image with animations */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -140,11 +175,22 @@ export const Hero = () => {
           />
 
           <div className="absolute inset-16 rounded-full bg-card shadow-glow overflow-hidden">
-            <img
-              src={home.imageUrl}
-              alt={pick(teacher.name, teacher.name_ar)}
-              className="w-full h-full object-cover"
-            />
+            {heroImage ? (
+              <img
+                src={heroImage}
+                alt={teacherName}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "/default-hero.jpg";
+                }}
+              />
+            ) : (
+              <div className="w-full h-full gradient-primary grid place-items-center">
+                <span className="text-white text-4xl font-bold">
+                  {teacherName.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
           </div>
 
           <motion.div
@@ -169,6 +215,32 @@ export const Hero = () => {
             <Atom className="w-7 h-7 text-white" />
           </motion.div>
         </motion.div>
+      </div>
+    </section>
+  );
+};
+
+// 🟢 Skeleton component for loading state
+const HeroSkeleton = () => {
+  const { lang } = useLang();
+  
+  return (
+    <section className="relative min-h-screen flex items-center pt-32 pb-20 overflow-hidden gradient-hero-bg">
+      <div className="container-tight relative grid lg:grid-cols-2 gap-12 items-center">
+        <div className="animate-pulse">
+          <div className="h-8 w-32 bg-gray-200 dark:bg-gray-700 rounded-lg mb-6" />
+          <div className="h-16 md:h-24 bg-gray-200 dark:bg-gray-700 rounded-2xl mb-4 w-3/4" />
+          <div className="h-16 md:h-24 bg-gray-200 dark:bg-gray-700 rounded-2xl mb-4 w-2/3" />
+          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-lg mb-8 w-1/2" />
+          <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-3xl mb-8" />
+          <div className="flex gap-3">
+            <div className="h-14 w-40 bg-gray-200 dark:bg-gray-700 rounded-2xl" />
+            <div className="h-14 w-36 bg-gray-200 dark:bg-gray-700 rounded-2xl" />
+          </div>
+        </div>
+        <div className="animate-pulse">
+          <div className="aspect-square rounded-full bg-gray-200 dark:bg-gray-700 mx-auto max-w-lg" />
+        </div>
       </div>
     </section>
   );
