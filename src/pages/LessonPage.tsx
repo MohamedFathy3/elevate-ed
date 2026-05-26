@@ -77,7 +77,7 @@ const LessonPage = () => {
   }, [examResultData, requiredExam]);
   
   // ✅ المنطق الصحيح لقفل المحتوى
-  const needsExamToUnlock = lesson?.must_pass_to_unlock === true && !examPassed && !attended;
+  const needsExamToUnlock = lesson?.must_pass_to_unlock === true;
   const isContentLocked = needsExamToUnlock;
   const canWatch = !isContentLocked;
   
@@ -279,7 +279,7 @@ const LessonPage = () => {
                     <span>{lesson.price} EGP</span>
                   </div>
                 )}
-                {lesson.must_pass_to_unlock === true && !examPassed && !attended && (
+                {lesson.must_pass_to_unlock === true && !(
                   <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/20 text-amber-600 text-xs">
                     <Lock className="w-3 h-3" />
                     {lang === "ar" ? "يتطلب اجتياز امتحان" : "Requires exam"}
@@ -334,7 +334,7 @@ const LessonPage = () => {
             )}
             
             {/* After Passing Exam */}
-            {lesson?.must_pass_to_unlock === true && examPassed && !attended && (
+            {lesson?.must_pass_to_unlock === false && (
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
