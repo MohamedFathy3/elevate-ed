@@ -679,3 +679,5 @@ const SemestersSkeleton = () => {
     </div>
   );
 };
+
+export default SemestersPage;

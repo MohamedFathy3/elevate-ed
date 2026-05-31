@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import { useTeacher } from "@/context/TeacherContext";
+import { useMemo } from "react";
 
 // 🟢 Types
 export interface StudentRegisterData {
@@ -320,7 +321,6 @@ export const useLessonAttendance = () => {
   });
 };
 
-// 🟢 Hook للطالب الحالي (من cookies)
 export const useCurrentStudent = () => {
   const token = Cookies.get('student_token');
   const studentData = Cookies.get('student_data');
@@ -335,4 +335,32 @@ export const useCurrentStudent = () => {
       window.location.reload();
     }
   };
+};
+
+
+
+export const useStudentCourses = () => {
+  const token = Cookies.get('student_token');
+  
+  return useQuery({
+    queryKey: ['student-courses'],
+    queryFn: async () => {
+      const response = await api.get('/my-student/learn');
+      return response.data?.data?.courses || [];
+    },
+    enabled: !!token,
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+// 🟢 Hook للتحقق إذا كان الطالب مشترك في كورس معين
+export const useIsEnrolledInCourse = (courseId: number) => {
+  const { data: courses, isLoading } = useStudentCourses();
+  
+  const isEnrolled = useMemo(() => {
+    if (!courses || !courseId) return false;
+    return courses.some((course: any) => course.id === courseId);
+  }, [courses, courseId]);
+  
+  return { isEnrolled, isLoading };
 };

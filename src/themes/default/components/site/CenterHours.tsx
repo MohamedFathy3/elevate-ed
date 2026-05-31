@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useLang } from "@/i18n/LanguageContext";
 import { useSafeTeacherData } from "@/hooks/useSafeTeacherData";
 import { useStudentAuth } from "@/context/StudentAuthContext";
+import { useTheme } from "@/context/ThemeContext";
 import {
   Calendar,
   Clock,
@@ -16,16 +17,23 @@ import {
   Building,
   Users,
   Bell,
+  Leaf,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 export const CenterHours = () => {
   const { lang } = useLang();
+  const { theme, colorMode } = useTheme();
   const { centerHours, isLoading } = useSafeTeacherData();
   const { isAuthenticated, student } = useStudentAuth();
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
 
+  const isNature = theme === 'nature';
+  const isDark = colorMode === 'dark';
+
   if (isLoading) {
-    return <CenterHoursSkeleton />;
+    return <CenterHoursSkeleton isNature={isNature} />;
   }
 
   if (!centerHours || centerHours.length === 0) {
@@ -47,7 +55,7 @@ export const CenterHours = () => {
     (a, b) => new Date(a).getTime() - new Date(b).getTime()
   );
 
-  // أيام الأسبوع بالعربية
+  // أيام الأسبوع
   const weekdaysAr: Record<string, string> = {
     Saturday: "السبت",
     Sunday: "الأحد",
@@ -82,8 +90,14 @@ export const CenterHours = () => {
     }
   };
 
+  // الألوان حسب الثيم
+  const accentColor = isNature ? 'amber' : 'accent';
+  const gradientFrom = isNature ? 'from-amber-500' : 'from-accent';
+  const gradientTo = isNature ? 'to-orange-500' : 'to-pink-500';
+  const bgColor = isNature ? 'bg-cream' : 'bg-background';
+
   return (
-    <section id="center-hours" className="relative overflow-hidden py-28 md:py-36">
+    <section id="center-hours" className={`relative overflow-hidden py-28 md:py-36 ${bgColor}`}>
       {/* BACKGROUND */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
@@ -95,7 +109,8 @@ export const CenterHours = () => {
             duration: 10,
             repeat: Infinity,
           }}
-          className="absolute right-0 bottom-0 h-[500px] w-[500px] rounded-full bg-accent/20 blur-[120px]"
+          className={`absolute right-0 bottom-0 h-[500px] w-[500px] rounded-full blur-[120px]
+            ${isNature ? 'bg-amber-300/20' : 'bg-accent/20'}`}
         />
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:60px_60px]" />
       </div>
@@ -107,9 +122,12 @@ export const CenterHours = () => {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/10 px-5 py-2 text-sm font-bold text-accent backdrop-blur-xl"
+            className={`inline-flex items-center gap-2 rounded-full border px-5 py-2 text-sm font-bold backdrop-blur-xl
+              ${isNature 
+                ? 'border-amber-400/20 bg-amber-100 text-amber-700' 
+                : 'border-accent/20 bg-accent/10 text-accent'}`}
           >
-            <Building className="h-4 w-4" />
+            {isNature ? <Leaf className="h-4 w-4" /> : <Building className="h-4 w-4" />}
             {lang === "ar" ? "مواعيد السنتر" : "Center Hours"}
           </motion.div>
 
@@ -121,7 +139,7 @@ export const CenterHours = () => {
             className="mt-8 text-5xl font-black leading-tight tracking-tight md:text-6xl"
           >
             {lang === "ar" ? "مواعيد الحضور" : "Attendance"}{" "}
-            <span className="bg-gradient-to-r from-accent to-pink-500 bg-clip-text text-transparent">
+            <span className={`bg-gradient-to-r ${gradientFrom} ${gradientTo} bg-clip-text text-transparent`}>
               {lang === "ar" ? "للطلاب" : "Schedule"}
             </span>
           </motion.h2>
@@ -146,14 +164,20 @@ export const CenterHours = () => {
           viewport={{ once: true }}
           className="mb-12 flex flex-wrap items-center justify-center gap-6"
         >
-          <div className="flex items-center gap-2 px-5 py-2 rounded-full bg-card/50 border border-border backdrop-blur-xl">
-            <Calendar className="w-4 h-4 text-accent" />
+          <div className={`flex items-center gap-2 px-5 py-2 rounded-full border backdrop-blur-xl
+            ${isNature 
+              ? 'bg-white border-amber-200' 
+              : 'bg-card/50 border-border'}`}>
+            <Calendar className={`w-4 h-4 ${isNature ? 'text-amber-500' : 'text-accent'}`} />
             <span className="text-sm font-medium">
               {Object.keys(groupedHours).length} {lang === "ar" ? "أيام" : "Days"}
             </span>
           </div>
-          <div className="flex items-center gap-2 px-5 py-2 rounded-full bg-card/50 border border-border backdrop-blur-xl">
-            <Clock className="w-4 h-4 text-accent" />
+          <div className={`flex items-center gap-2 px-5 py-2 rounded-full border backdrop-blur-xl
+            ${isNature 
+              ? 'bg-white border-amber-200' 
+              : 'bg-card/50 border-border'}`}>
+            <Clock className={`w-4 h-4 ${isNature ? 'text-amber-500' : 'text-accent'}`} />
             <span className="text-sm font-medium">
               {centerHours.length} {lang === "ar" ? "موعد" : "Times"}
             </span>
@@ -189,20 +213,29 @@ export const CenterHours = () => {
               >
                 <div
                   onClick={() => toggleDay(date)}
-                  className="group cursor-pointer bg-card/60 backdrop-blur-xl border border-border rounded-2xl p-5 hover:border-accent/40 transition-all duration-300"
+                  className={`group cursor-pointer backdrop-blur-xl border rounded-2xl p-5 transition-all duration-300
+                    ${isNature 
+                      ? 'bg-white/80 border-amber-200 hover:border-amber-400' 
+                      : 'bg-card/60 border-border hover:border-accent/40'}`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Calendar className="w-6 h-6 text-accent" />
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110
+                        ${isNature 
+                          ? 'bg-amber-100' 
+                          : 'bg-accent/10'}`}>
+                        <Calendar className={`w-6 h-6 ${isNature ? 'text-amber-600' : 'text-accent'}`} />
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold">{dayName}</h3>
+                        <h3 className={`text-xl font-bold ${isNature ? 'text-amber-800' : ''}`}>{dayName}</h3>
                         <p className="text-sm text-foreground/50">{formattedDate}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-semibold">
+                      <div className={`px-3 py-1 rounded-full text-xs font-semibold
+                        ${isNature 
+                          ? 'bg-amber-100 text-amber-700' 
+                          : 'bg-accent/10 text-accent'}`}>
                         {hours.length} {lang === "ar" ? "مواعيد" : "Times"}
                       </div>
                       <ChevronRight
@@ -225,15 +258,21 @@ export const CenterHours = () => {
                     {hours.map((hour: any, hourIdx: number) => (
                       <div
                         key={hour.id}
-                        className="bg-card/40 backdrop-blur-sm border border-border rounded-xl p-4 hover:bg-accent/5 transition-all"
+                        className={`backdrop-blur-sm border rounded-xl p-4 transition-all
+                          ${isNature 
+                            ? 'bg-white/80 border-amber-100 hover:bg-amber-50' 
+                            : 'bg-card/40 border-border hover:bg-accent/5'}`}
                       >
                         <div className="flex items-center justify-between flex-wrap gap-4">
                           <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                              <Clock className="w-5 h-5 text-accent" />
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center
+                              ${isNature 
+                                ? 'bg-amber-100' 
+                                : 'bg-accent/10'}`}>
+                              <Clock className={`w-5 h-5 ${isNature ? 'text-amber-600' : 'text-accent'}`} />
                             </div>
                             <div>
-                              <h4 className="font-semibold">{hour.title}</h4>
+                              <h4 className={`font-semibold ${isNature ? 'text-amber-800' : ''}`}>{hour.title}</h4>
                               <div className="flex items-center gap-2 text-sm text-foreground/50 mt-1">
                                 <Clock className="w-3 h-3" />
                                 <span>{hour.hours}</span>
@@ -260,15 +299,18 @@ export const CenterHours = () => {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mt-12 p-6 bg-gradient-to-r from-accent/10 to-pink-500/10 rounded-2xl border border-accent/20"
+          className={`mt-12 p-6 rounded-2xl border
+            ${isNature 
+              ? 'bg-gradient-to-r from-amber-100 to-orange-100 border-amber-200' 
+              : 'bg-gradient-to-r from-accent/10 to-pink-500/10 border-accent/20'}`}
         >
           <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
+            <AlertCircle className={`w-5 h-5 flex-shrink-0 mt-0.5 ${isNature ? 'text-amber-600' : 'text-accent'}`} />
             <div>
-              <p className="font-semibold mb-1">
+              <p className={`font-semibold mb-1 ${isNature ? 'text-amber-800' : ''}`}>
                 {lang === "ar" ? "ملاحظة هامة" : "Important Note"}
               </p>
-              <p className="text-sm text-foreground/60">
+              <p className={`text-sm ${isNature ? 'text-amber-700/70' : 'text-foreground/60'}`}>
                 {lang === "ar"
                   ? "يرجى التواصل مع إدارة السنتر لتأكيد الموعد قبل الحضور، والتأكد من توفر المقاعد"
                   : "Please contact the center administration to confirm the appointment before attending, and check seat availability"}
@@ -281,23 +323,25 @@ export const CenterHours = () => {
   );
 };
 
-const CenterHoursSkeleton = () => {
+// Skeleton Component
+const CenterHoursSkeleton = ({ isNature }: { isNature: boolean }) => {
   return (
-    <section className="py-28">
+    <section className={`py-28 ${isNature ? 'bg-cream' : 'bg-background'}`}>
       <div className="container-tight">
         <div className="text-center mb-14">
-          <div className="mx-auto h-10 w-40 animate-pulse rounded-full bg-muted" />
-          <div className="mx-auto mt-6 h-16 w-2/3 animate-pulse rounded-2xl bg-muted" />
-          <div className="mx-auto mt-4 h-6 w-1/2 animate-pulse rounded-xl bg-muted" />
+          <div className={`mx-auto h-10 w-40 animate-pulse rounded-full ${isNature ? 'bg-amber-200' : 'bg-muted'}`} />
+          <div className={`mx-auto mt-6 h-16 w-2/3 animate-pulse rounded-2xl ${isNature ? 'bg-amber-100' : 'bg-muted'}`} />
+          <div className={`mx-auto mt-4 h-6 w-1/2 animate-pulse rounded-xl ${isNature ? 'bg-amber-50' : 'bg-muted'}`} />
         </div>
         <div className="max-w-4xl mx-auto space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-card/60 rounded-2xl p-5 animate-pulse">
+            <div key={i} className={`rounded-2xl p-5 animate-pulse
+              ${isNature ? 'bg-white border border-amber-200' : 'bg-card/60'}`}>
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-muted" />
+                <div className={`w-12 h-12 rounded-xl animate-pulse ${isNature ? 'bg-amber-100' : 'bg-muted'}`} />
                 <div className="flex-1">
-                  <div className="h-6 w-32 rounded-lg bg-muted" />
-                  <div className="h-4 w-24 rounded-lg bg-muted mt-2" />
+                  <div className={`h-6 w-32 rounded-lg animate-pulse ${isNature ? 'bg-amber-100' : 'bg-muted'}`} />
+                  <div className={`h-4 w-24 rounded-lg animate-pulse mt-2 ${isNature ? 'bg-amber-50' : 'bg-muted'}`} />
                 </div>
               </div>
             </div>

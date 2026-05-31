@@ -1,0 +1,188 @@
+/* src/themes/nature/index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 1rem;
+    --background: 45 30% 96%;
+    --foreground: 30 10% 20%;
+    --card: 0 0% 100%;
+    --card-foreground: 30 10% 20%;
+    --primary: 350 70% 35%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 45 20% 90%;
+    --secondary-foreground: 30 10% 20%;
+    --muted: 45 15% 92%;
+    --muted-foreground: 30 8% 45%;
+    --accent: 145 50% 40%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 45 15% 85%;
+    --input: 45 15% 85%;
+    --ring: 350 70% 35%;
+    --brand: 350 70% 35%;
+    --brand-foreground: 0 0% 100%;
+    --cream: 45 30% 96%;
+    --gradient-hero: linear-gradient(180deg, hsl(45 30% 96%) 0%, hsl(45 25% 90%) 100%);
+    --gradient-sun: radial-gradient(circle, hsl(45 80% 65%) 0%, hsl(350 70% 35%) 60%, transparent 70%);
+    --shadow-soft: 0 10px 30px -10px hsl(350 70% 35% / 0.15);
+    --shadow-card: 0 8px 24px -8px hsl(350 70% 35% / 0.12);
+  }
+
+  .dark {
+    --background: 30 15% 12%;
+    --foreground: 45 15% 85%;
+    --card: 30 12% 18%;
+    --card-foreground: 45 15% 85%;
+    --primary: 350 60% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 30 12% 22%;
+    --secondary-foreground: 45 15% 85%;
+    --muted: 30 10% 20%;
+    --muted-foreground: 45 10% 65%;
+    --accent: 145 50% 45%;
+    --accent-foreground: 0 0% 100%;
+    --border: 30 12% 25%;
+    --input: 30 12% 25%;
+    --ring: 350 60% 55%;
+    --brand: 350 60% 55%;
+    --brand-foreground: 0 0% 100%;
+    --cream: 30 15% 14%;
+    --gradient-hero: linear-gradient(180deg, hsl(30 15% 12%) 0%, hsl(30 12% 18%) 100%);
+    --shadow-soft: 0 10px 30px -10px #00000055;
+    --shadow-card: 0 8px 24px -8px #00000045;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  
+  /* ✅ شرط data-theme */
+  body[data-theme="nature"] {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: 'Cairo', system-ui, sans-serif;
+  }
+  
+  /* للثيم default لو عايز */
+  body[data-theme="default"] {
+    background-color: hsl(var(--background-default));
+    color: hsl(var(--foreground-default));
+  }
+}
+
+@layer utilities {
+  .bg-gradient-hero { background-image: var(--gradient-hero); }
+  .bg-sun { background-image: var(--gradient-sun); }
+  .bg-cream { background-color: hsl(var(--cream)); }
+  .bg-brand { background-color: hsl(var(--brand)); }
+  .bg-brand\/20 { background-color: hsl(var(--brand) / 0.2); }
+  .bg-brand\/10 { background-color: hsl(var(--brand) / 0.1); }
+  .text-brand { color: hsl(var(--brand)); }
+  .text-brand-foreground { color: hsl(var(--brand-foreground)); }
+  .shadow-soft { box-shadow: var(--shadow-soft); }
+  .shadow-card { box-shadow: var(--shadow-card); }
+  
+  /* Animations */
+  .animate-float { animation: float 6s ease-in-out infinite; }
+  .animate-float-slow { animation: float 9s ease-in-out infinite; }
+  .animate-pulse-glow { animation: pulse-glow 3.5s ease-in-out infinite; }
+  .animate-fade-up { animation: fade-up 0.9s ease-out both; }
+  .animate-fade-in { animation: fade-in 0.9s ease-out both; }
+  .animate-scale-in { animation: scale-in 0.7s cubic-bezier(.2,.8,.2,1) both; }
+  .animate-spin-slow { animation: spin 30s linear infinite; }
+  .animate-sway { transform-origin: bottom center; animation: sway 4s ease-in-out infinite; }
+  
+  .hover-lift { transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s ease; }
+  .hover-lift:hover { transform: translateY(-6px); }
+  
+  .delay-100 { animation-delay: .1s; }
+  .delay-200 { animation-delay: .2s; }
+  .delay-300 { animation-delay: .3s; }
+  .delay-400 { animation-delay: .4s; }
+  .delay-500 { animation-delay: .5s; }
+  
+  /* Container */
+  .container-tight {
+    max-width: 80rem;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+  
+  @media (min-width: 640px) {
+    .container-tight {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .container-tight {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+  
+  /* Text gradients */
+  .text-gradient {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--brand)));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  
+  /* Cards */
+  .surface-card {
+    background: hsl(var(--card) / 0.85);
+    backdrop-filter: blur(12px);
+  }
+  
+  /* Grass animation */
+  @keyframes grass-sway {
+    0%, 100% { transform: rotate(-4deg); }
+    50% { transform: rotate(4deg); }
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+}
+@keyframes pulse-glow {
+  0%, 100% { opacity: .55; transform: scale(.92); }
+  50% { opacity: .9; transform: scale(1); }
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes sway {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { 
+    animation-duration: .001ms !important; 
+    animation-iteration-count: 1 !important; 
+    transition-duration: .001ms !important; 
+  }
+}

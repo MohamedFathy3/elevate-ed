@@ -5,11 +5,25 @@ import { useState } from "react";
 import { useLang } from "@/i18n/LanguageContext";
 import { useSafeTeacherData } from "@/hooks/useSafeTeacherData";
 import { useBuyCourse } from "@/hooks/useEnroll";
-import { ArrowRight, ArrowLeft, Clock, BookOpen, Atom, Zap, Sparkles, Users, Calendar, Percent, GraduationCap, BookMarked, Award, ShoppingCart, Loader2, CheckCircle } from "lucide-react";
+import { useTheme } from "@/context/ThemeContext";
+import { 
+  ArrowRight, ArrowLeft, BookOpen, Atom, Zap, Sparkles, 
+  Users, Calendar, Percent, GraduationCap, BookMarked, Award, 
+  ShoppingCart, Loader2, Leaf, Flower2, Trees, Clock
+} from "lucide-react";
 import { Link } from "react-router-dom";
 
-const ICONS = [Atom, Zap, BookOpen, Sparkles, Award, BookMarked];
-const COLORS = [
+// ============================================
+// أيقونات وألوان الثيمات
+// ============================================
+
+// أيقونات الثيم nature (للكاروسيل)
+const NATURE_ICONS = [Leaf, Flower2, Trees, Sparkles, Award, BookMarked];
+// أيقونات الثيم default (للكروت)
+const DEFAULT_ICONS = [Atom, Zap, BookOpen, Sparkles, Award, BookMarked];
+
+// ألوان الثيم default (للكروت)
+const DEFAULT_COLORS = [
   "gradient-primary",
   "bg-gradient-to-br from-orange-400 to-pink-500",
   "bg-gradient-to-br from-blue-500 to-indigo-600",
@@ -18,17 +32,20 @@ const COLORS = [
   "bg-gradient-to-br from-rose-400 to-red-500",
 ];
 
-// 🟢 Course Card Component with Buy Button
-export const CourseCard = ({ course, index, slug, pick, lang, Arrow, dir }: any) => {
+// ============================================
+// Course Card Component للثيم default (Grid)
+// ============================================
+
+const DefaultCourseCard = ({ course, index, slug, pick, lang, Arrow }: any) => {
   const [isBuying, setIsBuying] = useState(false);
   const { buyCourse } = useBuyCourse();
   
   if (!course) return null;
   
-  const Icon = ICONS[(index || 0) % ICONS.length];
-  const color = COLORS[(index || 0) % COLORS.length];
+  const Icon = DEFAULT_ICONS[(index || 0) % DEFAULT_ICONS.length];
+  const color = DEFAULT_COLORS[(index || 0) % DEFAULT_COLORS.length];
   
-  // حساب الخصم
+  // حساب السعر والخصم
   const originalPrice = parseFloat(course?.price) || 0;
   const discountPercent = parseFloat(course?.discount) || 0;
   const finalPrice = originalPrice - (originalPrice * discountPercent / 100);
@@ -37,22 +54,21 @@ export const CourseCard = ({ course, index, slug, pick, lang, Arrow, dir }: any)
   // الصورة
   const courseImage = course?.image?.fullUrl || course?.imageUrl || null;
   
-  // البيانات
+  // البيانات الأساسية
   const courseTitle = pick(course?.title, course?.title_ar) || "Course";
   const courseDescription = pick(course?.description, course?.description_ar) || "";
+  
+  // البيانات الإضافية
   const stageName = pick(course?.stage?.name, course?.stage?.name_ar) || "";
   const subjectName = pick(course?.subject?.name, course?.subject?.name_ar) || "";
   const semesterName = pick(course?.semester?.name, course?.semester?.name_ar) || "";
-  const lessonsCount = course?.details?.length || 0;
   const studentsCount = course?.count_student || 0;
+  const type = course?.type === "online" ? (lang === "ar" ? "أونلاين" : "Online") : (lang === "ar" ? "سنتر" : "Center");
   
-  // معالجة الشراء
   const handleBuy = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
     if (isBuying) return;
-    
     setIsBuying(true);
     try {
       await buyCourse(course.id, finalPrice);
@@ -87,7 +103,6 @@ export const CourseCard = ({ course, index, slug, pick, lang, Arrow, dir }: any)
           </div>
         )}
         
-        {/* Animated Icon */}
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
@@ -96,18 +111,20 @@ export const CourseCard = ({ course, index, slug, pick, lang, Arrow, dir }: any)
           <Icon className="w-32 h-32 text-white" strokeWidth={1} />
         </motion.div>
         
-        {/* Discount Badge */}
         {hasDiscount && (
           <div className="absolute top-3 left-3 z-10 flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500 text-white text-xs font-bold shadow-lg">
             <Percent className="w-3 h-3" />
             <span>{discountPercent}% OFF</span>
           </div>
         )}
+        
+        <div className="absolute top-3 right-3 z-10 px-2 py-1 rounded-lg bg-black/50 backdrop-blur-sm text-white text-xs font-medium">
+          {type}
+        </div>
       </div>
       
-      {/* Content */}
       <div className="p-4 flex-1 flex flex-col">
-        {/* Stage, Subject, Semester Tags */}
+        {/* Tags */}
         <div className="flex flex-wrap gap-1 mb-3">
           {stageName && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs">
@@ -143,12 +160,6 @@ export const CourseCard = ({ course, index, slug, pick, lang, Arrow, dir }: any)
         
         {/* Stats */}
         <div className="flex flex-wrap gap-3 mb-4 text-xs text-foreground/50">
-          {lessonsCount > 0 && (
-            <div className="flex items-center gap-1">
-              <BookOpen className="w-3 h-3" />
-              <span>{lessonsCount} {lang === "ar" ? "دروس" : "lessons"}</span>
-            </div>
-          )}
           {studentsCount > 0 && (
             <div className="flex items-center gap-1">
               <Users className="w-3 h-3" />
@@ -160,7 +171,6 @@ export const CourseCard = ({ course, index, slug, pick, lang, Arrow, dir }: any)
         {/* Price and Buttons */}
         <div className="mt-auto pt-3 border-t border-border">
           <div className="flex items-center justify-between gap-2">
-            {/* Price */}
             <div>
               {hasDiscount ? (
                 <div className="flex flex-col">
@@ -172,13 +182,11 @@ export const CourseCard = ({ course, index, slug, pick, lang, Arrow, dir }: any)
               )}
             </div>
             
-            {/* Action Buttons */}
             <div className="flex gap-2">
-              {/* Buy Button */}
               <button
                 onClick={handleBuy}
                 disabled={isBuying}
-                className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold text-xs shadow-soft hover:shadow-glow transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold text-xs shadow-soft hover:shadow-glow transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
               >
                 {isBuying ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -188,7 +196,6 @@ export const CourseCard = ({ course, index, slug, pick, lang, Arrow, dir }: any)
                 <span>{lang === "ar" ? "شراء" : "Buy"}</span>
               </button>
               
-              {/* Details Link */}
               <Link
                 to={`/${slug}/courses/${course?.id}`}
                 className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-card border border-border text-foreground font-semibold text-xs hover:border-primary/40 hover:bg-primary/5 transition-all"
@@ -204,24 +211,158 @@ export const CourseCard = ({ course, index, slug, pick, lang, Arrow, dir }: any)
   );
 };
 
-// 🟢 Main Courses Component
-export const Courses = ({ limit }: { limit?: number }) => {
+// ============================================
+// Carousel Component للثيم nature (الدائري)
+// ============================================
+
+const NatureCarouselCourses = ({ courses, pick, slug, lang, Arrow, dir }: any) => {
+  const [index, setIndex] = useState(0);
+  const ArrowIcon = ArrowLeft;
+  
+  if (!courses?.length) return null;
+  
+  const total = courses.length;
+  const go = (dir: number) => setIndex((i) => (i + dir + total) % total);
+  const c = courses[index];
+  
+  const originalPrice = parseFloat(c?.price) || 0;
+  const discount = parseFloat(c?.discount) || 0;
+  const finalPrice = originalPrice - (originalPrice * discount / 100);
+  const hasDiscount = discount > 0;
+  const studentsCount = c?.count_student || 0;
+  const courseImage = c?.image?.fullUrl || c?.imageUrl || null;
+  const courseTitle = pick(c?.title, c?.title_ar) || "Course";
+  const courseDescription = pick(c?.description, c?.description_ar) || "";
+  const type = c?.type === "online" ? (lang === "ar" ? "أونلاين" : "Online") : (lang === "ar" ? "سنتر" : "Center");
+  
+  return (
+    <section className="py-20 bg-cream overflow-hidden">
+      <div className="container mx-auto px-4 grid lg:grid-cols-2 gap-12 items-center">
+        {/* Carousel */}
+        <div className="relative order-2 lg:order-1">
+          <div className="relative rounded-[2rem] p-1.5 bg-gradient-to-br from-amber-600 via-amber-500 to-amber-700 shadow-soft">
+            <div className="relative bg-white rounded-[1.7rem] overflow-hidden animate-fade-in">
+              <div className="relative h-72 bg-gradient-to-br from-amber-200 to-amber-100 grid place-items-center overflow-hidden">
+                {courseImage ? (
+                  <img 
+                    src={courseImage} 
+                    alt={courseTitle} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Leaf className="w-24 h-24 text-amber-300" />
+                )}
+                {hasDiscount && (
+                  <span className="absolute top-4 right-4 px-3 py-1.5 rounded-lg bg-red-500 text-white text-xs font-black shadow-soft">
+                    {discount}% OFF
+                  </span>
+                )}
+                <div className="absolute bottom-3 left-3 px-2 py-1 rounded-lg bg-black/50 backdrop-blur-sm text-white text-xs font-medium">
+                  {type}
+                </div>
+                <button
+                  onClick={() => go(-1)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 size-11 rounded-full bg-white/90 backdrop-blur grid place-items-center shadow-soft hover:bg-white hover:scale-110 transition"
+                >
+                  <ArrowRight className="size-5 text-amber-600" />
+                </button>
+                <button
+                  onClick={() => go(1)}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 size-11 rounded-full bg-white/90 backdrop-blur grid place-items-center shadow-soft hover:bg-white hover:scale-110 transition"
+                >
+                  <ArrowIcon className="size-5 text-amber-600" />
+                </button>
+              </div>
+
+              <div className="p-6 text-center">
+                <h3 className="font-extrabold text-xl text-amber-800">{courseTitle}</h3>
+                <p className="mt-1 text-sm text-amber-600/70">{courseDescription.replace(/<[^>]*>/g, '')}</p>
+
+                <div className="mt-3 flex items-center justify-center gap-2 text-xs text-amber-600">
+                  <Users className="w-3 h-3" />
+                  <span>{studentsCount} {lang === "ar" ? "طالب" : "students"}</span>
+                </div>
+
+                <div className="mt-4 flex items-center justify-center gap-3">
+                  {hasDiscount ? (
+                    <>
+                      <span className="text-2xl font-black text-amber-700">{finalPrice.toFixed(2)} EGP</span>
+                      <span className="text-sm text-amber-400 line-through">{originalPrice.toFixed(2)} EGP</span>
+                    </>
+                  ) : (
+                    <span className="text-2xl font-black text-amber-700">{originalPrice.toFixed(2)} EGP</span>
+                  )}
+                </div>
+
+                <div className="mt-5 grid grid-cols-2 gap-3">
+                  <Link to={`/${slug}/courses/${c?.id}`} className="px-4 py-3 rounded-xl bg-amber-600 text-white text-sm font-bold hover-lift">
+                    {lang === "ar" ? "اشترك الآن" : "Enroll Now"}
+                  </Link>
+                  <Link to={`/${slug}/courses/${c?.id}`} className="px-4 py-3 rounded-xl bg-amber-100 text-amber-700 text-sm font-bold border border-amber-200 hover-lift">
+                    {lang === "ar" ? "تفاصيل الكورس" : "Details"}
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5 flex justify-center gap-2">
+            {courses.map((_: any, i: number) => (
+              <button
+                key={i}
+                onClick={() => setIndex(i)}
+                className={`h-2 rounded-full transition-all duration-300 ${i === index ? "w-8 bg-amber-600" : "w-2 bg-amber-300"}`}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Heading */}
+        <div className="order-1 lg:order-2 text-center lg:text-right relative">
+          <h2 className="text-4xl md:text-5xl font-black leading-tight">
+            <Leaf className="inline-block size-9 text-amber-600 animate-spin-slow mx-2" />
+            <span className="text-amber-700">{lang === "ar" ? "الكورسات" : "Courses"}</span>
+            <span className="text-amber-600"> {lang === "ar" ? "المُرشّحة" : "Featured"}</span>
+            <Leaf className="inline-block size-9 text-amber-600 animate-spin-slow mx-2" />
+          </h2>
+          <p className="mt-4 text-lg text-amber-600/70">
+            {lang === "ar" ? "دول أهم الكورسات اللي جمعناهالك هنا" : "Our featured courses for you"}
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// ============================================
+// Main Courses Component (يختار الشكل حسب الثيم)
+// ============================================
+
+export const Courses = ({ limit = 4 }: { limit?: number }) => {
   const { lang, dir } = useLang();
-  const { courses, slug, pick, isLoading, teacher } = useSafeTeacherData();
+  const { theme } = useTheme();
+  const { courses, slug, pick, isLoading } = useSafeTeacherData();
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
   
+  const isNature = theme === 'nature';
   const allCourses = Array.isArray(courses) ? courses : [];
   const displayCourses = limit ? allCourses.slice(0, limit) : allCourses;
   const validCourses = displayCourses.filter((course: any) => course && typeof course === 'object');
   
   if (isLoading) {
-    return <CoursesSkeleton />;
+    return <CoursesSkeleton isNature={isNature} />;
   }
   
   if (!validCourses.length) {
     return null;
   }
   
+  // ✅ الثيم nature: استخدم الكاروسيل
+  if (isNature) {
+    return <NatureCarouselCourses courses={validCourses} pick={pick} slug={slug} lang={lang} Arrow={Arrow} dir={dir} />;
+  }
+  
+  // ✅ الثيم default: استخدم الـ Grid مع البطاقات
   return (
     <section id="courses" className="py-24 md:py-32 relative overflow-hidden">
       <div className="absolute inset-0 opacity-30 pointer-events-none">
@@ -256,7 +397,7 @@ export const Courses = ({ limit }: { limit?: number }) => {
         
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
           {validCourses.map((course: any, i: number) => (
-            <CourseCard
+            <DefaultCourseCard
               key={course?.id || i}
               course={course}
               index={i}
@@ -264,7 +405,6 @@ export const Courses = ({ limit }: { limit?: number }) => {
               pick={pick}
               lang={lang}
               Arrow={Arrow}
-              dir={dir}
             />
           ))}
         </div>
@@ -286,8 +426,42 @@ export const Courses = ({ limit }: { limit?: number }) => {
   );
 };
 
-// 🟢 Skeleton Component
-const CoursesSkeleton = () => {
+// ============================================
+// Skeleton Component
+// ============================================
+
+const CoursesSkeleton = ({ isNature }: { isNature: boolean }) => {
+  if (isNature) {
+    return (
+      <section className="py-24 md:py-32 bg-cream">
+        <div className="container-tight">
+          <div className="text-center mb-16">
+            <div className="h-8 w-48 bg-amber-200 rounded-full mx-auto mb-5 animate-pulse" />
+            <div className="h-12 w-80 bg-amber-100 rounded-lg mx-auto animate-pulse" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div className="order-2 lg:order-1">
+              <div className="rounded-[2rem] p-1.5 bg-amber-200">
+                <div className="bg-white rounded-[1.7rem] overflow-hidden">
+                  <div className="h-72 bg-amber-100 animate-pulse" />
+                  <div className="p-6 text-center">
+                    <div className="h-6 bg-amber-100 rounded w-3/4 mx-auto mb-2 animate-pulse" />
+                    <div className="h-4 bg-amber-50 rounded w-1/2 mx-auto mb-4 animate-pulse" />
+                    <div className="h-8 bg-amber-100 rounded w-1/3 mx-auto animate-pulse" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="order-1 lg:order-2">
+              <div className="h-12 bg-amber-100 rounded-lg w-3/4 mx-auto animate-pulse" />
+              <div className="h-4 bg-amber-50 rounded w-1/2 mx-auto mt-4 animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+  
   return (
     <section className="py-24 md:py-32">
       <div className="container-tight">
@@ -315,3 +489,5 @@ const CoursesSkeleton = () => {
     </section>
   );
 };
+
+export default Courses;

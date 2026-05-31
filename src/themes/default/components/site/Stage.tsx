@@ -6,6 +6,7 @@ import { useRef, useState, useEffect } from "react";
 import { useLang } from "@/i18n/LanguageContext";
 import { useSafeTeacherData } from "@/hooks/useSafeTeacherData";
 import { useStudentAuth } from "@/context/StudentAuthContext";
+import { useTheme } from "@/context/ThemeContext";
 import {
   GraduationCap,
   ArrowRight,
@@ -21,6 +22,9 @@ import {
   CheckCircle,
   ChevronLeft,
   ChevronRight,
+  Leaf,
+  Flower2,
+  Trees,
 } from "lucide-react";
 
 import { useNavigate, Link } from "react-router-dom";
@@ -30,7 +34,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/effect-coverflow";
 
-// تعريف أيقونة PlayCircle مؤقتاً
+// أيقونة PlayCircle
 const PlayCircleIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -40,6 +44,7 @@ const PlayCircleIcon = ({ className }: { className?: string }) => (
 
 export const Stage = () => {
   const { lang, dir } = useLang();
+  const { theme } = useTheme();
   const { stages, pick, isLoading, slug } = useSafeTeacherData();
   const { student, isAuthenticated } = useStudentAuth();
   const navigate = useNavigate();
@@ -47,9 +52,20 @@ export const Stage = () => {
   const [showAll, setShowAll] = useState(false);
   const [studentStageId, setStudentStageId] = useState<number | null>(null);
 
+  const isNature = theme === 'nature';
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
   const PrevIcon = dir === "rtl" ? ChevronRight : ChevronLeft;
   const NextIcon = dir === "rtl" ? ChevronLeft : ChevronRight;
+  
+  // أيقونات حسب الثيم
+  const BadgeIcon = isNature ? Leaf : Sparkles;
+  const StageIcon = isNature ? Flower2 : GraduationCap;
+  
+  // ألوان حسب الثيم
+  const primaryColor = isNature ? 'emerald' : 'primary';
+  const primaryHsl = isNature ? 'emerald' : 'primary';
+  const gradientFrom = isNature ? 'from-emerald-500' : 'from-primary';
+  const gradientTo = isNature ? 'to-teal-600' : 'to-fuchsia-500';
 
   useEffect(() => {
     if (isAuthenticated && student?.stage_id) {
@@ -58,7 +74,7 @@ export const Stage = () => {
   }, [isAuthenticated, student]);
 
   if (isLoading) {
-    return <StageSkeleton />;
+    return <StageSkeleton isNature={isNature} />;
   }
 
   if (!stages.length) {
@@ -73,14 +89,12 @@ export const Stage = () => {
   const totalCourses = stages.reduce((acc: number, stage: any) => acc + (stage.courses_count || 0), 0);
   const totalStudents = stages.reduce((acc: number, stage: any) => acc + (stage.students_count || 0), 0);
 
-  // ✅ دالة معالجة الضغط على الكارد
   const handleCardClick = (stageId: number, stageName: string) => {
-    console.log("🎯 Card clicked:", stageId, stageName);
     navigate(`/${slug}/subjects?stage_id=${stageId}&stage_name=${encodeURIComponent(stageName)}`);
   };
 
   return (
-    <section id="stages" className="relative overflow-hidden py-28 md:py-36">
+    <section id="stages" className={`relative overflow-hidden py-28 md:py-36 ${isNature ? 'bg-cream' : 'bg-backgroun'}`}>
       {/* BACKGROUND */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
@@ -92,21 +106,25 @@ export const Stage = () => {
             duration: 8,
             repeat: Infinity,
           }}
-          className="absolute left-1/2 top-0 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-primary/10 blur-[140px]"
+          className={`absolute left-1/2 top-0 h-[600px] w-[600px] -translate-x-1/2 rounded-full blur-[140px]
+            ${isNature ? 'bg-emerald-400/15' : 'bg-primary/10'}`}
         />
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:60px_60px]" />
       </div>
 
       <div className="container-tight relative z-10">
-        {/* TOP SECTION - نفس الكود السابق */}
+        {/* TOP SECTION */}
         <div className="mx-auto max-w-4xl text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-5 py-2 text-sm font-bold text-primary backdrop-blur-xl"
+            className={`inline-flex items-center gap-2 rounded-full border px-5 py-2 text-sm font-bold backdrop-blur-xl
+              ${isNature 
+                ? 'border-emerald-400/20 bg-emerald-100 text-emerald-700' 
+                : 'border-primary/20 bg-primary/10 text-primary'}`}
           >
-            <Sparkles className="h-4 w-4" />
+            <BadgeIcon className="h-4 w-4" />
             {lang === "ar" ? "المراحل التعليمية" : "Educational Stages"}
           </motion.div>
 
@@ -118,7 +136,7 @@ export const Stage = () => {
             className="mt-8 text-5xl font-black leading-tight tracking-tight md:text-7xl"
           >
             {lang === "ar" ? "اختر مرحلتك" : "Choose Your"}{" "}
-            <span className="bg-gradient-to-r from-primary to-fuchsia-500 bg-clip-text text-transparent">
+            <span className={`bg-gradient-to-r ${gradientFrom} ${gradientTo} bg-clip-text text-transparent`}>
               {lang === "ar" ? "الدراسية" : "Stage"}
             </span>
           </motion.h2>
@@ -136,7 +154,7 @@ export const Stage = () => {
           </motion.p>
         </div>
 
-        {/* STATS SECTION - نفس الكود السابق */}
+        {/* STATS SECTION */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -154,14 +172,22 @@ export const Stage = () => {
               <motion.div
                 key={i}
                 whileHover={{ y: -8 }}
-                className="group rounded-[32px] border border-border bg-card/50 p-7 backdrop-blur-2xl"
+                className={`group rounded-[32px] border p-7 backdrop-blur-2xl
+                  ${isNature 
+                    ? 'border-emerald-200 bg-white/50' 
+                    : 'border-border bg-card/50'}`}
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-4xl font-black text-primary">{item.number}</h3>
+                    <h3 className={`text-4xl font-black ${isNature ? 'text-emerald-600' : 'text-primary'}`}>
+                      {item.number}
+                    </h3>
                     <p className="mt-2 text-sm text-foreground/60">{item.label}</p>
                   </div>
-                  <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-primary/10 transition-all group-hover:scale-110 group-hover:bg-primary group-hover:text-white">
+                  <div className={`flex h-16 w-16 items-center justify-center rounded-3xl transition-all group-hover:scale-110
+                    ${isNature 
+                      ? 'bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white' 
+                      : 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white'}`}>
                     <Icon className="h-7 w-7" />
                   </div>
                 </div>
@@ -175,13 +201,19 @@ export const Stage = () => {
           {/* Navigation Buttons */}
           <button
             onClick={() => swiperRef.current?.slidePrev()}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-card border border-border shadow-lg flex items-center justify-center hover:bg-primary hover:text-white transition-all -ml-6 hidden lg:flex"
+            className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border shadow-lg flex items-center justify-center transition-all -ml-6 hidden lg:flex
+              ${isNature 
+                ? 'bg-white border-emerald-200 text-emerald-600 hover:bg-emerald-600 hover:text-white' 
+                : 'bg-card border-border hover:bg-primary hover:text-white'}`}
           >
             <PrevIcon className="w-5 h-5" />
           </button>
           <button
             onClick={() => swiperRef.current?.slideNext()}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-card border border-border shadow-lg flex items-center justify-center hover:bg-primary hover:text-white transition-all -mr-6 hidden lg:flex"
+            className={`absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border shadow-lg flex items-center justify-center transition-all -mr-6 hidden lg:flex
+              ${isNature 
+                ? 'bg-white border-emerald-200 text-emerald-600 hover:bg-emerald-600 hover:text-white' 
+                : 'bg-card border-border hover:bg-primary hover:text-white'}`}
           >
             <NextIcon className="w-5 h-5" />
           </button>
@@ -226,24 +258,25 @@ export const Stage = () => {
                       whileHover={!isDisabled ? { y: -12 } : {}}
                       className={`group relative ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'} ${isDisabled ? 'opacity-60' : ''}`}
                     >
-                      {/* ✅ الكارد كامل - الـ onClick هنا */}
                       <div 
-                        className={`relative overflow-hidden rounded-[36px] border border-border bg-card/60 backdrop-blur-2xl transition-all duration-500 ${
-                          !isDisabled ? 'hover:border-primary/30 hover:shadow-[0_20px_80px_rgba(124,58,237,0.18)] cursor-pointer' : ''
-                        }`}
+                        className={`relative overflow-hidden rounded-[36px] border backdrop-blur-2xl transition-all duration-500 ${
+                          !isDisabled 
+                            ? `hover:border-${primaryColor}/30 hover:shadow-[0_20px_80px_rgba(0,0,0,0.15)] cursor-pointer` 
+                            : ''
+                        }
+                        ${isNature 
+                          ? 'border-emerald-200 bg-white/60' 
+                          : 'border-border bg-card/60'}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           if (!isDisabled) {
-                            console.log("🎯 Card clicked:", s.id, stageName);
-                            navigate(`/${slug}/subjects?stage_id=${s.id}&stage_name=${encodeURIComponent(stageName)}`);
+                            handleCardClick(s.id, stageName);
                           }
                         }}
                       >
                         {/* Disabled Overlay */}
                         {isDisabled && (
-                          <div 
-                            className="absolute inset-0 z-20 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center rounded-[36px] pointer-events-none"
-                          >
+                          <div className="absolute inset-0 z-20 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center rounded-[36px] pointer-events-none">
                             <Lock className="w-12 h-12 text-white/70 mb-2" />
                             <p className="text-white/80 text-sm font-semibold text-center px-4">
                               {lang === "ar" 
@@ -272,9 +305,15 @@ export const Stage = () => {
                               className={`h-full w-full object-cover transition-transform duration-700 ${!isDisabled ? 'group-hover:scale-110' : ''}`}
                             />
                           ) : (
-                            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 via-primary/5 to-fuchsia-500/20">
-                              <div className="flex h-28 w-28 items-center justify-center rounded-[30px] bg-primary text-white shadow-2xl">
-                                <GraduationCap className="h-14 w-14" />
+                            <div className={`flex h-full w-full items-center justify-center bg-gradient-to-br 
+                              ${isNature 
+                                ? 'from-emerald-200/50 via-emerald-100/30 to-teal-200/20' 
+                                : 'from-primary/20 via-primary/5 to-fuchsia-500/20'}`}>
+                              <div className={`flex h-28 w-28 items-center justify-center rounded-[30px] shadow-2xl
+                                ${isNature 
+                                  ? 'bg-emerald-600 text-white' 
+                                  : 'bg-primary text-white'}`}>
+                                <StageIcon className="h-14 w-14" />
                               </div>
                             </div>
                           )}
@@ -310,7 +349,7 @@ export const Stage = () => {
                         <div className="p-7">
                           <div className="flex items-start justify-between gap-4">
                             <div>
-                              <h3 className="text-3xl font-black transition-colors group-hover:text-primary">
+                              <h3 className={`text-3xl font-black transition-colors ${!isDisabled ? `group-hover:text-${primaryColor}` : ''}`}>
                                 {stageName}
                               </h3>
                               <p className="mt-3 line-clamp-2 leading-8 text-foreground/60">
@@ -320,8 +359,11 @@ export const Stage = () => {
                                     : "Professional educational programs.")}
                               </p>
                             </div>
-                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-all group-hover:scale-110 group-hover:bg-primary group-hover:text-white">
-                              <GraduationCap className="h-6 w-6" />
+                            <div className={`flex h-14 w-14 items-center justify-center rounded-2xl transition-all group-hover:scale-110
+                              ${isNature 
+                                ? 'bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white' 
+                                : 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white'}`}>
+                              <StageIcon className="h-6 w-6" />
                             </div>
                           </div>
 
@@ -334,7 +376,10 @@ export const Stage = () => {
                             ].map((item, idx) => (
                               <div
                                 key={idx}
-                                className="rounded-full border border-border bg-background/60 px-4 py-2 text-xs font-medium text-foreground/60 backdrop-blur-xl"
+                                className={`rounded-full border px-4 py-2 text-xs font-medium backdrop-blur-xl
+                                  ${isNature 
+                                    ? 'border-emerald-200 bg-white/60 text-emerald-700' 
+                                    : 'border-border bg-background/60 text-foreground/60'}`}
                               >
                                 {item}
                               </div>
@@ -343,9 +388,14 @@ export const Stage = () => {
 
                           {/* BUTTON */}
                           <div className="mt-8">
-                            <div className={`group/button inline-flex items-center gap-3 text-lg font-bold ${!isDisabled ? 'text-primary' : 'text-foreground/30'}`}>
+                            <div className={`group/button inline-flex items-center gap-3 text-lg font-bold ${!isDisabled ? (isNature ? 'text-emerald-600' : 'text-primary') : 'text-foreground/30'}`}>
                               {lang === "ar" ? "استكشف المواد" : "Explore Subjects"}
-                              <div className={`flex h-10 w-10 items-center justify-center rounded-full transition-all ${!isDisabled ? 'bg-primary/10 group-hover/button:bg-primary group-hover/button:text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>
+                              <div className={`flex h-10 w-10 items-center justify-center rounded-full transition-all 
+                                ${!isDisabled 
+                                  ? (isNature 
+                                      ? 'bg-emerald-100 group-hover/button:bg-emerald-600 group-hover/button:text-white' 
+                                      : 'bg-primary/10 group-hover/button:bg-primary group-hover/button:text-white')
+                                  : 'bg-gray-200 dark:bg-gray-700'}`}>
                                 <Arrow className="h-5 w-5 transition-transform group-hover/button:translate-x-1 rtl:group-hover/button:-translate-x-1" />
                               </div>
                             </div>
@@ -367,7 +417,8 @@ export const Stage = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowAll(!showAll)}
-              className="rounded-2xl bg-primary px-8 py-4 font-bold text-white shadow-[0_15px_50px_rgba(124,58,237,0.3)] transition-all"
+              className={`rounded-2xl px-8 py-4 font-bold text-white shadow-[0_15px_50px_rgba(0,0,0,0.25)] transition-all
+                ${isNature ? 'bg-emerald-600' : 'bg-primary'}`}
             >
               {showAll
                 ? lang === "ar" ? "عرض أقل" : "Show Less"
@@ -377,11 +428,14 @@ export const Stage = () => {
 
           <Link
             to={`/${slug}/stages`}
-            className="group flex items-center gap-3 rounded-2xl border border-border bg-card/60 px-8 py-4 font-bold backdrop-blur-xl transition-all hover:border-primary/30 hover:bg-primary/5"
+            className={`group flex items-center gap-3 rounded-2xl border px-8 py-4 font-bold backdrop-blur-xl transition-all
+              ${isNature 
+                ? 'border-emerald-200 bg-white/60 hover:border-emerald-300 hover:bg-emerald-50' 
+                : 'border-border bg-card/60 hover:border-primary/30 hover:bg-primary/5'}`}
           >
-            <PlayCircleIcon className="h-5 w-5 text-primary" />
+            <PlayCircleIcon className={`h-5 w-5 ${isNature ? 'text-emerald-600' : 'text-primary'}`} />
             {lang === "ar" ? "استعراض جميع المراحل" : "Browse All Stages"}
-            <Arrow className="h-5 w-5 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
+            <Arrow className={`h-5 w-5 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1 ${isNature ? 'text-emerald-600' : 'text-primary'}`} />
           </Link>
         </div>
       </div>
@@ -389,25 +443,26 @@ export const Stage = () => {
   );
 };
 
-const StageSkeleton = () => {
+// Skeleton Component
+const StageSkeleton = ({ isNature }: { isNature: boolean }) => {
   return (
-    <section className="py-32">
+    <section className={`py-32 ${isNature ? 'bg-cream' : 'bg-background'}`}>
       <div className="container-tight">
         <div className="mx-auto mb-20 max-w-3xl text-center">
-          <div className="mx-auto h-10 w-48 animate-pulse rounded-full bg-muted" />
-          <div className="mx-auto mt-6 h-20 w-full animate-pulse rounded-3xl bg-muted" />
-          <div className="mx-auto mt-6 h-8 w-2/3 animate-pulse rounded-2xl bg-muted" />
+          <div className={`mx-auto h-10 w-48 animate-pulse rounded-full ${isNature ? 'bg-emerald-200' : 'bg-muted'}`} />
+          <div className={`mx-auto mt-6 h-20 w-full animate-pulse rounded-3xl ${isNature ? 'bg-emerald-100' : 'bg-muted'}`} />
+          <div className={`mx-auto mt-6 h-8 w-2/3 animate-pulse rounded-2xl ${isNature ? 'bg-emerald-100/50' : 'bg-muted'}`} />
         </div>
         <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="overflow-hidden rounded-[36px] border border-border bg-card/60">
-              <div className="h-[320px] animate-pulse bg-muted" />
+            <div key={i} className={`overflow-hidden rounded-[36px] border ${isNature ? 'border-emerald-200 bg-white/60' : 'border-border bg-card/60'}`}>
+              <div className={`h-[320px] animate-pulse ${isNature ? 'bg-emerald-100' : 'bg-muted'}`} />
               <div className="p-7">
-                <div className="h-10 w-2/3 animate-pulse rounded-2xl bg-muted" />
-                <div className="mt-5 h-24 animate-pulse rounded-2xl bg-muted" />
+                <div className={`h-10 w-2/3 animate-pulse rounded-2xl ${isNature ? 'bg-emerald-100' : 'bg-muted'}`} />
+                <div className={`mt-5 h-24 animate-pulse rounded-2xl ${isNature ? 'bg-emerald-50' : 'bg-muted'}`} />
                 <div className="mt-7 flex gap-3">
-                  <div className="h-10 w-24 animate-pulse rounded-full bg-muted" />
-                  <div className="h-10 w-24 animate-pulse rounded-full bg-muted" />
+                  <div className={`h-10 w-24 animate-pulse rounded-full ${isNature ? 'bg-emerald-100' : 'bg-muted'}`} />
+                  <div className={`h-10 w-24 animate-pulse rounded-full ${isNature ? 'bg-emerald-100' : 'bg-muted'}`} />
                 </div>
               </div>
             </div>
