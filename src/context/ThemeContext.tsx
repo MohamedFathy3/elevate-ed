@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import api from '@/lib/api';
-import { useParams } from 'react-router-dom';
 
 export type ThemeName = 'default' | 'nature';
 export type ColorMode = 'light' | 'dark';
@@ -37,30 +36,38 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 import * as defaultPages from '@/themes/default/pages/index';
 
-const themeImports = {
-  default: () => import('@/themes/default/pages/index.tsx'),
-  nature: () => import('@/themes/nature/pages/index.tsx'),
-};
+// ✅ استيراد الـ CSS مباشرة (بدون مسار ديناميكي)
+import defaultCss from '@/themes/default/index.css?inline';
+import natureCss from '@/themes/nature/index.css?inline';
 
-let currentStyleLink: HTMLLinkElement | null = null;
+let currentStyleElement: HTMLStyleElement | null = null;
 
 const loadThemeCSS = (theme: ThemeName) => {
-  if (currentStyleLink) {
-    currentStyleLink.remove();
+  // إزالة الـ style القديم
+  if (currentStyleElement) {
+    currentStyleElement.remove();
+    currentStyleElement = null;
   }
   
-  const cssPath = theme === 'default' 
-    ? '/src/themes/default/index.css'
-    : '/src/themes/nature/index.css';
+  // إنشاء style element جديد
+  const styleElement = document.createElement('style');
   
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = cssPath;
-  document.head.appendChild(link);
-  currentStyleLink = link;
+  // تحديد الـ CSS المناسب
+  const cssContent = theme === 'default' ? defaultCss : natureCss;
+  styleElement.textContent = cssContent;
+  
+  // إضافته للـ head
+  document.head.appendChild(styleElement);
+  currentStyleElement = styleElement;
   
   document.body.setAttribute('data-theme', theme);
   localStorage.setItem('app-theme', theme);
+};
+
+// ✅ استيراد الصفحات ديناميكياً مع import
+const themeImports = {
+  default: () => import('@/themes/default/pages/index.tsx'),
+  nature: () => import('@/themes/nature/pages/index.tsx'),
 };
 
 // ✅ دالة جلب إعدادات الثيم من API
@@ -70,23 +77,15 @@ const fetchThemeSettings = async (teacherId: number): Promise<ThemeName> => {
     const response = await api.post('/teachers/theme', { teacher_id: teacherId });
     console.log("✅ Theme settings response:", response.data);
     
-    // التحقق من الاستجابة
     if (response.data?.status === true && response.data?.active_theme) {
       const activeTheme = response.data.active_theme;
-      console.log("🎨 Active theme from API:", activeTheme);
-      
-      // active_theme === "theme1" -> default
-      // active_theme === "theme2" -> nature
       if (activeTheme === "theme2") {
         return 'nature';
       }
     }
-    
-    // default (theme1) هو الافتراضي
     return 'default';
   } catch (error) {
     console.error("❌ Error fetching theme settings:", error);
-    // في حالة الخطأ، نرجع default
     return 'default';
   }
 };
@@ -97,19 +96,15 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [pages, setPages] = useState<ThemePages | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [teacherId, setTeacherId] = useState<number | null>(null);
-  const [slug, setSlug] = useState<string | null>(null);
 
   // الحصول على teacherId من الـ API باستخدام الـ slug
   useEffect(() => {
     const getTeacherId = async () => {
-      // استخراج الـ slug من الـ URL
       const pathname = window.location.pathname;
       const currentSlug = pathname.split('/')[1];
-      setSlug(currentSlug);
       
       if (currentSlug && currentSlug !== 'login' && currentSlug !== 'register') {
         try {
-          // جلب بيانات المعلم باستخدام الـ slug
           const response = await api.get(`/${currentSlug}`);
           if (response.data?.status === 200 && response.data?.data?.id) {
             setTeacherId(response.data.data.id);
@@ -143,33 +138,10 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     localStorage.setItem('color-mode', colorMode);
   }, [colorMode]);
 
-  // ✅ تحديد الثيم بناءً على API
-  const determineInitialTheme = async (): Promise<ThemeName> => {
-    // أولاً: نشوف لو فيه ثيم محفوظ في localStorage (للتجربة اليدوية)
-    const savedTheme = localStorage.getItem('app-theme') as ThemeName;
-    
-    // ثانياً: نجيب إعدادات الثيم من API
-    if (teacherId) {
-      const apiTheme = await fetchThemeSettings(teacherId);
-      console.log("🎨 API determined theme:", apiTheme);
-      
-      // إذا كان الـ API عنده preference، نستخدمه
-      return apiTheme;
-    }
-    
-    // لو مفيش API ولا teacherId، نستخدم الـ localStorage أو default
-    if (savedTheme && (savedTheme === 'default' || savedTheme === 'nature')) {
-      console.log("🎨 Using saved theme from localStorage:", savedTheme);
-      return savedTheme;
-    }
-    
-    console.log("🎨 Using default theme");
-    return 'default';
-  };
-
   const loadTheme = async (newTheme: ThemeName) => {
     setIsLoading(true);
     
+    // تحميل CSS أولاً
     loadThemeCSS(newTheme);
     
     try {
@@ -222,19 +194,38 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setColorMode(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
-  // ✅ التحميل الأولي - نجيب الثيم من API
+  // التحميل الأولي - نجيب الثيم من API
   useEffect(() => {
     const initTheme = async () => {
       setIsLoading(true);
-      const initialTheme = await determineInitialTheme();
-      console.log("🎨 Final initial theme:", initialTheme);
+      
+      // أولاً: نجيب إعدادات الثيم من API
+      let initialTheme: ThemeName = 'default';
+      
+      if (teacherId) {
+        initialTheme = await fetchThemeSettings(teacherId);
+        console.log("🎨 API determined theme:", initialTheme);
+      } else {
+        // إذا مفيش teacherId، نشوف localStorage
+        const savedTheme = localStorage.getItem('app-theme') as ThemeName;
+        if (savedTheme && (savedTheme === 'default' || savedTheme === 'nature')) {
+          initialTheme = savedTheme;
+        }
+      }
+      
       setThemeState(initialTheme);
       await loadTheme(initialTheme);
     };
     
-    // ننتظر حتى نجيب الـ teacherId
+    // ننتظر حتى نجيب الـ teacherId أو نستخدم الـ default
     if (teacherId !== null) {
       initTheme();
+    } else {
+      // لو مفيش teacherId (مثلاً في صفحة الـ Landing الرئيسية)
+      const savedTheme = localStorage.getItem('app-theme') as ThemeName;
+      const initialTheme = (savedTheme === 'default' || savedTheme === 'nature') ? savedTheme : 'default';
+      setThemeState(initialTheme);
+      loadTheme(initialTheme);
     }
   }, [teacherId]);
 

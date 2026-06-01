@@ -98,10 +98,33 @@ export default defineConfig(({ mode }) => {
         "@": path.resolve(__dirname, "./src"),
       },
     },
+    // ✅ إضافة تكوين CSS
+    css: {
+      modules: {
+        localsConvention: 'camelCase'
+      },
+      preprocessorOptions: {
+        css: {
+          // إعدادات إضافية للـ CSS
+        }
+      }
+    },
     // Define env variables that will be available in client code
     define: {
       'import.meta.env.VITE_APP_VERSION': JSON.stringify(process.env.npm_package_version),
       'import.meta.env.VITE_BUILD_TIME': JSON.stringify(new Date().toISOString()),
     },
+    // ✅ إضافة build options لضمان تحويل CSS بشكل صحيح
+    build: {
+      cssCodeSplit: true,
+      sourcemap: false,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor': ['react', 'react-dom', 'react-router-dom'],
+          }
+        }
+      }
+    }
   };
 });
