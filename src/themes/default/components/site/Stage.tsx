@@ -14,7 +14,6 @@ import {
   Sparkles,
   BookOpen,
   Users,
-  Trophy,
   Layers3,
   PlayCircle,
   Star,
@@ -24,15 +23,13 @@ import {
   ChevronRight,
   Leaf,
   Flower2,
-  Trees,
 } from "lucide-react";
 
 import { useNavigate, Link } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Autoplay, EffectCoverflow } from "swiper/modules";
+import { Navigation, Autoplay } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
-import "swiper/css/effect-coverflow";
 
 // أيقونة PlayCircle
 const PlayCircleIcon = ({ className }: { className?: string }) => (
@@ -63,7 +60,6 @@ export const Stage = () => {
   
   // ألوان حسب الثيم
   const primaryColor = isNature ? 'emerald' : 'primary';
-  const primaryHsl = isNature ? 'emerald' : 'primary';
   const gradientFrom = isNature ? 'from-emerald-500' : 'from-primary';
   const gradientTo = isNature ? 'to-teal-600' : 'to-fuchsia-500';
 
@@ -72,6 +68,10 @@ export const Stage = () => {
       setStudentStageId(student.stage_id);
     }
   }, [isAuthenticated, student]);
+
+  const handleCardClick = (stageId: number, stageName: string) => {
+    navigate(`/${slug}/subjects?stage_id=${stageId}&stage_name=${encodeURIComponent(stageName)}`);
+  };
 
   if (isLoading) {
     return <StageSkeleton isNature={isNature} />;
@@ -89,12 +89,8 @@ export const Stage = () => {
   const totalCourses = stages.reduce((acc: number, stage: any) => acc + (stage.courses_count || 0), 0);
   const totalStudents = stages.reduce((acc: number, stage: any) => acc + (stage.students_count || 0), 0);
 
-  const handleCardClick = (stageId: number, stageName: string) => {
-    navigate(`/${slug}/subjects?stage_id=${stageId}&stage_name=${encodeURIComponent(stageName)}`);
-  };
-
   return (
-    <section id="stages" className={`relative overflow-hidden py-28 md:py-36 ${isNature ? 'bg-cream' : 'bg-backgroun'}`}>
+    <section id="stages" className={`relative overflow-hidden py-28 md:py-36 ${isNature ? 'bg-cream' : ''}`}>
       {/* BACKGROUND */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
@@ -196,7 +192,7 @@ export const Stage = () => {
           })}
         </motion.div>
 
-        {/* STAGES SWIPER */}
+        {/* STAGES SWIPER - مُصلح بالكامل */}
         <div className="mt-20 relative">
           {/* Navigation Buttons */}
           <button
@@ -220,18 +216,13 @@ export const Stage = () => {
 
           <Swiper
             onBeforeInit={(swiper) => { swiperRef.current = swiper; }}
-            modules={[Navigation, Autoplay, EffectCoverflow]}
+            modules={[Navigation, Autoplay]}
             spaceBetween={24}
             slidesPerView={1}
             centeredSlides={false}
-            effect="coverflow"
-            coverflowEffect={{
-              rotate: 0,
-              stretch: 0,
-              depth: 100,
-              modifier: 1,
-              slideShadows: false,
-            }}
+            grabCursor={true}
+            resistance={true}
+            resistanceRatio={0.85}
             breakpoints={{
               640: { slidesPerView: 1.2, spaceBetween: 20 },
               768: { slidesPerView: 2, spaceBetween: 24 },
@@ -249,161 +240,152 @@ export const Stage = () => {
 
               return (
                 <SwiperSlide key={s.id}>
-                  {({ isActive }: { isActive: boolean }) => (
-                    <motion.div
-                      initial={{ opacity: 0, y: 60 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: Math.min(i * 0.08, 0.5) }}
-                      whileHover={!isDisabled ? { y: -12 } : {}}
-                      className={`group relative ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'} ${isDisabled ? 'opacity-60' : ''}`}
+                  <motion.div
+                    initial={{ opacity: 0, y: 60 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: Math.min(i * 0.08, 0.5) }}
+                    whileHover={!isDisabled ? { y: -12 } : {}}
+                    className={`group relative ${isDisabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!isDisabled) {
+                        handleCardClick(s.id, stageName);
+                      }
+                    }}
+                  >
+                    <div 
+                      className={`relative overflow-hidden rounded-[36px] border backdrop-blur-2xl transition-all duration-500
+                        ${!isDisabled ? `hover:border-${primaryColor}/30 hover:shadow-[0_20px_80px_rgba(0,0,0,0.15)]` : ''}
+                        ${isNature ? 'border-emerald-200 bg-white/60' : 'border-border bg-card/60'}`}
                     >
-                      <div 
-                        className={`relative overflow-hidden rounded-[36px] border backdrop-blur-2xl transition-all duration-500 ${
-                          !isDisabled 
-                            ? `hover:border-${primaryColor}/30 hover:shadow-[0_20px_80px_rgba(0,0,0,0.15)] cursor-pointer` 
-                            : ''
-                        }
-                        ${isNature 
-                          ? 'border-emerald-200 bg-white/60' 
-                          : 'border-border bg-card/60'}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!isDisabled) {
-                            handleCardClick(s.id, stageName);
-                          }
-                        }}
-                      >
-                        {/* Disabled Overlay */}
-                        {isDisabled && (
-                          <div className="absolute inset-0 z-20 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center rounded-[36px] pointer-events-none">
-                            <Lock className="w-12 h-12 text-white/70 mb-2" />
-                            <p className="text-white/80 text-sm font-semibold text-center px-4">
-                              {lang === "ar" 
-                                ? "هذه المرحلة غير متاحة لك"
-                                : "This stage is not available for you"}
-                            </p>
+                      {/* Disabled Overlay */}
+                      {isDisabled && (
+                        <div className="absolute inset-0 z-20 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center rounded-[36px] pointer-events-none">
+                          <Lock className="w-12 h-12 text-white/70 mb-2" />
+                          <p className="text-white/80 text-sm font-semibold text-center px-4">
+                            {lang === "ar" 
+                              ? "هذه المرحلة غير متاحة لك"
+                              : "This stage is not available for you"}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Student Stage Badge */}
+                      {isStudentStage && (
+                        <div className="absolute top-5 right-5 z-10">
+                          <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-green-500 text-white text-xs font-bold shadow-lg">
+                            <CheckCircle className="w-3 h-3" />
+                            <span>{lang === "ar" ? "مرحلتي" : "My Stage"}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* IMAGE */}
+                      <div className="relative h-[320px] overflow-hidden">
+                        {image ? (
+                          <img
+                            src={image}
+                            alt={stageName}
+                            className={`h-full w-full object-cover transition-transform duration-700 ${!isDisabled ? 'group-hover:scale-110' : ''}`}
+                          />
+                        ) : (
+                          <div className={`flex h-full w-full items-center justify-center bg-gradient-to-br 
+                            ${isNature 
+                              ? 'from-emerald-200/50 via-emerald-100/30 to-teal-200/20' 
+                              : 'from-primary/20 via-primary/5 to-fuchsia-500/20'}`}>
+                            <div className={`flex h-28 w-28 items-center justify-center rounded-[30px] shadow-2xl
+                              ${isNature ? 'bg-emerald-600 text-white' : 'bg-primary text-white'}`}>
+                              <StageIcon className="h-14 w-14" />
+                            </div>
                           </div>
                         )}
 
-                        {/* Student Stage Badge */}
-                        {isStudentStage && (
-                          <div className="absolute top-5 right-5 z-10">
-                            <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-green-500 text-white text-xs font-bold shadow-lg">
-                              <CheckCircle className="w-3 h-3" />
-                              <span>{lang === "ar" ? "مرحلتي" : "My Stage"}</span>
-                            </div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+
+                        {/* Top Badge */}
+                        <div className="absolute left-5 top-5">
+                          <div className="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-bold text-white backdrop-blur-xl">
+                            {lang === "ar" ? "مرحلة تعليمية" : "Educational Stage"}
                           </div>
-                        )}
-
-                        {/* IMAGE */}
-                        <div className="relative h-[320px] overflow-hidden">
-                          {image ? (
-                            <img
-                              src={image}
-                              alt={stageName}
-                              className={`h-full w-full object-cover transition-transform duration-700 ${!isDisabled ? 'group-hover:scale-110' : ''}`}
-                            />
-                          ) : (
-                            <div className={`flex h-full w-full items-center justify-center bg-gradient-to-br 
-                              ${isNature 
-                                ? 'from-emerald-200/50 via-emerald-100/30 to-teal-200/20' 
-                                : 'from-primary/20 via-primary/5 to-fuchsia-500/20'}`}>
-                              <div className={`flex h-28 w-28 items-center justify-center rounded-[30px] shadow-2xl
-                                ${isNature 
-                                  ? 'bg-emerald-600 text-white' 
-                                  : 'bg-primary text-white'}`}>
-                                <StageIcon className="h-14 w-14" />
-                              </div>
-                            </div>
-                          )}
-
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-
-                          {/* Top Badge */}
-                          <div className="absolute left-5 top-5">
-                            <div className="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-bold text-white backdrop-blur-xl">
-                              {lang === "ar" ? "مرحلة تعليمية" : "Educational Stage"}
-                            </div>
-                          </div>
-
-                          {/* Floating Courses */}
-                          <motion.div
-                            animate={{ y: [0, -10, 0] }}
-                            transition={{ duration: 4, repeat: Infinity }}
-                            className="absolute bottom-5 left-5 rounded-2xl border border-white/10 bg-white/10 px-4 py-3 backdrop-blur-2xl"
-                          >
-                            <div className="flex items-center gap-3 text-white">
-                              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10">
-                                <BookOpen className="h-5 w-5" />
-                              </div>
-                              <div>
-                                <p className="text-lg font-black">{coursesCount}+</p>
-                                <p className="text-xs text-white/70">{lang === "ar" ? "كورسات" : "Courses"}</p>
-                              </div>
-                            </div>
-                          </motion.div>
                         </div>
 
-                        {/* CONTENT */}
-                        <div className="p-7">
-                          <div className="flex items-start justify-between gap-4">
+                        {/* Floating Courses */}
+                        <motion.div
+                          animate={{ y: [0, -10, 0] }}
+                          transition={{ duration: 4, repeat: Infinity }}
+                          className="absolute bottom-5 left-5 rounded-2xl border border-white/10 bg-white/10 px-4 py-3 backdrop-blur-2xl"
+                        >
+                          <div className="flex items-center gap-3 text-white">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10">
+                              <BookOpen className="h-5 w-5" />
+                            </div>
                             <div>
-                              <h3 className={`text-3xl font-black transition-colors ${!isDisabled ? `group-hover:text-${primaryColor}` : ''}`}>
-                                {stageName}
-                              </h3>
-                              <p className="mt-3 line-clamp-2 leading-8 text-foreground/60">
-                                {pick(s.description, s.description_ar) ||
-                                  (lang === "ar"
-                                    ? "برامج تعليمية احترافية ومناهج متطورة."
-                                    : "Professional educational programs.")}
-                              </p>
-                            </div>
-                            <div className={`flex h-14 w-14 items-center justify-center rounded-2xl transition-all group-hover:scale-110
-                              ${isNature 
-                                ? 'bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white' 
-                                : 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white'}`}>
-                              <StageIcon className="h-6 w-6" />
+                              <p className="text-lg font-black">{coursesCount}+</p>
+                              <p className="text-xs text-white/70">{lang === "ar" ? "كورسات" : "Courses"}</p>
                             </div>
                           </div>
+                        </motion.div>
+                      </div>
 
-                          {/* FEATURES */}
-                          <div className="mt-7 flex flex-wrap gap-3">
-                            {[
-                              lang === "ar" ? "دعم مباشر" : "Live Support",
-                              lang === "ar" ? "شرح فيديو" : "Video Lessons",
-                              lang === "ar" ? "اختبارات" : "Exams",
-                            ].map((item, idx) => (
-                              <div
-                                key={idx}
-                                className={`rounded-full border px-4 py-2 text-xs font-medium backdrop-blur-xl
-                                  ${isNature 
-                                    ? 'border-emerald-200 bg-white/60 text-emerald-700' 
-                                    : 'border-border bg-background/60 text-foreground/60'}`}
-                              >
-                                {item}
-                              </div>
-                            ))}
+                      {/* CONTENT */}
+                      <div className="p-7">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <h3 className={`text-3xl font-black transition-colors ${!isDisabled ? `group-hover:text-${primaryColor}` : ''}`}>
+                              {stageName}
+                            </h3>
+                            <p className="mt-3 line-clamp-2 leading-8 text-foreground/60">
+                              {pick(s.description, s.description_ar) ||
+                                (lang === "ar"
+                                  ? "برامج تعليمية احترافية ومناهج متطورة."
+                                  : "Professional educational programs.")}
+                            </p>
                           </div>
+                          <div className={`flex h-14 w-14 items-center justify-center rounded-2xl transition-all group-hover:scale-110
+                            ${isNature 
+                              ? 'bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white' 
+                              : 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white'}`}>
+                            <StageIcon className="h-6 w-6" />
+                          </div>
+                        </div>
 
-                          {/* BUTTON */}
-                          <div className="mt-8">
-                            <div className={`group/button inline-flex items-center gap-3 text-lg font-bold ${!isDisabled ? (isNature ? 'text-emerald-600' : 'text-primary') : 'text-foreground/30'}`}>
-                              {lang === "ar" ? "استكشف المواد" : "Explore Subjects"}
-                              <div className={`flex h-10 w-10 items-center justify-center rounded-full transition-all 
-                                ${!isDisabled 
-                                  ? (isNature 
-                                      ? 'bg-emerald-100 group-hover/button:bg-emerald-600 group-hover/button:text-white' 
-                                      : 'bg-primary/10 group-hover/button:bg-primary group-hover/button:text-white')
-                                  : 'bg-gray-200 dark:bg-gray-700'}`}>
-                                <Arrow className="h-5 w-5 transition-transform group-hover/button:translate-x-1 rtl:group-hover/button:-translate-x-1" />
-                              </div>
+                        {/* FEATURES */}
+                        <div className="mt-7 flex flex-wrap gap-3">
+                          {[
+                            lang === "ar" ? "دعم مباشر" : "Live Support",
+                            lang === "ar" ? "شرح فيديو" : "Video Lessons",
+                            lang === "ar" ? "اختبارات" : "Exams",
+                          ].map((item, idx) => (
+                            <div
+                              key={idx}
+                              className={`rounded-full border px-4 py-2 text-xs font-medium backdrop-blur-xl
+                                ${isNature 
+                                  ? 'border-emerald-200 bg-white/60 text-emerald-700' 
+                                  : 'border-border bg-background/60 text-foreground/60'}`}
+                            >
+                              {item}
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* BUTTON */}
+                        <div className="mt-8">
+                          <div className={`group/button inline-flex items-center gap-3 text-lg font-bold ${!isDisabled ? (isNature ? 'text-emerald-600' : 'text-primary') : 'text-foreground/30'}`}>
+                            {lang === "ar" ? "استكشف المواد" : "Explore Subjects"}
+                            <div className={`flex h-10 w-10 items-center justify-center rounded-full transition-all 
+                              ${!isDisabled 
+                                ? (isNature 
+                                    ? 'bg-emerald-100 group-hover/button:bg-emerald-600 group-hover/button:text-white' 
+                                    : 'bg-primary/10 group-hover/button:bg-primary group-hover/button:text-white')
+                                : 'bg-gray-200 dark:bg-gray-700'}`}>
+                              <Arrow className="h-5 w-5 transition-transform group-hover/button:translate-x-1 rtl:group-hover/button:-translate-x-1" />
                             </div>
                           </div>
                         </div>
                       </div>
-                    </motion.div>
-                  )}
+                    </div>
+                  </motion.div>
                 </SwiperSlide>
               );
             })}
@@ -453,7 +435,7 @@ const StageSkeleton = ({ isNature }: { isNature: boolean }) => {
           <div className={`mx-auto mt-6 h-20 w-full animate-pulse rounded-3xl ${isNature ? 'bg-emerald-100' : 'bg-muted'}`} />
           <div className={`mx-auto mt-6 h-8 w-2/3 animate-pulse rounded-2xl ${isNature ? 'bg-emerald-100/50' : 'bg-muted'}`} />
         </div>
-        <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className={`overflow-hidden rounded-[36px] border ${isNature ? 'border-emerald-200 bg-white/60' : 'border-border bg-card/60'}`}>
               <div className={`h-[320px] animate-pulse ${isNature ? 'bg-emerald-100' : 'bg-muted'}`} />

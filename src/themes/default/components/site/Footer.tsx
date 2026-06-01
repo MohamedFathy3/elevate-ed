@@ -349,9 +349,9 @@ export const Footer = () => {
 
           {/* RIGHT - Contact */}
           <div>
-            <h4 className="mb-8 text-xl font-bold">
+            {/* <h4 className="mb-8 text-xl font-bold">
               {lang === "ar" ? "تواصل معنا" : "Contact"}
-            </h4>
+            </h4> */}
 
             <div className="space-y-5">
               {footer.email && (
