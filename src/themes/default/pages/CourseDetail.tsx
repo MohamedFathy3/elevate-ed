@@ -518,11 +518,43 @@ const goToLessonPage = (lessonId: number) => {
   );
 };
 
-// 🟢 Lesson Card Component (مع زرار المشاهدة)
 const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFullCourse, isAuthenticated, onBuy, onWatch, isBuying, isSelected, isNature, isDark }: any) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const navigate = useNavigate(); // ✅ أضف useNavigate
+  const { slug } = useParams(); // ✅ جلب slug من الـ URL
+  
   const lessonTitle = lang === "ar" && lesson.title_ar ? lesson.title_ar : lesson.title;
   const lessonDesc = lang === "ar" && lesson.description_ar ? lesson.description_ar : lesson.description;
+  
+  // ✅ تجهيز الأجزاء من Arrays الدرس
+  const subParts = (lesson.titles || []).map((title: string, idx: number) => ({
+    id: idx,
+    title: title,
+    title_ar: lesson.titles_ar?.[idx] || title,
+    videoUrl: lesson.link_video?.[idx] || lesson.content_link,
+    imageUrl: lesson.imageUrl,
+  }));
+  
+  const hasSubParts = subParts.length > 0;
+  const lessonImage = lesson.imageUrl;
+  
+  // ✅ دالة للذهاب لصفحة الدرس مع تحديد الجزء
+  const goToLessonWithPart = (lessonId: number, partIndex: number) => {
+    navigate(`/${slug}/lesson/${lessonId}?part=${partIndex}`);
+  };
+  
+  const getVideoUrl = (url: string) => {
+    if (!url) return "#";
+    if (url.includes('youtube.com/watch?v=')) {
+      const videoId = url.split('v=')[1]?.split('&')[0];
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+    if (url.includes('youtu.be/')) {
+      const videoId = url.split('youtu.be/')[1]?.split('?')[0];
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+    return url;
+  };
   
   const cardBg = isNature 
     ? (isDark ? 'bg-amber-900/20' : 'bg-white') 
@@ -548,14 +580,17 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
       transition={{ delay: index * 0.05 }}
       className={`border rounded-2xl overflow-hidden transition-all ${cardBg} ${borderColor} ${isSelected ? selectedBorder : ''}`}
     >
+      {/* رأس الدرس الرئيسي */}
       <div 
         className={`p-4 flex items-center justify-between cursor-pointer transition-colors ${hoverBg}`} 
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-4 flex-1">
-          <div className={`w-10 h-10 rounded-xl ${numberBg} grid place-items-center text-white font-bold text-sm`}>
-            {index + 1}
-          </div>
+          <img 
+            src={lessonImage || "/default-course.jpg"} 
+            alt={lessonTitle}
+            className="w-12 h-12 rounded-xl object-cover"
+          />
           <div className="flex-1">
             <h3 className={`font-semibold ${titleColor}`}>{lessonTitle}</h3>
             <div className="flex items-center gap-3 text-xs text-foreground/50 mt-1">
@@ -566,30 +601,25 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
         </div>
         
         <div className="flex items-center gap-3">
-          {/* سعر الدرس */}
           {!isFree && !isPurchased && (
             <span className={`text-lg font-bold ${isNature ? 'text-amber-600 dark:text-amber-400' : 'text-primary'}`}>
               {parseFloat(lesson.price).toFixed(2)} EGP
             </span>
           )}
           
-          {/* ✅ زرار المشاهدة - الأهم */}
           {isPurchased && (
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={(e) => { e.stopPropagation(); onWatch(); }} 
               className={`px-4 py-2 rounded-xl text-white text-sm font-semibold flex items-center gap-2
-                ${isNature 
-                  ? 'bg-gradient-to-r from-amber-600 to-orange-600' 
-                  : 'gradient-primary'}`}
+                ${isNature ? 'bg-gradient-to-r from-amber-600 to-orange-600' : 'gradient-primary'}`}
             >
               <Eye className="w-4 h-4" />
               {lang === "ar" ? "مشاهدة" : "Watch"}
             </motion.button>
           )}
           
-          {/* زرار الشراء (إذا لم يكن مشترى) */}
           {!isFree && !isPurchased && isAuthenticated && !hasPurchasedFullCourse && (
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -603,18 +633,13 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
             </motion.button>
           )}
           
-          {/* الدرس مقفل (غير مسجل دخول) */}
           {!isAuthenticated && !hasPurchasedFullCourse && (
             <div className="px-4 py-2 rounded-xl bg-gray-200 dark:bg-gray-700 text-foreground/40 text-sm font-semibold flex items-center gap-1">
               <Lock className="w-3 h-3" /> {lang === "ar" ? "مقفل" : "Locked"}
             </div>
           )}
           
-          {/* السهم للتوسيع */}
-          <motion.div
-            animate={{ rotate: isExpanded ? 180 : 0 }}
-            transition={{ duration: 0.3 }}
-          >
+          <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.3 }}>
             <svg className="w-5 h-5 text-foreground/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
@@ -622,6 +647,7 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
         </div>
       </div>
       
+      {/* المحتوى الممتد - كروت الأجزاء */}
       <AnimatePresence>
         {isExpanded && (
           <motion.div
@@ -631,13 +657,98 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
             className="px-4 pb-4 pt-0"
           >
             <div className={`pt-3 border-t ${isNature ? 'border-amber-200 dark:border-amber-800' : 'border-border'}`}>
+              
+              {/* وصف الدرس */}
               {lessonDesc && (
-                <p className={`text-sm mb-3 ${isNature ? 'text-amber-700/70 dark:text-amber-300/70' : 'text-foreground/60'}`}>
+                <p className={`text-sm mb-4 ${isNature ? 'text-amber-700/70 dark:text-amber-300/70' : 'text-foreground/60'}`}>
                   {lessonDesc}
                 </p>
               )}
+              
+              {/* ✅ كروت أجزاء الدرس - كل كارت يودي على صفحة Lesson مع تحديد الجزء */}
+              {hasSubParts && isPurchased && (
+                <div className="mt-2">
+                  <h4 className={`text-sm font-semibold mb-3 ${isNature ? 'text-amber-700 dark:text-amber-300' : 'text-foreground'}`}>
+                    {lang === "ar" ? "📚 أجزاء الدرس:" : "📚 Lesson parts:"}
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {subParts.map((part: any, idx: number) => (
+                      <motion.div
+                        key={idx}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: idx * 0.05 }}
+                        onClick={() => goToLessonWithPart(lesson.id, idx)}
+                        className={`rounded-xl overflow-hidden border transition-all hover:shadow-lg cursor-pointer
+                          ${isNature 
+                            ? 'bg-white dark:bg-amber-900/30 border-amber-200 dark:border-amber-800' 
+                            : 'bg-card border-border'}`}
+                      >
+                        {/* صورة الجزء */}
+                        <div className="relative h-32 overflow-hidden">
+                          <img 
+                            src={lessonImage || "/default-course.jpg"} 
+                            alt={part.title}
+                            className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
+                          />
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                            <PlayCircle className="w-12 h-12 text-white drop-shadow-lg" />
+                          </div>
+                        </div>
+                        
+                        {/* محتوى الكارت */}
+                        <div className="p-3">
+                          <div className="flex items-start gap-2">
+                            <div className={`w-6 h-6 rounded-lg ${numberBg} grid place-items-center text-white font-bold text-xs flex-shrink-0`}>
+                              {idx + 1}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h5 className={`font-semibold text-sm truncate ${titleColor}`}>
+                                {lang === "ar" ? part.title_ar : part.title}
+                              </h5>
+                              <p className="text-xs text-foreground/50 mt-1 flex items-center gap-1">
+                                <Video className="w-3 h-3" />
+                                {lang === "ar" ? "مقطع فيديو" : "Video part"}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div
+                            className={`mt-3 w-full py-2 rounded-lg text-center text-sm font-medium transition-all flex items-center justify-center gap-2
+                              ${isNature 
+                                ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-800/50 dark:text-amber-300' 
+                                : 'bg-primary/10 text-primary hover:bg-primary/20'}`}
+                          >
+                            <Eye className="w-3 h-3" />
+                            {lang === "ar" ? "مشاهدة" : "Watch"}
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* لو الدرس مش مشترى */}
+              {hasSubParts && !isPurchased && (
+                <div className="mt-2 p-8 rounded-xl bg-gray-100 dark:bg-gray-800 text-center">
+                  <Lock className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                  <p className="text-sm text-gray-500">
+                    {lang === "ar" ? "اشتر الدرس لمشاهدة الأجزاء" : "Buy the lesson to watch parts"}
+                  </p>
+                  <button
+                    onClick={onBuy}
+                    className={`mt-3 px-4 py-2 rounded-lg text-sm font-semibold text-white
+                      ${isNature ? 'bg-amber-600' : 'bg-primary'}`}
+                  >
+                    {lang === "ar" ? "شراء الدرس" : "Buy Lesson"}
+                  </button>
+                </div>
+              )}
+              
+              {/* شرط اجتياز الامتحان */}
               {lesson.must_pass_to_unlock && !isPurchased && (
-                <div className="flex items-center gap-2 text-amber-600 text-sm">
+                <div className="flex items-center gap-2 text-amber-600 text-sm mt-3">
                   <Lock className="w-4 h-4" /> 
                   {lang === "ar" ? "يجب اجتياز الامتحان السابق" : "Must pass previous exam"}
                 </div>
@@ -649,7 +760,6 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
     </motion.div>
   );
 };
-
 // Skeleton Component
 const CourseDetailSkeleton = ({ isNature }: { isNature: boolean }) => {
   return (

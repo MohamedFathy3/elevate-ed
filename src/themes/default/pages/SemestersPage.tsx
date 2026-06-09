@@ -398,7 +398,7 @@ export const SemestersPage = () => {
                 {isNature ? <Leaf className="w-5 h-5 text-white" /> : <Flame className="w-5 h-5 text-white" />}
               </div>
               <h2 className={`text-2xl font-bold ${isNature ? 'text-amber-800 dark:text-amber-100' : ''}`}>
-                {lang === "ar" ? "كورسات مباشرة" : "Direct Courses"}
+                {lang === "ar" ? "كورسات منفصله" : "separate Courses"}
               </h2>
               <span className={`text-sm px-2 py-0.5 rounded-full ${isNature ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-secondary text-foreground/50'}`}>
                 {filteredDirectCourses.length}
@@ -584,10 +584,7 @@ const DirectCourseCard = ({ course, index, slug, lang, pick, isNature, isDark }:
               <BookOpen className="w-3 h-3" />
               {lessonsCount} {lang === "ar" ? "دروس" : "lessons"}
             </span>
-            <span className="flex items-center gap-1">
-              <Users className="w-3 h-3" />
-              {studentsCount} {lang === "ar" ? "طالب" : "students"}
-            </span>
+          
           </div>
           
           <div className="flex items-center justify-between">
@@ -623,6 +620,7 @@ const DirectCourseCard = ({ course, index, slug, lang, pick, isNature, isDark }:
 };
 
 // 🟢 Semester Card Component (معدل للثيمات)
+// 🟢 Semester Card Component (معدل مع صورة كخلفية)
 const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isNature, isDark }: any) => {
   const [isBuying, setIsBuying] = useState(false);
   const { buySemester } = useBuyCourse();
@@ -633,6 +631,16 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
   const hasDiscount = discountPercent > 0;
   const coursesCount = semester.courses?.length || 0;
   
+  // جلب رابط الصورة
+  const semesterImageUrl = semester.image?.fullUrl || semester.imageUrl;
+  
+  // صورة افتراضية (يمكنك تغيير الرابط حسب اللي عندك)
+  const defaultImage = isNature 
+    ? "https://images.unsplash.com/photo-1434030216411-0b793f4f4173?w=400&h=200&fit=crop" // صورة طبيعة للمود نيتشر
+    : "https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=400&h=200&fit=crop"; // صورة مكتبية للمود العادي
+  
+  const finalImageUrl = semesterImageUrl || defaultImage;
+
   const cardBg = isNature 
     ? (isDark ? 'bg-amber-900/20' : 'bg-white') 
     : 'bg-card';
@@ -660,37 +668,56 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
       whileHover={{ y: -5 }}
       className={`group relative rounded-2xl border transition-all overflow-hidden ${cardBg} ${cardBorder} hover:border-${isNature ? 'amber-400' : 'primary'}/30`}
     >
-      {hasDiscount && (
-        <div className="absolute top-4 right-4 z-10 flex items-center gap-1 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-          <Percent className="w-3 h-3" />
-          {discountPercent}% OFF
-        </div>
-      )}
-
-      <div className="p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div className={`w-12 h-12 rounded-xl ${isNature ? 'bg-gradient-to-r from-amber-500 to-orange-600' : 'gradient-primary'} grid place-items-center shadow-lg`}>
-            <Crown className="w-6 h-6 text-white" />
+      {/* قسم الصورة العلوي (Banner) */}
+      <div className="relative h-36 overflow-hidden">
+        <img 
+          src={finalImageUrl} 
+          alt={pick(semester.name, semester.name_ar)}
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+        />
+        {/* طبقة تدرج لجعل النص اللي جوه يظهر بوضوح لو حطينا نص */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+        
+        {/* أيقونة أو badge فوق الصورة */}
+        {coursesCount > 0 && (
+          <div className={`absolute top-3 left-3 flex items-center gap-1 text-xs px-2 py-1 rounded-full backdrop-blur-md bg-black/50 text-white`}>
+            <BookOpen className="w-3 h-3" />
+            <span>{coursesCount} {lang === "ar" ? "كورسات" : "courses"}</span>
           </div>
-          {coursesCount > 0 && (
-            <div className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full ${isNature ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-secondary text-foreground/50'}`}>
-              <BookOpen className="w-3 h-3" />
-              <span>{coursesCount} {lang === "ar" ? "كورسات" : "courses"}</span>
-            </div>
-          )}
+        )}
+        
+        {hasDiscount && (
+          <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+            <Percent className="w-3 h-3" />
+            {discountPercent}% OFF
+          </div>
+        )}
+      </div>
+
+      {/* محتوى الكارد */}
+      <div className="p-5">
+        <div className="flex items-start justify-between mb-3">
+          {/* أيقونة صغيرة بجانب الاسم (بديل في حالة عدم وجود صورة) - دلوقتي دي مش ضرورية بس حلوة كلمسة */}
+          <div className={`w-8 h-8 rounded-lg ${isNature ? 'bg-amber-100 dark:bg-amber-900/40' : 'bg-secondary'} grid place-items-center`}>
+            {isNature ? (
+              <Leaf className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+            ) : (
+              <Crown className="w-4 h-4 text-primary" />
+            )}
+          </div>
         </div>
 
-        <h3 className={`text-xl font-bold mb-2 transition-colors ${isNature ? 'text-amber-800 dark:text-amber-200 group-hover:text-amber-600' : 'group-hover:text-primary'}`}>
+        <h3 className={`text-xl font-bold mb-2 transition-colors line-clamp-1 ${isNature ? 'text-amber-800 dark:text-amber-200 group-hover:text-amber-600' : 'group-hover:text-primary'}`}>
           {pick(semester.name, semester.name_ar)}
         </h3>
         
         {semester.description && (
-          <p className="text-sm text-foreground/60 mb-4 line-clamp-2">
+          <p className="text-sm text-foreground/60 mb-3 line-clamp-2">
             {pick(semester.description, semester.description_ar)}
           </p>
         )}
 
-        <div className="mt-4">
+        <div className="mt-3">
           {hasDiscount ? (
             <div className="flex items-baseline gap-2 flex-wrap">
               <span className={`text-2xl font-black ${isNature ? 'text-amber-600 dark:text-amber-400' : 'text-primary'}`}>
@@ -708,18 +735,18 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
           )}
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-4 text-sm text-foreground/60">
+        <div className="mt-3 flex flex-wrap gap-4 text-xs text-foreground/60">
           <div className="flex items-center gap-1">
-            <Clock className="w-4 h-4" />
+            <Clock className="w-3 h-3" />
             <span>{lang === "ar" ? "تعلّم بوتيرتك" : "Self-paced"}</span>
           </div>
           <div className="flex items-center gap-1">
-            <Award className="w-4 h-4" />
+            <Award className="w-3 h-3" />
             <span>{lang === "ar" ? "شهادة معتمدة" : "Certificate"}</span>
           </div>
         </div>
 
-        <div className="mt-6 pt-4 border-t" style={{ borderColor: isNature ? (isDark ? '#854d0e' : '#fde68a') : 'var(--border)' }}>
+        <div className="mt-5 pt-4 border-t" style={{ borderColor: isNature ? (isDark ? '#854d0e' : '#fde68a') : 'var(--border)' }}>
           <div className="flex gap-3">
             <button
               onClick={handleBuySemester}

@@ -117,8 +117,8 @@ export const Navbar = () => {
                 onClick={() => setProfileOpen(!profileOpen)}
                 className="flex items-center gap-2 px-3 py-2 rounded-full bg-gradient-to-r from-primary/10 to-accent/10 hover:from-primary/20 hover:to-accent/20 transition-all"
               >
-                <div className="w-8 h-8 rounded-full gradient-primary grid place-items-center">
-                  <User className="w-4 h-4 text-white" />
+                <div className="w-10 h-10 rounded-full gradient-primary grid place-items-center">
+                  <img src={student?.imageUrl} alt={studentName} className="w-full h-full object-cover rounded-full" />
                 </div>
                 <span className="text-sm font-medium hidden md:block">{studentName}</span>
               </button>

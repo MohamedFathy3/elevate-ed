@@ -9,6 +9,7 @@ import { useTeacher } from "@/context/TeacherContext";
 import { useMemo } from "react";
 
 // 🟢 Types
+// في useStudent.ts - تحديث واجهة StudentRegisterData
 export interface StudentRegisterData {
   name: string;
   phone: string;
@@ -18,11 +19,13 @@ export interface StudentRegisterData {
   gender: 'male' | 'female';
   teacher_id: number;
   stage_id: number;
-  center_time?: string;
-  center_day?: string;
-  center_hour_id?: number; 
+  center_hour_id?: number;
+  // الحقول الجديدة
+  governorate?: string;
+  school_name?: string;
+  type_of_study?: 'general' | 'azhar';
+  profile?: number | null;
 }
-
 export interface StudentLoginData {
   phone: string;
   password: string;

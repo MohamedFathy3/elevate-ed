@@ -142,7 +142,7 @@ export const Navbar = () => {
                   ${isNature 
                     ? 'bg-amber-600 text-white' 
                     : 'gradient-primary'}`}>
-                  <User className="w-4 h-4 text-white" />
+                    <img src={student?.image_url} alt={studentName} className="w-4 h-4 object-cover rounded-full" />  
                 </div>
                 <span className="text-sm font-medium hidden md:block">{studentName}</span>
               </button>

@@ -2,7 +2,6 @@
 // pages/SubjectsPage.tsx
 import { useSearchParams, useParams, Link } from "react-router-dom";
 import { useLang } from "@/i18n/LanguageContext";
-import { useSubjects } from "@/hooks/useSubjects";
 import { useTeacher } from "@/context/TeacherContext";
 import { useStudentAuth } from "@/context/StudentAuthContext";
 import { useTheme } from "@/context/ThemeContext";
@@ -19,16 +18,18 @@ export const SubjectsPage = () => {
   const { lang, dir } = useLang();
   const { theme, colorMode } = useTheme();
   const { slug } = useParams();
-  const { teacher } = useTeacher();
+  const { teacher, stages, pick, isLoading: teacherLoading } = useTeacher();
   const { student, isAuthenticated } = useStudentAuth();
   const [searchParams] = useSearchParams();
+  
+  // 🆕 نجيب stage_id من الـ URL (لو موجود)
   const stageId = searchParams.get('stage_id');
   const stageName = searchParams.get('stage_name');
   
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<string>("default");
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
+  const [selectedStageId, setSelectedStageId] = useState<string>(stageId || "");
   
   const isNature = theme === 'nature';
   const isDark = colorMode === 'dark';
@@ -52,19 +53,30 @@ export const SubjectsPage = () => {
     ? (isDark ? 'bg-amber-900/30' : 'bg-white') 
     : 'bg-card';
   
-  const { data: subjects, isLoading } = useSubjects(
-    stageId ? parseInt(stageId) : undefined,
-    teacher?.id
-  );
+  // 🆕 المواد من الـ Teacher Context مباشرة
+  const allSubjects = teacher?.website?.subjects || [];
   
-  const filteredSubjects = useMemo(() => {
-    if (!subjects) return [];
+  // 🆕 فلترة المواد حسب المرحلة المختارة
+  const filteredSubjectsByStage = useMemo(() => {
+    if (!allSubjects.length) return [];
     
-    let filtered = [...subjects];
+    if (selectedStageId) {
+      return allSubjects.filter((subject: any) => 
+        subject.stage_id === parseInt(selectedStageId)
+      );
+    }
+    return allSubjects;
+  }, [allSubjects, selectedStageId]);
+  
+  // 🆕 فلترة حسب البحث
+  const filteredSubjects = useMemo(() => {
+    if (!filteredSubjectsByStage.length) return [];
+    
+    let filtered = [...filteredSubjectsByStage];
     
     if (searchQuery) {
       filtered = filtered.filter((subject: any) => {
-        const subjectName = (lang === "ar" && subject.name_ar ? subject.name_ar : subject.name)?.toLowerCase() || "";
+        const subjectName = pick(subject.name, subject.name_ar)?.toLowerCase() || "";
         return subjectName.includes(searchQuery.toLowerCase());
       });
     }
@@ -72,15 +84,15 @@ export const SubjectsPage = () => {
     switch (sortBy) {
       case "name_asc":
         filtered.sort((a, b) => {
-          const nameA = (lang === "ar" && a.name_ar ? a.name_ar : a.name) || "";
-          const nameB = (lang === "ar" && b.name_ar ? b.name_ar : b.name) || "";
+          const nameA = pick(a.name, a.name_ar) || "";
+          const nameB = pick(b.name, b.name_ar) || "";
           return nameA.localeCompare(nameB);
         });
         break;
       case "name_desc":
         filtered.sort((a, b) => {
-          const nameA = (lang === "ar" && a.name_ar ? a.name_ar : a.name) || "";
-          const nameB = (lang === "ar" && b.name_ar ? b.name_ar : b.name) || "";
+          const nameA = pick(a.name, a.name_ar) || "";
+          const nameB = pick(b.name, b.name_ar) || "";
           return nameB.localeCompare(nameA);
         });
         break;
@@ -90,22 +102,28 @@ export const SubjectsPage = () => {
     }
     
     return filtered;
-  }, [subjects, searchQuery, sortBy, lang]);
+  }, [filteredSubjectsByStage, searchQuery, sortBy, pick]);
   
   const totalResults = filteredSubjects.length;
   const hasResults = totalResults > 0;
+  const stagesList = stages || [];
   
   const resetFilters = () => {
     setSearchQuery("");
     setSortBy("default");
-    setSelectedFeatures([]);
+    setSelectedStageId("");
   };
   
-  const availableFeatures = [
-    { id: "has_courses", label_ar: "يوجد كورسات", label_en: "Has Courses", icon: BookOpen },
-    { id: "has_exams", label_ar: "يوجد امتحانات", label_en: "Has Exams", icon: Award },
-    { id: "popular", label_ar: "شائع", label_en: "Popular", icon: TrendingUp },
-  ];
+  const clearStageFilter = () => {
+    setSelectedStageId("");
+  };
+  
+  // العثور على اسم المرحلة المختارة
+  const getSelectedStageName = () => {
+    if (stageName && selectedStageId) return stageName;
+    const stage = stagesList.find((s: any) => s.id === parseInt(selectedStageId));
+    return stage ? pick(stage.name, stage.name_ar) : "";
+  };
 
   // أنيميشن المتغيرات
   const containerVariants = {
@@ -124,7 +142,7 @@ export const SubjectsPage = () => {
     visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
   };
 
-  if (isLoading) {
+  if (teacherLoading) {
     return <SubjectsSkeleton isNature={isNature} />;
   }
 
@@ -147,17 +165,6 @@ export const SubjectsPage = () => {
           transition={{ duration: 10, repeat: Infinity, delay: 2 }}
           className={`absolute bottom-20 left-10 w-96 h-96 rounded-full blur-3xl ${isNature ? 'bg-orange-300/20' : 'bg-accent/5'}`}
         />
-        {/* Floating particles */}
-        {[...Array(15)].map((_, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: [0, 0.4, 0], scale: [0, 1, 0], y: [0, -40, -80] }}
-            transition={{ duration: 3 + i, repeat: Infinity, delay: i * 0.2 }}
-            className={`absolute w-1 h-1 rounded-full ${isNature ? 'bg-amber-400' : 'bg-primary'} ${i % 2 === 0 ? 'left-1/4' : 'right-1/4'}`}
-            style={{ top: `${Math.random() * 100}%` }}
-          />
-        ))}
       </div>
 
       <div className="container-tight relative">
@@ -175,17 +182,29 @@ export const SubjectsPage = () => {
             <Link to={`/${slug}/stages`} className={`hover:${isNature ? 'text-amber-600' : 'text-primary'} transition-colors`}>
               {lang === "ar" ? "المراحل" : "Stages"}
             </Link>
+            {selectedStageId && (
+              <>
+                <ChevronRight className="w-4 h-4" />
+                <span className={`font-medium ${isNature ? 'text-amber-700 dark:text-amber-400' : 'text-foreground'}`}>
+                  {getSelectedStageName()}
+                </span>
+              </>
+            )}
             <ChevronRight className="w-4 h-4" />
             <span className={`font-medium ${isNature ? 'text-amber-700 dark:text-amber-400' : 'text-foreground'}`}>
-              {stageName || (lang === "ar" ? "المواد" : "Subjects")}
+              {lang === "ar" ? "المواد" : "Subjects"}
             </span>
           </div>
           
           <h1 className={`text-4xl md:text-5xl font-black ${isNature ? 'text-amber-800 dark:text-amber-100' : ''}`}>
-            {stageName || (lang === "ar" ? "المواد الدراسية" : "Subjects")}
+            {selectedStageId 
+              ? `${getSelectedStageName()} - ${lang === "ar" ? "المواد" : "Subjects"}`
+              : (lang === "ar" ? "المواد الدراسية" : "Subjects")}
           </h1>
           <p className="text-foreground/60 mt-2">
-            {lang === "ar" ? "اختر المادة لاستعراض الترمات والكورسات" : "Choose a subject to view semesters and courses"}
+            {lang === "ar" 
+              ? "اختر المادة لاستعراض الترمات والكورسات" 
+              : "Choose a subject to view semesters and courses"}
           </p>
         </motion.div>
 
@@ -249,6 +268,17 @@ export const SubjectsPage = () => {
               <option value="name_desc">{lang === "ar" ? "الاسم (ي-أ)" : "Name (Z-A)"}</option>
             </select>
             
+            {selectedStageId && (
+              <button
+                onClick={clearStageFilter}
+                className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs
+                  ${isNature ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-secondary text-foreground/70'}`}
+              >
+                {getSelectedStageName()}
+                <X className="w-3 h-3" />
+              </button>
+            )}
+            
             <div className={`text-sm px-3 py-1.5 rounded-full ${isNature ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-secondary text-foreground/50'}`}>
               {totalResults} {lang === "ar" ? "مادة" : "subjects"}
             </div>
@@ -264,42 +294,48 @@ export const SubjectsPage = () => {
               >
                 <div className={`mt-4 p-5 rounded-xl border ${inputBg} ${cardBorder}`}>
                   <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-                    <h4 className="font-semibold">{lang === "ar" ? "فلترة حسب الميزات" : "Filter by Features"}</h4>
-                    <button
-                      onClick={resetFilters}
-                      className="text-sm text-foreground/50 hover:text-primary transition-colors"
-                    >
-                      {lang === "ar" ? "إعادة ضبط" : "Reset"}
-                    </button>
+                    <h4 className="font-semibold">{lang === "ar" ? "فلترة حسب المرحلة" : "Filter by Stage"}</h4>
+                    {selectedStageId && (
+                      <button
+                        onClick={clearStageFilter}
+                        className="text-sm text-foreground/50 hover:text-primary transition-colors"
+                      >
+                        {lang === "ar" ? "إزالة الفلتر" : "Clear filter"}
+                      </button>
+                    )}
                   </div>
-                  <div className="flex flex-wrap gap-3">
-                    {availableFeatures.map((feature) => {
-                      const Icon = feature.icon;
-                      const isSelected = selectedFeatures.includes(feature.id);
-                      return (
-                        <motion.button
-                          key={feature.id}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => {
-                            if (isSelected) {
-                              setSelectedFeatures(selectedFeatures.filter(f => f !== feature.id));
-                            } else {
-                              setSelectedFeatures([...selectedFeatures, feature.id]);
-                            }
-                          }}
-                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm transition-all ${
-                            isSelected
+                  
+                  {stagesList.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => setSelectedStageId("")}
+                        className={`px-4 py-2 rounded-full text-sm transition-all ${
+                          !selectedStageId
+                            ? (isNature ? 'bg-amber-600 text-white' : 'gradient-primary text-white')
+                            : `bg-secondary hover:bg-secondary/80`
+                        }`}
+                      >
+                        {lang === "ar" ? "الكل" : "All"}
+                      </button>
+                      {stagesList.map((stage: any) => (
+                        <button
+                          key={stage.id}
+                          onClick={() => setSelectedStageId(stage.id.toString())}
+                          className={`px-4 py-2 rounded-full text-sm transition-all ${
+                            selectedStageId === stage.id.toString()
                               ? (isNature ? 'bg-amber-600 text-white' : 'gradient-primary text-white')
                               : `bg-secondary hover:bg-secondary/80`
                           }`}
                         >
-                          <Icon className="w-4 h-4" />
-                          <span>{lang === "ar" ? feature.label_ar : feature.label_en}</span>
-                        </motion.button>
-                      );
-                    })}
-                  </div>
+                          {pick(stage.name, stage.name_ar)}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-foreground/50">
+                      {lang === "ar" ? "لا توجد مراحل متاحة" : "No stages available"}
+                    </p>
+                  )}
                 </div>
               </motion.div>
             )}
@@ -360,6 +396,7 @@ export const SubjectsPage = () => {
                     index={i}
                     slug={slug!}
                     lang={lang}
+                    pick={pick}
                     isNature={isNature}
                     isDark={isDark}
                     primaryGradient={primaryGradient}
@@ -374,10 +411,10 @@ export const SubjectsPage = () => {
   );
 };
 
-// 🟢 Subject Card Component (معدل للثيمات)
-const SubjectCard = ({ subject, index, slug, lang, isNature, isDark, primaryGradient }: any) => {
-  const subjectName = lang === "ar" && subject.name_ar ? subject.name_ar : subject.name;
-  const subjectStage = subject.stage?.name || "";
+// 🟢 Subject Card Component (معدل)
+const SubjectCard = ({ subject, index, slug, lang, pick, isNature, isDark, primaryGradient }: any) => {
+  const subjectName = pick(subject.name, subject.name_ar);
+  const subjectStage = subject.stage ? pick(subject.stage.name, subject.stage.name_ar) : "";
   
   const cardBg = isNature 
     ? (isDark ? 'bg-amber-900/20' : 'bg-white') 
@@ -405,17 +442,12 @@ const SubjectCard = ({ subject, index, slug, lang, isNature, isDark, primaryGrad
       className={`group relative rounded-2xl border transition-all cursor-pointer
         ${cardBg} ${cardBorder} ${cardHoverBorder} shadow-sm hover:shadow-xl`}
     >
-      {/* Animated shine effect */}
-      <motion.div
-        className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent z-20 pointer-events-none rounded-2xl"
-      />
-      
       <Link to={`/${slug}/semesters?subject_id=${subject.id}&subject_name=${encodeURIComponent(subjectName)}`}>
         <div className="p-6">
           {/* Icon */}
           <motion.div 
             whileHover={{ scale: 1.1, rotate: 5 }}
-            className={`w-12 h-12 rounded-xl ${iconBg} grid place-items-center mb-4 shadow-lg transition-transform`}
+            className={`w-12 h-12 rounded-xl bg-gradient-to-r ${iconBg} grid place-items-center mb-4 shadow-lg transition-transform`}
           >
             {isNature ? <Leaf className="w-6 h-6 text-white" /> : <BookOpen className="w-6 h-6 text-white" />}
           </motion.div>
@@ -433,13 +465,6 @@ const SubjectCard = ({ subject, index, slug, lang, isNature, isDark, primaryGrad
             </div>
           )}
           
-          {/* Description */}
-          <p className={`text-sm line-clamp-2 min-h-[40px] ${isNature ? 'text-amber-700/60 dark:text-amber-300/60' : 'text-foreground/60'}`}>
-            {lang === "ar" 
-              ? `استعرض الترمات والكورسات المتاحة في ${subjectName}`
-              : `Browse semesters and courses available in ${subjectName}`}
-          </p>
-          
           {/* View Button */}
           <div className="mt-4 pt-3 border-t" style={{ borderColor: isNature ? (isDark ? '#854d0e' : '#fde68a') : 'var(--border)' }}>
             <div className={`inline-flex items-center gap-2 font-semibold text-sm transition-all group-hover:gap-3
@@ -454,7 +479,7 @@ const SubjectCard = ({ subject, index, slug, lang, isNature, isDark, primaryGrad
   );
 };
 
-// 🟢 Skeleton Component (معدل للثيمات)
+// 🟢 Skeleton Component
 const SubjectsSkeleton = ({ isNature }: { isNature: boolean }) => {
   return (
     <div className={`min-h-screen pt-32 pb-20 ${isNature ? 'bg-cream' : 'bg-background'}`}>

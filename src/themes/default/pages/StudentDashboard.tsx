@@ -5,7 +5,7 @@ import { useLang } from "@/i18n/LanguageContext";
 import { useStudentProfile, useStudentLearning, useCurrentStudent } from "@/hooks/useStudent";
 import { useWalletBalance, useCreateRechargeCode, useRechargeWallet } from "@/hooks/useWallet";
 import { useTheme } from "@/context/ThemeContext";
-import { BookOpen, Clock, Award, Calendar, ChevronRight, User, Phone, Mail, GraduationCap, FileQuestion, ClipboardList, CheckCircle, XCircle, TrendingUp, Eye, Wallet, CreditCard, Copy, RefreshCw, Loader2, Zap, Leaf, Sun, Moon } from "lucide-react";
+import { BookOpen, Clock, Award, Calendar, ChevronRight, User, Phone, Mail, GraduationCap, FileQuestion, ClipboardList, CheckCircle, XCircle, TrendingUp, Eye, Wallet, CreditCard, Copy, RefreshCw, Loader2, Zap, Leaf, Sun, Moon, Wifi, Building, Landmark, School, MapPin, Users } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
@@ -29,7 +29,70 @@ const StudentDashboard = () => {
   const [showRechargeModal, setShowRechargeModal] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+// دوال مساعدة لترجمة اسم المحافظة
+const getGovernorateNameAr = (govValue: string) => {
+  const governorates: Record<string, string> = {
+    cairo: "القاهرة",
+    alexandria: "الإسكندرية",
+    giza: "الجيزة",
+    sharqia: "الشرقية",
+    dakahlia: "الدقهلية",
+    beheira: "البحيرة",
+    qalyubia: "القليوبية",
+    menofia: "المنوفية",
+    gharbia: "الغربية",
+    kafr_el_sheikh: "كفر الشيخ",
+    ismailia: "الإسماعيلية",
+    port_said: "بورسعيد",
+    suez: "السويس",
+    damietta: "دمياط",
+    luxor: "الأقصر",
+    aswan: "أسوان",
+    sohag: "سوهاج",
+    asyut: "أسيوط",
+    minya: "المنيا",
+    beni_suef: "بني سويف",
+    qena: "قنا",
+    red_sea: "البحر الأحمر",
+    new_valley: "الوادي الجديد",
+    matrouh: "مطروح",
+    north_sinai: "شمال سيناء",
+    south_sinai: "جنوب سيناء",
+  };
+  return governorates[govValue] || govValue;
+};
 
+const getGovernorateNameEn = (govValue: string) => {
+  const governorates: Record<string, string> = {
+    cairo: "Cairo",
+    alexandria: "Alexandria",
+    giza: "Giza",
+    sharqia: "Sharqia",
+    dakahlia: "Dakahlia",
+    beheira: "Beheira",
+    qalyubia: "Qalyubia",
+    menofia: "Menofia",
+    gharbia: "Gharbia",
+    kafr_el_sheikh: "Kafr El Sheikh",
+    ismailia: "Ismailia",
+    port_said: "Port Said",
+    suez: "Suez",
+    damietta: "Damietta",
+    luxor: "Luxor",
+    aswan: "Aswan",
+    sohag: "Sohag",
+    asyut: "Asyut",
+    minya: "Minya",
+    beni_suef: "Beni Suef",
+    qena: "Qena",
+    red_sea: "Red Sea",
+    new_valley: "New Valley",
+    matrouh: "Matrouh",
+    north_sinai: "North Sinai",
+    south_sinai: "South Sinai",
+  };
+  return governorates[govValue] || govValue;
+};
   // الألوان حسب الثيم
   const primaryGradient = isNature 
     ? "from-amber-500 to-orange-600" 
@@ -259,37 +322,149 @@ const StudentDashboard = () => {
         )}
         
         {/* Student Info Section */}
-        {studentInfo && (
-          <div className={`${cardBg} rounded-2xl border p-6 mb-8`}>
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <User className={`w-5 h-5 ${isNature ? 'text-amber-600' : 'text-primary'}`} />
-              {lang === "ar" ? "معلومات الطالب" : "Student Information"}
-            </h2>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-                <Phone className="w-5 h-5 text-foreground/50" />
-                <div>
-                  <p className="text-xs text-foreground/50">{lang === "ar" ? "رقم الهاتف" : "Phone"}</p>
-                  <p className="font-medium">{studentInfo?.phone || "-"}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-                <Mail className="w-5 h-5 text-foreground/50" />
-                <div>
-                  <p className="text-xs text-foreground/50">{lang === "ar" ? "ولي الأمر" : "Parent"}</p>
-                  <p className="font-medium">{studentInfo?.phone_parent || "-"}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-                <GraduationCap className="w-5 h-5 text-foreground/50" />
-                <div>
-                  <p className="text-xs text-foreground/50">{lang === "ar" ? "كود ولي الأمر" : "Parent Code"}</p>
-                  <p className="font-medium">{studentInfo?.code_parent || "-"}</p>
-                </div>
-              </div>
-            </div>
-          </div>
+    {/* Student Info Section - معدل مع الحقول الجديدة */}
+{studentInfo && (
+  <div className={`${cardBg} rounded-2xl border p-6 mb-8`}>
+    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+      <User className={`w-5 h-5 ${isNature ? 'text-amber-600' : 'text-primary'}`} />
+      {lang === "ar" ? "معلومات الطالب" : "Student Information"}
+    </h2>
+    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* الاسم */}
+      <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
+        <User className="w-5 h-5 text-foreground/50" />
+        <div>
+          <p className="text-xs text-foreground/50">{lang === "ar" ? "الاسم" : "Name"}</p>
+          <p className="font-medium">{studentInfo?.name || "-"}</p>
+        </div>
+      </div>
+      
+      {/* رقم الهاتف */}
+      <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
+        <Phone className="w-5 h-5 text-foreground/50" />
+        <div>
+          <p className="text-xs text-foreground/50">{lang === "ar" ? "رقم الهاتف" : "Phone"}</p>
+          <p className="font-medium">{studentInfo?.phone || "-"}</p>
+        </div>
+      </div>
+      
+      {/* رقم ولي الأمر */}
+      <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
+        <Users className="w-5 h-5 text-foreground/50" />
+        <div>
+          <p className="text-xs text-foreground/50">{lang === "ar" ? "هاتف ولي الأمر" : "Parent Phone"}</p>
+          <p className="font-medium">{studentInfo?.phone_parent || "-"}</p>
+        </div>
+      </div>
+      
+      {/* كود ولي الأمر */}
+      <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
+        <GraduationCap className="w-5 h-5 text-foreground/50" />
+        <div>
+          <p className="text-xs text-foreground/50">{lang === "ar" ? "كود ولي الأمر" : "Parent Code"}</p>
+          <p className="font-mono font-medium">{studentInfo?.code_parent || "-"}</p>
+        </div>
+      </div>
+      
+      {/* المحافظة 🆕 */}
+      <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
+        <MapPin className="w-5 h-5 text-foreground/50" />
+        <div>
+          <p className="text-xs text-foreground/50">{lang === "ar" ? "المحافظة" : "Governorate"}</p>
+          <p className="font-medium">
+            {studentInfo?.governorate ? (
+              lang === "ar" 
+                ? getGovernorateNameAr(studentInfo.governorate)
+                : getGovernorateNameEn(studentInfo.governorate)
+            ) : "-"}
+          </p>
+        </div>
+      </div>
+      
+      {/* اسم المدرسة 🆕 */}
+      <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
+        <School className="w-5 h-5 text-foreground/50" />
+        <div>
+          <p className="text-xs text-foreground/50">{lang === "ar" ? "اسم المدرسة" : "School Name"}</p>
+          <p className="font-medium">{studentInfo?.school_name || "-"}</p>
+        </div>
+      </div>
+      
+      {/* نوع الدراسة 🆕 */}
+      <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
+        {studentInfo?.type_of_study === "azhar" ? (
+          <Landmark className="w-5 h-5 text-foreground/50" />
+        ) : (
+          <BookOpen className="w-5 h-5 text-foreground/50" />
         )}
+        <div>
+          <p className="text-xs text-foreground/50">{lang === "ar" ? "نوع الدراسة" : "Study Type"}</p>
+          <p className="font-medium">
+            {studentInfo?.type_of_study === "azhar" 
+              ? (lang === "ar" ? "أزهري" : "Azhar")
+              : (lang === "ar" ? "عام" : "General")}
+          </p>
+        </div>
+      </div>
+      
+      {/* نوع الحضور */}
+      <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
+        {studentInfo?.type_of_attendance === "center" ? (
+          <Building className="w-5 h-5 text-foreground/50" />
+        ) : (
+          <Wifi className="w-5 h-5 text-foreground/50" />
+        )}
+        <div>
+          <p className="text-xs text-foreground/50">{lang === "ar" ? "نوع الحضور" : "Attendance Type"}</p>
+          <p className="font-medium">
+            {studentInfo?.type_of_attendance === "center" 
+              ? (lang === "ar" ? "سنتر" : "Center")
+              : (lang === "ar" ? "أونلاين" : "Online")}
+          </p>
+        </div>
+      </div>
+      
+      {/* النوع */}
+      <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
+        <User className="w-5 h-5 text-foreground/50" />
+        <div>
+          <p className="text-xs text-foreground/50">{lang === "ar" ? "النوع" : "Gender"}</p>
+          <p className="font-medium">
+            {studentInfo?.gender === "male" 
+              ? (lang === "ar" ? "ذكر" : "Male")
+              : studentInfo?.gender === "female" 
+                ? (lang === "ar" ? "أنثى" : "Female")
+                : "-"}
+          </p>
+        </div>
+      </div>
+      
+      {/* الحالة */}
+      <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
+        <div className={`w-2 h-2 rounded-full ${studentInfo?.active ? 'bg-green-500' : 'bg-red-500'}`} />
+        <div>
+          <p className="text-xs text-foreground/50">{lang === "ar" ? "الحالة" : "Status"}</p>
+          <p className="font-medium">
+            {studentInfo?.active 
+              ? (lang === "ar" ? "نشط" : "Active")
+              : (lang === "ar" ? "غير نشط" : "Inactive")}
+          </p>
+        </div>
+      </div>
+      
+      {/* تاريخ الانضمام */}
+      {studentInfo?.joined_at && (
+        <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
+          <Calendar className="w-5 h-5 text-foreground/50" />
+          <div>
+            <p className="text-xs text-foreground/50">{lang === "ar" ? "تاريخ الانضمام" : "Joined Date"}</p>
+            <p className="font-medium">{new Date(studentInfo.joined_at).toLocaleDateString()}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+)}
         
         {/* Exams Section */}
         {examsList.length > 0 && (

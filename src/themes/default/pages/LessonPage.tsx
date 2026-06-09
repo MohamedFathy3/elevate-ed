@@ -6,15 +6,17 @@ import { useLang } from "@/i18n/LanguageContext";
 import { useLessonDetails } from "@/hooks/useLessonDetails";
 import { useExamResult } from "@/hooks/useExams";
 import { useCurrentStudent } from "@/hooks/useStudent";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   Play, CheckCircle, Clock, Calendar, ChevronRight, ChevronLeft,
   FileText, Download, ExternalLink, Loader2, Lock, Unlock, 
   ArrowLeft, ArrowRight, BookOpen, Award, Users, MessageCircle,
   ThumbsUp, ThumbsDown, Eye, EyeOff, AlertCircle, FileQuestion,
-  ClipboardList, HelpCircle, TrendingUp, BarChart, XCircle
+  ClipboardList, HelpCircle, TrendingUp, BarChart, XCircle, Video,
+  PlayCircle
 } from "lucide-react";
 import { toast } from "sonner";
+import { enableFullProtection } from "@/utils/protection";
 
 const LessonPage = () => {
   const { lang, dir } = useLang();
@@ -26,12 +28,15 @@ const LessonPage = () => {
   
   const [lesson, setLesson] = useState<any>(null);
   const [attended, setAttended] = useState(false);
-  const [showTranscript, setShowTranscript] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [requiredExam, setRequiredExam] = useState<any>(null);
   const [examPassed, setExamPassed] = useState(false);
   const [examsList, setExamsList] = useState<any[]>([]);
   
+  // ✅ State للمقطع المختار حالياً
+  const [selectedPartIndex, setSelectedPartIndex] = useState<number>(0);
+  
+  const videoRef = useRef<HTMLVideoElement>(null);
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
   
   // ✅ تعيين بيانات الدرس من الـ API
@@ -44,7 +49,6 @@ const LessonPage = () => {
       // ✅ جلب الامتحانات من بيانات الدرس مباشرة
       if (lessonInfo.exams && lessonInfo.exams.length > 0) {
         setExamsList(lessonInfo.exams);
-        // تعيين أول امتحان كامتحان مطلوب لفتح المحتوى
         setRequiredExam(lessonInfo.exams[0]);
       }
       
@@ -52,14 +56,15 @@ const LessonPage = () => {
         title: lessonInfo.title,
         must_pass_to_unlock: lessonInfo.must_pass_to_unlock,
         hasExams: lessonInfo.exams?.length > 0,
-        examCount: lessonInfo.exams?.length,
-        attended: lessonInfo.attended
+        attended: lessonInfo.attended,
+        titles: lessonInfo.titles,
+        link_video: lessonInfo.link_video
       });
     }
   }, [lessonData]);
   
   // ✅ التحقق من اجتياز الامتحان المطلوب
-  const { data: examResultData, refetch: refetchExamResult } = useExamResult(
+  const { data: examResultData } = useExamResult(
     requiredExam?.id || 0, 
     student?.id || 0
   );
@@ -68,18 +73,42 @@ const LessonPage = () => {
     if (requiredExam && examResultData) {
       const hasPassed = examResultData.status === true;
       setExamPassed(hasPassed);
-      console.log(`📊 Exam ${requiredExam.id} result:`, {
-        passed: hasPassed,
-        status: examResultData.status,
-        data: examResultData
-      });
+      console.log(`📊 Exam ${requiredExam.id} result:`, { passed: hasPassed });
     }
   }, [examResultData, requiredExam]);
   
-  // ✅ المنطق الصحيح لقفل المحتوى
-  const needsExamToUnlock = lesson?.must_pass_to_unlock === true;
-  const isContentLocked = needsExamToUnlock;
-  const canWatch = !isContentLocked;
+  // ✅ منطق القفل: إذا كان الدرس يتطلب امتحان والطالب لم يجتازه
+  const needsExamToUnlock = lesson?.must_pass_to_unlock === true && !examPassed;
+  const canWatch = !needsExamToUnlock;
+  
+  // ✅ تجهيز الأجزاء من Arrays الدرس (مع صورة الدرس الأب)
+  const subParts = (lesson?.titles || []).map((title: string, idx: number) => ({
+    id: idx,
+    title: title,
+    title_ar: lesson?.titles_ar?.[idx] || title,
+    videoUrl: lesson?.link_video?.[idx] || lesson?.content_link,
+    imageUrl: lesson?.imageUrl, // ✅ صورة الدرس الأب
+    description: lesson?.description,
+    description_ar: lesson?.description_ar,
+  }));
+  
+  const hasSubParts = subParts.length > 0;
+  const currentPart = subParts[selectedPartIndex] || subParts[0];
+  const currentVideoUrl = currentPart?.videoUrl || lesson?.content_link;
+  
+  // ✅ تغيير الجزء الحالي
+  const handleSelectPart = (index: number) => {
+    setSelectedPartIndex(index);
+    setVideoError(false);
+    if (videoRef.current) {
+      videoRef.current.load();
+    }
+    toast.success(
+      lang === "ar" 
+        ? `تم التبديل إلى: ${subParts[index]?.title_ar || subParts[index]?.title}` 
+        : `Switched to: ${subParts[index]?.title}`
+    );
+  };
   
   const handleStartExam = (exam: any) => {
     navigate(`/${slug}/exam/${exam.id}?redirect=${encodeURIComponent(window.location.pathname)}`);
@@ -94,17 +123,27 @@ const LessonPage = () => {
     if (!url) return null;
     if (url.includes('youtube.com/watch?v=')) {
       const videoId = url.split('v=')[1]?.split('&')[0];
-      return `https://www.youtube.com/embed/${videoId}?enablejsapi=1&origin=${window.location.origin}`;
+      return `https://www.youtube.com/embed/${videoId}?enablejsapi=1`;
     }
     if (url.includes('youtu.be/')) {
       const videoId = url.split('youtu.be/')[1]?.split('?')[0];
-      return `https://www.youtube.com/embed/${videoId}?enablejsapi=1&origin=${window.location.origin}`;
+      return `https://www.youtube.com/embed/${videoId}?enablejsapi=1`;
     }
     if (url.includes('youtube.com/embed/')) {
       return url;
     }
     return url;
   };
+  
+  const isVideo = currentVideoUrl?.includes('youtube.com') || currentVideoUrl?.includes('youtu.be');
+  const isPdf = currentVideoUrl?.endsWith('.pdf');
+  const isExternal = !isVideo && !isPdf;
+  const embedUrl = isVideo ? getYouTubeEmbedUrl(currentVideoUrl) : null;
+  
+  // تفعيل الحماية
+  useEffect(() => {
+    enableFullProtection();
+  }, []);
   
   if (lessonLoading) {
     return <LessonSkeleton />;
@@ -128,13 +167,8 @@ const LessonPage = () => {
     );
   }
   
-  const isVideo = lesson.content_link?.includes('youtube.com') || lesson.content_link?.includes('youtu.be');
-  const isPdf = lesson.content_link?.endsWith('.pdf');
-  const isExternal = !isVideo && !isPdf;
-  const embedUrl = isVideo ? getYouTubeEmbedUrl(lesson.content_link) : null;
-  
   return (
-    <div className="min-h-screen pt-32 pb-20">
+    <div className="min-h-screen pt-32 pb-20" dir={dir}>
       <div className="container-tight">
         {/* Breadcrumb */}
         <div className="mb-6">
@@ -143,7 +177,7 @@ const LessonPage = () => {
               {lang === "ar" ? "لوحة التحكم" : "Dashboard"}
             </Link>
             <ChevronRight className="w-4 h-4" />
-            <Link to={`/${slug}/dashboard`} className="hover:text-primary transition-colors">
+            <Link to={`/${slug}/courses`} className="hover:text-primary transition-colors">
               {lang === "ar" ? "كورساتي" : "My Courses"}
             </Link>
             <ChevronRight className="w-4 h-4" />
@@ -152,15 +186,15 @@ const LessonPage = () => {
         </div>
         
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Content - Video/Content */}
+          {/* Main Content - Video Player */}
           <div className="lg:col-span-2">
             {/* Video/Content Player */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="relative bg-card rounded-2xl border border-border overflow-hidden shadow-card"
+              className="relative bg-black rounded-2xl overflow-hidden shadow-card"
             >
-              {isContentLocked ? (
+              {needsExamToUnlock ? (
                 <div className="aspect-video bg-gradient-to-br from-gray-900 to-gray-800 flex flex-col items-center justify-center p-8 text-center">
                   <Lock className="w-20 h-20 text-white/30 mb-4" />
                   <h3 className="text-xl font-bold text-white mb-2">
@@ -174,7 +208,7 @@ const LessonPage = () => {
                   {requiredExam && (
                     <button
                       onClick={() => handleStartExam(requiredExam)}
-                      className="px-6 py-2 rounded-xl gradient-primary text-white font-semibold flex items-center gap-2"
+                      className="px-6 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold flex items-center gap-2"
                     >
                       <FileQuestion className="w-4 h-4" />
                       {lang === "ar" ? "ابدأ الامتحان" : "Start Exam"}
@@ -187,10 +221,9 @@ const LessonPage = () => {
                     key={embedUrl}
                     src={embedUrl}
                     className="w-full h-full"
-                    title={lang === "ar" ? "مشغل الفيديو التعليمي" : "Educational video player"}
+                    title={currentPart?.title || lesson.title}
                     allowFullScreen
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-presentation"
                     onError={() => setVideoError(true)}
                   />
                   {videoError && (
@@ -199,7 +232,7 @@ const LessonPage = () => {
                         <AlertCircle className="w-12 h-12 mx-auto mb-2 text-red-500" />
                         <p>{lang === "ar" ? "عذراً، لا يمكن تحميل الفيديو" : "Sorry, cannot load video"}</p>
                         <a 
-                          href={lesson.content_link} 
+                          href={currentVideoUrl} 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="mt-3 inline-block px-4 py-2 rounded-lg bg-primary text-white text-sm"
@@ -216,10 +249,10 @@ const LessonPage = () => {
                     <FileText className="w-16 h-16 text-primary mx-auto mb-4" />
                     <p className="mb-4">{lang === "ar" ? "ملف PDF" : "PDF File"}</p>
                     <a
-                      href={lesson.content_link}
+                      href={currentVideoUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl gradient-primary text-white"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-accent text-white"
                     >
                       <Download className="w-4 h-4" />
                       {lang === "ar" ? "تحميل الملف" : "Download"}
@@ -232,10 +265,10 @@ const LessonPage = () => {
                     <ExternalLink className="w-16 h-16 text-primary mx-auto mb-4" />
                     <p className="mb-4">{lang === "ar" ? "محتوى خارجي" : "External Content"}</p>
                     <a
-                      href={lesson.content_link}
+                      href={currentVideoUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl gradient-primary text-white"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-accent text-white"
                     >
                       <ExternalLink className="w-4 h-4" />
                       {lang === "ar" ? "فتح الرابط" : "Open Link"}
@@ -249,6 +282,24 @@ const LessonPage = () => {
                 </div>
               )}
             </motion.div>
+            
+            {/* Current Part Info */}
+            {canWatch && hasSubParts && currentPart && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-4 p-4 bg-primary/5 rounded-xl border border-primary/20"
+              >
+                <div className="flex items-center gap-2 text-sm text-foreground/60 mb-1">
+                  <Video className="w-4 h-4 text-primary" />
+                  <span>{lang === "ar" ? "الجزء الحالي" : "Current part"}</span>
+                  <span className="text-primary font-semibold">#{selectedPartIndex + 1}</span>
+                </div>
+                <h3 className="font-bold text-lg">
+                  {lang === "ar" ? currentPart.title_ar : currentPart.title}
+                </h3>
+              </motion.div>
+            )}
             
             {/* Lesson Info */}
             <motion.div
@@ -273,32 +324,98 @@ const LessonPage = () => {
                   <Clock className="w-4 h-4" />
                   <span>{lesson.lession_time}</span>
                 </div>
-                {lesson.price && parseFloat(lesson.price) > 0 && (
-                  <div className="flex items-center gap-1">
-                    <Award className="w-4 h-4" />
-                    <span>{lesson.price} EGP</span>
+                {hasSubParts && (
+                  <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-primary/20 text-primary text-xs">
+                    <Video className="w-3 h-3" />
+                    {subParts.length} {lang === "ar" ? "أجزاء" : "parts"}
                   </div>
                 )}
-                {lesson.must_pass_to_unlock === true && !(
+                {lesson.must_pass_to_unlock === true && (
                   <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/20 text-amber-600 text-xs">
                     <Lock className="w-3 h-3" />
                     {lang === "ar" ? "يتطلب اجتياز امتحان" : "Requires exam"}
-                  </div>
-                )}
-                {lesson.must_pass_to_unlock === false && (
-                  <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-500/20 text-green-600 text-xs">
-                    <Unlock className="w-3 h-3" />
-                    {lang === "ar" ? "متاح مباشرة" : "Direct access"}
                   </div>
                 )}
               </div>
             </motion.div>
           </div>
           
-          {/* Sidebar - Info & Actions */}
+          {/* Sidebar - Parts Cards + Actions */}
           <div className="space-y-6">
+            {/* ✅ كروت أجزاء الدرس - مع الصورة */}
+            {canWatch && hasSubParts && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-card rounded-2xl border border-border p-4"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold flex items-center gap-2">
+                    <Video className="w-5 h-5 text-primary" />
+                    {lang === "ar" ? "أجزاء الدرس" : "Lesson Parts"}
+                  </h3>
+                  <span className="text-xs text-foreground/50 bg-secondary px-2 py-1 rounded-full">
+                    {subParts.length}
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-1 gap-3 max-h-[450px] overflow-y-auto pr-1 custom-scrollbar">
+                  {subParts.map((part: any, idx: number) => (
+                    <motion.button
+                      key={idx}
+                      onClick={() => handleSelectPart(idx)}
+                      className={`w-full text-left rounded-xl transition-all overflow-hidden border-2
+                        ${selectedPartIndex === idx 
+                          ? 'border-primary shadow-md bg-primary/5' 
+                          : 'border-border hover:border-primary/40 bg-card'}`}
+                    >
+                      <div className="flex items-center gap-3 p-3">
+                        {/* صورة الجزء (من الدرس الأب) */}
+                        <img 
+                          src={part.imageUrl || "/default-course.jpg"} 
+                          alt={part.title}
+                          className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
+                        />
+                        
+                        {/* معلومات الجزء */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-5 h-5 rounded-md flex items-center justify-center text-white text-xs font-bold flex-shrink-0
+                              ${selectedPartIndex === idx 
+                                ? 'bg-primary' 
+                                : 'bg-gray-300 dark:bg-gray-600'}`}>
+                              {idx + 1}
+                            </div>
+                            <p className={`font-medium text-sm truncate ${selectedPartIndex === idx ? 'text-primary' : ''}`}>
+                              {lang === "ar" ? part.title_ar : part.title}
+                            </p>
+                          </div>
+                          <p className="text-xs text-foreground/50 flex items-center gap-1 mt-1">
+                            <PlayCircle className="w-3 h-3" />
+                            {lang === "ar" ? "فيديو تعليمي" : "Educational video"}
+                          </p>
+                        </div>
+                        
+                        {/* أيون التشغيل */}
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all
+                          ${selectedPartIndex === idx 
+                            ? 'bg-primary text-white' 
+                            : 'bg-gray-100 dark:bg-gray-800 text-foreground/40'}`}>
+                          {selectedPartIndex === idx ? (
+                            <Play className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
+                        </div>
+                      </div>
+                    </motion.button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+            
             {/* Required Exam Card */}
-            {isContentLocked && requiredExam && (
+            {needsExamToUnlock && requiredExam && (
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -333,8 +450,8 @@ const LessonPage = () => {
               </motion.div>
             )}
             
-            {/* After Passing Exam */}
-            {lesson?.must_pass_to_unlock === false && (
+            {/* After Passing Exam Card */}
+            {examPassed && (
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -353,16 +470,10 @@ const LessonPage = () => {
                     ? "تهانينا! لقد اجتزت الامتحان بنجاح. يمكنك الآن مشاهدة الدرس."
                     : "Congratulations! You have passed the exam. You can now watch the lesson."}
                 </p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="mt-4 w-full py-2 rounded-xl bg-green-500 text-white font-semibold"
-                >
-                  {lang === "ar" ? "تحديث الصفحة" : "Refresh Page"}
-                </button>
               </motion.div>
             )}
             
-            {/* Attendance Card (يظهر فقط إذا المحتوى مفتوح) */}
+            {/* Attendance Card */}
             {canWatch && (
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
@@ -388,7 +499,7 @@ const LessonPage = () => {
                     </p>
                     <button
                       onClick={handleMarkAttendance}
-                      className="w-full py-3 rounded-xl gradient-primary text-white font-semibold flex items-center justify-center gap-2"
+                      className="w-full py-3 rounded-xl bg-gradient-to-r from-primary to-accent text-white font-semibold flex items-center justify-center gap-2"
                     >
                       <ThumbsUp className="w-5 h-5" />
                       {lang === "ar" ? "تأكيد الحضور" : "Confirm Attendance"}
@@ -401,21 +512,31 @@ const LessonPage = () => {
             {/* Navigation Buttons */}
             <div className="flex gap-3">
               <Link
-                to={`/${slug}/dashboard`}
+                to={`/${slug}/courses/${lesson.course_id}`}
                 className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-card border border-border hover:border-primary/40 transition-all"
               >
-                <Arrow className="w-4 h-4" />
-                {lang === "ar" ? "العودة" : "Back"}
+                <ArrowRight className="w-4 h-4 rtl:rotate-180" />
+                {lang === "ar" ? "العودة للكورس" : "Back to Course"}
               </Link>
             </div>
           </div>
         </div>
       </div>
+      
+      <style>{`
+        .recording-detected { filter: blur(40px) !important; opacity: 0.2 !important; transition: all 0.3s ease; }
+        video::-webkit-media-controls-download-button { display: none !important; }
+        video::-webkit-media-controls-enclosure { overflow: hidden; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #555; }
+      `}</style>
     </div>
   );
 };
 
-// 🟢 Skeleton Component
+// Skeleton Component
 const LessonSkeleton = () => {
   return (
     <div className="min-h-screen pt-32 pb-20">
@@ -430,7 +551,7 @@ const LessonSkeleton = () => {
             </div>
           </div>
           <div className="space-y-6">
-            <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded-2xl animate-pulse" />
+            <div className="h-80 bg-gray-200 dark:bg-gray-700 rounded-2xl animate-pulse" />
             <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-2xl animate-pulse" />
           </div>
         </div>

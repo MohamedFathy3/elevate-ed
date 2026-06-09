@@ -10,7 +10,7 @@ export { default as SemestersPage } from '@/themes/default/pages/SemestersPage';
 export { default as StagesPage } from '@/themes/default/pages/StagesPage'; // نستخدم نفس صفحة المراحل بتاعت default عشان شكلها مناسب للطبيعة
 export { default as StudentDashboard } from '@/themes/default/pages/StudentDashboard';
 export { default as ExamPage } from './ExamPage';
-export { default as LessonPage } from './LessonPage';
+export { default as LessonPage } from '@/themes/default/pages/LessonPage';
 export { default as SemesterDetails } from './SemesterDetails';
 export { default as Login } from './Login';
 export { default as Register } from './Register';
