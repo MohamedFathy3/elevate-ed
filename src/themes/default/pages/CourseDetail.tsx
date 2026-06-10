@@ -2,16 +2,15 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, Link, Navigate, useNavigate } from "react-router-dom";
 import { useLang } from "@/i18n/LanguageContext";
-import { useTeacher } from "@/context/TeacherContext";
 import { useTheme } from "@/context/ThemeContext";
-import { useStudentCourses, useCourseDetails } from "@/hooks/useCourseDetails";
+import { useCourseDetails, useStudentCourses } from "@/hooks/useCourseDetails";
 import { useBuyCourse } from "@/hooks/useEnroll";
 import { useStudentAuth } from "@/context/StudentAuthContext";
 import { 
   Clock, Atom, ArrowLeft, ArrowRight, CheckCircle2, 
   PlayCircle, ShoppingCart, Lock, Calendar, 
   Loader2, Shield, Leaf, Sparkles, Users, Award, Star,
-  Eye, Video, FileText, ExternalLink
+  Eye, Video, FileText, ExternalLink, Info, BookOpen
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
@@ -21,15 +20,17 @@ import Cookies from "js-cookie";
 const CourseDetail = () => {
   const { lang, dir } = useLang();
   const { theme, colorMode } = useTheme();
-  const { teacher, slug, pick } = useTeacher();
-  const { courseId } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated, student } = useStudentAuth();
+  const { isAuthenticated } = useStudentAuth();
+  const { courseId } = useParams(); // ✅ هذا السطر موجود لكن تأكد منه
+  const courseIdNum = parseInt(courseId || '0');
   
-  // جلب كورسات الطالب المشترك فيها
+  // ✅ استخدام الـ Hooks الجديدة
   const { data: studentCourses, isLoading: coursesLoading } = useStudentCourses();
-  const { data: courseData, isLoading: detailsLoading, refetch: refetchDetails } = useCourseDetails(parseInt(courseId || '0'));
+  const { data: courseApiData, isLoading: detailsLoading, refetch: refetchDetails } = useCourseDetails(courseIdNum);
   const { buyCourse, buyLesson, isLoading: buying } = useBuyCourse();
+  
   const videoRef = useRef<HTMLVideoElement>(null);
   
   const isNature = theme === 'nature';
@@ -41,6 +42,21 @@ const CourseDetail = () => {
   const [showProtectionWarning, setShowProtectionWarning] = useState(false);
   const [hasPurchasedFullCourse, setHasPurchasedFullCourse] = useState(false);
   const [videoError, setVideoError] = useState(false);
+
+  // ✅ استخراج بيانات الكورس من API
+  const courseFromApi = courseApiData?.data;
+  const lessons = courseFromApi?.details || [];
+  
+  // ✅ معلومات الكورس الكاملة
+  const courseTitle = lang === "ar" ? courseFromApi?.title_ar : courseFromApi?.title;
+  const courseDescription = lang === "ar" ? courseFromApi?.description_ar : courseFromApi?.description;
+  const courseAbout = lang === "ar" ? courseFromApi?.about_ar : courseFromApi?.about;
+  const courseImage = courseFromApi?.image?.fullUrl || courseFromApi?.imageUrl || "/default-course.jpg";
+  
+  const originalPrice = parseFloat(courseFromApi?.price) || 0;
+  const discountPercent = parseFloat(courseFromApi?.discount) || 0;
+  const finalPrice = courseFromApi?.price_before_discount || originalPrice;
+  const hasDiscount = discountPercent > 0;
 
   // الألوان حسب الثيم
   const primaryGradient = isNature 
@@ -56,19 +72,27 @@ const CourseDetail = () => {
 
   // ✅ التحقق من شراء الكورس من بيانات الطالب
   useEffect(() => {
-    if (studentCourses && studentCourses.length > 0 && courseId) {
-      const isEnrolled = studentCourses.some((course: any) => course.id === parseInt(courseId || '0'));
+    if (studentCourses && studentCourses.length > 0 && courseIdNum) {
+      const isEnrolled = studentCourses.some((course: any) => course.id === courseIdNum);
       setHasPurchasedFullCourse(isEnrolled);
-      console.log("🎓 Course enrollment check:", { courseId, isEnrolled });
+      console.log("🎓 Course enrollment check:", { courseId: courseIdNum, isEnrolled });
     }
-  }, [studentCourses, courseId]);
+    
+    // ✅ أو التحقق من الدروس إذا كان أي درس attended = true
+    if (!hasPurchasedFullCourse && lessons.length > 0) {
+      const hasAttendedLesson = lessons.some((lesson: any) => lesson.attended === true);
+      if (hasAttendedLesson) {
+        setHasPurchasedFullCourse(true);
+      }
+    }
+  }, [studentCourses, courseIdNum, lessons]);
 
   // ✅ تعيين أول درس كافتراضي إذا كان الكورس مشترى
   useEffect(() => {
-    if (hasPurchasedFullCourse && courseData?.data && courseData.data.length > 0 && !selectedLesson) {
-      setSelectedLesson(courseData.data[0]);
+    if (hasPurchasedFullCourse && lessons.length > 0 && !selectedLesson) {
+      setSelectedLesson(lessons[0]);
     }
-  }, [hasPurchasedFullCourse, courseData]);
+  }, [hasPurchasedFullCourse, lessons]);
 
   // تفعيل الحماية عند تحميل الصفحة
   useEffect(() => {
@@ -77,23 +101,9 @@ const CourseDetail = () => {
     setTimeout(() => setShowProtectionWarning(false), 5000);
   }, []);
 
-  const course = teacher?.website?.courses?.find((c: any) => String(c.id) === courseId);
-  
-  if ((!course && !detailsLoading) || (!course && !coursesLoading && !hasPurchasedFullCourse)) {
-    return <Navigate to={`/${slug}/courses`} replace />;
-  }
-const goToLessonPage = (lessonId: number) => {
-  navigate(`/${slug}/lesson/${lessonId}`);
-};
-  const lessons = courseData?.data || [];
-  const courseImage = course?.image?.fullUrl || course?.imageUrl || "/default-course.jpg";
-  const courseTitle = pick(course?.title, course?.title_ar) || "Course";
-  const courseDescription = pick(course?.description, course?.description_ar) || "";
-  
-  const originalPrice = parseFloat(course?.price) || 0;
-  const discountPercent = parseFloat(course?.discount) || 0;
-  const finalPrice = originalPrice - (originalPrice * discountPercent / 100);
-  const hasDiscount = discountPercent > 0;
+  const goToLessonPage = (lessonId: number) => {
+    navigate(`/${slug}/lesson/${lessonId}`);
+  };
 
   // ✅ شراء الكورس كاملاً
   const handleBuyFullCourse = async () => {
@@ -106,7 +116,7 @@ const goToLessonPage = (lessonId: number) => {
     
     setBuyingFullCourse(true);
     try {
-      await buyCourse(parseInt(courseId || '0'), finalPrice);
+      await buyCourse(courseIdNum, finalPrice);
       toast.success(lang === "ar" ? "تم شراء الكورس بنجاح!" : "Course purchased successfully!");
       setHasPurchasedFullCourse(true);
       setTimeout(() => refetchDetails(), 1000);
@@ -165,6 +175,10 @@ const goToLessonPage = (lessonId: number) => {
 
   if (isLoading) {
     return <CourseDetailSkeleton isNature={isNature} />;
+  }
+
+  if (!courseFromApi && !isLoading) {
+    return <Navigate to={`/${slug}/courses`} replace />;
   }
 
   return (
@@ -326,40 +340,110 @@ const goToLessonPage = (lessonId: number) => {
               </motion.div>
             )}
 
-            {/* Course Info */}
+            {/* ✅ Course Info - من API */}
             <motion.div className="mt-8">
               <div className="flex flex-wrap gap-2 mb-4">
                 <span className={`px-3 py-1 rounded-full text-xs font-bold
                   ${isNature 
                     ? 'bg-amber-100 text-amber-700 dark:bg-amber-800/50 dark:text-amber-300' 
                     : 'bg-primary/10 text-primary'}`}>
-                  {course?.type === "online" ? (lang === "ar" ? "أونلاين" : "Online") : (lang === "ar" ? "سنتر" : "Center")}
+                  {courseFromApi?.type === "online" ? (lang === "ar" ? "أونلاين" : "Online") : (lang === "ar" ? "سنتر" : "Center")}
                 </span>
                 <span className={`px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1
                   ${isNature 
                     ? 'bg-amber-100 text-amber-700 dark:bg-amber-800/50 dark:text-amber-300' 
                     : 'bg-accent/10 text-accent'}`}>
                   {isNature ? <Leaf className="w-3 h-3" /> : <Atom className="w-3 h-3" />}
-                  {pick(course?.subject?.name, course?.subject?.name_ar) || "Subject"}
+                  {lang === "ar" ? courseFromApi?.subject?.name_ar : courseFromApi?.subject?.name}
                 </span>
                 <span className={`px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1
                   ${isNature 
                     ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' 
                     : 'bg-secondary'}`}>
                   <Clock className="w-3 h-3" />
-                  {course?.hour_time_course || (lang === "ar" ? "مرن" : "Flexible")}
+                  {courseFromApi?.hour_time_course || (lang === "ar" ? "مرن" : "Flexible")}
+                </span>
+                {/* ✅ عدد الطلاب */}
+                <span className={`px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1
+                  ${isNature 
+                    ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' 
+                    : 'bg-secondary'}`}>
+                  <Users className="w-3 h-3" />
+                  {courseFromApi?.count_student || 0} {lang === "ar" ? "طالب" : "students"}
                 </span>
               </div>
+              
               <h1 className={`font-display font-black text-3xl md:text-5xl tracking-tight ${isNature ? 'text-amber-800 dark:text-amber-100' : ''}`}>
                 {courseTitle}
               </h1>
+              
+              {/* ✅ وصف الكورس */}
               <div className={`mt-4 text-lg leading-relaxed ${isNature ? 'text-amber-700/80 dark:text-amber-300/70' : 'text-foreground/70'}`} 
-                   dangerouslySetInnerHTML={{ __html: courseDescription }} />
+                   dangerouslySetInnerHTML={{ __html: courseDescription || '' }} />
+              
+              {/* ✅ نبذة عن الكورس - About */}
+              {courseAbout && (
+                <div className={`mt-6 p-5 rounded-2xl ${isNature ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-secondary/30'}`}>
+                  <h3 className={`font-bold text-lg mb-2 flex items-center gap-2 ${isNature ? 'text-amber-800' : ''}`}>
+                    <Info className="w-5 h-5" />
+                    {lang === "ar" ? "نبذة عن الكورس" : "About this course"}
+                  </h3>
+                  <div className={`leading-relaxed ${isNature ? 'text-amber-700/70' : 'text-foreground/60'}`}
+                       dangerouslySetInnerHTML={{ __html: courseAbout }} />
+                </div>
+              )}
+              
+              {/* ✅ تفاصيل إضافية */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                <div className={`p-3 rounded-xl text-center ${isNature ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-secondary/30'}`}>
+                  <p className="text-xs text-foreground/50">{lang === "ar" ? "المرحلة" : "Stage"}</p>
+                  <p className={`font-semibold ${isNature ? 'text-amber-700' : ''}`}>
+                    {lang === "ar" ? courseFromApi?.stage?.name_ar : courseFromApi?.stage?.name}
+                  </p>
+                </div>
+                <div className={`p-3 rounded-xl text-center ${isNature ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-secondary/30'}`}>
+                  <p className="text-xs text-foreground/50">{lang === "ar" ? "المادة" : "Subject"}</p>
+                  <p className={`font-semibold ${isNature ? 'text-amber-700' : ''}`}>
+                    {lang === "ar" ? courseFromApi?.subject?.name_ar : courseFromApi?.subject?.name}
+                  </p>
+                </div>
+                <div className={`p-3 rounded-xl text-center ${isNature ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-secondary/30'}`}>
+                  <p className="text-xs text-foreground/50">{lang === "ar" ? "الترم" : "Semester"}</p>
+                  <p className={`font-semibold ${isNature ? 'text-amber-700' : ''}`}>
+                    {lang === "ar" ? courseFromApi?.semester?.name_ar : courseFromApi?.semester?.name}
+                  </p>
+                </div>
+                <div className={`p-3 rounded-xl text-center ${isNature ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-secondary/30'}`}>
+                  <p className="text-xs text-foreground/50">{lang === "ar" ? "عدد الدروس" : "Lessons"}</p>
+                  <p className={`font-semibold ${isNature ? 'text-amber-700' : ''}`}>
+                    {lessons.length}
+                  </p>
+                </div>
+              </div>
+              
+              {/* ✅ تاريخ الكورس */}
+              {(courseFromApi?.start_date || courseFromApi?.end_date) && (
+                <div className={`mt-4 flex items-center gap-4 text-sm ${isNature ? 'text-amber-600' : 'text-foreground/50'}`}>
+                  {courseFromApi?.start_date && (
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      <span>{lang === "ar" ? "يبدأ:" : "Starts:"} {new Date(courseFromApi.start_date).toLocaleDateString()}</span>
+                    </div>
+                  )}
+                  {courseFromApi?.end_date && (
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      <span>{lang === "ar" ? "ينتهي:" : "Ends:"} {new Date(courseFromApi.end_date).toLocaleDateString()}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </motion.div>
 
-            {/* Lessons List - ✅ إضافة زرار المشاهدة هنا */}
+            {/* Lessons List */}
             <motion.div className="mt-10">
-              <h2 className={`text-2xl font-bold mb-6 ${isNature ? 'text-amber-800 dark:text-amber-100' : ''}`}>
+              <h2 className={`text-2xl font-bold mb-6 flex items-center gap-2 ${isNature ? 'text-amber-800 dark:text-amber-100' : ''}`}>
+                <BookOpen className="w-6 h-6" />
                 {lang === "ar" ? "محتويات الكورس" : "Course Content"}
                 <span className="text-sm text-foreground/50 ml-2">({lessons.length} {lang === "ar" ? "دروس" : "lessons"})</span>
               </h2>
@@ -374,7 +458,6 @@ const goToLessonPage = (lessonId: number) => {
                       lesson={lesson}
                       index={index}
                       lang={lang}
-                      
                       isPurchased={isPurchased}
                       isFree={isFree}
                       hasPurchasedFullCourse={hasPurchasedFullCourse}
@@ -392,7 +475,7 @@ const goToLessonPage = (lessonId: number) => {
             </motion.div>
           </div>
 
-          {/* Sidebar - Purchase Card (يظهر فقط إذا لم يتم شراء الكورس) */}
+          {/* Sidebar - Purchase Card */}
           {!hasPurchasedFullCourse && (
             <motion.aside
               initial={{ opacity: 0, x: 20 }}
@@ -424,25 +507,31 @@ const goToLessonPage = (lessonId: number) => {
                   <div className="flex justify-between">
                     <span className="text-foreground/60">{lang === "ar" ? "المرحلة" : "Stage"}</span>
                     <span className={`font-semibold ${isNature ? 'text-amber-700 dark:text-amber-300' : ''}`}>
-                      {pick(course?.stage?.name, course?.stage?.name_ar)}
+                      {lang === "ar" ? courseFromApi?.stage?.name_ar : courseFromApi?.stage?.name}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-foreground/60">{lang === "ar" ? "المادة" : "Subject"}</span>
                     <span className={`font-semibold ${isNature ? 'text-amber-700 dark:text-amber-300' : ''}`}>
-                      {pick(course?.subject?.name, course?.subject?.name_ar)}
+                      {lang === "ar" ? courseFromApi?.subject?.name_ar : courseFromApi?.subject?.name}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-foreground/60">{lang === "ar" ? "الترم" : "Semester"}</span>
                     <span className={`font-semibold ${isNature ? 'text-amber-700 dark:text-amber-300' : ''}`}>
-                      {pick(course?.semester?.name, course?.semester?.name_ar)}
+                      {lang === "ar" ? courseFromApi?.semester?.name_ar : courseFromApi?.semester?.name}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-foreground/60">{lang === "ar" ? "عدد الدروس" : "Lessons"}</span>
                     <span className={`font-semibold ${isNature ? 'text-amber-700 dark:text-amber-300' : ''}`}>
                       {lessons.length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-foreground/60">{lang === "ar" ? "عدد الطلاب" : "Students"}</span>
+                    <span className={`font-semibold ${isNature ? 'text-amber-700 dark:text-amber-300' : ''}`}>
+                      {courseFromApi?.count_student || 0}
                     </span>
                   </div>
                 </div>
@@ -520,13 +609,13 @@ const goToLessonPage = (lessonId: number) => {
 
 const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFullCourse, isAuthenticated, onBuy, onWatch, isBuying, isSelected, isNature, isDark }: any) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const navigate = useNavigate(); // ✅ أضف useNavigate
-  const { slug } = useParams(); // ✅ جلب slug من الـ URL
+  const navigate = useNavigate();
+  const { slug } = useParams();
   
   const lessonTitle = lang === "ar" && lesson.title_ar ? lesson.title_ar : lesson.title;
   const lessonDesc = lang === "ar" && lesson.description_ar ? lesson.description_ar : lesson.description;
   
-  // ✅ تجهيز الأجزاء من Arrays الدرس
+  // تجهيز الأجزاء من Arrays الدرس
   const subParts = (lesson.titles || []).map((title: string, idx: number) => ({
     id: idx,
     title: title,
@@ -538,22 +627,8 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
   const hasSubParts = subParts.length > 0;
   const lessonImage = lesson.imageUrl;
   
-  // ✅ دالة للذهاب لصفحة الدرس مع تحديد الجزء
   const goToLessonWithPart = (lessonId: number, partIndex: number) => {
     navigate(`/${slug}/lesson/${lessonId}?part=${partIndex}`);
-  };
-  
-  const getVideoUrl = (url: string) => {
-    if (!url) return "#";
-    if (url.includes('youtube.com/watch?v=')) {
-      const videoId = url.split('v=')[1]?.split('&')[0];
-      return `https://www.youtube.com/embed/${videoId}`;
-    }
-    if (url.includes('youtu.be/')) {
-      const videoId = url.split('youtu.be/')[1]?.split('?')[0];
-      return `https://www.youtube.com/embed/${videoId}`;
-    }
-    return url;
   };
   
   const cardBg = isNature 
@@ -580,7 +655,6 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
       transition={{ delay: index * 0.05 }}
       className={`border rounded-2xl overflow-hidden transition-all ${cardBg} ${borderColor} ${isSelected ? selectedBorder : ''}`}
     >
-      {/* رأس الدرس الرئيسي */}
       <div 
         className={`p-4 flex items-center justify-between cursor-pointer transition-colors ${hoverBg}`} 
         onClick={() => setIsExpanded(!isExpanded)}
@@ -647,7 +721,6 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
         </div>
       </div>
       
-      {/* المحتوى الممتد - كروت الأجزاء */}
       <AnimatePresence>
         {isExpanded && (
           <motion.div
@@ -657,15 +730,12 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
             className="px-4 pb-4 pt-0"
           >
             <div className={`pt-3 border-t ${isNature ? 'border-amber-200 dark:border-amber-800' : 'border-border'}`}>
-              
-              {/* وصف الدرس */}
               {lessonDesc && (
                 <p className={`text-sm mb-4 ${isNature ? 'text-amber-700/70 dark:text-amber-300/70' : 'text-foreground/60'}`}>
                   {lessonDesc}
                 </p>
               )}
               
-              {/* ✅ كروت أجزاء الدرس - كل كارت يودي على صفحة Lesson مع تحديد الجزء */}
               {hasSubParts && isPurchased && (
                 <div className="mt-2">
                   <h4 className={`text-sm font-semibold mb-3 ${isNature ? 'text-amber-700 dark:text-amber-300' : 'text-foreground'}`}>
@@ -684,7 +754,6 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
                             ? 'bg-white dark:bg-amber-900/30 border-amber-200 dark:border-amber-800' 
                             : 'bg-card border-border'}`}
                       >
-                        {/* صورة الجزء */}
                         <div className="relative h-32 overflow-hidden">
                           <img 
                             src={lessonImage || "/default-course.jpg"} 
@@ -695,8 +764,6 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
                             <PlayCircle className="w-12 h-12 text-white drop-shadow-lg" />
                           </div>
                         </div>
-                        
-                        {/* محتوى الكارت */}
                         <div className="p-3">
                           <div className="flex items-start gap-2">
                             <div className={`w-6 h-6 rounded-lg ${numberBg} grid place-items-center text-white font-bold text-xs flex-shrink-0`}>
@@ -712,7 +779,6 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
                               </p>
                             </div>
                           </div>
-                          
                           <div
                             className={`mt-3 w-full py-2 rounded-lg text-center text-sm font-medium transition-all flex items-center justify-center gap-2
                               ${isNature 
@@ -729,7 +795,6 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
                 </div>
               )}
               
-              {/* لو الدرس مش مشترى */}
               {hasSubParts && !isPurchased && (
                 <div className="mt-2 p-8 rounded-xl bg-gray-100 dark:bg-gray-800 text-center">
                   <Lock className="w-8 h-8 mx-auto mb-2 text-gray-400" />
@@ -746,7 +811,6 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
                 </div>
               )}
               
-              {/* شرط اجتياز الامتحان */}
               {lesson.must_pass_to_unlock && !isPurchased && (
                 <div className="flex items-center gap-2 text-amber-600 text-sm mt-3">
                   <Lock className="w-4 h-4" /> 
@@ -760,6 +824,7 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
     </motion.div>
   );
 };
+
 // Skeleton Component
 const CourseDetailSkeleton = ({ isNature }: { isNature: boolean }) => {
   return (
@@ -783,7 +848,7 @@ const CourseDetailSkeleton = ({ isNature }: { isNature: boolean }) => {
   );
 };
 
-// إضافة AlertCircle للاستيراد
+// AlertCircle Component
 const AlertCircle = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

@@ -3,7 +3,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import Cookies from "js-cookie";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 export interface CourseDetail {
   id: number;
@@ -29,6 +29,51 @@ export interface CourseDetail {
     price: string;
     discount: string;
     type: string;
+  };
+}
+
+interface CourseDetailsResponse {
+  result: string;
+  message: string;
+  status: number;
+  data: {
+    id: number;
+    title: string;
+    title_ar: string;
+    description: string;
+    description_ar: string;
+    about: string;
+    about_ar: string;
+    price: string;
+    discount: string;
+    price_before_discount: number;
+    type: string;
+    imageUrl: string;
+    image: any;
+    stage: {
+      id: number;
+      name: string;
+      name_ar: string;
+    };
+    subject: {
+      id: number;
+      name: string;
+      name_ar: string;
+    };
+    semester: {
+      id: number;
+      name: string;
+      name_ar: string;
+      price: string;
+      discount: string;
+    };
+    hour_time_course: string;
+    count_student: number;
+    start_date: string;
+    end_date: string;
+    details: any[]; // الدروس
+    students: any[];
+    teacher: any;
   };
 }
 
@@ -137,35 +182,50 @@ export const useIsEnrolledInCourse = (courseId: number | undefined) => {
 };
 
 // ============================================
-// 🟢 Hook لتفاصيل الكورس (الدروس)
+// 🟢 Hook لتفاصيل الكورس (الدروس + معلومات الكورس)
 // ============================================
 
-export const useCourseDetails = (courseId: number | undefined) => {
+export const useCourseDetails = (courseId: number) => {
   const token = Cookies.get('student_token');
   
   return useQuery({
     queryKey: ['course-details', courseId],
     queryFn: async () => {
-      if (!courseId) throw new Error("Course ID is required");
+      if (!courseId || courseId === 0) return null;
       
-      console.log("📚 Fetching course details for course:", courseId);
-      const response = await api.post('/course-detail/index', {
-        filters: {
-          course_id: courseId
-        },
-        orderBy: "id",
-        orderByDirection: "asc",
-        perPage: 100,
-        paginate: false,
-        delete: false
-      });
-      console.log("✅ Course details response:", response.data);
-      return response.data;
+      const { data } = await api.get<CourseDetailsResponse>(`/course/${courseId}`);
+      console.log("📚 Full course details response:", data);
+      return data;
     },
-    enabled: !!courseId && !!token,
-    staleTime: 5 * 60 * 1000,
-    retry: 1,
+    enabled: !!courseId && courseId !== 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
+};
+
+// ============================================
+// 🟢 Hook لجلب الدروس فقط من الكورس
+// ============================================
+
+export const useCourseLessons = (courseId: number) => {
+  const { data: courseData, isLoading, refetch } = useCourseDetails(courseId);
+  return {
+    data: courseData?.data?.details || [],
+    isLoading,
+    refetch,
+  };
+};
+
+// ============================================
+// 🟢 Hook لجلب معلومات الكورس فقط (بدون الدروس)
+// ============================================
+
+export const useCourseInfo = (courseId: number) => {
+  const { data: courseData, isLoading, refetch } = useCourseDetails(courseId);
+  return {
+    data: courseData?.data || null,
+    isLoading,
+    refetch,
+  };
 };
 
 // ============================================
@@ -173,12 +233,12 @@ export const useCourseDetails = (courseId: number | undefined) => {
 // ============================================
 
 export const useCourseWithEnrollment = (courseId: number | undefined) => {
-  // جلب تفاصيل الكورس (الدروس)
+  // جلب تفاصيل الكورس (الدروس + معلومات)
   const { 
     data: courseDetailsData, 
     isLoading: detailsLoading, 
     refetch: refetchDetails 
-  } = useCourseDetails(courseId);
+  } = useCourseDetails(courseId || 0);
   
   // جلب كورسات الطالب والتحقق من الاشتراك
   const { 
@@ -190,7 +250,10 @@ export const useCourseWithEnrollment = (courseId: number | undefined) => {
   const isLoading = detailsLoading || enrollmentLoading;
   
   // الدروس من تفاصيل الكورس
-  const lessons = courseDetailsData?.data || [];
+  const lessons = courseDetailsData?.data?.details || [];
+  
+  // معلومات الكورس الكاملة من API
+  const courseFromApi = courseDetailsData?.data || null;
   
   // هل الطالب اشترى الكورس (أي درس من الدروس attended = true أو موجود في كورساته)
   const hasPurchasedFullCourse = useMemo(() => {
@@ -202,15 +265,42 @@ export const useCourseWithEnrollment = (courseId: number | undefined) => {
   }, [isEnrolled, lessons]);
   
   // معلومات الكورس من بيانات الطالب المشترك (إذا وجد)
-  const courseInfo = enrolledCourse;
+  const courseInfo = enrolledCourse || courseFromApi;
+  
+  // استخراج البيانات المفيدة للعرض
+  const courseTitle = (lang: string) => {
+    return lang === "ar" ? courseFromApi?.title_ar : courseFromApi?.title;
+  };
+  
+  const courseDescription = (lang: string) => {
+    return lang === "ar" ? courseFromApi?.description_ar : courseFromApi?.description;
+  };
+  
+  const courseAbout = (lang: string) => {
+    return lang === "ar" ? courseFromApi?.about_ar : courseFromApi?.about;
+  };
+  
+  const originalPrice = parseFloat(courseFromApi?.price) || 0;
+  const discountPercent = parseFloat(courseFromApi?.discount) || 0;
+  const finalPrice = courseFromApi?.price_before_discount || originalPrice;
+  const hasDiscount = discountPercent > 0;
   
   return {
-    lessons,
-    courseInfo,
-    isEnrolled,
-    hasPurchasedFullCourse,
-    isLoading,
-    refetchDetails,
+    lessons,                    // قائمة الدروس
+    courseFromApi,             // بيانات الكورس الكاملة من API
+    courseInfo,                // معلومات الكورس (من enrollment إن وجد)
+    isEnrolled,                // هل الطالب مشترك؟
+    hasPurchasedFullCourse,    // هل اشترى الكورس كاملاً؟
+    isLoading,                 // حالة التحميل
+    refetchDetails,            // إعادة جلب البيانات
+    // دوال مساعدة للعرض
+    courseTitle,
+    courseDescription,
+    courseAbout,
+    originalPrice,
+    discountPercent,
+    finalPrice,
+    hasDiscount,
   };
 };
 
@@ -256,5 +346,87 @@ export const useLessonFromEnrolledCourses = (lessonId: number | undefined) => {
   };
 };
 
-// استيراد useState و useEffect للـ useLessonFromEnrolledCourses
-import { useState, useEffect } from "react";
+// ============================================
+// 🟢 Hook لجلب تفاصيل درس معين من API مباشرة
+// ============================================
+
+export const useLessonDetails = (lessonId: number | undefined) => {
+  const token = Cookies.get('student_token');
+  
+  return useQuery({
+    queryKey: ['lesson-details', lessonId],
+    queryFn: async () => {
+      if (!lessonId) return null;
+      const { data } = await api.get(`/course-details/${lessonId}`);
+      console.log("📚 Lesson details response:", data);
+      return data;
+    },
+    enabled: !!lessonId && !!token,
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+// ============================================
+// 🟢 Hook لجلب تقدم الطالب في كورس معين
+// ============================================
+
+export const useCourseProgress = (courseId: number | undefined) => {
+  const { lessons, hasPurchasedFullCourse, isLoading } = useCourseWithEnrollment(courseId);
+  
+  const progress = useMemo(() => {
+    if (!hasPurchasedFullCourse || !lessons.length) return 0;
+    
+    const completedLessons = lessons.filter((lesson: any) => lesson.attended === true).length;
+    return (completedLessons / lessons.length) * 100;
+  }, [lessons, hasPurchasedFullCourse]);
+  
+  const completedCount = useMemo(() => {
+    if (!hasPurchasedFullCourse || !lessons.length) return 0;
+    return lessons.filter((lesson: any) => lesson.attended === true).length;
+  }, [lessons, hasPurchasedFullCourse]);
+  
+  return {
+    progress,
+    completedCount,
+    totalCount: lessons.length,
+    isLoading,
+  };
+};
+
+// ============================================
+// 🟢 Hook لجلب آخر درس تم مشاهدته في كورس
+// ============================================
+
+export const useLastWatchedLesson = (courseId: number | undefined) => {
+  const { lessons, hasPurchasedFullCourse, isLoading } = useCourseWithEnrollment(courseId);
+  
+  const lastWatchedLesson = useMemo(() => {
+    if (!hasPurchasedFullCourse || !lessons.length) return null;
+    
+    // ترتيب الدروس حسب التاريخ والعثور على آخر درس تمت مشاهدته
+    const watchedLessons = lessons.filter((lesson: any) => lesson.attended === true);
+    if (watchedLessons.length === 0) return lessons[0];
+    
+    // إرجاع أول درس غير مشاهد أو آخر درس تمت مشاهدته
+    const firstUnwatched = lessons.find((lesson: any) => lesson.attended !== true);
+    return firstUnwatched || watchedLessons[watchedLessons.length - 1];
+  }, [lessons, hasPurchasedFullCourse]);
+  
+  return {
+    lastWatchedLesson,
+    isLoading,
+  };
+};
+
+export default {
+  useStudentCourses,
+  useIsEnrolledInCourse,
+  useCourseDetails,
+  useCourseLessons,
+  useCourseInfo,
+  useCourseWithEnrollment,
+  useLessonFromEnrolledCourses,
+  useLessonDetails,
+  useCourseProgress,
+  useLastWatchedLesson,
+};

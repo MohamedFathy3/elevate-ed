@@ -6,13 +6,14 @@ import { toast } from "sonner";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
 
-export type EnrollType = 'course' | 'semester' | 'lesson';
+export type EnrollType = 'course' | 'semester' | 'lesson' | 'book';
 
 interface EnrollRequest {
   type: EnrollType;
   course_id?: number | null;
   semester_id?: number | null;
   course_detail_id?: number | null;
+  book_id?: number | null;
   price: number;
 }
 
@@ -30,34 +31,31 @@ interface EnrollResponse {
 export const useEnroll = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const token = Cookies.get('student_token');
   
   return useMutation({
     mutationFn: async (enrollData: EnrollRequest): Promise<EnrollResponse> => {
-      // ✅ التحقق من وجود توكن
       const token = Cookies.get('student_token');
       if (!token) {
         throw new Error("No authentication token found. Please login again.");
       }
       
       console.log("📦 Enroll request:", enrollData);
-      console.log("🔐 Using token:", token ? "Yes" : "No");
       
       const { data } = await api.post('/enroll/request', enrollData);
       console.log("✅ Enroll response:", data);
       return data;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (data) => {
       if (data.status === 200) {
         toast.success(data.message || "تم التسجيل بنجاح!", {
           duration: 4000,
           position: "top-center",
         });
-        // تحديث الكاش
         queryClient.invalidateQueries({ queryKey: ['courses'] });
         queryClient.invalidateQueries({ queryKey: ['semesters'] });
         queryClient.invalidateQueries({ queryKey: ['course-details'] });
         queryClient.invalidateQueries({ queryKey: ['student-learning'] });
+        queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
       } else if (data.status === 401) {
         toast.error("انتهت صلاحية الجلسة، الرجاء تسجيل الدخول مرة أخرى", {
           duration: 5000,
@@ -82,7 +80,6 @@ export const useEnroll = () => {
     onError: (error: any) => {
       console.error("❌ Enroll error:", error);
       
-      // ✅ معالجة أخطاء المصادقة
       if (error.response?.status === 401) {
         toast.error("الرجاء تسجيل الدخول أولاً", {
           duration: 4000,
@@ -111,7 +108,6 @@ export const useBuyCourse = () => {
   const slug = window.location.pathname.split('/')[1];
   
   const buyCourse = (courseId: number, price: number) => {
-    // ✅ التحقق من المصادقة قبل الشراء
     if (!token) {
       toast.error("الرجاء تسجيل الدخول أولاً", {
         duration: 3000,
@@ -162,13 +158,103 @@ export const useBuyCourse = () => {
     });
   };
   
+  const buyBook = (bookId: number, price: number) => {
+    if (!token) {
+      toast.error("الرجاء تسجيل الدخول أولاً", {
+        duration: 3000,
+        position: "top-center",
+      });
+      setTimeout(() => navigate(`/${slug}/login`), 1500);
+      return Promise.reject(new Error("Not authenticated"));
+    }
+    
+    return enroll.mutateAsync({
+      type: 'book',
+      book_id: bookId,
+      price: price,
+    });
+  };
+  
   return {
     buyCourse,
     buySemester,
     buyLesson,
+    buyBook,
     isLoading: enroll.isPending,
     isSuccess: enroll.isSuccess,
     isError: enroll.isError,
     error: enroll.error,
   };
+};
+
+// 🟢 Hook لاستخدام كود الخصم (Redeem Code) - مستقلة تماماً
+export const useRedeemCode = () => {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  
+  return useMutation({
+    mutationFn: async (code: string) => {
+      const token = Cookies.get('student_token');
+      if (!token) {
+        throw new Error("No authentication token found. Please login again.");
+      }
+      
+      console.log("🎫 Redeem code request:", code);
+      
+      const { data } = await api.post('/enroll/redeem-code', { code });
+      console.log("✅ Redeem response:", data);
+      return data;
+    },
+    onSuccess: (data) => {
+      if (data.status === 200) {
+        toast.success(data.message || "تم تفعيل الكود بنجاح!", {
+          duration: 4000,
+          position: "top-center",
+        });
+        // تحديث الكاشات
+        queryClient.invalidateQueries({ queryKey: ['student-profile'] });
+        queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+        queryClient.invalidateQueries({ queryKey: ['student-learning'] });
+      } else if (data.status === 401) {
+        toast.error("انتهت صلاحية الجلسة، الرجاء تسجيل الدخول مرة أخرى", {
+          duration: 5000,
+          position: "top-center",
+        });
+        Cookies.remove('student_token');
+        Cookies.remove('student_data');
+        const slug = window.location.pathname.split('/')[1];
+        setTimeout(() => navigate(`/${slug}/login`), 2000);
+      } else {
+        toast.error(data.message || "فشل تفعيل الكود", {
+          duration: 4000,
+          position: "top-center",
+        });
+      }
+    },
+    onError: (error: any) => {
+      console.error("❌ Redeem error:", error);
+      
+      if (error.response?.status === 401) {
+        toast.error("الرجاء تسجيل الدخول أولاً", {
+          duration: 4000,
+          position: "top-center",
+        });
+        Cookies.remove('student_token');
+        Cookies.remove('student_data');
+        const slug = window.location.pathname.split('/')[1];
+        setTimeout(() => navigate(`/${slug}/login`), 2000);
+      } else if (error.response?.status === 404) {
+        toast.error("الكود غير صالح أو منتهي الصلاحية", {
+          duration: 4000,
+          position: "top-center",
+        });
+      } else {
+        const message = error.response?.data?.message || "حدث خطأ ما، يرجى المحاولة مرة أخرى";
+        toast.error(message, {
+          duration: 4000,
+          position: "top-center",
+        });
+      }
+    },
+  });
 };

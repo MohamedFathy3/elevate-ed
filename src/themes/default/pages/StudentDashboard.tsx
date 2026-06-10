@@ -5,11 +5,12 @@ import { useLang } from "@/i18n/LanguageContext";
 import { useStudentProfile, useStudentLearning, useCurrentStudent } from "@/hooks/useStudent";
 import { useWalletBalance, useCreateRechargeCode, useRechargeWallet } from "@/hooks/useWallet";
 import { useTheme } from "@/context/ThemeContext";
-import { BookOpen, Clock, Award, Calendar, ChevronRight, User, Phone, Mail, GraduationCap, FileQuestion, ClipboardList, CheckCircle, XCircle, TrendingUp, Eye, Wallet, CreditCard, Copy, RefreshCw, Loader2, Zap, Leaf, Sun, Moon, Wifi, Building, Landmark, School, MapPin, Users } from "lucide-react";
+import { BookOpen, Clock, Award, Calendar, ChevronRight, User, Phone, Mail, GraduationCap, FileQuestion, ClipboardList, CheckCircle, XCircle, TrendingUp, Eye, Wallet, CreditCard, Copy, RefreshCw, Loader2, Zap, Leaf, Sun, Moon, Wifi, Building, Landmark, School, MapPin, Users, Ticket, Gift } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
+import { useRedeemCode } from "@/hooks/useEnroll"; // ✅ تصحيح الـ import
 
 const StudentDashboard = () => {
   const { lang } = useLang();
@@ -21,78 +22,95 @@ const StudentDashboard = () => {
   const { data: walletData, isLoading: walletLoading, refetch: refetchWallet } = useWalletBalance();
   const { mutate: createRechargeCode, isPending: creatingCode } = useCreateRechargeCode();
   const { mutate: rechargeWallet, isPending: recharging } = useRechargeWallet();
-  
+  const { mutate: redeemCode, isPending: redeeming } = useRedeemCode();
+
   const isNature = theme === 'nature';
   const isDark = colorMode === 'dark';
-  
+  const [redeemCodeInput, setRedeemCodeInput] = useState("");
+  const [showRedeemModal, setShowRedeemModal] = useState(false);
   const [rechargeCode, setRechargeCode] = useState("");
   const [showRechargeModal, setShowRechargeModal] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
-// دوال مساعدة لترجمة اسم المحافظة
-const getGovernorateNameAr = (govValue: string) => {
-  const governorates: Record<string, string> = {
-    cairo: "القاهرة",
-    alexandria: "الإسكندرية",
-    giza: "الجيزة",
-    sharqia: "الشرقية",
-    dakahlia: "الدقهلية",
-    beheira: "البحيرة",
-    qalyubia: "القليوبية",
-    menofia: "المنوفية",
-    gharbia: "الغربية",
-    kafr_el_sheikh: "كفر الشيخ",
-    ismailia: "الإسماعيلية",
-    port_said: "بورسعيد",
-    suez: "السويس",
-    damietta: "دمياط",
-    luxor: "الأقصر",
-    aswan: "أسوان",
-    sohag: "سوهاج",
-    asyut: "أسيوط",
-    minya: "المنيا",
-    beni_suef: "بني سويف",
-    qena: "قنا",
-    red_sea: "البحر الأحمر",
-    new_valley: "الوادي الجديد",
-    matrouh: "مطروح",
-    north_sinai: "شمال سيناء",
-    south_sinai: "جنوب سيناء",
-  };
-  return governorates[govValue] || govValue;
-};
 
-const getGovernorateNameEn = (govValue: string) => {
-  const governorates: Record<string, string> = {
-    cairo: "Cairo",
-    alexandria: "Alexandria",
-    giza: "Giza",
-    sharqia: "Sharqia",
-    dakahlia: "Dakahlia",
-    beheira: "Beheira",
-    qalyubia: "Qalyubia",
-    menofia: "Menofia",
-    gharbia: "Gharbia",
-    kafr_el_sheikh: "Kafr El Sheikh",
-    ismailia: "Ismailia",
-    port_said: "Port Said",
-    suez: "Suez",
-    damietta: "Damietta",
-    luxor: "Luxor",
-    aswan: "Aswan",
-    sohag: "Sohag",
-    asyut: "Asyut",
-    minya: "Minya",
-    beni_suef: "Beni Suef",
-    qena: "Qena",
-    red_sea: "Red Sea",
-    new_valley: "New Valley",
-    matrouh: "Matrouh",
-    north_sinai: "North Sinai",
-    south_sinai: "South Sinai",
+  // دوال مساعدة لترجمة اسم المحافظة
+  const getGovernorateNameAr = (govValue: string) => {
+    const governorates: Record<string, string> = {
+      cairo: "القاهرة",
+      alexandria: "الإسكندرية",
+      giza: "الجيزة",
+      sharqia: "الشرقية",
+      dakahlia: "الدقهلية",
+      beheira: "البحيرة",
+      qalyubia: "القليوبية",
+      menofia: "المنوفية",
+      gharbia: "الغربية",
+      kafr_el_sheikh: "كفر الشيخ",
+      ismailia: "الإسماعيلية",
+      port_said: "بورسعيد",
+      suez: "السويس",
+      damietta: "دمياط",
+      luxor: "الأقصر",
+      aswan: "أسوان",
+      sohag: "سوهاج",
+      asyut: "أسيوط",
+      minya: "المنيا",
+      beni_suef: "بني سويف",
+      qena: "قنا",
+      red_sea: "البحر الأحمر",
+      new_valley: "الوادي الجديد",
+      matrouh: "مطروح",
+      north_sinai: "شمال سيناء",
+      south_sinai: "جنوب سيناء",
+    };
+    return governorates[govValue] || govValue;
   };
-  return governorates[govValue] || govValue;
-};
+
+  const getGovernorateNameEn = (govValue: string) => {
+    const governorates: Record<string, string> = {
+      cairo: "Cairo",
+      alexandria: "Alexandria",
+      giza: "Giza",
+      sharqia: "Sharqia",
+      dakahlia: "Dakahlia",
+      beheira: "Beheira",
+      qalyubia: "Qalyubia",
+      menofia: "Menofia",
+      gharbia: "Gharbia",
+      kafr_el_sheikh: "Kafr El Sheikh",
+      ismailia: "Ismailia",
+      port_said: "Port Said",
+      suez: "Suez",
+      damietta: "Damietta",
+      luxor: "Luxor",
+      aswan: "Aswan",
+      sohag: "Sohag",
+      asyut: "Asyut",
+      minya: "Minya",
+      beni_suef: "Beni Suef",
+      qena: "Qena",
+      red_sea: "Red Sea",
+      new_valley: "New Valley",
+      matrouh: "Matrouh",
+      north_sinai: "North Sinai",
+      south_sinai: "South Sinai",
+    };
+    return governorates[govValue] || govValue;
+  };
+
+  const handleRedeemCode = () => {
+    if (!redeemCodeInput.trim()) {
+      toast.error(lang === "ar" ? "الرجاء إدخال الكود" : "Please enter the code");
+      return;
+    }
+    redeemCode(redeemCodeInput.toUpperCase(), {
+      onSuccess: () => {
+        setRedeemCodeInput("");
+        setShowRedeemModal(false);
+      }
+    });
+  };
+
   // الألوان حسب الثيم
   const primaryGradient = isNature 
     ? "from-amber-500 to-orange-600" 
@@ -321,151 +339,114 @@ const getGovernorateNameEn = (govValue: string) => {
           </div>
         )}
         
-        {/* Student Info Section */}
-    {/* Student Info Section - معدل مع الحقول الجديدة */}
-{studentInfo && (
-  <div className={`${cardBg} rounded-2xl border p-6 mb-8`}>
-    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-      <User className={`w-5 h-5 ${isNature ? 'text-amber-600' : 'text-primary'}`} />
-      {lang === "ar" ? "معلومات الطالب" : "Student Information"}
-    </h2>
-    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {/* الاسم */}
-      <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-        <User className="w-5 h-5 text-foreground/50" />
-        <div>
-          <p className="text-xs text-foreground/50">{lang === "ar" ? "الاسم" : "Name"}</p>
-          <p className="font-medium">{studentInfo?.name || "-"}</p>
-        </div>
-      </div>
-      
-      {/* رقم الهاتف */}
-      <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-        <Phone className="w-5 h-5 text-foreground/50" />
-        <div>
-          <p className="text-xs text-foreground/50">{lang === "ar" ? "رقم الهاتف" : "Phone"}</p>
-          <p className="font-medium">{studentInfo?.phone || "-"}</p>
-        </div>
-      </div>
-      
-      {/* رقم ولي الأمر */}
-      <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-        <Users className="w-5 h-5 text-foreground/50" />
-        <div>
-          <p className="text-xs text-foreground/50">{lang === "ar" ? "هاتف ولي الأمر" : "Parent Phone"}</p>
-          <p className="font-medium">{studentInfo?.phone_parent || "-"}</p>
-        </div>
-      </div>
-      
-      {/* كود ولي الأمر */}
-      <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-        <GraduationCap className="w-5 h-5 text-foreground/50" />
-        <div>
-          <p className="text-xs text-foreground/50">{lang === "ar" ? "كود ولي الأمر" : "Parent Code"}</p>
-          <p className="font-mono font-medium">{studentInfo?.code_parent || "-"}</p>
-        </div>
-      </div>
-      
-      {/* المحافظة 🆕 */}
-      <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-        <MapPin className="w-5 h-5 text-foreground/50" />
-        <div>
-          <p className="text-xs text-foreground/50">{lang === "ar" ? "المحافظة" : "Governorate"}</p>
-          <p className="font-medium">
-            {studentInfo?.governorate ? (
-              lang === "ar" 
-                ? getGovernorateNameAr(studentInfo.governorate)
-                : getGovernorateNameEn(studentInfo.governorate)
-            ) : "-"}
-          </p>
-        </div>
-      </div>
-      
-      {/* اسم المدرسة 🆕 */}
-      <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-        <School className="w-5 h-5 text-foreground/50" />
-        <div>
-          <p className="text-xs text-foreground/50">{lang === "ar" ? "اسم المدرسة" : "School Name"}</p>
-          <p className="font-medium">{studentInfo?.school_name || "-"}</p>
-        </div>
-      </div>
-      
-      {/* نوع الدراسة 🆕 */}
-      <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-        {studentInfo?.type_of_study === "azhar" ? (
-          <Landmark className="w-5 h-5 text-foreground/50" />
-        ) : (
-          <BookOpen className="w-5 h-5 text-foreground/50" />
-        )}
-        <div>
-          <p className="text-xs text-foreground/50">{lang === "ar" ? "نوع الدراسة" : "Study Type"}</p>
-          <p className="font-medium">
-            {studentInfo?.type_of_study === "azhar" 
-              ? (lang === "ar" ? "أزهري" : "Azhar")
-              : (lang === "ar" ? "عام" : "General")}
-          </p>
-        </div>
-      </div>
-      
-      {/* نوع الحضور */}
-      <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-        {studentInfo?.type_of_attendance === "center" ? (
-          <Building className="w-5 h-5 text-foreground/50" />
-        ) : (
-          <Wifi className="w-5 h-5 text-foreground/50" />
-        )}
-        <div>
-          <p className="text-xs text-foreground/50">{lang === "ar" ? "نوع الحضور" : "Attendance Type"}</p>
-          <p className="font-medium">
-            {studentInfo?.type_of_attendance === "center" 
-              ? (lang === "ar" ? "سنتر" : "Center")
-              : (lang === "ar" ? "أونلاين" : "Online")}
-          </p>
-        </div>
-      </div>
-      
-      {/* النوع */}
-      <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-        <User className="w-5 h-5 text-foreground/50" />
-        <div>
-          <p className="text-xs text-foreground/50">{lang === "ar" ? "النوع" : "Gender"}</p>
-          <p className="font-medium">
-            {studentInfo?.gender === "male" 
-              ? (lang === "ar" ? "ذكر" : "Male")
-              : studentInfo?.gender === "female" 
-                ? (lang === "ar" ? "أنثى" : "Female")
-                : "-"}
-          </p>
-        </div>
-      </div>
-      
-      {/* الحالة */}
-      <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-        <div className={`w-2 h-2 rounded-full ${studentInfo?.active ? 'bg-green-500' : 'bg-red-500'}`} />
-        <div>
-          <p className="text-xs text-foreground/50">{lang === "ar" ? "الحالة" : "Status"}</p>
-          <p className="font-medium">
-            {studentInfo?.active 
-              ? (lang === "ar" ? "نشط" : "Active")
-              : (lang === "ar" ? "غير نشط" : "Inactive")}
-          </p>
-        </div>
-      </div>
-      
-      {/* تاريخ الانضمام */}
-      {studentInfo?.joined_at && (
-        <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-          <Calendar className="w-5 h-5 text-foreground/50" />
-          <div>
-            <p className="text-xs text-foreground/50">{lang === "ar" ? "تاريخ الانضمام" : "Joined Date"}</p>
-            <p className="font-medium">{new Date(studentInfo.joined_at).toLocaleDateString()}</p>
+        {/* Redeem Code Section - كود الخصم */}
+        <div className={`${cardBg} rounded-2xl border p-6 mb-8`}>
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isNature ? 'bg-amber-100' : 'bg-primary/10'}`}>
+                <Gift className={`w-6 h-6 ${isNature ? 'text-amber-600' : 'text-primary'}`} />
+              </div>
+              <div>
+                <p className="text-foreground/60 text-sm">{lang === "ar" ? "كود الخصم" : "Redeem Code"}</p>
+                <p className="font-semibold text-sm">
+                  {lang === "ar" 
+                    ? "أدخل كود المدرس لتفعيل المحتوي " 
+                    : "Enter teacher's code to activate   get  content"}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowRedeemModal(true)}
+              className={`px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 transition-all hover:scale-105
+                ${isNature 
+                  ? 'bg-amber-600 text-white hover:bg-amber-700' 
+                  : 'gradient-primary text-white shadow-soft hover:shadow-glow'}`}
+            >
+              <Ticket className="w-4 h-4" />
+              {lang === "ar" ? "استخدم كود" : "Use Code"}
+            </button>
           </div>
         </div>
-      )}
-    </div>
-  </div>
-)}
+
+        {/* Redeem Code Modal */}
+        {showRedeemModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className={`${cardBg} rounded-2xl p-6 max-w-md w-full mx-4 border`}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold">{lang === "ar" ? "استخدام كود الخصم" : "Redeem Code"}</h3>
+                <button
+                  onClick={() => setShowRedeemModal(false)}
+                  className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center hover:bg-secondary/80"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <p className="text-foreground/60 text-sm mb-4">
+                {lang === "ar" 
+                  ? "أدخل الكود الذي حصلت عليه من المدرس لتفعيل الخصم أو الحصول على محتوى مجاني"
+                  : "Enter the code you received from the teacher to activate discount or get free content"}
+              </p>
+              
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-2">
+                  {lang === "ar" ? "الكود" : "Code"}
+                </label>
+                <input
+                  type="text"
+                  value={redeemCodeInput}
+                  onChange={(e) => setRedeemCodeInput(e.target.value.toUpperCase())}
+                  placeholder="مثال: LOT4LBNW"
+                  className={`w-full bg-background border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-500 transition-all font-mono tracking-wider uppercase
+                    ${isNature ? 'focus:ring-2 focus:ring-amber-500/20' : ''}`}
+                  autoFocus
+                />
+                <p className="text-xs text-foreground/40 mt-2">
+                  {lang === "ar" 
+                    ? "الكود مكون من 8 أحرف أو أرقام" 
+                    : "Code consists of 8 letters or numbers"}
+                </p>
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowRedeemModal(false)}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-secondary text-foreground font-semibold hover:bg-secondary/80 transition-all"
+                >
+                  {lang === "ar" ? "إلغاء" : "Cancel"}
+                </button>
+                <button
+                  onClick={handleRedeemCode}
+                  disabled={redeeming || !redeemCodeInput.trim()}
+                  className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed
+                    ${isNature 
+                      ? 'bg-amber-600 hover:bg-amber-700' 
+                      : 'gradient-primary'}`}
+                >
+                  {redeeming ? (
+                    <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+                  ) : (
+                    lang === "ar" ? "تفعيل" : "Redeem"
+                  )}
+                </button>
+              </div>
+              
+              <div className="mt-4 pt-4 border-t border-border text-center">
+                <p className="text-xs text-foreground/40">
+                  {lang === "ar"
+                    ? "الكود مقدم من المدرس ويمكن استخدامه مرة واحدة فقط"
+                    : "The code is provided by the teacher and can be used only once"}
+                </p>
+              </div>
+            </motion.div>
+          </div>
+        )}
         
+        {/* باقي الأقسام... */}
         {/* Exams Section */}
         {examsList.length > 0 && (
           <div className="mb-8">

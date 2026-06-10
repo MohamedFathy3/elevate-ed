@@ -67,6 +67,22 @@ export const useLessonExams = (courseDetailId: number) => {
   });
 };
 
+export const useAssignmentResult = (assignmentId: number, studentId: number) => {
+  const token = Cookies.get('student_token');
+  
+  return useQuery({
+    queryKey: ['assignment-result', assignmentId, studentId],
+    queryFn: async () => {
+      if (!assignmentId || !studentId) return null;
+      
+      const { data } = await api.get(`/exams/${assignmentId}/student/${studentId}`);
+      console.log("📝 Assignment result response:", data);
+      return data;
+    },
+    enabled: !!assignmentId && !!studentId && !!token,
+    staleTime: 5 * 60 * 1000,
+  });
+};
 // جلب تفاصيل امتحان معين
 export const useExamDetails = (examId: number) => {
   const token = Cookies.get('student_token');

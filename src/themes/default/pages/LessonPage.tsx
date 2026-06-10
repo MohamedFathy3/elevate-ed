@@ -78,7 +78,7 @@ const LessonPage = () => {
   }, [examResultData, requiredExam]);
   
   // ✅ منطق القفل: إذا كان الدرس يتطلب امتحان والطالب لم يجتازه
-  const needsExamToUnlock = lesson?.must_pass_to_unlock === true && !examPassed;
+  const needsExamToUnlock = lesson?.must_pass_to_unlock === true || lesson?.must_solve_assignment_to_unlock === true;
   const canWatch = !needsExamToUnlock;
   
   // ✅ تجهيز الأجزاء من Arrays الدرس (مع صورة الدرس الأب)
@@ -451,28 +451,7 @@ const LessonPage = () => {
             )}
             
             {/* After Passing Exam Card */}
-            {examPassed && (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-2xl border border-green-500/30 p-6"
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                  </div>
-                  <h3 className="font-bold text-lg">
-                    {lang === "ar" ? "تم اجتياز الامتحان" : "Exam Passed"}
-                  </h3>
-                </div>
-                <p className="text-sm text-foreground/60">
-                  {lang === "ar" 
-                    ? "تهانينا! لقد اجتزت الامتحان بنجاح. يمكنك الآن مشاهدة الدرس."
-                    : "Congratulations! You have passed the exam. You can now watch the lesson."}
-                </p>
-              </motion.div>
-            )}
-            
+         
             {/* Attendance Card */}
             {canWatch && (
               <motion.div

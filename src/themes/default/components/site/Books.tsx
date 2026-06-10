@@ -4,19 +4,28 @@ import { useLang } from "@/i18n/LanguageContext";
 import { useSafeTeacher } from "@/context/TeacherContext";
 import { useTheme } from "@/context/ThemeContext";
 import { BookOpen, FileText, Leaf, Flower2, BookMarked } from "lucide-react";
+import { useBuyCourse } from "@/hooks/useEnroll"; // ✅ استيراد الـ hook
 
 export const Books = () => {
   const { lang } = useLang();
   const { theme } = useTheme();
   const { teacher, pick, isLoading } = useSafeTeacher();
-  
+    const { buyBook, isLoading: isBuying } = useBuyCourse(); 
   const isNature = theme === 'nature';
   const books = teacher?.website?.books || [];
 
   if (isLoading) {
     return <BooksSkeleton isNature={isNature} />;
   }
-
+ // ✅ معالج شراء الكتاب
+  const handleBuyBook = async (bookId: number, price: number, bookTitle: string) => {
+    try {
+      await buyBook(bookId, price);
+      // الباقي handled by useEnroll onSuccess
+    } catch (error) {
+      console.error("Failed to buy book:", error);
+    }
+  };
   if (!books.length) {
     return null;
   }
@@ -113,12 +122,19 @@ export const Books = () => {
                   </div>
                   <div className="text-[10px] text-foreground/50 font-medium">EGP</div>
                 </div>
-                <button className={`px-4 py-2.5 rounded-2xl text-white font-semibold text-sm transition-all hover:scale-105 active:scale-95
+               <button
+                onClick={() => handleBuyBook(b.id, b.price, pick(b.title, b.title_ar))}
+                disabled={isBuying}
+                className={`px-4 py-2.5 rounded-2xl text-white font-semibold text-sm transition-all 
+                  ${isBuying ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 active:scale-95'}
                   ${isNature 
                     ? 'bg-emerald-600 shadow-md hover:bg-emerald-700 hover:shadow-lg' 
-                    : 'gradient-primary shadow-soft hover:shadow-glow'}`}>
-                  {lang === "ar" ? "اشتري الآن" : "Buy now"}
-                </button>
+                    : 'gradient-primary shadow-soft hover:shadow-glow'}`}
+              >
+                {isBuying 
+                  ? (lang === "ar" ? "جاري الشراء..." : "Buying...") 
+                  : (lang === "ar" ? "اشتري الآن" : "Buy now")}
+              </button>
               </div>
             </motion.article>
           ))}
