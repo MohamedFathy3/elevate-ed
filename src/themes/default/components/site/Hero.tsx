@@ -105,16 +105,17 @@ export const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
-            className="mt-8 p-5 md:p-6 rounded-3xl surface-card border border-border shadow-soft max-w-xl"
+            className="mt-8 p-5 md:p-6 rounded-3xl  border  shadow-soft max-w-xl bg-[#d5dbe273]"
           >
-            <div className="flex gap-4">
-              <div className="shrink-0 w-9 h-9 rounded-full gradient-accent grid place-items-center shadow-soft">
-                <CheckCircle2 className="w-5 h-5 text-white" />
-              </div>
-              <p className="text-sm md:text-base text-foreground/75 leading-relaxed">
-                {heroDescription}
-              </p>
-            </div>
+           <div className="flex gap-4 py-5">
+  <div className="shrink-0 w-5 h-9 rounded-full  grid place-items-center shadow-soft">
+    <CheckCircle2 className="w-5 h-5 text-white" />
+  </div>
+
+  <p className="min-w-0 break-words text-sm  leading-relaxed">
+    {heroDescription}
+  </p>
+</div>
           </motion.div>
 
           <motion.div
@@ -133,9 +134,10 @@ export const Hero = () => {
             </Link>
             <Link
               to={`/${slug}/courses`}
-              className="inline-flex items-center gap-2 px-6 py-4 rounded-2xl bg-card border border-border font-semibold hover:border-primary/40 hover:bg-primary/5 transition-colors"
+              className="group inline-flex items-center gap-3 px-6 shadow-glow  md:px-8 py-4 md:py-5 rounded-2xl  text-white font-bold text-base md:text-lg shadow-elegant hover:shadow-glow transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
-              {lang === "ar" ? "تصفح الكورسات" : "Browse Courses"}
+              <span className="shadow-glow ">              {lang === "ar" ? "تصفح الكورسات" : "Browse Courses"}
+</span>
             </Link>
           </motion.div>
         </div>
@@ -174,7 +176,7 @@ export const Hero = () => {
             className="absolute inset-16 rounded-full gradient-primary blur-2xl"
           />
 
-          <div className="absolute inset-16 rounded-full bg-card shadow-glow overflow-hidden">
+          <div className="absolute inset-16 rounded-full  shadow-glow overflow-hidden">
             {heroImage ? (
               <img
                 src={heroImage}
@@ -196,14 +198,14 @@ export const Hero = () => {
           <motion.div
             animate={{ y: [0, -12, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-6 right-2 md:right-0 w-16 h-16 rounded-2xl bg-card shadow-card grid place-items-center"
+            className="absolute top-6 right-2 md:right-0 w-16 h-16 rounded-2xl  shadow-card grid place-items-center"
           >
             <Zap className="w-7 h-7 text-accent" fill="currentColor" />
           </motion.div>
           <motion.div
             animate={{ y: [0, 12, 0] }}
             transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-            className="absolute bottom-12 left-2 md:left-0 w-16 h-16 rounded-2xl bg-card shadow-card grid place-items-center"
+            className="absolute bottom-12 left-2 md:left-0 w-16 h-16 rounded-2xl  shadow-card grid place-items-center"
           >
             <Lightbulb className="w-7 h-7 text-amber-400" fill="currentColor" />
           </motion.div>

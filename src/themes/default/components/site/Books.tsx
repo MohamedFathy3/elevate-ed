@@ -3,35 +3,94 @@ import { motion } from "framer-motion";
 import { useLang } from "@/i18n/LanguageContext";
 import { useSafeTeacher } from "@/context/TeacherContext";
 import { useTheme } from "@/context/ThemeContext";
-import { BookOpen, FileText, Leaf, Flower2, BookMarked } from "lucide-react";
-import { useBuyCourse } from "@/hooks/useEnroll"; // ✅ استيراد الـ hook
+import { BookOpen, FileText, Leaf, Flower2, BookMarked, AlertCircle } from "lucide-react";
+import { useBuyCourse } from "@/hooks/useEnroll";
+import { toast } from "sonner";
 
 export const Books = () => {
   const { lang } = useLang();
   const { theme } = useTheme();
   const { teacher, pick, isLoading } = useSafeTeacher();
-    const { buyBook, isLoading: isBuying } = useBuyCourse(); 
+  const { buyBook, isLoading: isBuying } = useBuyCourse(); 
   const isNature = theme === 'nature';
   const books = teacher?.website?.books || [];
 
   if (isLoading) {
     return <BooksSkeleton isNature={isNature} />;
   }
- // ✅ معالج شراء الكتاب
+
+  // ✅ معالج شراء الكتاب مع confirmation popup
   const handleBuyBook = async (bookId: number, price: number, bookTitle: string) => {
+    toast.custom((t) => (
+      <div className={`rounded-2xl p-5 shadow-2xl max-w-sm w-full mx-4 
+        ${isNature ? '' : 'bg-card border'}`}>
+        <div className="flex items-start gap-3">
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0
+            ${isNature ? 'bg-amber-100' : 'bg-amber-500/10'}`}>
+            <AlertCircle className={`w-5 h-5 ${isNature ? 'text-amber-600' : 'text-amber-500'}`} />
+          </div>
+          <div className="flex-1">
+            <h4 className={`font-bold text-lg ${isNature ? 'text-emerald-800' : ''}`}>
+              {lang === "ar" ? "تأكيد الشراء" : "Confirm Purchase"}
+            </h4>
+            <p className="text-sm text-foreground/70 mt-1">
+              {lang === "ar" 
+                ? `هل أنت متأكد من شراء كتاب "${bookTitle}" بسعر ${price} EGP؟`
+                : `Are you sure you want to buy "${bookTitle}" for ${price} EGP?`}
+            </p>
+            <div className={`mt-3 p-2 rounded-xl text-xs font-medium
+              ${isNature ? 'bg-amber-50 text-amber-700' : 'bg-amber-500/10 text-amber-600'}`}>
+              ⚠️ {lang === "ar" 
+                ? "سيتم خصم المبلغ من محفظتك الإلكترونية"
+                : "The amount will be deducted from your wallet"}
+            </div>
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => {
+                  toast.dismiss(t);
+                  handleConfirmBuy(bookId, price);
+                }}
+                className={`flex-1 py-2 rounded-xl text-white font-semibold text-sm
+                  ${isNature 
+                    ? 'bg-emerald-600 hover:bg-emerald-700' 
+                    : 'bg-gradient-to-r from-emerald-500 to-teal-600'}`}
+              >
+                {lang === "ar" ? "تأكيد الشراء" : "Confirm"}
+              </button>
+              <button
+                onClick={() => toast.dismiss(t)}
+                className={`flex-1 py-2 rounded-xl font-semibold text-sm transition
+                  ${isNature 
+                    ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' 
+                    : 'bg-secondary hover:bg-secondary/80'}`}
+              >
+                {lang === "ar" ? "إلغاء" : "Cancel"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    ), {
+      duration: 10000,
+      position: "top-center",
+    });
+  };
+
+  // ✅ دالة تأكيد الشراء الفعلية
+  const handleConfirmBuy = async (bookId: number, price: number) => {
     try {
       await buyBook(bookId, price);
-      // الباقي handled by useEnroll onSuccess
     } catch (error) {
       console.error("Failed to buy book:", error);
     }
   };
+
   if (!books.length) {
     return null;
   }
 
   return (
-    <section id="books" className={`py-24 md:py-32 relative ${isNature ? 'bg-cream' : 'bg-background'}`}>
+    <section id="books" className={`py-24 md:py-32 relative ${isNature ? '' : ''}`}>
       <div className="container-tight">
         <div className="text-center max-w-3xl mx-auto mb-14">
           <motion.div
@@ -53,7 +112,7 @@ export const Books = () => {
             transition={{ duration: 0.6 }}
             className="font-display font-black text-4xl md:text-5xl lg:text-6xl tracking-tight"
           >
-            <span className={isNature ? 'text-emerald-600' : 'text-gradient-rainbow'}>
+            <span className={isNature ? 'text-gradient-rainbow' : 'text-gradient-rainbow'}>
               {lang === "ar" ? "كتبنا المطبوعة" : "Our printed books"}
             </span>
           </motion.h2>
@@ -63,7 +122,7 @@ export const Books = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="mt-4 text-muted-foreground"
+              className="mt-4 text-white"
             >
               {lang === "ar" 
                 ? "استمتع بقراءة كتبنا المصممة خصيصاً لمسيرتك التعليمية" 
@@ -82,8 +141,8 @@ export const Books = () => {
               transition={{ duration: 0.6, delay: i * 0.1 }}
               className={`group relative rounded-3xl p-6 transition-all
                 ${isNature 
-                  ? 'bg-white border border-emerald-200 shadow-md hover:shadow-xl hover:border-emerald-300' 
-                  : 'bg-card shadow-card hover:shadow-elegant'}`}
+                  ? 'bg-white border  shadow-md hover:shadow-xl hover:border-emerald-300' 
+                  : ' shadow-card hover:shadow-elegant'}`}
             >
               <div className={`relative aspect-[3/4] rounded-2xl overflow-hidden mb-5
                 ${isNature ? 'bg-emerald-50' : 'bg-secondary'}`}>
@@ -122,19 +181,19 @@ export const Books = () => {
                   </div>
                   <div className="text-[10px] text-foreground/50 font-medium">EGP</div>
                 </div>
-               <button
-                onClick={() => handleBuyBook(b.id, b.price, pick(b.title, b.title_ar))}
-                disabled={isBuying}
-                className={`px-4 py-2.5 rounded-2xl text-white font-semibold text-sm transition-all 
-                  ${isBuying ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 active:scale-95'}
-                  ${isNature 
-                    ? 'bg-emerald-600 shadow-md hover:bg-emerald-700 hover:shadow-lg' 
-                    : 'gradient-primary shadow-soft hover:shadow-glow'}`}
-              >
-                {isBuying 
-                  ? (lang === "ar" ? "جاري الشراء..." : "Buying...") 
-                  : (lang === "ar" ? "اشتري الآن" : "Buy now")}
-              </button>
+                <button
+                  onClick={() => handleBuyBook(b.id, b.price, pick(b.title, b.title_ar))}
+                  disabled={isBuying}
+                  className={`px-4 py-2.5 rounded-2xl text-white font-semibold text-sm transition-all 
+                    ${isBuying ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 active:scale-95'}
+                    ${isNature 
+                      ? 'bg-emerald-600 shadow-md hover:bg-emerald-700 hover:shadow-lg' 
+                      : 'gradient-primary shadow-soft hover:shadow-glow'}`}
+                >
+                  {isBuying 
+                    ? (lang === "ar" ? "جاري الشراء..." : "Buying...") 
+                    : (lang === "ar" ? "اشتري الآن" : "Buy now")}
+                </button>
               </div>
             </motion.article>
           ))}

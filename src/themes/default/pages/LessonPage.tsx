@@ -6,7 +6,13 @@ import { useLang } from "@/i18n/LanguageContext";
 import { useLessonDetails } from "@/hooks/useLessonDetails";
 import { useExamResult } from "@/hooks/useExams";
 import { useCurrentStudent } from "@/hooks/useStudent";
+import { useWatermark } from '@/hooks/useWatermark';
+import { usePreventScreenshot } from '@/hooks/usePreventScreenshot';
+import { useDetectDevTools } from '@/hooks/useDetectDevTools';
 import { motion, AnimatePresence } from "framer-motion";
+import { useStudentAuth } from "@/context/StudentAuthContext";
+import VideoPlayer from '@/components/VideoPlayer';
+
 import { 
   Play, CheckCircle, Clock, Calendar, ChevronRight, ChevronLeft,
   FileText, Download, ExternalLink, Loader2, Lock, Unlock, 
@@ -15,6 +21,8 @@ import {
   ClipboardList, HelpCircle, TrendingUp, BarChart, XCircle, Video,
   PlayCircle
 } from "lucide-react";
+import useAdvancedProtection from '@/hooks/useScreenRecorderProtection';
+
 import { toast } from "sonner";
 import { enableFullProtection } from "@/utils/protection";
 
@@ -32,13 +40,35 @@ const LessonPage = () => {
   const [requiredExam, setRequiredExam] = useState<any>(null);
   const [examPassed, setExamPassed] = useState(false);
   const [examsList, setExamsList] = useState<any[]>([]);
-  
+  const [assignmentsList, setAssignmentsList] = useState<any[]>([]);
+
   // ✅ State للمقطع المختار حالياً
   const [selectedPartIndex, setSelectedPartIndex] = useState<number>(0);
+
+
+
+  const watermarkText = student 
+    ? `${student.name} | ID: ${student.id} | ${new Date().toLocaleDateString('ar-EG')}`
+    : 'زائر | يرجى تسجيل الدخول';  
+  // ✅ منع التصوير ونسخ المحتوى
+  usePreventScreenshot(true);
+    useWatermark(watermarkText, true);
+
+  // ✅ كشف أدوات المطور
+  const { devToolsOpen } = useDetectDevTools(true);
+
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
-  
+ const { BlueScreen, ProtectedContent } = useAdvancedProtection({
+  enabled: true,
+  sensitivity: 'low',
+  videoRef: videoRef,
+  onDetect: () => {
+    toast.error("⚠️ تم اكتشاف محاولة تسجيل!");
+  }
+});
+
   // ✅ تعيين بيانات الدرس من الـ API
   useEffect(() => {
     if (lessonData?.data) {
@@ -51,7 +81,10 @@ const LessonPage = () => {
         setExamsList(lessonInfo.exams);
         setRequiredExam(lessonInfo.exams[0]);
       }
-      
+      // ✅ جلب الواجبات من بيانات الدرس
+if (lessonInfo.assignments && lessonInfo.assignments.length > 0) {
+  setAssignmentsList(lessonInfo.assignments);
+}
       console.log("📚 Lesson data loaded:", {
         title: lessonInfo.title,
         must_pass_to_unlock: lessonInfo.must_pass_to_unlock,
@@ -62,7 +95,9 @@ const LessonPage = () => {
       });
     }
   }, [lessonData]);
-  
+  const handleStartAssignment = (exam: any) => {
+    navigate(`/${slug}/exam/${exam.id}?redirect=${encodeURIComponent(window.location.pathname)}`);
+};
   // ✅ التحقق من اجتياز الامتحان المطلوب
   const { data: examResultData } = useExamResult(
     requiredExam?.id || 0, 
@@ -166,9 +201,24 @@ const LessonPage = () => {
       </div>
     );
   }
-  
+   if (devToolsOpen) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-red-50">
+        <div className="text-center p-8">
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-bold mb-2">⚠️ تم اكتشاف أدوات المطور</h2>
+          <p className="text-gray-600">يرجى إغلاق أدوات المطور (F12) لمتابعة المحتوى</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen pt-32 pb-20" dir={dir}>
+
+          {BlueScreen}
+
+             <ProtectedContent>
+
       <div className="container-tight">
         {/* Breadcrumb */}
         <div className="mb-6">
@@ -184,7 +234,6 @@ const LessonPage = () => {
             <span className="text-foreground line-clamp-1">{lesson.title}</span>
           </div>
         </div>
-        
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content - Video Player */}
           <div className="lg:col-span-2">
@@ -216,33 +265,19 @@ const LessonPage = () => {
                   )}
                 </div>
               ) : isVideo && embedUrl ? (
-                <div className="aspect-video bg-black">
-                  <iframe
-                    key={embedUrl}
-                    src={embedUrl}
-                    className="w-full h-full"
-                    title={currentPart?.title || lesson.title}
-                    allowFullScreen
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    onError={() => setVideoError(true)}
-                  />
-                  {videoError && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/80">
-                      <div className="text-center text-white p-4">
-                        <AlertCircle className="w-12 h-12 mx-auto mb-2 text-red-500" />
-                        <p>{lang === "ar" ? "عذراً، لا يمكن تحميل الفيديو" : "Sorry, cannot load video"}</p>
-                        <a 
-                          href={currentVideoUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="mt-3 inline-block px-4 py-2 rounded-lg bg-primary text-white text-sm"
-                        >
-                          {lang === "ar" ? "فتح على يوتيوب" : "Open on YouTube"}
-                        </a>
-                      </div>
-                    </div>
-                  )}
-                </div>
+              <VideoPlayer
+  videoUrl={currentVideoUrl}
+  title={lesson.title}
+  studentName={student?.name}
+  studentId={student?.id}
+  isLocked={needsExamToUnlock}
+  requiredExam={requiredExam}
+  onStartExam={() => handleStartExam(requiredExam)}
+  poster={lesson.imageUrl}
+  parts={subParts}
+  onPartChange={handleSelectPart}
+  selectedPartIndex={selectedPartIndex}
+/>
               ) : isPdf ? (
                 <div className="aspect-[3/4] bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                   <div className="text-center p-8">
@@ -449,7 +484,45 @@ const LessonPage = () => {
                 </button>
               </motion.div>
             )}
-            
+            {/* ✅ كارد الواجبات (Assignments) */}
+{assignmentsList.length > 0 && (
+  <motion.div
+    initial={{ opacity: 0, x: 20 }}
+    animate={{ opacity: 1, x: 0 }}
+    className="bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-2xl border border-blue-500/30 p-6"
+  >
+    <div className="flex items-center gap-3 mb-4">
+      <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+        <ClipboardList className="w-5 h-5 text-blue-500" />
+      </div>
+      <h3 className="font-bold text-lg">
+        {lang === "ar" ? "الواجبات" : "Assignments"}
+      </h3>
+    </div>
+    
+    <div className="space-y-3">
+      {assignmentsList.map((assignment) => (
+        <div key={assignment.id} className="bg-white/5 rounded-xl p-3">
+          <p className="font-semibold text-sm">{assignment.title}</p>
+          <p className="text-xs text-foreground/60 mt-1 line-clamp-2">{assignment.description}</p>
+          <div className="flex items-center gap-3 mt-2 text-xs text-foreground/50">
+            <span><Award className="w-3 h-3 inline" /> {assignment.total_marks} {lang === "ar" ? "درجة" : "marks"}</span>
+            {assignment.time_end && (
+              <span><Calendar className="w-3 h-3 inline" /> {new Date(assignment.time_end).toLocaleDateString()}</span>
+            )}
+          </div>
+          <button
+            onClick={() => handleStartAssignment(assignment)}
+            className="w-full mt-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-semibold flex items-center justify-center gap-2"
+          >
+            <FileText className="w-3 h-3" />
+            {lang === "ar" ? "حل الواجب" : "Solve Assignment"}
+          </button>
+        </div>
+      ))}
+    </div>
+  </motion.div>
+)}
             {/* After Passing Exam Card */}
          
             {/* Attendance Card */}
@@ -501,7 +574,6 @@ const LessonPage = () => {
           </div>
         </div>
       </div>
-      
       <style>{`
         .recording-detected { filter: blur(40px) !important; opacity: 0.2 !important; transition: all 0.3s ease; }
         video::-webkit-media-controls-download-button { display: none !important; }
@@ -511,7 +583,10 @@ const LessonPage = () => {
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #555; }
       `}</style>
+        </ProtectedContent>
+
     </div>
+
   );
 };
 

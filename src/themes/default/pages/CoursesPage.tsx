@@ -151,7 +151,7 @@ const CoursesPage = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className={`pt-36 md:pt-40 pb-24 min-h-screen relative overflow-hidden ${bgColor}`}
+      className={`pt-36 md:pt-40 pb-24 min-h-screen relative overflow-hidden `}
     >
       {/* Background decoration */}
       <div className="absolute inset-0 pointer-events-none">
@@ -261,7 +261,7 @@ const CoursesPage = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={lang === "ar" ? "ابحث عن كورس..." : "Search for a course..."}
                 className={`w-full border rounded-xl pl-11 rtl:pl-4 rtl:pr-11 pr-4 py-3 text-sm focus:outline-none transition-all
-                  ${inputBg} ${cardBorder} focus:border-${isNature ? 'amber-400' : 'primary'}/50`}
+                  focus:border-${isNature ? 'amber-400' : 'primary'}/50`}
               />
             </div>
             
@@ -270,7 +270,7 @@ const CoursesPage = () => {
               whileTap={{ scale: 0.98 }}
               onClick={() => setShowFilters(!showFilters)}
               className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl border transition-all
-                ${inputBg} ${cardBorder} hover:${isNature ? 'border-amber-400' : 'border-primary/40'}`}
+                hover:${isNature ? 'border-amber-400' : 'border-primary/40'}`}
             >
               <Filter className="w-4 h-4" />
               <span className="text-sm font-medium">
@@ -287,7 +287,7 @@ const CoursesPage = () => {
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.3 }}
-                className={`mt-4 p-5 rounded-xl border overflow-hidden ${inputBg} ${cardBorder}`}
+                className={`mt-4 p-5 rounded-xl border overflow-hidden `}
               >
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
@@ -448,7 +448,7 @@ const CourseCardFull = ({ course, slug, pick, lang, dir, isNature, primaryGradie
   // ألوان ديناميكية حسب الثيم والوضع
   const cardBg = isNature 
     ? (isDark ? 'bg-amber-900/40 backdrop-blur-sm' : 'bg-white')
-    : (isDark ? 'bg-gray-800/80 backdrop-blur-sm' : 'bg-card');
+    : (isDark ? 'bg-gray-800/80 backdrop-blur-sm' : 'bg-white');
     
   const cardBorder = isNature 
     ? (isDark ? 'border-amber-700/50' : 'border-amber-200')
@@ -546,7 +546,7 @@ const CourseCardFull = ({ course, slug, pick, lang, dir, isNature, primaryGradie
               <span className="text-xs text-white/50 line-through">{originalPrice.toFixed(2)} EGP</span>
             </div>
           ) : (
-            <span className={`text-xl font-black ${priceColor} drop-shadow-md`}>{originalPrice.toFixed(2)} EGP</span>
+            <span className={`text-xl font-black ${priceColor} drop-shadow-md text-white`}>{originalPrice.toFixed(2)} EGP</span>
           )}
         </div>
       </div>

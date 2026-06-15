@@ -11,7 +11,7 @@ import {
   Trophy, Users, Clock, Calendar, ChevronRight, Star, 
   Award, Target, Rocket, Search, Filter, X, SlidersHorizontal,
   ChevronDown, ChevronUp, TrendingUp, Zap, Layers3, Eye, Lock, CheckCircle,
-  Leaf, Flower2
+  Leaf, Flower2, LogIn
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
@@ -20,13 +20,49 @@ export const StagesPage = () => {
   const { theme } = useTheme();
   const { slug } = useParams();
   const { stages, pick, isLoading, teacher } = useSafeTeacherData();
-  const { student, isAuthenticated } = useStudentAuth();
+  const { student, isAuthenticated, isLoading: authLoading } = useStudentAuth();
   const navigate = useNavigate();
   
   const isNature = theme === 'nature';
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
   const [studentStageId, setStudentStageId] = useState<number | null>(null);
-  
+  const [redirectPath, setRedirectPath] = useState<string>("");
+
+  // ✅ تخزين مسار الصفحة الحالية للعودة بعد تسجيل الدخول
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setRedirectPath(window.location.pathname);
+    }
+  }, []);
+
+  // ✅ إذا كان المستخدم غير مسجل، حوله لصفحة تسجيل الدخول
+  if (!authLoading && !isAuthenticated) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${isNature ? 'bg-cream' : 'bg-background'}`}>
+        <div className="text-center max-w-md p-8">
+          <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+            <LogIn className="w-12 h-12 text-red-500" />
+          </div>
+          <h1 className="text-2xl font-bold mb-3">
+            {lang === "ar" ? "تسجيل الدخول مطلوب" : "Login Required"}
+          </h1>
+          <p className="text-muted-foreground mb-6">
+            {lang === "ar" 
+              ? "يجب تسجيل الدخول أولاً لعرض المراحل الدراسية"
+              : "You must login first to view educational stages"}
+          </p>
+          <Link
+            to={`/${slug}/login?redirect=${encodeURIComponent(redirectPath || window.location.pathname)}`}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold hover:shadow-lg transition-all"
+          >
+            <LogIn className="w-5 h-5" />
+            {lang === "ar" ? "تسجيل الدخول" : "Login"}
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   // الألوان حسب الثيم
   const primaryGradient = isNature 
     ? "from-[#8B4513] to-[#A0522D]" 
@@ -130,7 +166,8 @@ export const StagesPage = () => {
   const totalCourses = stages?.reduce((acc, stage) => acc + (stage.courses_count || 0), 0) || 0;
   const totalStudents = stages?.reduce((acc, stage) => acc + (stage.students_count || 0), 0) || 0;
   
-  if (isLoading) {
+  // ✅ تحميل بيانات المراحل (يتم فقط بعد تأكيد تسجيل الدخول)
+  if (authLoading || isLoading) {
     return <StagesPageSkeleton isNature={isNature} />;
   }
 
@@ -139,7 +176,7 @@ export const StagesPage = () => {
   }
 
   return (
-    <div className={`min-h-screen pt-32 pb-20 relative overflow-hidden ${isNature ? 'bg-cream' : 'bg-background'}`}>
+    <div className={`min-h-screen pt-32 pb-20 relative overflow-hidden ${isNature ? '' : ''}`}>
       {/* Background Decorations */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 left-0 w-full h-full">
@@ -369,7 +406,8 @@ export const StagesPage = () => {
                   whileHover={!isDisabled ? { y: -8 } : {}}
                   onClick={() => {
                     if (!isDisabled) {
-                      navigate(`/${slug}/subjects?stage_id=${stage.id}&stage_name=${encodeURIComponent(stageName)}`);
+                      // ✅ التعديل هنا - يودي على السمستر بدل المواد
+                      navigate(`/${slug}/semesters?stage_id=${stage.id}&stage_name=${encodeURIComponent(stageName)}`);
                     }
                   }}
                   className={`group relative ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'} ${isDisabled ? 'opacity-60' : ''}`}
@@ -458,7 +496,7 @@ export const StagesPage = () => {
                       
                       <div className="mt-4 pt-4 border-t border-border">
                         <div className={`inline-flex items-center gap-2 text-sm font-semibold transition-all ${!isDisabled ? primaryTextClass + ' group-hover:gap-3' : 'text-foreground/30'}`}>
-                          {lang === "ar" ? "استكشف المواد" : "Explore Subjects"}
+                          {lang === "ar" ? "استكشف الترم" : "Explore Semesters"}
                           <Arrow className="w-4 h-4 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
                         </div>
                       </div>

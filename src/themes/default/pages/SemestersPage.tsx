@@ -12,7 +12,7 @@ import {
   BookOpen, ChevronRight, DollarSign, Clock, Star, ArrowLeft, ArrowRight, 
   ShoppingCart, Loader2, Percent, Users, Calendar, Award, Filter, 
   Search, X, SlidersHorizontal, TrendingUp, Zap, Crown, Sparkles,
-  ChevronDown, ChevronUp, Tag, Flame, Leaf
+  ChevronDown, ChevronUp, Tag, Flame, Leaf, GraduationCap, Layers
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
@@ -25,28 +25,25 @@ export const SemestersPage = () => {
   const [searchParams] = useSearchParams();
   const subjectId = searchParams.get('subject_id');
   const subjectName = searchParams.get('subject_name');
+  const stageId = searchParams.get('stage_id');
+  const stageName = searchParams.get('stage_name');
   
   const isNature = theme === 'nature';
   const isDark = colorMode === 'dark';
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
   
   // الألوان حسب الثيم
+  const primaryColor = isNature ? 'amber' : 'primary';
   const primaryGradient = isNature 
     ? "from-amber-500 to-orange-600" 
-    : "gradient-primary";
-  const bgColor = isNature ? 'bg-cream' : 'bg-background';
-  const cardBg = isNature 
-    ? (isDark ? 'bg-amber-900/20' : 'bg-white') 
-    : 'bg-card';
-  const cardBorder = isNature 
-    ? (isDark ? 'border-amber-800' : 'border-amber-200') 
-    : 'border-border';
-  const cardHoverBorder = isNature 
-    ? 'hover:border-amber-400' 
-    : 'hover:border-primary/30';
-  const inputBg = isNature 
-    ? (isDark ? 'bg-amber-900/30' : 'bg-white') 
-    : 'bg-card';
+    : "from-primary to-accent";
+  const bgColor = isNature ? 'bg-amber-50/30' : 'bg-background';
+  const cardBg = isNature ? 'bg-white' : 'bg-card';
+  const cardBorder = isNature ? 'border-amber-200' : 'border-border';
+  const cardHoverBorder = isNature ? 'hover:border-amber-400' : 'hover:border-primary/30';
+  const inputBg = isNature ? 'bg-white' : 'bg-card';
+  const textPrimary = isNature ? 'text-amber-700 dark:text-amber-400' : 'text-primary';
+  const textSecondary = isNature ? 'text-amber-600/70' : 'text-foreground/60';
   
   // حالة الفلترة
   const [searchQuery, setSearchQuery] = useState("");
@@ -156,7 +153,6 @@ export const SemestersPage = () => {
     setSortBy("default");
   };
   
-  // أنيميشن المتغيرات
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { 
@@ -177,12 +173,16 @@ export const SemestersPage = () => {
     return <SemestersSkeleton isNature={isNature} />;
   }
 
+  // عنوان الصفحة (أولوية للمرحلة ثم المادة)
+  const pageTitle = stageName || subjectName || (lang === "ar" ? "الترمات والكورسات" : "Semesters & Courses");
+  const pageBreadcrumb = stageName ? "المرحلة" : "المادة";
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className={`min-h-screen pt-32 pb-20 relative overflow-hidden ${bgColor}`}
+      className={`min-h-screen pt-32 pb-20 relative overflow-hidden `}
     >
       {/* Background Decorations */}
       <div className="absolute inset-0 pointer-events-none">
@@ -206,25 +206,35 @@ export const SemestersPage = () => {
           className="mb-8"
         >
           <div className="flex items-center gap-2 text-sm text-foreground/60 mb-4 flex-wrap">
-            <Link to={`/${slug}`} className={`hover:${isNature ? 'text-amber-600' : 'text-primary'} transition-colors`}>
+            <Link to={`/${slug}`} className={`hover:${textPrimary} transition-colors`}>
               {lang === "ar" ? "الرئيسية" : "Home"}
             </Link>
             <ChevronRight className="w-4 h-4" />
-            <Link to={`/${slug}/subjects`} className={`hover:${isNature ? 'text-amber-600' : 'text-primary'} transition-colors`}>
-              {lang === "ar" ? "المواد" : "Subjects"}
-            </Link>
-            <ChevronRight className="w-4 h-4" />
-            <span className={`font-medium ${isNature ? 'text-amber-700 dark:text-amber-400' : 'text-foreground'}`}>
-              {subjectName || (lang === "ar" ? "المادة" : "Subject")}
+            
+            {stageName ? (
+              <>
+                <Link to={`/${slug}/stages`} className={`hover:${textPrimary} transition-colors`}>
+                  {lang === "ar" ? "المراحل" : "Stages"}
+                </Link>
+                <ChevronRight className="w-4 h-4" />
+              </>
+            ) : (
+              <>
+                
+              </>
+            )}
+            
+            <span className={`font-medium ${textPrimary}`}>
+              {pageTitle}
             </span>
           </div>
           
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className={`text-4xl md:text-5xl font-black ${isNature ? 'text-amber-800 dark:text-amber-100' : ''}`}>
-                {subjectName || (lang === "ar" ? "الترمات والكورسات" : "Semesters & Courses")}
+              <h1 className={`text-4xl md:text-5xl font-black ${textPrimary}`}>
+                {pageTitle}
               </h1>
-              <p className="text-foreground/60 mt-2">
+              <p className={`${textSecondary} mt-2`}>
                 {lang === "ar" 
                   ? `اختر الترم المناسب أو الكورس المباشر لبدء التعلم (${totalResults} نتيجة)`
                   : `Choose the right semester or direct course to start learning (${totalResults} results)`}
@@ -240,7 +250,7 @@ export const SemestersPage = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={lang === "ar" ? "بحث..." : "Search..."}
                 className={`w-full border rounded-xl pl-10 pr-10 py-2.5 text-sm focus:outline-none transition-colors
-                  ${inputBg} ${cardBorder} focus:border-${isNature ? 'amber-400' : 'primary'}/50`}
+                 focus:border-${primaryColor}/50`}
               />
               {searchQuery && (
                 <button
@@ -268,8 +278,8 @@ export const SemestersPage = () => {
               onClick={() => setShowFilters(!showFilters)}
               className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${
                 showFilters 
-                  ? (isNature ? 'bg-amber-600 text-white border-amber-500' : 'gradient-primary text-white border-transparent')
-                  : `${inputBg} ${cardBorder} hover:${isNature ? 'border-amber-400' : 'border-primary/40'}`
+                  ? (isNature ? 'bg-amber-600 text-white border-amber-500' : `bg-gradient-to-r ${primaryGradient} text-white border-transparent`)
+                  : ` hover:border-${primaryColor}/40`
               }`}
             >
               <SlidersHorizontal className="w-4 h-4" />
@@ -280,7 +290,7 @@ export const SemestersPage = () => {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className={`${inputBg} ${cardBorder} border rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-${isNature ? 'amber-400' : 'primary'}/50`}
+              className={`border rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-${primaryColor}/50`}
             >
               <option value="default">{lang === "ar" ? "ترتيب افتراضي" : "Default Sort"}</option>
               <option value="price_asc">{lang === "ar" ? "السعر: من الأقل للأعلى" : "Price: Low to High"}</option>
@@ -288,7 +298,7 @@ export const SemestersPage = () => {
               <option value="popularity">{lang === "ar" ? "الأكثر شهرة" : "Most Popular"}</option>
             </select>
             
-            <div className={`text-sm px-3 py-1.5 rounded-full ${isNature ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-secondary text-foreground/50'}`}>
+            <div className={`text-sm px-3 py-1.5 rounded-full ${isNature ? 'bg-amber-100 text-amber-700' : 'bg-secondary text-foreground/50'}`}>
               {totalResults} {lang === "ar" ? "نتيجة" : "results"}
             </div>
           </div>
@@ -301,7 +311,7 @@ export const SemestersPage = () => {
                 exit={{ opacity: 0, height: 0 }}
                 className="overflow-hidden"
               >
-                <div className={`mt-4 p-5 rounded-xl border ${inputBg} ${cardBorder}`}>
+                <div className={`mt-4 p-5 rounded-xl border `}>
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium mb-3">
@@ -314,7 +324,7 @@ export const SemestersPage = () => {
                             type="number"
                             value={priceRange[0]}
                             onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
-                            className={`w-full border rounded-xl pl-9 pr-3 py-2 text-sm ${inputBg} ${cardBorder}`}
+                            className={`w-full border rounded-xl pl-9 pr-3 py-2 text-sm `}
                             placeholder="Min"
                           />
                         </div>
@@ -341,7 +351,7 @@ export const SemestersPage = () => {
                           onClick={() => setSelectedType("all")}
                           className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
                             selectedType === "all"
-                              ? (isNature ? 'bg-amber-600 text-white' : 'gradient-primary text-white')
+                              ? (isNature ? 'bg-amber-600 text-white' : `bg-gradient-to-r ${primaryGradient} text-white`)
                               : `bg-secondary hover:bg-secondary/80`
                           }`}
                         >
@@ -351,7 +361,7 @@ export const SemestersPage = () => {
                           onClick={() => setSelectedType("online")}
                           className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
                             selectedType === "online"
-                              ? (isNature ? 'bg-amber-600 text-white' : 'gradient-primary text-white')
+                              ? (isNature ? 'bg-amber-600 text-white' : `bg-gradient-to-r ${primaryGradient} text-white`)
                               : `bg-secondary hover:bg-secondary/80`
                           }`}
                         >
@@ -361,7 +371,7 @@ export const SemestersPage = () => {
                           onClick={() => setSelectedType("center")}
                           className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
                             selectedType === "center"
-                              ? (isNature ? 'bg-amber-600 text-white' : 'gradient-primary text-white')
+                              ? (isNature ? 'bg-amber-600 text-white' : `bg-gradient-to-r ${primaryGradient} text-white`)
                               : `bg-secondary hover:bg-secondary/80`
                           }`}
                         >
@@ -371,7 +381,7 @@ export const SemestersPage = () => {
                     </div>
                   </div>
                   
-                  <div className="mt-5 pt-4 border-t" style={{ borderColor: isNature ? (isDark ? '#854d0e' : '#fde68a') : 'var(--border)' }}>
+                  <div className="mt-5 pt-4 border-t border-border">
                     <button
                       onClick={resetFilters}
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm text-foreground/60 hover:text-primary transition-colors"
@@ -394,13 +404,13 @@ export const SemestersPage = () => {
             className="mb-12"
           >
             <div className="flex items-center gap-3 mb-6">
-              <div className={`w-10 h-10 rounded-xl bg-gradient-to-r ${isNature ? 'from-amber-500 to-orange-600' : 'from-primary to-accent'} flex items-center justify-center`}>
+              <div className={`w-10 h-10 rounded-xl bg-gradient-to-r ${primaryGradient} flex items-center justify-center`}>
                 {isNature ? <Leaf className="w-5 h-5 text-white" /> : <Flame className="w-5 h-5 text-white" />}
               </div>
-              <h2 className={`text-2xl font-bold ${isNature ? 'text-amber-800 dark:text-amber-100' : ''}`}>
-                {lang === "ar" ? "كورسات منفصله" : "separate Courses"}
+              <h2 className={`text-2xl font-bold ${textPrimary}`}>
+                {lang === "ar" ? "كورسات منفصلة" : "Separate Courses"}
               </h2>
-              <span className={`text-sm px-2 py-0.5 rounded-full ${isNature ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-secondary text-foreground/50'}`}>
+              <span className={`text-sm px-2 py-0.5 rounded-full ${isNature ? 'bg-amber-100 text-amber-700' : 'bg-secondary text-foreground/50'}`}>
                 {filteredDirectCourses.length}
               </span>
             </div>
@@ -419,7 +429,6 @@ export const SemestersPage = () => {
                     lang={lang}
                     pick={pick}
                     isNature={isNature}
-                    isDark={isDark}
                   />
                 </motion.div>
               ))}
@@ -428,20 +437,20 @@ export const SemestersPage = () => {
         )}
 
         {/* Semesters Section */}
-        {hasSemesters ? (
+        {hasSemesters && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
             <div className="flex items-center gap-3 mb-6">
-              <div className={`w-10 h-10 rounded-xl bg-gradient-to-r ${isNature ? 'from-amber-500 to-orange-600' : 'from-emerald-500 to-teal-600'} flex items-center justify-center`}>
-                <Star className="w-5 h-5 text-white" />
+              <div className={`w-10 h-10 rounded-xl bg-gradient-to-r ${primaryGradient} flex items-center justify-center`}>
+                <Layers className="w-5 h-5 text-white" />
               </div>
-              <h2 className={`text-2xl font-bold ${isNature ? 'text-amber-800 dark:text-amber-100' : ''}`}>
+              <h2 className={`text-2xl font-bold ${textPrimary}`}>
                 {lang === "ar" ? "الترمات الدراسية" : "Semesters"}
               </h2>
-              <span className={`text-sm px-2 py-0.5 rounded-full ${isNature ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-secondary text-foreground/50'}`}>
+              <span className={`text-sm px-2 py-0.5 rounded-full ${isNature ? 'bg-amber-100 text-amber-700' : 'bg-secondary text-foreground/50'}`}>
                 {filteredSemesters.length}
               </span>
             </div>
@@ -458,21 +467,18 @@ export const SemestersPage = () => {
                     index={i}
                     slug={slug!}
                     lang={lang}
-                    pick={(en, ar) => (lang === "ar" ? ar || en : en || ar)}
+                    pick={pick}
                     refetchSemesters={refetchSemesters}
                     isNature={isNature}
-                    isDark={isDark}
                   />
                 </motion.div>
               ))}
             </motion.div>
           </motion.div>
-        ) : !hasDirectCourses ? (
-          <EmptyState slug={slug!} lang={lang} Arrow={Arrow} isNature={isNature} />
-        ) : null}
+        )}
         
         {/* No Results Message */}
-        {totalResults === 0 && (
+        {!hasSemesters && !hasDirectCourses && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -489,14 +495,14 @@ export const SemestersPage = () => {
             <h3 className="text-xl font-semibold mb-2">
               {lang === "ar" ? "لا توجد نتائج" : "No results found"}
             </h3>
-            <p className="text-foreground/60 mb-4">
+            <p className={`${textSecondary} mb-4`}>
               {lang === "ar" 
                 ? "لم نجد أي نتائج تطابق معايير البحث الخاصة بك"
                 : "No results match your search criteria"}
             </p>
             <button
               onClick={resetFilters}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-white ${isNature ? 'bg-amber-600' : 'gradient-primary'}`}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-white ${isNature ? 'bg-amber-600' : `bg-gradient-to-r ${primaryGradient}`}`}
             >
               <X className="w-4 h-4" />
               {lang === "ar" ? "إعادة ضبط الفلترة" : "Reset Filters"}
@@ -508,8 +514,8 @@ export const SemestersPage = () => {
   );
 };
 
-// 🟢 Direct Course Card Component (معدل للثيمات)
-const DirectCourseCard = ({ course, index, slug, lang, pick, isNature, isDark }: any) => {
+// Direct Course Card Component
+const DirectCourseCard = ({ course, index, slug, lang, pick, isNature }: any) => {
   const [isBuying, setIsBuying] = useState(false);
   const { buyCourse } = useBuyCourse();
   
@@ -521,14 +527,9 @@ const DirectCourseCard = ({ course, index, slug, lang, pick, isNature, isDark }:
   const courseTitle = pick(course.title, course.title_ar) || "Course";
   const courseImage = course.image?.fullUrl || course.imageUrl || "/default-course.jpg";
   const lessonsCount = course.details?.length || 0;
-  const studentsCount = course.count_student || 0;
   
-  const cardBg = isNature 
-    ? (isDark ? 'bg-amber-900/20' : 'bg-white') 
-    : 'bg-card';
-  const cardBorder = isNature 
-    ? (isDark ? 'border-amber-800' : 'border-amber-200') 
-    : 'border-border';
+  const primaryColor = isNature ? 'amber' : 'primary';
+  const textPrimary = isNature ? 'text-amber-600 dark:text-amber-400' : 'text-primary';
   
   const handleBuyCourse = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -547,7 +548,7 @@ const DirectCourseCard = ({ course, index, slug, lang, pick, isNature, isDark }:
   return (
     <motion.div
       whileHover={{ y: -5 }}
-      className={`group rounded-2xl border transition-all overflow-hidden ${cardBg} ${cardBorder} hover:border-${isNature ? 'amber-400' : 'primary'}/30`}
+      className={`group rounded-2xl border transition-all overflow-hidden bg-white dark:bg-gray-900 ${isNature ? 'border-amber-200 dark:border-amber-800' : 'border-border'} hover:border-${primaryColor}/30`}
     >
       <Link to={`/${slug}/courses/${course.id}`}>
         <div className="relative h-40 overflow-hidden">
@@ -584,20 +585,19 @@ const DirectCourseCard = ({ course, index, slug, lang, pick, isNature, isDark }:
               <BookOpen className="w-3 h-3" />
               {lessonsCount} {lang === "ar" ? "دروس" : "lessons"}
             </span>
-          
           </div>
           
           <div className="flex items-center justify-between">
             <div>
               {hasDiscount ? (
                 <div className="flex items-baseline gap-2">
-                  <span className={`text-xl font-bold ${isNature ? 'text-amber-600 dark:text-amber-400' : 'text-primary'}`}>
+                  <span className={`text-xl font-bold ${textPrimary}`}>
                     {finalPrice.toFixed(2)} EGP
                   </span>
                   <span className="text-xs text-foreground/40 line-through">{originalPrice.toFixed(2)} EGP</span>
                 </div>
               ) : (
-                <span className={`text-xl font-bold ${isNature ? 'text-amber-600 dark:text-amber-400' : 'text-primary'}`}>
+                <span className={`text-xl font-bold ${textPrimary}`}>
                   {originalPrice.toFixed(2)} EGP
                 </span>
               )}
@@ -619,9 +619,8 @@ const DirectCourseCard = ({ course, index, slug, lang, pick, isNature, isDark }:
   );
 };
 
-// 🟢 Semester Card Component (معدل للثيمات)
-// 🟢 Semester Card Component (معدل مع صورة كخلفية)
-const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isNature, isDark }: any) => {
+// Semester Card Component
+const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isNature }: any) => {
   const [isBuying, setIsBuying] = useState(false);
   const { buySemester } = useBuyCourse();
   
@@ -631,22 +630,14 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
   const hasDiscount = discountPercent > 0;
   const coursesCount = semester.courses?.length || 0;
   
-  // جلب رابط الصورة
   const semesterImageUrl = semester.image?.fullUrl || semester.imageUrl;
-  
-  // صورة افتراضية (يمكنك تغيير الرابط حسب اللي عندك)
   const defaultImage = isNature 
-    ? "https://images.unsplash.com/photo-1434030216411-0b793f4f4173?w=400&h=200&fit=crop" // صورة طبيعة للمود نيتشر
-    : "https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=400&h=200&fit=crop"; // صورة مكتبية للمود العادي
+    ? "https://images.unsplash.com/photo-1434030216411-0b793f4f4173?w=400&h=200&fit=crop"
+    : "https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=400&h=200&fit=crop";
   
   const finalImageUrl = semesterImageUrl || defaultImage;
-
-  const cardBg = isNature 
-    ? (isDark ? 'bg-amber-900/20' : 'bg-white') 
-    : 'bg-card';
-  const cardBorder = isNature 
-    ? (isDark ? 'border-amber-800' : 'border-amber-200') 
-    : 'border-border';
+  const primaryColor = isNature ? 'amber' : 'primary';
+  const textPrimary = isNature ? 'text-amber-600 dark:text-amber-400' : 'text-primary';
   
   const handleBuySemester = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -666,21 +657,18 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
   return (
     <motion.div
       whileHover={{ y: -5 }}
-      className={`group relative rounded-2xl border transition-all overflow-hidden ${cardBg} ${cardBorder} hover:border-${isNature ? 'amber-400' : 'primary'}/30`}
+      className={`group relative rounded-2xl border transition-all overflow-hidden bg-white dark:bg-gray-900 ${isNature ? 'border-amber-200 dark:border-amber-800' : 'border-border'} hover:border-${primaryColor}/30`}
     >
-      {/* قسم الصورة العلوي (Banner) */}
       <div className="relative h-36 overflow-hidden">
         <img 
           src={finalImageUrl} 
           alt={pick(semester.name, semester.name_ar)}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
-        {/* طبقة تدرج لجعل النص اللي جوه يظهر بوضوح لو حطينا نص */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
         
-        {/* أيقونة أو badge فوق الصورة */}
         {coursesCount > 0 && (
-          <div className={`absolute top-3 left-3 flex items-center gap-1 text-xs px-2 py-1 rounded-full backdrop-blur-md bg-black/50 text-white`}>
+          <div className="absolute top-3 left-3 flex items-center gap-1 text-xs px-2 py-1 rounded-full backdrop-blur-md bg-black/50 text-white">
             <BookOpen className="w-3 h-3" />
             <span>{coursesCount} {lang === "ar" ? "كورسات" : "courses"}</span>
           </div>
@@ -694,10 +682,8 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
         )}
       </div>
 
-      {/* محتوى الكارد */}
       <div className="p-5">
         <div className="flex items-start justify-between mb-3">
-          {/* أيقونة صغيرة بجانب الاسم (بديل في حالة عدم وجود صورة) - دلوقتي دي مش ضرورية بس حلوة كلمسة */}
           <div className={`w-8 h-8 rounded-lg ${isNature ? 'bg-amber-100 dark:bg-amber-900/40' : 'bg-secondary'} grid place-items-center`}>
             {isNature ? (
               <Leaf className="w-4 h-4 text-amber-600 dark:text-amber-400" />
@@ -720,16 +706,16 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
         <div className="mt-3">
           {hasDiscount ? (
             <div className="flex items-baseline gap-2 flex-wrap">
-              <span className={`text-2xl font-black ${isNature ? 'text-amber-600 dark:text-amber-400' : 'text-primary'}`}>
+              <span className={`text-2xl font-black text-amber-800  `}>
                 {finalPrice.toFixed(2)} EGP
               </span>
-              <span className="text-sm text-foreground/40 line-through">{originalPrice.toFixed(2)} EGP</span>
+              <span className="text-sm text-amber-700 line-through">{originalPrice.toFixed(2)} EGP</span>
               <span className={`text-xs px-2 py-0.5 rounded-full ${isNature ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'}`}>
                 وفر {((originalPrice - finalPrice)).toFixed(2)} EGP
               </span>
             </div>
           ) : (
-            <span className={`text-2xl font-black ${isNature ? 'text-amber-600 dark:text-amber-400' : 'text-primary'}`}>
+            <span className={`text-2xl font-black text-amber-800 }`}>
               {originalPrice.toFixed(2)} EGP
             </span>
           )}
@@ -746,7 +732,7 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
           </div>
         </div>
 
-        <div className="mt-5 pt-4 border-t" style={{ borderColor: isNature ? (isDark ? '#854d0e' : '#fde68a') : 'var(--border)' }}>
+        <div className="mt-5 pt-4 border-t border-border">
           <div className="flex gap-3">
             <button
               onClick={handleBuySemester}
@@ -773,43 +759,10 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
   );
 };
 
-// 🟢 Empty State Component (معدل للثيمات)
-const EmptyState = ({ slug, lang, Arrow, isNature }: any) => {
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="text-center py-20"
-    >
-      <motion.div 
-        animate={{ scale: [1, 1.1, 1] }}
-        transition={{ duration: 2, repeat: Infinity }}
-        className={`w-24 h-24 mx-auto mb-4 rounded-full grid place-items-center
-          ${isNature ? 'bg-amber-100' : 'bg-gray-100 dark:bg-gray-800'}`}
-      >
-        {isNature ? <Leaf className="w-12 h-12 text-amber-400" /> : <BookOpen className="w-12 h-12 text-foreground/30" />}
-      </motion.div>
-      <h3 className="text-xl font-semibold mb-2">
-        {lang === "ar" ? "لا توجد ترمات أو كورسات" : "No semesters or courses found"}
-      </h3>
-      <p className="text-foreground/60">
-        {lang === "ar" ? "لا توجد ترمات أو كورسات متاحة لهذه المادة حالياً" : "No semesters or courses available for this subject yet"}
-      </p>
-      <Link
-        to={`/${slug}/subjects`}
-        className={`inline-flex items-center gap-2 mt-6 px-6 py-3 rounded-xl text-white font-semibold ${isNature ? 'bg-amber-600' : 'gradient-primary'}`}
-      >
-        <Arrow className="w-4 h-4" />
-        {lang === "ar" ? "العودة للمواد" : "Back to Subjects"}
-      </Link>
-    </motion.div>
-  );
-};
-
-// 🟢 Skeleton Component (معدل للثيمات)
+// Skeleton Component
 const SemestersSkeleton = ({ isNature }: { isNature: boolean }) => {
   return (
-    <div className={`min-h-screen pt-32 pb-20 ${isNature ? 'bg-cream' : 'bg-background'}`}>
+    <div className={`min-h-screen pt-32 pb-20 ${isNature ? 'bg-amber-50/30' : 'bg-background'}`}>
       <div className="container-tight">
         <div className="mb-8">
           <div className={`h-4 w-48 rounded mb-4 animate-pulse ${isNature ? 'bg-amber-200' : 'bg-gray-200 dark:bg-gray-700'}`} />

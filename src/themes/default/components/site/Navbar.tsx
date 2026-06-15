@@ -258,7 +258,7 @@ export const Navbar = () => {
                     ${isNature 
                       ? 'hover:bg-amber-100 text-amber-800' 
                       : 'hover:bg-primary/5'}`}>
-                    {lang === "ar" ? "تسجيل دخول" : "Login"}
+                    {lang === "ar" ? "خش ذاكر " : "Login"}
                   </Link>
                 </li>
                 <li>
@@ -266,7 +266,7 @@ export const Navbar = () => {
                     ${isNature 
                       ? 'bg-amber-600' 
                       : 'gradient-primary'}`}>
-                    {lang === "ar" ? "إنشاء حساب" : "Sign up"}
+                    {lang === "ar" ? " اعمل اكونت" : "Sign up"}
                   </Link>
                 </li>
               </>

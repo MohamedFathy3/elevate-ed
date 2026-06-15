@@ -10,17 +10,20 @@ import {
   BookOpen, ChevronRight, Search, Filter, X, 
   SlidersHorizontal, ChevronDown, ChevronUp, Star, 
   TrendingUp, Users, Clock, Award, ArrowLeft, ArrowRight,
-  Lock, CheckCircle, Leaf, Sparkles
+  Lock, CheckCircle, Leaf, Sparkles, LogIn
 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 export const SubjectsPage = () => {
   const { lang, dir } = useLang();
   const { theme, colorMode } = useTheme();
   const { slug } = useParams();
   const { teacher, stages, pick, isLoading: teacherLoading } = useTeacher();
-  const { student, isAuthenticated } = useStudentAuth();
+  const { student, isAuthenticated, isLoading: authLoading } = useStudentAuth();
   const [searchParams] = useSearchParams();
+  
+  // تخزين مسار الصفحة الحالية للعودة بعد تسجيل الدخول
+  const [redirectPath, setRedirectPath] = useState<string>("");
   
   // 🆕 نجيب stage_id من الـ URL (لو موجود)
   const stageId = searchParams.get('stage_id');
@@ -34,6 +37,41 @@ export const SubjectsPage = () => {
   const isNature = theme === 'nature';
   const isDark = colorMode === 'dark';
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
+
+  // ✅ تخزين مسار الصفحة الحالية
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setRedirectPath(window.location.pathname);
+    }
+  }, []);
+
+  // ✅ إذا كان المستخدم غير مسجل، حوله لصفحة تسجيل الدخول
+  if (!authLoading && !isAuthenticated) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${isNature ? 'bg-cream' : 'bg-background'}`}>
+        <div className="text-center max-w-md p-8">
+          <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+            <LogIn className="w-12 h-12 text-red-500" />
+          </div>
+          <h1 className="text-2xl font-bold mb-3">
+            {lang === "ar" ? "تسجيل الدخول مطلوب" : "Login Required"}
+          </h1>
+          <p className="text-muted-foreground mb-6">
+            {lang === "ar" 
+              ? "يجب تسجيل الدخول أولاً لعرض المواد الدراسية"
+              : "You must login first to view subjects"}
+          </p>
+          <Link
+            to={`/${slug}/login?redirect=${encodeURIComponent(redirectPath || window.location.pathname)}`}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold hover:shadow-lg transition-all"
+          >
+            <LogIn className="w-5 h-5" />
+            {lang === "ar" ? "تسجيل الدخول" : "Login"}
+          </Link>
+        </div>
+      </div>
+    );
+  }
   
   // الألوان حسب الثيم
   const primaryGradient = isNature 
@@ -142,7 +180,8 @@ export const SubjectsPage = () => {
     visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
   };
 
-  if (teacherLoading) {
+  // ✅ تحميل بيانات المواد (يتم فقط بعد تأكيد تسجيل الدخول)
+  if (authLoading || teacherLoading) {
     return <SubjectsSkeleton isNature={isNature} />;
   }
 
@@ -151,9 +190,9 @@ export const SubjectsPage = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className={`min-h-screen pt-32 pb-20 relative overflow-hidden ${bgColor}`}
+      className={`min-h-screen pt-32 pb-20 relative overflow-hidden }`}
     >
-      {/* Background Decorations */}
+      {/* Background Decorations - نفس الكود */}
       <div className="absolute inset-0 pointer-events-none">
         <motion.div
           animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
@@ -168,7 +207,7 @@ export const SubjectsPage = () => {
       </div>
 
       <div className="container-tight relative">
-        {/* Breadcrumb */}
+        {/* Breadcrumb - نفس الكود */}
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}

@@ -35,6 +35,7 @@ export interface TeacherWebsiteData {
     books: any[];
     footer: any;
     future?: any[];
+    featured_courses:any[]
     centerHours?: any[]; // ✅ إضافة centerHours
   };
   createdAt: string;
@@ -56,6 +57,7 @@ interface TeacherContextValue {
   future: any[];
   home: any;
   centerHours: any[]; // ✅ إضافة centerHours
+  featured_courses:any[]
 }
 
 const TeacherContext = createContext<TeacherContextValue | undefined>(undefined);
@@ -130,6 +132,7 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
     future: teacher?.website?.future || [],
     home: teacher?.website?.home || null,
     centerHours: teacher?.website?.centerHours || [], // ✅ إضافة centerHours
+    featured_courses: teacher?.website?.featured_courses || [], // ✅ إضافة centerHours
   };
 
   // Show loading state
@@ -190,6 +193,7 @@ export const useTeacher = () => {
   return context;
 };
 
+
 export const useSafeTeacher = () => {
   try {
     return useTeacher();
@@ -197,7 +201,7 @@ export const useSafeTeacher = () => {
     console.warn("⚠️ useSafeTeacher: Context not available");
     return {
       teacher: null,
-      slug: "",
+      slug: "", // ✅ تأكد إن slug موجود هنا
       isLoading: false,
       error: null,
       refetch: () => {},
@@ -210,7 +214,7 @@ export const useSafeTeacher = () => {
       footer: null,
       future: [],
       home: null,
-      centerHours: [], // ✅ إضافة fallback
+      centerHours: [],
     };
   }
 };

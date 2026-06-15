@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // src/themes/nature/pages/Register.tsx
+
 import { useState, useEffect } from "react";
 import { useLang } from "@/i18n/LanguageContext";
 import { useParams, Link } from "react-router-dom";
@@ -10,9 +11,11 @@ import FileUploader from "@/components/FileUploader";
 import { 
   UserPlus, Lock, User, Phone, GraduationCap, Eye, EyeOff,
   Loader2, ArrowLeft, ArrowRight, Building, Wifi, Calendar, Clock, 
-  MapPin, AlertCircle, ChevronDown, Users, School, Landmark, BookOpen, Image
+  MapPin, AlertCircle, ChevronDown, Users, School, Landmark, BookOpen, Image,
+  X, CheckCircle, Info, Shield, WifiOff, CreditCard, RefreshCw, Smartphone
 } from "lucide-react";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Register = () => {
   const { lang, dir } = useLang();
@@ -20,6 +23,9 @@ const Register = () => {
   const { teacher, stages, pick, isLoading } = useTeacher();
   const { mutate: register, isPending } = useStudentRegister();
   const { data: centerHours, isLoading: hoursLoading } = useCenterHours(teacher?.id);
+  
+  // ✅ State لإظهار/إخفاء popup التعليمات - يظهر كل مرة
+  const [showInstructions, setShowInstructions] = useState(true);
   
   const [showPassword, setShowPassword] = useState(false);
   const [step, setStep] = useState(1);
@@ -36,6 +42,7 @@ const Register = () => {
     school_name: "",
     type_of_study: "general",
     image: "",
+    region:"",
   });
 
   const Arrow = dir === "rtl" ? ArrowRight : ArrowLeft;
@@ -46,6 +53,11 @@ const Register = () => {
   const isCenter = formData.type_of_attendance === "center";
   const hoursList = centerHours || [];
   const hasHours = hoursList.length > 0;
+
+  // ✅ إغلاق popup
+  const handleCloseInstructions = () => {
+    setShowInstructions(false);
+  };
 
   // قائمة المحافظات
   const governorates = [
@@ -93,7 +105,6 @@ const Register = () => {
 
   const handleProfileUpload = (imageId: number) => {
     setFormData({ ...formData, image: imageId.toString() });
-    console.log("✅ Profile image uploaded with ID:", imageId);
     toast.success(lang === "ar" ? "تم رفع الصورة بنجاح" : "Image uploaded successfully");
   };
 
@@ -131,11 +142,11 @@ const Register = () => {
       center_hour_id: isCenter ? parseInt(formData.center_hour_id) : undefined,
       governorate: formData.governorate,
       school_name: formData.school_name,
+      region: formData.region,
       type_of_study: formData.type_of_study as 'general' | 'azhar',
       image: formData.image ? parseInt(formData.image) : undefined,
     };
     
-    console.log("📝 Submitting student data:", submitData);
     register(submitData);
   };
 
@@ -176,14 +187,12 @@ const Register = () => {
     setStep(step - 1);
   };
 
-  // ✅ منع إرسال الفورم عند الضغط على Enter في أي خطوة غير الخطوة 3
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Enter' && step !== 3) {
         e.preventDefault();
       }
     };
-    
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [step]);
@@ -197,15 +206,199 @@ const Register = () => {
   }
 
   return (
-    <div className="min-h-screen py-16 md:py-24 bg-gradient-hero">
+    <div className="min-h-screen py-16 md:py-24 ">
+      {/* ✅ Modal التعليمات - يظهر كل مرة */}
+      <AnimatePresence>
+        {showInstructions && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+            onClick={handleCloseInstructions}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 25 }}
+              className="max-w-2xl w-full max-h-[85vh] overflow-y-auto rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-amber-200 dark:border-amber-800"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="sticky top-0 z-10 bg-gradient-to-r from-amber-500 to-orange-600 text-white p-5 rounded-t-3xl">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                      <AlertCircle className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold">
+                        {lang === "ar" ? "📋 تعليمات هامة" : "📋 Important Instructions"}
+                      </h2>
+                      <p className="text-white/80 text-sm">
+                        {lang === "ar" ? "برجاء قراءة التعليمات بعناية" : "Please read carefully"}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleCloseInstructions}
+                    className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 transition-colors flex items-center justify-center"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-6 space-y-5">
+                {/* Device Compatibility */}
+                <div className="flex items-start gap-3 p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                    <Smartphone className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-blue-800 dark:text-blue-300">
+                      {lang === "ar" ? "📱 متوافق مع جميع الأجهزة" : "📱 Compatible with all devices"}
+                    </h3>
+                    <p className="text-sm text-blue-700 dark:text-blue-400">
+                      {lang === "ar" 
+                        ? "المنصة تعمل على جميع الأجهزة (موبايل ولابتوب)"
+                        : "The platform works on all devices (Mobile & Laptop)"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Account Type */}
+                <div className="flex items-start gap-3 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                    <Users className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-emerald-800 dark:text-emerald-300">
+                      {lang === "ar" ? "👥 نوع الحساب" : "👥 Account Type"}
+                    </h3>
+                    <p className="text-sm text-emerald-700 dark:text-emerald-400">
+                      {lang === "ar" 
+                        ? "طالب سنتر يعمل أكونت سنتر وطالب الأونلاين يعمل أكونت أونلاين"
+                        : "Center student creates center account, online student creates online account"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* No Modification */}
+                <div className="flex items-start gap-3 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                    <RefreshCw className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-amber-800 dark:text-amber-300">
+                      {lang === "ar" ? "🔒 لا يمكن تعديل البيانات" : "🔒 No data modification"}
+                    </h3>
+                    <p className="text-sm text-amber-700 dark:text-amber-400">
+                      {lang === "ar" 
+                        ? "لا يمكن تعديل البيانات إلا بالعودة للدعم"
+                        : "Data cannot be modified except by contacting support"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* No Refund */}
+                <div className="flex items-start gap-3 p-4 rounded-2xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
+                  <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                    <CreditCard className="w-5 h-5 text-red-600 dark:text-red-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-red-800 dark:text-red-300">
+                      {lang === "ar" ? "💰 عدم استرجاع الكورسات" : "💰 No course refund"}
+                    </h3>
+                    <p className="text-sm text-red-700 dark:text-red-400">
+                      {lang === "ar" 
+                        ? "لا يمكن استرجاع أو تبديل الكورس بعد الاشتراك"
+                        : "No refund or exchange of course after subscription"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Ask Support */}
+                <div className="flex items-start gap-3 p-4 rounded-2xl bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800">
+                  <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                    <Info className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-purple-800 dark:text-purple-300">
+                      {lang === "ar" ? "❓ اسأل قبل الاشتراك" : "❓ Ask before subscribing"}
+                    </h3>
+                    <p className="text-sm text-purple-700 dark:text-purple-400">
+                      {lang === "ar" 
+                        ? "لو فيه حاجه مش متأكد منها اسأل الدعم قبل الأشتراك"
+                        : "If you are unsure about anything, ask support before subscribing"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Internet */}
+                <div className="flex items-start gap-3 p-4 rounded-2xl bg-cyan-50 dark:bg-cyan-950/20 border border-cyan-200 dark:border-cyan-800">
+                  <div className="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                    <WifiOff className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-cyan-800 dark:text-cyan-300">
+                      {lang === "ar" ? "🌐 اتصال إنترنت قوي" : "🌐 Strong internet connection"}
+                    </h3>
+                    <p className="text-sm text-cyan-700 dark:text-cyan-400">
+                      {lang === "ar" 
+                        ? "استخدم واي فاي قوي والنت يكون مستقر جدا حتي لا تواجه مشكلة مع الفيديوهات"
+                        : "Use strong Wi-Fi and stable internet to avoid video issues"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Personal Use */}
+                <div className="flex items-start gap-3 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800">
+                  <div className="w-10 h-10 rounded-xl bg-rose-500/20 flex items-center justify-center flex-shrink-0">
+                    <Shield className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-rose-800 dark:text-rose-300">
+                      {lang === "ar" ? "👤 استخدام شخصي فقط" : "👤 Personal use only"}
+                    </h3>
+                    <p className="text-sm text-rose-700 dark:text-rose-400">
+                      {lang === "ar" 
+                        ? "الحساب مخصص للاستخدام الشخصي فقط ومشاركته تعرضه للإغلاق"
+                        : "Account is for personal use only; sharing it will lead to closure"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="sticky bottom-0 bg-gray-50 dark:bg-slate-800 p-4 rounded-b-3xl border-t border-gray-200 dark:border-slate-700">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                    <CheckCircle className="w-3 h-3 text-green-500" />
+                    <span>{lang === "ar" ? "برجاء الالتزام بهذه التعليمات" : "Please follow these instructions"}</span>
+                  </div>
+                  <button
+                    onClick={handleCloseInstructions}
+                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold text-sm hover:shadow-lg transition-all"
+                  >
+                    {lang === "ar" ? "فهمت ✓" : "I Understand ✓"}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="container mx-auto px-4 max-w-3xl">
-        {/* Back button */}
+        {/* باقي الفورم كما هو */}
         <Link to={`/${slug}`} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary mb-4 transition-colors">
           <Arrow className="w-4 h-4" />
           {lang === "ar" ? "العودة للرئيسية" : "Back to Home"}
         </Link>
 
-        {/* Main Card */}
         <div className="bg-card rounded-3xl shadow-soft border p-8 md:p-10 animate-fade-up">
           {/* Header */}
           <div className="flex items-center gap-3 mb-6">
@@ -222,7 +415,7 @@ const Register = () => {
             </div>
           </div>
 
-          {/* Steps Indicator - 3 خطوات */}
+          {/* Steps Indicator - خطوتين */}
           <div className="flex items-center justify-center gap-2 mb-8">
             <div className={`flex items-center gap-2 ${step === 1 ? 'text-primary' : 'text-foreground/30'}`}>
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step === 1 ? 'bg-primary text-white' : 'bg-muted'}`}>1</div>
@@ -233,22 +426,13 @@ const Register = () => {
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step === 2 ? 'bg-primary text-white' : 'bg-muted'}`}>2</div>
               <span className="text-sm hidden sm:inline">{lang === "ar" ? "البيانات الدراسية" : "Study Info"}</span>
             </div>
-            <div className="w-8 h-px bg-border" />
-            <div className={`flex items-center gap-2 ${step === 3 ? 'text-primary' : 'text-foreground/30'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step === 3 ? 'bg-primary text-white' : 'bg-muted'}`}>3</div>
-              <span className="text-sm hidden sm:inline">{lang === "ar" ? "الصورة الشخصية" : "Profile Picture"}</span>
-            </div>
           </div>
 
-          {/* ✅ الفورم المعدل - يمنع الإرسال إلا في الخطوة 3 */}
           <form 
             onSubmit={(e) => {
               e.preventDefault();
-              // فقط في الخطوة 3 يتم الإرسال
-              if (step === 3) {
+              if (step === 2) {
                 handleSubmit(e);
-              } else {
-                console.log(`⛔ Prevented form submission in step ${step}`);
               }
             }} 
           >
@@ -266,8 +450,7 @@ const Register = () => {
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
-                      className="flex-1 bg-transparent py-3 outline-none text-sm placeholder:text-muted-foreground"
-                      placeholder={lang === "ar" ? "أدخل اسمك بالكامل" : "Enter your full name"}
+                      className="flex-1 bg-transparent py-3 outline-none text-sm"
                       required
                     />
                   </div>
@@ -284,13 +467,20 @@ const Register = () => {
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
-                      className="flex-1 bg-transparent py-3 outline-none text-sm placeholder:text-muted-foreground"
-                      placeholder="01x xxxx xxxx"
+                      className="flex-1 bg-transparent py-3 outline-none text-sm"
                       required
                     />
                   </div>
                 </div>
-
+ <div>
+                  <label className="block text-sm font-bold mb-1.5">
+                    {lang === "ar" ? "  المنطقه" : " region"} <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative flex items-center bg-background border rounded-2xl focus-within:ring-2 focus-within:ring-primary/40 transition">
+                    <span className="px-4 text-muted-foreground"></span>
+                    <input type="text" name="region" value={formData.region} onChange={handleChange} className="flex-1 bg-transparent py-3 outline-none text-sm" required />
+                  </div>
+                </div>
                 <div>
                   <label className="block text-sm font-bold mb-1.5">
                     {lang === "ar" ? "كلمة المرور" : "Password"} <span className="text-red-500">*</span>
@@ -302,8 +492,7 @@ const Register = () => {
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
-                      className="flex-1 bg-transparent py-3 outline-none text-sm placeholder:text-muted-foreground"
-                      placeholder="••••••••"
+                      className="flex-1 bg-transparent py-3 outline-none text-sm"
                       required
                     />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="px-4 text-muted-foreground">
@@ -328,8 +517,7 @@ const Register = () => {
                       name="phone_parent"
                       value={formData.phone_parent}
                       onChange={handleChange}
-                      className="flex-1 bg-transparent py-3 outline-none text-sm placeholder:text-muted-foreground"
-                      placeholder="01x xxxx xxxx"
+                      className="flex-1 bg-transparent py-3 outline-none text-sm"
                     />
                   </div>
                 </div>
@@ -371,8 +559,7 @@ const Register = () => {
                       name="school_name"
                       value={formData.school_name}
                       onChange={handleChange}
-                      className="flex-1 bg-transparent py-3 outline-none text-sm placeholder:text-muted-foreground"
-                      placeholder={lang === "ar" ? "مثال: مدرسة النصر الثانوية" : "e.g., Nasr High School"}
+                      className="flex-1 bg-transparent py-3 outline-none text-sm"
                       required
                     />
                   </div>
@@ -409,7 +596,7 @@ const Register = () => {
                   )}
                 </div>
 
-                {/* نوع الدراسة (عام / أزهري) */}
+                {/* نوع الدراسة */}
                 <div>
                   <label className="block text-sm font-bold mb-1.5">
                     {lang === "ar" ? "نوع الدراسة" : "Type of Study"} <span className="text-red-500">*</span>
@@ -418,22 +605,21 @@ const Register = () => {
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, type_of_study: "general" })}
-                      className={`flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border transition-all ${formData.type_of_study === "general" ? "bg-primary text-white border-primary" : "bg-background border-border"}`}
+                      className={`px-4 py-3 rounded-2xl border transition-all ${formData.type_of_study === "general" ? "bg-primary text-white border-primary" : "bg-background border-border"}`}
                     >
-                      <BookOpen className="size-4" />
                       {lang === "ar" ? "عام" : "General"}
                     </button>
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, type_of_study: "azhar" })}
-                      className={`flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border transition-all ${formData.type_of_study === "azhar" ? "bg-primary text-white border-primary" : "bg-background border-border"}`}
+                      className={`px-4 py-3 rounded-2xl border transition-all ${formData.type_of_study === "azhar" ? "bg-primary text-white border-primary" : "bg-background border-border"}`}
                     >
-                      <Landmark className="size-4" />
                       {lang === "ar" ? "أزهري" : "Azhar"}
                     </button>
                   </div>
                 </div>
 
+                {/* نوع الحضور */}
                 <div>
                   <label className="block text-sm font-bold mb-1.5">
                     {lang === "ar" ? "نوع الحضور" : "Attendance Type"} <span className="text-red-500">*</span>
@@ -442,17 +628,15 @@ const Register = () => {
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, type_of_attendance: "online", center_hour_id: "" })}
-                      className={`flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border transition-all ${formData.type_of_attendance === "online" ? "bg-primary text-white border-primary" : "bg-background border-border"}`}
+                      className={`px-4 py-3 rounded-2xl border transition-all ${formData.type_of_attendance === "online" ? "bg-primary text-white border-primary" : "bg-background border-border"}`}
                     >
-                      <Wifi className="size-4" />
                       {lang === "ar" ? "أونلاين" : "Online"}
                     </button>
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, type_of_attendance: "center" })}
-                      className={`flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border transition-all ${formData.type_of_attendance === "center" ? "bg-primary text-white border-primary" : "bg-background border-border"}`}
+                      className={`px-4 py-3 rounded-2xl border transition-all ${formData.type_of_attendance === "center" ? "bg-primary text-white border-primary" : "bg-background border-border"}`}
                     >
-                      <Building className="size-4" />
                       {lang === "ar" ? "سنتر" : "Center"}
                     </button>
                   </div>
@@ -473,31 +657,23 @@ const Register = () => {
                         </p>
                       </div>
                     ) : (
-                      <div className="relative flex items-center bg-background border rounded-xl focus-within:ring-2 focus-within:ring-primary/40">
-                        <span className="px-3 text-muted-foreground"><Clock className="size-4" /></span>
-                        <select
-                          name="center_hour_id"
-                          value={formData.center_hour_id}
-                          onChange={handleChange}
-                          className="flex-1 bg-transparent py-2.5 outline-none text-sm appearance-none pr-4"
-                          required
-                        >
-                          <option value="">{lang === "ar" ? "اختر الميعاد" : "Select time"}</option>
-                          {hoursList.map((hour: any) => (
-                            <option key={hour.id} value={hour.id}>{getHourLabel(hour)}</option>
-                          ))}
-                        </select>
-                        <ChevronDown className="absolute right-3 text-muted-foreground pointer-events-none" />
-                      </div>
+                      <select
+                        name="center_hour_id"
+                        value={formData.center_hour_id}
+                        onChange={handleChange}
+                        className="w-full bg-background border rounded-xl px-4 py-2.5 outline-none text-sm"
+                        required
+                      >
+                        <option value="">{lang === "ar" ? "اختر الميعاد" : "Select time"}</option>
+                        {hoursList.map((hour: any) => (
+                          <option key={hour.id} value={hour.id}>{getHourLabel(hour)}</option>
+                        ))}
+                      </select>
                     )}
-                    
-                    <div className="text-xs text-foreground/50 flex items-center gap-1">
-                      <MapPin className="size-3" />
-                      {lang === "ar" ? "سيتم التواصل معك لتأكيد الموعد" : "You will be contacted to confirm"}
-                    </div>
                   </div>
                 )}
 
+                {/* النوع */}
                 <div>
                   <label className="block text-sm font-bold mb-1.5">
                     {lang === "ar" ? "النوع" : "Gender"} <span className="text-red-500">*</span>
@@ -519,8 +695,8 @@ const Register = () => {
                     </button>
                   </div>
                 </div>
-                <div>
-                    <FileUploader
+
+                <FileUploader
                   label={lang === "ar" ? "📸 تحميل الصورة الشخصية" : "📸 Upload Profile Picture"}
                   onUploadSuccess={handleProfileUpload}
                   multiple={false}
@@ -531,20 +707,6 @@ const Register = () => {
                   defaultImageId={formData.image ? parseInt(formData.image) : null}
                   onRemoveImage={handleRemoveProfile}
                 />
-
-                </div>
-              </div>
-            )}
-
-            {/* Step 3: الصورة الشخصية */}
-            {step === 3 && (
-              <div className="space-y-6">
-                <div className="text-center">
-                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-4">
-                    <Image className="size-10 text-primary" />
-                  </div>
-                 
-                </div>
               </div>
             )}
 
@@ -560,7 +722,7 @@ const Register = () => {
                 </button>
               )}
               
-              {step < 3 ? (
+              {step < 2 ? (
                 <button
                   type="button"
                   onClick={nextStep}

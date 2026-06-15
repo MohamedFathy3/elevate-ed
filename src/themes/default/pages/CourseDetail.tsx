@@ -10,7 +10,8 @@ import {
   Clock, Atom, ArrowLeft, ArrowRight, CheckCircle2, 
   PlayCircle, ShoppingCart, Lock, Calendar, 
   Loader2, Shield, Leaf, Sparkles, Users, Award, Star,
-  Eye, Video, FileText, ExternalLink, Info, BookOpen
+  Eye, Video, FileText, ExternalLink, Info, BookOpen,
+  AlertTriangle, LogIn
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
@@ -22,8 +23,8 @@ const CourseDetail = () => {
   const { theme, colorMode } = useTheme();
   const { slug } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useStudentAuth();
-  const { courseId } = useParams(); // ✅ هذا السطر موجود لكن تأكد منه
+  const { isAuthenticated, student, isLoading: authLoading } = useStudentAuth();
+  const { courseId } = useParams();
   const courseIdNum = parseInt(courseId || '0');
   
   // ✅ استخدام الـ Hooks الجديدة
@@ -42,6 +43,42 @@ const CourseDetail = () => {
   const [showProtectionWarning, setShowProtectionWarning] = useState(false);
   const [hasPurchasedFullCourse, setHasPurchasedFullCourse] = useState(false);
   const [videoError, setVideoError] = useState(false);
+  const [redirectPath, setRedirectPath] = useState<string>("");
+
+  // ✅ تخزين مسار الصفحة الحالية للعودة بعد تسجيل الدخول
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setRedirectPath(window.location.pathname);
+    }
+  }, []);
+
+  // ✅ إذا كان المستخدم غير مسجل، حوله لصفحة تسجيل الدخول
+  if (!authLoading && !isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-md p-8">
+          <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+            <LogIn className="w-12 h-12 text-red-500" />
+          </div>
+          <h1 className="text-2xl font-bold mb-3">
+            {lang === "ar" ? "تسجيل الدخول مطلوب" : "Login Required"}
+          </h1>
+          <p className="text-muted-foreground mb-6">
+            {lang === "ar" 
+              ? "يجب تسجيل الدخول أولاً لمشاهدة محتوى هذا الكورس"
+              : "You must login first to view this course content"}
+          </p>
+          <Link
+            to={`/${slug}/login?redirect=${encodeURIComponent(redirectPath || window.location.pathname)}`}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold hover:shadow-lg transition-all"
+          >
+            <LogIn className="w-5 h-5" />
+            {lang === "ar" ? "تسجيل الدخول" : "Login"}
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   // ✅ استخراج بيانات الكورس من API
   const courseFromApi = courseApiData?.data;
@@ -62,7 +99,7 @@ const CourseDetail = () => {
   const primaryGradient = isNature 
     ? "from-amber-500 to-orange-600" 
     : "from-primary to-accent";
-  const bgColor = isNature ? 'bg-cream' : 'bg-background';
+  const bgColor = isNature ? '' : '';
   const cardBg = isNature 
     ? (isDark ? 'bg-amber-900/30' : 'bg-white') 
     : (isDark ? 'bg-gray-800/50' : 'bg-card');
@@ -94,12 +131,14 @@ const CourseDetail = () => {
     }
   }, [hasPurchasedFullCourse, lessons]);
 
-  // تفعيل الحماية عند تحميل الصفحة
+  // تفعيل الحماية عند تحميل الصفحة (للمستخدمين المسجلين فقط)
   useEffect(() => {
-    enableFullProtection();
-    setShowProtectionWarning(true);
-    setTimeout(() => setShowProtectionWarning(false), 5000);
-  }, []);
+    if (isAuthenticated) {
+      enableFullProtection();
+      setShowProtectionWarning(true);
+      setTimeout(() => setShowProtectionWarning(false), 5000);
+    }
+  }, [isAuthenticated]);
 
   const goToLessonPage = (lessonId: number) => {
     navigate(`/${slug}/lesson/${lessonId}`);
@@ -171,7 +210,7 @@ const CourseDetail = () => {
     return url;
   };
 
-  const isLoading = detailsLoading || coursesLoading;
+  const isLoading = detailsLoading || coursesLoading || authLoading;
 
   if (isLoading) {
     return <CourseDetailSkeleton isNature={isNature} />;
@@ -191,7 +230,7 @@ const CourseDetail = () => {
       <div className="container-tight">
         {/* تحذير الحماية */}
         <AnimatePresence>
-          {showProtectionWarning && (
+          {showProtectionWarning && isAuthenticated && (
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}

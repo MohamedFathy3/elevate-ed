@@ -1,5 +1,4 @@
 // src/themes/nature/pages/index.tsx
-// نفس طريقة default بالضبط
 
 export { default as TeacherHome } from './TeacherHome';
 export { default as Landing } from './Landing';
@@ -15,3 +14,4 @@ export { default as SemesterDetails } from './SemesterDetails';
 export { default as Login } from './Login';
 export { default as Register } from './Register';
 export { default as NotFound } from './NotFound';
+export { default as CenterHours } from '@/themes/default/pages/CenterHours';

@@ -6,6 +6,7 @@ import { useRef, useState, useEffect } from "react";
 import { useLang } from "@/i18n/LanguageContext";
 import { useSafeTeacherData } from "@/hooks/useSafeTeacherData";
 import { useTheme } from "@/context/ThemeContext";
+import { Link, useParams } from "react-router-dom";
 
 import {
   Sparkles,
@@ -40,6 +41,7 @@ const NATURE_FEATURES_ICONS = [
 export const About = () => {
   const { lang } = useLang();
   const { theme } = useTheme();
+  const { slug } = useParams();
   const { features, about, pick, isLoading } = useSafeTeacherData();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -113,7 +115,7 @@ export const About = () => {
   return (
     <section 
       id="about" 
-      className={`relative overflow-hidden py-28 md:py-36 ${isNature ? 'bg-cream' : 'bg-background'}`}
+      className={`relative overflow-hidden py-28 md:py-36 ${isNature ? '' : ''}`}
     >
       {/* BACKGROUND */}
       <div className="absolute inset-0 overflow-hidden">
@@ -183,7 +185,7 @@ export const About = () => {
                   : "Learn with a modern premium educational experience designed for students and teachers.")}
             </motion.p>
 
-            {/* BUTTONS */}
+            {/* BUTTONS - معدل عشان يودي على register */}
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -191,47 +193,30 @@ export const About = () => {
               transition={{ delay: 0.3 }}
               className="mt-10 flex flex-wrap gap-4"
             >
-              <button className={`group rounded-2xl px-8 py-4 font-bold text-white shadow-[0_10px_40px_rgba(0,0,0,0.25)] transition-all hover:scale-105
-                ${isNature ? 'bg-emerald-600' : 'bg-primary'}`}>
+              <Link
+                to={`/${slug}/register`}
+                className={`group rounded-2xl px-8 py-4 font-bold text-white shadow-[0_10px_40px_rgba(0,0,0,0.25)] transition-all hover:scale-105
+                  ${isNature ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-primary hover:bg-primary/90'}`}
+              >
                 {lang === "ar" ? "ابدأ الآن" : "Get Started"}
-              </button>
+              </Link>
 
-              <button className={`group flex items-center gap-3 rounded-2xl border px-8 py-4 font-semibold backdrop-blur-xl transition-all hover:bg-primary/5
-                ${isNature 
-                  ? 'border-emerald-200 bg-white/60 hover:border-emerald-300' 
-                  : 'border-border bg-card/60 hover:border-primary/30'}`}>
+              <Link
+                to={`/${slug}/register`}
+                className={`group flex items-center gap-3 rounded-2xl border px-8 py-4 font-semibold backdrop-blur-xl transition-all hover:bg-primary/5
+                  ${isNature 
+                    ? 'border-emerald-200 bg-white/60 hover:border-emerald-300' 
+                    : 'border-border bg-card/60 hover:border-primary/30'}`}
+              >
                 <div className={`flex h-10 w-10 items-center justify-center rounded-full
                   ${isNature ? 'bg-emerald-100' : 'bg-primary/10'}`}>
                   <Play className={`h-4 w-4 fill-current ${isNature ? 'text-emerald-600' : 'text-primary'}`} />
                 </div>
                 {lang === "ar" ? "شاهد المنصة" : "Watch Platform"}
-              </button>
+              </Link>
             </motion.div>
 
-            {/* STATS */}
-            <div className="mt-14 grid grid-cols-3 gap-5">
-              {[
-                { number: "500+", label: lang === "ar" ? "طالب" : "Students" },
-                { number: "120+", label: lang === "ar" ? "دورة" : "Courses" },
-                { number: "4.9", label: lang === "ar" ? "تقييم" : "Rating" },
-              ].map((item, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 40 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  className={`rounded-3xl border p-6 text-center backdrop-blur-xl
-                    ${isNature 
-                      ? 'border-emerald-100 bg-white/50' 
-                      : 'border-border bg-card/50'}`}
-                >
-                  <h3 className={`text-3xl font-black ${isNature ? 'text-emerald-600' : 'text-primary'}`}>
-                    {item.number}
-                  </h3>
-                  <p className="mt-2 text-sm text-foreground/60">{item.label}</p>
-                </motion.div>
-              ))}
-            </div>
+            {/* ✅ STATS - تم إزالتها */}
           </div>
 
           {/* RIGHT MEDIA (VIDEO or IMAGE) */}

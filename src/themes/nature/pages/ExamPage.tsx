@@ -1,19 +1,220 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// pages/ExamPage.tsx
-import { useState, useEffect } from "react";
+// pages/ExamPage.tsx - مع ساعة عقارب متحركة
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useLang } from "@/i18n/LanguageContext";
 import { useExamQuestions, useSubmitExam, useExamResult, useExamDetails } from "@/hooks/useExams";
+import { useAutoSubmitOnLeave } from '@/hooks/useAutoSubmitOnLeave';
 import { useCurrentStudent } from "@/hooks/useStudent";
 import { motion, AnimatePresence } from "framer-motion";
+
 import { 
   Clock, ArrowLeft, ArrowRight, Loader2, CheckCircle, 
   XCircle, AlertCircle, FileQuestion, Award, TrendingUp,
   Send, Shield, Zap, Brain, HelpCircle, BookOpen,
-  ChevronDown, ChevronUp
+  ChevronDown, ChevronUp, Timer, AlarmClock, Hourglass
 } from "lucide-react";
 import { toast } from "sonner";
 
+// ✅ Improved Analog Clock Component - شكل أنيق وجميل
+const AnalogClock = ({ timeLeft, totalSeconds }: { timeLeft: number; totalSeconds: number }) => {
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  const minutes = Math.floor(timeLeft / 60);
+  const seconds = timeLeft % 60;
+  
+  // الزوايا
+  const minuteAngle = ((minutes % 60) / 60) * 360;
+  const secondAngle = (seconds / 60) * 360;
+  const hourAngle = ((minutes / 60) / 12) * 360;
+  
+  const remainingPercentage = (timeLeft / totalSeconds) * 100;
+  
+  // لون الدائرة حسب الوقت
+  const getClockColor = () => {
+    if (remainingPercentage <= 10) return '#ef4444'; // أحمر
+    if (remainingPercentage <= 25) return '#f97316'; // برتقالي
+    if (remainingPercentage <= 50) return '#eab308'; // أصفر
+    return '#10b981'; // أخضر
+  };
+  
+  const clockColor = getClockColor();
+  
+  if (!mounted) return null;
+  
+  return (
+    <div className="relative flex flex-col items-center">
+      {/* Clock Container */}
+      <div className="relative w-16 h-16 md:w-20 md:h-20">
+        {/* Outer Glow */}
+        <div 
+          className="absolute inset-0 rounded-full opacity-20 animate-pulse"
+          style={{ 
+            backgroundColor: clockColor,
+            filter: 'blur(8px)'
+          }}
+        />
+        
+        {/* Main Clock Face */}
+        <svg className="w-full h-full" viewBox="0 0 100 100">
+          {/* Outer Ring */}
+          <circle
+            cx="50"
+            cy="50"
+            r="46"
+            fill="none"
+            stroke="#e2e8f0"
+            strokeWidth="2"
+            className="dark:stroke-gray-700"
+          />
+          
+          {/* Progress Arc */}
+          <circle
+            cx="50"
+            cy="50"
+            r="46"
+            fill="none"
+            stroke={clockColor}
+            strokeWidth="3"
+            strokeDasharray={`${2 * Math.PI * 46}`}
+            strokeDashoffset={`${2 * Math.PI * 46 * (1 - remainingPercentage / 100)}`}
+            strokeLinecap="round"
+            className="transition-all duration-1000"
+            style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%' }}
+          />
+          
+          {/* Inner Circle Background */}
+          <circle
+            cx="50"
+            cy="50"
+            r="40"
+            fill="white"
+            fillOpacity="0.1"
+            className="dark:fill-gray-800"
+          />
+          
+          {/* Clock Marks (12, 3, 6, 9) */}
+          <line x1="50" y1="8" x2="50" y2="14" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" />
+          <line x1="92" y1="50" x2="86" y2="50" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" />
+          <line x1="50" y1="92" x2="50" y2="86" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" />
+          <line x1="8" y1="50" x2="14" y2="50" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" />
+          
+          {/* Small Marks for each 5 minutes */}
+          {[1, 2, 4, 5, 7, 8, 10, 11].map((i) => {
+            const angle = (i * 30) - 90;
+            const rad = (angle * Math.PI) / 180;
+            const x1 = 50 + 38 * Math.cos(rad);
+            const y1 = 50 + 38 * Math.sin(rad);
+            const x2 = 50 + 42 * Math.cos(rad);
+            const y2 = 50 + 42 * Math.sin(rad);
+            return (
+              <line
+                key={i}
+                x1={x1}
+                y1={y1}
+                x2={x2}
+                y2={y2}
+                stroke="#cbd5e1"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                className="dark:stroke-gray-600"
+              />
+            );
+          })}
+          
+          {/* ✅ Minute Hand (عقرب الدقائق) - سميك وواضح */}
+          <line
+            x1="50"
+            y1="50"
+            x2="50"
+            y2="22"
+            stroke={clockColor}
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            className="transition-all duration-300"
+            style={{ 
+              transform: `rotate(${minuteAngle}deg)`,
+              transformOrigin: '50% 50%',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}
+          />
+          
+          {/* ✅ Second Hand (عقرب الثواني) - رفيع وأحمر مع نقطة */}
+          <line
+            x1="50"
+            y1="60"
+            x2="50"
+            y2="18"
+            stroke="#ef4444"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+            className="transition-all duration-100"
+            style={{ 
+              transform: `rotate(${secondAngle}deg)`,
+              transformOrigin: '50% 60%'
+            }}
+          />
+          
+          {/* Second Hand Counter Weight */}
+          <circle
+            cx="50"
+            cy="62"
+            r="3"
+            fill="#ef4444"
+            className="transition-all duration-100"
+            style={{ 
+              transform: `rotate(${secondAngle}deg)`,
+              transformOrigin: '50% 60%'
+            }}
+          />
+          
+          {/* ✅ Hour Hand (عقرب الساعات) - قصير وسميك */}
+          <line
+            x1="50"
+            y1="55"
+            x2="50"
+            y2="30"
+            stroke="#475569"
+            strokeWidth="3"
+            strokeLinecap="round"
+            className="dark:stroke-gray-400 transition-all duration-300"
+            style={{ 
+              transform: `rotate(${hourAngle}deg)`,
+              transformOrigin: '50% 55%'
+            }}
+          />
+          
+          {/* Center Pin */}
+          <circle cx="50" cy="50" r="3" fill={clockColor} />
+          <circle cx="50" cy="50" r="1.5" fill="white" />
+        </svg>
+        
+        {/* Warning Pulse when time is low */}
+        {remainingPercentage <= 10 && (
+          <div className="absolute inset-0 rounded-full animate-ping opacity-30" 
+               style={{ backgroundColor: clockColor, animationDuration: '1s' }} />
+        )}
+      </div>
+      
+      {/* Digital Time Display */}
+      <div className="mt-2 text-center">
+        <span className={`text-sm font-mono font-bold px-2 py-0.5 rounded-lg ${
+          remainingPercentage <= 10 ? 'text-red-500 bg-red-50 dark:bg-red-950/30' :
+          remainingPercentage <= 25 ? 'text-orange-500 bg-orange-50 dark:bg-orange-950/30' :
+          'text-primary bg-primary/10'
+        }`}>
+          {Math.floor(timeLeft / 60).toString().padStart(2, '0')}:
+          {(timeLeft % 60).toString().padStart(2, '0')}
+        </span>
+      </div>
+    </div>
+  );
+};
+// ✅ Main ExamPage Component
 const ExamPage = () => {
   const { lang, dir } = useLang();
   const { slug, examId, lessonId } = useParams();
@@ -22,6 +223,7 @@ const ExamPage = () => {
   const { data: examDetails, isLoading: detailsLoading } = useExamDetails(parseInt(examId || '0'));
   const { data: questionsData, isLoading: questionsLoading } = useExamQuestions(parseInt(examId || '0'));
   const { mutate: submitExam, isPending: submitting } = useSubmitExam();
+  
   const { data: resultData, refetch: refetchResult } = useExamResult(
     parseInt(examId || '0'), 
     student?.id || 0
@@ -31,6 +233,8 @@ const ExamPage = () => {
   const [submitted, setSubmitted] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [showExitWarning, setShowExitWarning] = useState(false);
+  const [autoSubmitTriggered, setAutoSubmitTriggered] = useState(false);
+  const [hasAutoSubmitted, setHasAutoSubmitted] = useState(false);
   
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
   const exam = examDetails?.data;
@@ -40,8 +244,104 @@ const ExamPage = () => {
   const currentLessonId = lessonId || exam?.course_detail_id?.id;
   const answeredCount = Object.keys(answers).length;
   const progressPercent = totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0;
+  const totalSeconds = exam?.duration_minutes ? exam.duration_minutes * 60 : 0;
   
-  // منع النسخ واللصق أثناء الامتحان
+  // ✅ دالة تقديم الامتحان (تُعرَّف أولاً)
+  const handleSubmitExam = useCallback(async (isAutoSubmit = false) => {
+    if (autoSubmitTriggered || submitted || hasResult || hasAutoSubmitted) {
+      console.log("❌ Submit prevented - already submitted");
+      return;
+    }
+    
+    console.log("📝 Starting exam submission... Auto? ", isAutoSubmit);
+    
+    setAutoSubmitTriggered(true);
+    setHasAutoSubmitted(true);
+    
+    const hasAnyAnswer = answeredCount > 0;
+    let formattedAnswers: any[] = [];
+    
+    if (hasAnyAnswer) {
+      formattedAnswers = Object.entries(answers).map(([questionId, answer]) => ({
+        question_id: parseInt(questionId),
+        answer: Array.isArray(answer) ? answer.join(',') : answer.toString(),
+      }));
+      console.log(`📤 Submitting ${formattedAnswers.length} answers`);
+    } else {
+      console.log("📤 No answers to submit - submitting empty array");
+    }
+    
+    if (isAutoSubmit) {
+      toast.warning(
+        lang === "ar" 
+          ? "⏰ تم تسليم الامتحان تلقائياً"
+          : "⏰ Exam submitted automatically"
+      );
+    }
+    
+    localStorage.removeItem(`exam_timer_${examId}`);
+    
+    submitExam({
+      examId: parseInt(examId || '0'),
+      answers: formattedAnswers,
+    }, {
+      onSuccess: () => {
+        console.log("✅ Exam submitted successfully!");
+        setSubmitted(true);
+        
+        setTimeout(() => refetchResult(), 500);
+        
+        setTimeout(() => {
+          if (!isAutoSubmit) {
+            toast.success(
+              lang === "ar" 
+                ? "🎉 تم حفظ النتيجة بنجاح! جاري العودة للدرس..."
+                : "🎉 Result saved successfully! Returning to lesson..."
+            );
+          }
+          if (currentLessonId) {
+            navigate(`/${slug}/lesson/${currentLessonId}`);
+          } else {
+            navigate(`/${slug}/dashboard`);
+          }
+        }, isAutoSubmit ? 1000 : 2000);
+      },
+      onError: (error) => {
+        console.error("❌ Submit error:", error);
+        setAutoSubmitTriggered(false);
+        setHasAutoSubmitted(false);
+        localStorage.removeItem(`exam_submitted_${examId}`);
+        toast.error(
+          lang === "ar" 
+            ? "حدث خطأ في تسليم الامتحان، يرجى المحاولة مرة أخرى" 
+            : "Error submitting exam, please try again"
+        );
+      }
+    });
+  }, [answers, answeredCount, autoSubmitTriggered, examId, hasResult, lang, navigate, refetchResult, slug, submitExam, submitted, currentLessonId, hasAutoSubmitted]);
+  
+  // ✅ ✅ ✅ هنا حط الـ Hooks (بعد تعريف الدالة، قبل الـ useEffects)
+const shouldAutoSubmit = !submitted && !hasResult && !hasAutoSubmitted && timeLeft !== null && timeLeft > 0;
+  
+  useAutoSubmitOnLeave({
+    shouldSubmit: shouldAutoSubmit,
+    onSubmit: () => {
+      console.log("🔥 Auto-submit triggered by leave event!");
+      handleSubmitExam(true);
+    },
+    delay: 500,
+  });
+  
+useAutoSubmitOnLeave({
+  shouldSubmit: shouldAutoSubmit,
+  onSubmit: () => {
+    console.log("🔥 Auto-submit triggered by leave event!");
+    handleSubmitExam(true);
+  },
+  delay: 500,
+});
+  
+  // ✅ باقي الـ useEffects (منع النسخ، المؤقت، العد التنازلي، إلخ)
   useEffect(() => {
     const preventCopy = (e: ClipboardEvent) => {
       if (!submitted && !hasResult) {
@@ -51,36 +351,36 @@ const ExamPage = () => {
     };
     document.addEventListener('copy', preventCopy);
     return () => document.removeEventListener('copy', preventCopy);
-  }, [submitted, hasResult]);
+  }, [submitted, hasResult, lang]);
   
-  // تحذير عند مغادرة الصفحة أثناء الامتحان
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (!submitted && !hasResult && answeredCount > 0) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [submitted, hasResult, answeredCount]);
-  
-  // إعداد المؤقت
+  // ✅ إعداد المؤقت
   useEffect(() => {
     if (exam?.duration_minutes && !submitted && !hasResult) {
-      setTimeLeft(exam.duration_minutes * 60);
+      const savedTime = localStorage.getItem(`exam_timer_${examId}`);
+      if (savedTime && parseInt(savedTime) > 0 && parseInt(savedTime) < exam.duration_minutes * 60) {
+        setTimeLeft(parseInt(savedTime));
+      } else {
+        setTimeLeft(exam.duration_minutes * 60);
+      }
     }
-  }, [exam, submitted, hasResult]);
+  }, [exam, submitted, hasResult, examId]);
   
-  // عد تنازلي
+  // ✅ حفظ الوقت المتبقي
   useEffect(() => {
-    if (timeLeft === null || timeLeft <= 0 || submitted || hasResult) return;
+    if (timeLeft !== null && !submitted && !hasResult && !hasAutoSubmitted) {
+      localStorage.setItem(`exam_timer_${examId}`, timeLeft.toString());
+    }
+  }, [timeLeft, submitted, hasResult, examId, hasAutoSubmitted]);
+  
+  // ✅ عد تنازلي
+  useEffect(() => {
+    if (timeLeft === null || timeLeft <= 0 || submitted || hasResult || hasAutoSubmitted) return;
     
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev === null || prev <= 1) {
           clearInterval(timer);
-          handleAutoSubmit();
+          handleSubmitExam(true);
           return 0;
         }
         return prev - 1;
@@ -88,81 +388,18 @@ const ExamPage = () => {
     }, 1000);
     
     return () => clearInterval(timer);
-  }, [timeLeft, submitted, hasResult]);
+  }, [timeLeft, submitted, hasResult, hasAutoSubmitted, handleSubmitExam]);
   
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-  
-  const handleAnswer = (questionId: number, answer: any) => {
-    setAnswers(prev => ({ ...prev, [questionId]: answer }));
-  };
-  
-  const handleSubmit = () => {
-    if (answeredCount < totalQuestions) {
-      toast.warning(
-        lang === "ar" 
-          ? `⚠️ الرجاء الإجابة على جميع الأسئلة (${answeredCount}/${totalQuestions})`
-          : `⚠️ Please answer all questions (${answeredCount}/${totalQuestions})`
-      );
-      return;
-    }
-    
-    const formattedAnswers = Object.entries(answers).map(([questionId, answer]) => ({
-      question_id: parseInt(questionId),
-      answer: Array.isArray(answer) ? answer.join(',') : answer.toString(),
-    }));
-    
-    submitExam({
-      examId: parseInt(examId || '0'),
-      answers: formattedAnswers,
-    }, {
-      onSuccess: () => {
-        setSubmitted(true);
-        setTimeout(() => {
-          refetchResult();
-        }, 500);
-        setTimeout(() => {
-          toast.success(
-            lang === "ar" 
-              ? "🎉 تم حفظ النتيجة بنجاح! جاري العودة للدرس..."
-              : "🎉 Result saved successfully! Returning to lesson..."
-          );
-          if (currentLessonId) {
-            navigate(`/${slug}/lesson/${currentLessonId}`);
-          } else {
-            navigate(`/${slug}/dashboard`);
-          }
-        }, 2000);
-      },
-      onError: (error) => {
-        console.error("Submit error:", error);
-        toast.error(lang === "ar" ? "حدث خطأ في تسليم الامتحان" : "Error submitting exam");
-      }
-    });
-  };
-  
-  const handleAutoSubmit = () => {
-    if (!submitted && !hasResult && answeredCount > 0) {
-      toast.warning(lang === "ar" ? "⏰ انتهى الوقت! يتم تسليم الإجابات تلقائياً." : "⏰ Time's up! Submitting automatically.");
-      handleSubmit();
-    } else if (!submitted && !hasResult && answeredCount === 0) {
-      toast.error(lang === "ar" ? "❌ انتهى الوقت دون إجابة!" : "❌ Time's up with no answers!");
-      setTimeout(() => {
-        if (currentLessonId) {
-          navigate(`/${slug}/lesson/${currentLessonId}`);
-        } else {
-          navigate(`/${slug}/dashboard`);
-        }
-      }, 2000);
-    }
-  };
-  
-  // إذا كان الامتحان قد تم حله مسبقاً
+  // ✅ تنظيف localStorage بعد الانتهاء
   useEffect(() => {
-    if (hasResult && !submitted) {
+    if (submitted || hasResult) {
+      localStorage.removeItem(`exam_timer_${examId}`);
+    }
+  }, [submitted, hasResult, examId]);
+  
+  // ✅ إذا كان الامتحان قد تم حله مسبقاً
+  useEffect(() => {
+    if (hasResult && !submitted && !hasAutoSubmitted) {
       toast.info(lang === "ar" ? "📝 لقد قمت بحل هذا الامتحان مسبقاً" : "📝 You have already taken this exam");
       setTimeout(() => {
         if (currentLessonId) {
@@ -172,7 +409,23 @@ const ExamPage = () => {
         }
       }, 1500);
     }
-  }, [hasResult, submitted]);
+  }, [hasResult, submitted, hasAutoSubmitted, currentLessonId, slug, navigate, lang]);
+  
+  const handleAnswer = (questionId: number, answer: any) => {
+    setAnswers(prev => ({ ...prev, [questionId]: answer }));
+  };
+  
+  const handleManualSubmit = () => {
+    if (answeredCount < totalQuestions) {
+      toast.warning(
+        lang === "ar" 
+          ? `⚠️ الرجاء الإجابة على جميع الأسئلة (${answeredCount}/${totalQuestions})`
+          : `⚠️ Please answer all questions (${answeredCount}/${totalQuestions})`
+      );
+      return;
+    }
+    handleSubmitExam(false);
+  };
   
   if (detailsLoading || questionsLoading) {
     return <ExamSkeleton lang={lang} />;
@@ -205,8 +458,8 @@ const ExamPage = () => {
                   </h3>
                   <p className="text-foreground/60 mb-6">
                     {lang === "ar" 
-                      ? "هل أنت متأكد من مغادرة الامتحان؟ سيتم فقدان إجاباتك الحالية."
-                      : "Are you sure you want to leave? Your current answers will be lost."}
+                      ? "هل أنت متأكد من مغادرة الامتحان؟ سيتم تسليم الإجابات الحالية تلقائياً."
+                      : "Are you sure you want to leave? Your current answers will be submitted automatically."}
                   </p>
                   <div className="flex gap-3">
                     <button
@@ -218,11 +471,11 @@ const ExamPage = () => {
                     <button
                       onClick={() => {
                         setShowExitWarning(false);
-                        navigate(-1);
+                        handleSubmitExam(true);
                       }}
                       className="flex-1 px-4 py-2 rounded-xl bg-red-500 text-white font-semibold"
                     >
-                      {lang === "ar" ? "مغادرة" : "Leave"}
+                      {lang === "ar" ? "مغادرة وتقديم" : "Leave & Submit"}
                     </button>
                   </div>
                 </div>
@@ -241,7 +494,7 @@ const ExamPage = () => {
           <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
             <button 
               onClick={() => {
-                if (answeredCount > 0 && !submitted && !hasResult) {
+                if (answeredCount > 0 && !submitted && !hasResult && !hasAutoSubmitted) {
                   setShowExitWarning(true);
                 } else {
                   navigate(-1);
@@ -254,18 +507,9 @@ const ExamPage = () => {
             </button>
             
             <div className="flex items-center gap-3">
-              {/* Timer */}
+              {/* ✅ Analog Clock */}
               {timeLeft !== null && !submitted && !hasResult && (
-                <motion.div 
-                  animate={timeLeft < 60 ? { scale: [1, 1.05, 1] } : {}}
-                  transition={{ repeat: Infinity, duration: 1 }}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl font-mono font-bold ${
-                    timeLeft < 60 ? 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg' : 'bg-primary/10 text-primary'
-                  }`}
-                >
-                  <Clock className="w-4 h-4" />
-                  <span>{formatTime(timeLeft)}</span>
-                </motion.div>
+                <AnalogClock timeLeft={timeLeft} totalSeconds={totalSeconds} />
               )}
               
               {/* Progress Badge */}
@@ -277,7 +521,6 @@ const ExamPage = () => {
           
           {/* Exam Info */}
           <div className="text-center mb-6">
-            {/* Exam Image */}
             {exam?.image?.fullUrl && (
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
@@ -306,7 +549,7 @@ const ExamPage = () => {
             </div>
             {exam?.duration_minutes && (
               <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800">
-                <Clock className="w-4 h-4 text-blue-500" />
+                <Hourglass className="w-4 h-4 text-blue-500" />
                 <span>{exam.duration_minutes} {lang === "ar" ? "دقائق" : "minutes"}</span>
               </div>
             )}
@@ -349,8 +592,8 @@ const ExamPage = () => {
             className="mt-10 flex justify-center"
           >
             <button
-              onClick={handleSubmit}
-              disabled={submitting || answeredCount < totalQuestions}
+              onClick={handleManualSubmit}
+              disabled={submitting}
               className="group relative px-8 py-4 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-white font-bold text-lg flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-xl hover:scale-105"
             >
               {submitting ? (
@@ -382,7 +625,7 @@ const ExamPage = () => {
   );
 };
 
-// 🟢 Improved Question Card Component
+// Question Card Component
 const QuestionCard = ({ question, index, value, onChange, lang, disabled }: any) => {
   const [expanded, setExpanded] = useState(true);
   const questionText = lang === "ar" && question.question_ar ? question.question_ar : question.question;
@@ -398,7 +641,6 @@ const QuestionCard = ({ question, index, value, onChange, lang, disabled }: any)
           : 'border-gray-200 dark:border-gray-700 hover:border-primary/30'
       }`}
     >
-      {/* Question Header */}
       <div 
         className="p-5 cursor-pointer"
         onClick={() => !disabled && setExpanded(!expanded)}
@@ -421,7 +663,6 @@ const QuestionCard = ({ question, index, value, onChange, lang, disabled }: any)
               )}
             </div>
             
-            {/* Question Image */}
             {question.image?.fullUrl && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -436,7 +677,6 @@ const QuestionCard = ({ question, index, value, onChange, lang, disabled }: any)
               </motion.div>
             )}
             
-            {/* Badges */}
             <div className="flex items-center gap-3 mt-3">
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 text-xs">
                 <Award className="w-3 h-3" />
@@ -453,7 +693,6 @@ const QuestionCard = ({ question, index, value, onChange, lang, disabled }: any)
             </div>
           </div>
           
-          {/* Status Icon */}
           {value !== undefined && (
             <div className="flex-shrink-0">
               <CheckCircle className="w-6 h-6 text-green-500" />
@@ -462,7 +701,6 @@ const QuestionCard = ({ question, index, value, onChange, lang, disabled }: any)
         </div>
       </div>
       
-      {/* Answer Area */}
       <AnimatePresence>
         {expanded && !disabled && (
           <motion.div
@@ -541,12 +779,11 @@ const QuestionCard = ({ question, index, value, onChange, lang, disabled }: any)
   );
 };
 
-// 🟢 Modern Skeleton Component
+// Exam Skeleton Component
 const ExamSkeleton = ({ lang }: { lang: string }) => {
   return (
     <div className="min-h-screen pt-24 pb-20 bg-gradient-to-br from-gray-50 to-white dark:from-gray-950 dark:to-gray-900">
       <div className="container mx-auto px-4 max-w-4xl">
-        {/* Header Skeleton */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-6">
             <div className="h-10 w-24 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
@@ -564,7 +801,6 @@ const ExamSkeleton = ({ lang }: { lang: string }) => {
           </div>
         </div>
         
-        {/* Questions Skeleton */}
         <div className="space-y-4">
           {[1, 2, 3, 4, 5].map(i => (
             <div key={i} className="bg-white dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700 p-5">
@@ -582,7 +818,6 @@ const ExamSkeleton = ({ lang }: { lang: string }) => {
           ))}
         </div>
         
-        {/* Submit Button Skeleton */}
         <div className="mt-10 flex justify-center">
           <div className="h-14 w-48 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
         </div>

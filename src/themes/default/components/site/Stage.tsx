@@ -23,6 +23,20 @@ import {
   ChevronRight,
   Leaf,
   Flower2,
+  TreePine,
+  Mountain,
+  Cloud,
+  Sun,
+  Wind,
+  Compass,
+  Globe2,
+  Bird,
+  Waves,
+  Sunrise,
+  Award,
+  Smartphone,
+  Tablet,
+  Laptop
 } from "lucide-react";
 
 import { useNavigate, Link } from "react-router-dom";
@@ -38,6 +52,9 @@ const PlayCircleIcon = ({ className }: { className?: string }) => (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
 );
+
+// أيقونات طبيعية للمراحل
+const natureIcons = [TreePine, Mountain, Compass, Globe2, Bird, Waves, Sunrise, Flower2];
 
 export const Stage = () => {
   const { lang, dir } = useLang();
@@ -70,7 +87,7 @@ export const Stage = () => {
   }, [isAuthenticated, student]);
 
   const handleCardClick = (stageId: number, stageName: string) => {
-    navigate(`/${slug}/subjects?stage_id=${stageId}&stage_name=${encodeURIComponent(stageName)}`);
+    navigate(`/${slug}/semesters?stage_id=${stageId}&stage_name=${encodeURIComponent(stageName)}`);
   };
 
   if (isLoading) {
@@ -89,25 +106,201 @@ export const Stage = () => {
   const totalCourses = stages.reduce((acc: number, stage: any) => acc + (stage.courses_count || 0), 0);
   const totalStudents = stages.reduce((acc: number, stage: any) => acc + (stage.students_count || 0), 0);
 
-  return (
-    <section id="stages" className={`relative overflow-hidden py-28 md:py-36 ${isNature ? 'bg-cream' : ''}`}>
-      {/* BACKGROUND */}
-      <div className="absolute inset-0 overflow-hidden">
+if (isNature) {
+  const stageColors = [
+    { gradient: "from-emerald-500 to-teal-600", icon: <GraduationCap className="w-8 h-8 text-white" />, image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400&h=250&fit=crop" },
+    { gradient: "from-teal-500 to-cyan-600", icon: <BookOpen className="w-8 h-8 text-white" />, image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&h=250&fit=crop" },
+    { gradient: "from-cyan-500 to-blue-600", icon: <Award className="w-8 h-8 text-white" />, image: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=400&h=250&fit=crop" }
+  ];
+
+return (
+  <section className="relative overflow-hidden py-24 md:py-32 bg-gradient-to-br from-emerald-50 via-white to-teal-50 dark:from-gray-950 dark:via-emerald-950/10 dark:to-gray-950">
+    {/* Background decorations (أوراق ودوائر متحركة) */}
+    <div className="absolute inset-0 pointer-events-none">
+      <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-emerald-200/30 dark:bg-emerald-900/20 blur-3xl animate-pulse" />
+      <div className="absolute bottom-20 right-10 w-80 h-80 rounded-full bg-teal-200/20 dark:bg-teal-900/20 blur-3xl animate-pulse" />
+      {[...Array(6)].map((_, i) => (
         <motion.div
-          animate={{
-            scale: [1, 1.15, 1],
-            opacity: [0.2, 0.35, 0.2],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-          }}
-          className={`absolute left-1/2 top-0 h-[600px] w-[600px] -translate-x-1/2 rounded-full blur-[140px]
-            ${isNature ? 'bg-emerald-400/15' : 'bg-primary/10'}`}
-        />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:60px_60px]" />
+          key={i}
+          animate={{ y: [0, -30, 0], x: [0, (Math.random() - 0.5) * 50, 0], rotate: [0, 360] }}
+          transition={{ duration: 10 + i * 2, repeat: Infinity, ease: "easeInOut", delay: i * 2 }}
+          className="absolute opacity-10 dark:opacity-5"
+          style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%` }}
+        >
+          <Leaf className="w-6 h-6 text-emerald-600" />
+        </motion.div>
+      ))}
+    </div>
+
+    <div className="container-tight relative z-10">
+      {/* Hero Section */}
+      <div className="text-center max-w-3xl mx-auto mb-16">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-sm font-medium mb-5"
+        >
+          <Leaf className="w-4 h-4" />
+          {lang === "ar" ? "السنوات الدراسية" : "Academic Years"}
+        </motion.div>
+
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="text-4xl md:text-5xl lg:text-6xl font-bold text-emerald-900 dark:text-emerald-100 mb-4"
+        >
+          {lang === "ar" ? "السنوات الدراسية" : "Academic Years"}
+        </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="text-emerald-700/70 dark:text-emerald-300/70 text-lg"
+        >
+          {lang === "ar"
+            ? "على موبايالك، التابلت أو اللابتوب الخاص بيك. المنصة متاحة على:"
+            : "On your mobile, tablet or laptop. The platform is available on:"}
+        </motion.p>
       </div>
 
+      {/* Stages Cards - مع طبقة واضحة للمراحل غير المتاحة */}
+      <div className="grid md:grid-cols-3 gap-8 mb-16">
+        {visibleStages.map((stage: any, idx: number) => {
+          const stageName = pick(stage.name, stage.name_ar);
+          const isStudentStage = isAuthenticated && stage.id === studentStageId;
+          const isDisabled = isAuthenticated && !isStudentStage;
+          const color = stageColors[idx % stageColors.length];
+
+          return (
+            <motion.div
+              key={stage.id}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.1 }}
+              whileHover={{ y: isDisabled ? 0 : -8 }}
+              onClick={() => {
+                if (!isDisabled)
+                  navigate(`/${slug}/semesters?stage_id=${stage.id}&stage_name=${encodeURIComponent(stageName)}`);
+              }}
+              className={`group relative ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+            >
+              <div
+                className={`relative rounded-2xl overflow-hidden bg-white dark:bg-gray-900 shadow-lg transition-all duration-300 h-full flex flex-col
+                  ${isDisabled ? 'opacity-80 grayscale-[0.1]' : 'hover:shadow-2xl'}`}
+              >
+                {/* صورة المرحلة */}
+                <div className="relative h-48 overflow-hidden">
+                  <img
+                    src={stage.image?.fullUrl || stage.image?.previewUrl || color.image}
+                    alt={stageName}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+
+                  {/* شارة "مرحلتي" للمرحلة التابعة للطالب */}
+                  {isStudentStage && (
+                    <div className="absolute top-4 right-4">
+                      <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-500 text-white text-xs font-bold shadow-lg">
+                        <CheckCircle className="w-3 h-3" />
+                        <span>{lang === "ar" ? "مرحلتي" : "My Stage"}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* أيقونة متحركة */}
+                  <div
+                    className={`absolute bottom-4 left-4 w-12 h-12 rounded-xl bg-gradient-to-r ${color.gradient} flex items-center justify-center shadow-lg`}
+                  >
+                    {color.icon}
+                  </div>
+                </div>
+
+                {/* محتوى الكارد */}
+                <div className="p-6 text-center flex-1 flex flex-col">
+                  <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+                    {stageName}
+                  </h3>
+                  <p className="text-emerald-600 dark:text-emerald-400 text-sm font-medium mb-4">
+                    {lang === "ar" ? "الدخول لجميع الكورسات" : "Access all courses"}
+                  </p>
+
+                  {/* زر مختلف للمراحل غير المتاحة */}
+                  {isDisabled ? (
+                    <div className="w-full py-2.5 rounded-xl bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-center font-semibold cursor-not-allowed">
+                      {lang === "ar" ? "غير متاحة لك" : "Not available"}
+                    </div>
+                  ) : (
+                    <button
+                      className={`w-full py-2.5 rounded-xl font-semibold transition-all duration-300 bg-gradient-to-r ${color.gradient} text-white hover:shadow-lg hover:scale-105`}
+                    >
+                      {lang === "ar" ? "اكتشف المحتوى" : "Explore"}
+                      <ArrowRight className="inline-block w-4 h-4 ml-1" />
+                    </button>
+                  )}
+                </div>
+
+                {/* ✅ الطبقة العلوية الواضحة للمراحل غير المتاحة (ليست مرحلتي) */}
+                {isDisabled && (
+                  <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl z-20">
+                    <Lock className="w-14 h-14 text-red-400 mb-3 drop-shadow-lg animate-pulse" />
+                    <p className="text-white font-extrabold text-lg tracking-wide">
+                      {lang === "ar" ? "❌ ليست مرحلتي" : "❌ Not my stage"}
+                    </p>
+                    <p className="text-white/80 text-xs mt-2 text-center px-4">
+                      {lang === "ar"
+                        ? "غير مسموح لك بالدخول إلى هذه المرحلة"
+                        : "You don't have access to this stage"}
+                    </p>
+                    <div className="mt-3 w-12 h-0.5 bg-red-400/50 rounded-full" />
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* CTA + Device Icons */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="text-center"
+      >
+        <div className="inline-flex flex-col items-center gap-5">
+          <div className="flex flex-wrap justify-center gap-6 text-emerald-600 dark:text-emerald-400">
+            <div className="flex flex-col items-center gap-1">
+              <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+                <Smartphone className="w-6 h-6" />
+              </div>
+              <span className="text-xs">Mobile</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+                <Tablet className="w-6 h-6" />
+              </div>
+              <span className="text-xs">Tablet</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+                <Laptop className="w-6 h-6" />
+              </div>
+              <span className="text-xs">Laptop</span>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  </section>
+);
+}
+
+  // ✅ الثيم العادي (default) - يبقى زي ما هو
+  return (
+    <section id="stages" className="relative overflow-hidden py-28 md:py-36">
       <div className="container-tight relative z-10">
         {/* TOP SECTION */}
         <div className="mx-auto max-w-4xl text-center">
@@ -115,12 +308,9 @@ export const Stage = () => {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className={`inline-flex items-center gap-2 rounded-full border px-5 py-2 text-sm font-bold backdrop-blur-xl
-              ${isNature 
-                ? 'border-emerald-400/20 bg-emerald-100 text-emerald-700' 
-                : 'border-primary/20 bg-primary/10 text-primary'}`}
+            className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-5 py-2 text-sm font-bold text-primary backdrop-blur-xl"
           >
-            <BadgeIcon className="h-4 w-4" />
+            <Sparkles className="h-4 w-4" />
             {lang === "ar" ? "المراحل التعليمية" : "Educational Stages"}
           </motion.div>
 
@@ -132,7 +322,7 @@ export const Stage = () => {
             className="mt-8 text-5xl font-black leading-tight tracking-tight md:text-7xl"
           >
             {lang === "ar" ? "اختر مرحلتك" : "Choose Your"}{" "}
-            <span className={`bg-gradient-to-r ${gradientFrom} ${gradientTo} bg-clip-text text-transparent`}>
+            <span className="bg-gradient-to-r from-primary to-fuchsia-500 bg-clip-text text-transparent">
               {lang === "ar" ? "الدراسية" : "Stage"}
             </span>
           </motion.h2>
@@ -150,17 +340,16 @@ export const Stage = () => {
           </motion.p>
         </div>
 
-        {/* STATS SECTION */}
+        {/* STATS SECTION - Default */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mt-16 grid gap-5 md:grid-cols-4"
+          className="mt-16 grid gap-5 md:grid-cols-3"
         >
           {[
             { number: stages.length, label: lang === "ar" ? "مرحلة" : "Stages", icon: Layers3 },
             { number: `${totalCourses}+`, label: lang === "ar" ? "كورس" : "Courses", icon: BookOpen },
-            { number: `${totalStudents}+`, label: lang === "ar" ? "طالب" : "Students", icon: Users },
             { number: "4.9", label: lang === "ar" ? "تقييم" : "Rating", icon: Star },
           ].map((item, i) => {
             const Icon = item.icon;
@@ -168,22 +357,14 @@ export const Stage = () => {
               <motion.div
                 key={i}
                 whileHover={{ y: -8 }}
-                className={`group rounded-[32px] border p-7 backdrop-blur-2xl
-                  ${isNature 
-                    ? 'border-emerald-200 bg-white/50' 
-                    : 'border-border bg-card/50'}`}
+                className="group rounded-[32px] border border-border bg-card/60 p-7 backdrop-blur-2xl"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className={`text-4xl font-black ${isNature ? 'text-emerald-600' : 'text-primary'}`}>
-                      {item.number}
-                    </h3>
+                    <h3 className="text-4xl font-black text-primary">{item.number}</h3>
                     <p className="mt-2 text-sm text-foreground/60">{item.label}</p>
                   </div>
-                  <div className={`flex h-16 w-16 items-center justify-center rounded-3xl transition-all group-hover:scale-110
-                    ${isNature 
-                      ? 'bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white' 
-                      : 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white'}`}>
+                  <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-primary/10 text-primary transition-all group-hover:scale-110 group-hover:bg-primary group-hover:text-white">
                     <Icon className="h-7 w-7" />
                   </div>
                 </div>
@@ -192,24 +373,17 @@ export const Stage = () => {
           })}
         </motion.div>
 
-        {/* STAGES SWIPER - مُصلح بالكامل */}
+        {/* STAGES SWIPER - Default */}
         <div className="mt-20 relative">
-          {/* Navigation Buttons */}
           <button
             onClick={() => swiperRef.current?.slidePrev()}
-            className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border shadow-lg flex items-center justify-center transition-all -ml-6 hidden lg:flex
-              ${isNature 
-                ? 'bg-white border-emerald-200 text-emerald-600 hover:bg-emerald-600 hover:text-white' 
-                : 'bg-card border-border hover:bg-primary hover:text-white'}`}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border border-border bg-card shadow-lg flex items-center justify-center transition-all -ml-6 hover:bg-primary hover:text-white hidden lg:flex"
           >
             <PrevIcon className="w-5 h-5" />
           </button>
           <button
             onClick={() => swiperRef.current?.slideNext()}
-            className={`absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border shadow-lg flex items-center justify-center transition-all -mr-6 hidden lg:flex
-              ${isNature 
-                ? 'bg-white border-emerald-200 text-emerald-600 hover:bg-emerald-600 hover:text-white' 
-                : 'bg-card border-border hover:bg-primary hover:text-white'}`}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border border-border bg-card shadow-lg flex items-center justify-center transition-all -mr-6 hover:bg-primary hover:text-white hidden lg:flex"
           >
             <NextIcon className="w-5 h-5" />
           </button>
@@ -221,8 +395,7 @@ export const Stage = () => {
             slidesPerView={1}
             centeredSlides={false}
             grabCursor={true}
-            resistance={true}
-            resistanceRatio={0.85}
+            autoplay={{ delay: 5000, disableOnInteraction: false, pauseOnMouseEnter: true }}
             breakpoints={{
               640: { slidesPerView: 1.2, spaceBetween: 20 },
               768: { slidesPerView: 2, spaceBetween: 24 },
@@ -254,19 +427,13 @@ export const Stage = () => {
                       }
                     }}
                   >
-                    <div 
-                      className={`relative overflow-hidden rounded-[36px] border backdrop-blur-2xl transition-all duration-500
-                        ${!isDisabled ? `hover:border-${primaryColor}/30 hover:shadow-[0_20px_80px_rgba(0,0,0,0.15)]` : ''}
-                        ${isNature ? 'border-emerald-200 bg-white/60' : 'border-border bg-card/60'}`}
-                    >
+                    <div className={`relative overflow-hidden rounded-[36px] border border-border bg-card/80 backdrop-blur-2xl transition-all duration-500 ${!isDisabled ? 'hover:border-primary/30 hover:shadow-2xl' : ''}`}>
                       {/* Disabled Overlay */}
                       {isDisabled && (
                         <div className="absolute inset-0 z-20 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center rounded-[36px] pointer-events-none">
                           <Lock className="w-12 h-12 text-white/70 mb-2" />
                           <p className="text-white/80 text-sm font-semibold text-center px-4">
-                            {lang === "ar" 
-                              ? "هذه المرحلة غير متاحة لك"
-                              : "This stage is not available for you"}
+                            {lang === "ar" ? "هذه المرحلة غير متاحة لك" : "This stage is not available for you"}
                           </p>
                         </div>
                       )}
@@ -284,33 +451,28 @@ export const Stage = () => {
                       {/* IMAGE */}
                       <div className="relative h-[320px] overflow-hidden">
                         {image ? (
-                          <img
-                            src={image}
-                            alt={stageName}
-                            className={`h-full w-full object-cover transition-transform duration-700 ${!isDisabled ? 'group-hover:scale-110' : ''}`}
-                          />
+                          <>
+                            <img
+                              src={image}
+                              alt={stageName}
+                              className={`h-full w-full object-cover transition-transform duration-700 ${!isDisabled ? 'group-hover:scale-110' : ''}`}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                          </>
                         ) : (
-                          <div className={`flex h-full w-full items-center justify-center bg-gradient-to-br 
-                            ${isNature 
-                              ? 'from-emerald-200/50 via-emerald-100/30 to-teal-200/20' 
-                              : 'from-primary/20 via-primary/5 to-fuchsia-500/20'}`}>
-                            <div className={`flex h-28 w-28 items-center justify-center rounded-[30px] shadow-2xl
-                              ${isNature ? 'bg-emerald-600 text-white' : 'bg-primary text-white'}`}>
-                              <StageIcon className="h-14 w-14" />
+                          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 via-primary/10 to-fuchsia-500/20">
+                            <div className="flex h-28 w-28 items-center justify-center rounded-[30px] bg-primary text-white shadow-2xl">
+                              <GraduationCap className="h-14 w-14" />
                             </div>
                           </div>
                         )}
 
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-
-                        {/* Top Badge */}
                         <div className="absolute left-5 top-5">
                           <div className="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-bold text-white backdrop-blur-xl">
                             {lang === "ar" ? "مرحلة تعليمية" : "Educational Stage"}
                           </div>
                         </div>
 
-                        {/* Floating Courses */}
                         <motion.div
                           animate={{ y: [0, -10, 0] }}
                           transition={{ duration: 4, repeat: Infinity }}
@@ -332,7 +494,7 @@ export const Stage = () => {
                       <div className="p-7">
                         <div className="flex items-start justify-between gap-4">
                           <div>
-                            <h3 className={`text-3xl font-black transition-colors ${!isDisabled ? `group-hover:text-${primaryColor}` : ''}`}>
+                            <h3 className={`text-3xl font-black transition-colors ${!isDisabled ? 'group-hover:text-primary' : ''}`}>
                               {stageName}
                             </h3>
                             <p className="mt-3 line-clamp-2 leading-8 text-foreground/60">
@@ -342,43 +504,16 @@ export const Stage = () => {
                                   : "Professional educational programs.")}
                             </p>
                           </div>
-                          <div className={`flex h-14 w-14 items-center justify-center rounded-2xl transition-all group-hover:scale-110
-                            ${isNature 
-                              ? 'bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white' 
-                              : 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white'}`}>
-                            <StageIcon className="h-6 w-6" />
+                          <div className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-all group-hover:scale-110 group-hover:bg-primary group-hover:text-white`}>
+                            <GraduationCap className="h-6 w-6" />
                           </div>
-                        </div>
-
-                        {/* FEATURES */}
-                        <div className="mt-7 flex flex-wrap gap-3">
-                          {[
-                            lang === "ar" ? "دعم مباشر" : "Live Support",
-                            lang === "ar" ? "شرح فيديو" : "Video Lessons",
-                            lang === "ar" ? "اختبارات" : "Exams",
-                          ].map((item, idx) => (
-                            <div
-                              key={idx}
-                              className={`rounded-full border px-4 py-2 text-xs font-medium backdrop-blur-xl
-                                ${isNature 
-                                  ? 'border-emerald-200 bg-white/60 text-emerald-700' 
-                                  : 'border-border bg-background/60 text-foreground/60'}`}
-                            >
-                              {item}
-                            </div>
-                          ))}
                         </div>
 
                         {/* BUTTON */}
                         <div className="mt-8">
-                          <div className={`group/button inline-flex items-center gap-3 text-lg font-bold ${!isDisabled ? (isNature ? 'text-emerald-600' : 'text-primary') : 'text-foreground/30'}`}>
-                            {lang === "ar" ? "استكشف المواد" : "Explore Subjects"}
-                            <div className={`flex h-10 w-10 items-center justify-center rounded-full transition-all 
-                              ${!isDisabled 
-                                ? (isNature 
-                                    ? 'bg-emerald-100 group-hover/button:bg-emerald-600 group-hover/button:text-white' 
-                                    : 'bg-primary/10 group-hover/button:bg-primary group-hover/button:text-white')
-                                : 'bg-gray-200 dark:bg-gray-700'}`}>
+                          <div className={`group/button inline-flex items-center gap-3 text-lg font-bold ${!isDisabled ? 'text-primary' : 'text-foreground/30'}`}>
+                            {lang === "ar" ? "استكشف الترم" : "Explore Semesters"}
+                            <div className={`flex h-10 w-10 items-center justify-center rounded-full transition-all ${!isDisabled ? 'bg-primary/10 group-hover/button:bg-primary group-hover/button:text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>
                               <Arrow className="h-5 w-5 transition-transform group-hover/button:translate-x-1 rtl:group-hover/button:-translate-x-1" />
                             </div>
                           </div>
@@ -399,8 +534,7 @@ export const Stage = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowAll(!showAll)}
-              className={`rounded-2xl px-8 py-4 font-bold text-white shadow-[0_15px_50px_rgba(0,0,0,0.25)] transition-all
-                ${isNature ? 'bg-emerald-600' : 'bg-primary'}`}
+              className="rounded-2xl px-8 py-4 font-bold text-white shadow-lg transition-all bg-gradient-to-r from-primary to-accent hover:shadow-xl hover:scale-105"
             >
               {showAll
                 ? lang === "ar" ? "عرض أقل" : "Show Less"
@@ -410,14 +544,11 @@ export const Stage = () => {
 
           <Link
             to={`/${slug}/stages`}
-            className={`group flex items-center gap-3 rounded-2xl border px-8 py-4 font-bold backdrop-blur-xl transition-all
-              ${isNature 
-                ? 'border-emerald-200 bg-white/60 hover:border-emerald-300 hover:bg-emerald-50' 
-                : 'border-border bg-card/60 hover:border-primary/30 hover:bg-primary/5'}`}
+            className="group flex items-center gap-3 rounded-2xl border border-border bg-card/60 px-8 py-4 font-bold backdrop-blur-xl transition-all hover:border-primary/30 hover:bg-primary/5"
           >
-            <PlayCircleIcon className={`h-5 w-5 ${isNature ? 'text-emerald-600' : 'text-primary'}`} />
+            <PlayCircleIcon className="h-5 w-5 text-primary" />
             {lang === "ar" ? "استعراض جميع المراحل" : "Browse All Stages"}
-            <Arrow className={`h-5 w-5 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1 ${isNature ? 'text-emerald-600' : 'text-primary'}`} />
+            <Arrow className="h-5 w-5 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1 text-primary" />
           </Link>
         </div>
       </div>
@@ -427,24 +558,53 @@ export const Stage = () => {
 
 // Skeleton Component
 const StageSkeleton = ({ isNature }: { isNature: boolean }) => {
+  if (isNature) {
+    return (
+      <section className="py-32 bg-gradient-to-b from-emerald-50 via-white to-emerald-50 dark:from-emerald-950/30 dark:via-gray-950 dark:to-emerald-950/30">
+        <div className="container-tight">
+          <div className="mx-auto mb-20 max-w-3xl text-center">
+            <div className="mx-auto h-10 w-48 animate-pulse rounded-full bg-emerald-200 dark:bg-emerald-800" />
+            <div className="mx-auto mt-6 h-20 w-full animate-pulse rounded-3xl bg-emerald-100 dark:bg-emerald-900" />
+            <div className="mx-auto mt-6 h-8 w-2/3 animate-pulse rounded-2xl bg-emerald-100/50 dark:bg-emerald-900/50" />
+          </div>
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="overflow-hidden rounded-3xl border border-emerald-200 dark:border-emerald-800 bg-white/80 dark:bg-gray-900/40">
+                <div className="h-64 animate-pulse bg-emerald-100 dark:bg-emerald-900" />
+                <div className="p-6">
+                  <div className="h-8 w-2/3 animate-pulse rounded-2xl bg-emerald-100 dark:bg-emerald-900" />
+                  <div className="mt-4 h-16 animate-pulse rounded-2xl bg-emerald-50 dark:bg-emerald-900/50" />
+                  <div className="mt-5 flex gap-3">
+                    <div className="h-8 w-20 animate-pulse rounded-full bg-emerald-100 dark:bg-emerald-900" />
+                    <div className="h-8 w-20 animate-pulse rounded-full bg-emerald-100 dark:bg-emerald-900" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section className={`py-32 ${isNature ? 'bg-cream' : 'bg-background'}`}>
+    <section className="py-32 bg-background">
       <div className="container-tight">
         <div className="mx-auto mb-20 max-w-3xl text-center">
-          <div className={`mx-auto h-10 w-48 animate-pulse rounded-full ${isNature ? 'bg-emerald-200' : 'bg-muted'}`} />
-          <div className={`mx-auto mt-6 h-20 w-full animate-pulse rounded-3xl ${isNature ? 'bg-emerald-100' : 'bg-muted'}`} />
-          <div className={`mx-auto mt-6 h-8 w-2/3 animate-pulse rounded-2xl ${isNature ? 'bg-emerald-100/50' : 'bg-muted'}`} />
+          <div className="mx-auto h-10 w-48 animate-pulse rounded-full bg-muted" />
+          <div className="mx-auto mt-6 h-20 w-full animate-pulse rounded-3xl bg-muted" />
+          <div className="mx-auto mt-6 h-8 w-2/3 animate-pulse rounded-2xl bg-muted" />
         </div>
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className={`overflow-hidden rounded-[36px] border ${isNature ? 'border-emerald-200 bg-white/60' : 'border-border bg-card/60'}`}>
-              <div className={`h-[320px] animate-pulse ${isNature ? 'bg-emerald-100' : 'bg-muted'}`} />
+            <div key={i} className="overflow-hidden rounded-[36px] border border-border bg-card/60">
+              <div className="h-[320px] animate-pulse bg-muted" />
               <div className="p-7">
-                <div className={`h-10 w-2/3 animate-pulse rounded-2xl ${isNature ? 'bg-emerald-100' : 'bg-muted'}`} />
-                <div className={`mt-5 h-24 animate-pulse rounded-2xl ${isNature ? 'bg-emerald-50' : 'bg-muted'}`} />
+                <div className="h-10 w-2/3 animate-pulse rounded-2xl bg-muted" />
+                <div className="mt-5 h-24 animate-pulse rounded-2xl bg-muted" />
                 <div className="mt-7 flex gap-3">
-                  <div className={`h-10 w-24 animate-pulse rounded-full ${isNature ? 'bg-emerald-100' : 'bg-muted'}`} />
-                  <div className={`h-10 w-24 animate-pulse rounded-full ${isNature ? 'bg-emerald-100' : 'bg-muted'}`} />
+                  <div className="h-10 w-24 animate-pulse rounded-full bg-muted" />
+                  <div className="h-10 w-24 animate-pulse rounded-full bg-muted" />
                 </div>
               </div>
             </div>
@@ -454,3 +614,5 @@ const StageSkeleton = ({ isNature }: { isNature: boolean }) => {
     </section>
   );
 };
+
+export default Stage;

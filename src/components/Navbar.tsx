@@ -20,7 +20,8 @@ export const Navbar = () => {
   const { pathname } = useLocation();
   const isNature = theme === 'nature';
   const isDefault = theme === 'default';
- const isDark = colorMode === 'dark';
+  const isDark = colorMode === 'dark';
+  
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
     onScroll();
@@ -50,16 +51,14 @@ export const Navbar = () => {
   if (isLoading) {
     return <NavbarSkeleton />;
   }
-
   return (
-    <motion.header
-      initial={{ y: -40, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
-      className="fixed top-3 md:top-5 inset-x-0 z-50 px-3 md:px-6"
-    >
-      <nav className={`max-w-7xl mx-auto rounded-full pl-3 pr-2 md:pl-5 md:pr-2 py-2 flex items-center justify-between gap-3 transition-all duration-300 glass shadow-card`}>
-        {/* Logo */}
+ <motion.header
+        initial={{ y: -40, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
+        className="fixed top-3 md:top-5 inset-x-0 z-50 px-3 md:px-6"
+      >
+  <nav className={`max-w-7xl mx-auto rounded-full pl-3 pr-2 md:pl-5 md:pr-2 py-2 flex items-center justify-between gap-3 transition-all duration-300 glass shadow-card`}>        {/* Logo */}
         <Link to={`/${slug}`} className="flex items-center gap-2 shrink-0">
           <div className="w-10 h-10 rounded-xl gradient-primary grid place-items-center shadow-soft">
             {logoImage ? (
@@ -68,7 +67,7 @@ export const Navbar = () => {
               <Zap className="w-5 h-5 text-white" fill="white" />
             )}
           </div>
-          <span className="font-bold text-sm md:text-base hidden sm:block">{teacherName}</span>
+          <span className="font-bold text-sm md:text-base hidden sm:block text-black dark:text-white">{teacherName}</span>
         </Link>
 
         {/* Links - تخفي للطلاب المسجلين */}
@@ -90,7 +89,7 @@ export const Navbar = () => {
           {/* Language Toggle */}
           <button
             onClick={() => setLang(lang === "ar" ? "en" : "ar")}
-            className="hidden sm:flex w-10 h-10 rounded-full bg-card border border-border items-center justify-center text-xs font-bold hover:border-primary/40 transition-colors"
+            className="hidden sm:flex w-10 h-10 rounded-full border  items-center justify-center text-xs font-bold hover:border-primary/40 transition-colors "
           >
             {lang === "ar" ? "EN" : "AR"}
           </button>
@@ -100,8 +99,8 @@ export const Navbar = () => {
             onClick={toggleColorMode}
             className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors
               ${isNature 
-                ? 'bg-white border border-amber-200 hover:border-amber-400' 
-                : 'bg-card border border-border hover:border-primary/40'}`}
+                ? 'bg-white   hover:border-amber-400' 
+                : 'border  hover:border-primary/40'}`}
           >
             {isDark ? (
               <Sun className="w-4 h-4 text-amber-500" />
@@ -117,15 +116,31 @@ export const Navbar = () => {
                 onClick={() => setProfileOpen(!profileOpen)}
                 className="flex items-center gap-2 px-3 py-2 rounded-full bg-gradient-to-r from-primary/10 to-accent/10 hover:from-primary/20 hover:to-accent/20 transition-all"
               >
-                <div className="w-10 h-10 rounded-full gradient-primary grid place-items-center">
-                  <img src={student?.imageUrl} alt={studentName} className="w-full h-full object-cover rounded-full" />
-                </div>
-                <span className="text-sm font-medium hidden md:block">{studentName}</span>
+               <div className="w-10 h-10 rounded-full gradient-primary grid place-items-center">
+  {student?.imageUrl ? (
+    <img 
+      src={student.imageUrl} 
+      alt={student?.name || 'Student'} 
+      className="w-full h-full object-cover rounded-full"
+      onError={(e) => {
+        // لو الصورة مش موجودة أو فيها error
+        e.currentTarget.style.display = 'none';
+        e.currentTarget.parentElement?.classList.add('show-avatar');
+      }}
+    />
+  ) : null}
+  
+  {/* Avatar بديل */}
+  <div className="w-full h-full rounded-full flex items-center justify-center text-white font-bold text-sm bg-gradient-to-br from-primary to-accent">
+    {student?.name ? student.name.charAt(0).toUpperCase() : '?'}
+  </div>
+</div>
+                <span className="text-sm font-medium hidden md:block text-black dark:text-white ">{studentName}</span>
               </button>
 
               {/* Profile Dropdown */}
               {profileOpen && (
-                <div className="absolute top-full left-0 rtl:left-auto rtl:right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50">
+                <div className="absolute top-full left-0 rtl:left-auto rtl:right-0 mt-2 w-48 bg-black border border-border rounded-xl shadow-lg overflow-hidden z-50">
                   <Link
                     to={`/${slug}/dashboard`}
                     className="flex items-center gap-3 px-4 py-3 hover:bg-primary/10 transition-colors"
@@ -154,13 +169,13 @@ export const Navbar = () => {
                 className="inline-flex items-center gap-2 px-4 md:px-5 py-2.5 rounded-full gradient-primary text-white text-sm font-semibold shadow-soft hover:shadow-glow transition-all hover:scale-[1.03] active:scale-95"
               >
                 <Zap className="w-4 h-4" fill="white" />
-                <span className="hidden sm:inline">{lang === "ar" ? "إنشاء حساب" : "Sign up"}</span>
+                <span className="hidden sm:inline">{lang === "ar" ? " اعمل اكونت" : "Sign up"}</span>
               </Link>
               <Link
                 to={`/${slug}/login`}
                 className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
               >
-                {lang === "ar" ? "تسجيل دخول" : "Login"}
+                {lang === "ar" ? "خش ذاكر " : "Login"}
               </Link>
             </>
           )}

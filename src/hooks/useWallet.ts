@@ -10,20 +10,6 @@ export interface WalletData {
   rechargeCode?: string;
 }
 
-export const useWalletBalance = () => {
-  const token = Cookies.get('student_token');
-  
-  return useQuery({
-    queryKey: ['wallet-balance'],
-    queryFn: async () => {
-      const response = await api.get('/student/wallet');
-      console.log("💰 Wallet balance:", response.data);
-      return response.data;
-    },
-    enabled: !!token,
-    staleTime: 60 * 1000,
-  });
-};
 
 export const useCreateRechargeCode = () => {
   const queryClient = useQueryClient();

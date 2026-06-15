@@ -1,15 +1,18 @@
 // src/App.tsx
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Suspense } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import { ThemeProvider, useTheme } from "@/context/ThemeContext";
-import { PlanetsBackground } from "@/components/PlanetsBackground";
+import { BackgroundSelector } from "@/components/BackgroundSelector";
 import { SiteLayout } from "@/components/SiteLayout";
 import { StudentAuthProvider } from "@/context/StudentAuthContext";
+import { LoadingBook } from "@/components/LoadingBook";
+import { useLang } from "@/i18n/LanguageContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,11 +23,19 @@ const queryClient = new QueryClient({
   },
 });
 
-const LoadingSpinner = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-  </div>
-);
+// Loading Spinner القديم نستبدله بالكتاب
+const LoadingSpinner = () => {
+  const { lang } = useLang();
+  return (
+    <LoadingBook 
+      lang={lang}
+      message={{
+        ar: 'جاري تحميل المنصة...',
+        en: 'Loading platform...'
+      }}
+    />
+  );
+};
 
 const DynamicRoutes = () => {
   const { pages, isLoading } = useTheme();
@@ -48,12 +59,11 @@ const DynamicRoutes = () => {
     Login,
     Register,
     NotFound,
+    CenterHours,
   } = pages;
   
   return (
-    <Suspense fallback={<LoadingSpinner />}>
       <Routes>
-        {/* Landing صفحة */}
         <Route path="/" element={<Landing />} />
         
         <Route path="/:slug" element={<SiteLayout />}>
@@ -70,11 +80,11 @@ const DynamicRoutes = () => {
           <Route path="semester/:semesterId" element={<SemesterDetails />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
+          <Route path="center-hours" element={<CenterHours />} />
         </Route>
         
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </Suspense>
   );
 };
 
@@ -88,7 +98,7 @@ const App = () => {
           <BrowserRouter>
             <LanguageProvider>
               <StudentAuthProvider>
-                <PlanetsBackground />
+                <BackgroundSelector />
                 <DynamicRoutes />
               </StudentAuthProvider>
             </LanguageProvider>
