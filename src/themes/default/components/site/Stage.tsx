@@ -308,7 +308,7 @@ return (
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-5 py-2 text-sm font-bold text-primary backdrop-blur-xl"
+            className="inline-flex items-center gap-2 rounded-full border   px-5 py-2 text-sm font-bold text-primary backdrop-blur-xl"
           >
             <Sparkles className="h-4 w-4" />
             {lang === "ar" ? "المراحل التعليمية" : "Educational Stages"}
@@ -357,7 +357,7 @@ return (
               <motion.div
                 key={i}
                 whileHover={{ y: -8 }}
-                className="group rounded-[32px] border border-border bg-card/60 p-7 backdrop-blur-2xl"
+                className="group rounded-[32px] border  p-7 backdrop-blur-2xl"
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -427,7 +427,7 @@ return (
                       }
                     }}
                   >
-                    <div className={`relative overflow-hidden rounded-[36px] border border-border bg-card/80 backdrop-blur-2xl transition-all duration-500 ${!isDisabled ? 'hover:border-primary/30 hover:shadow-2xl' : ''}`}>
+                    <div className={`relative overflow-hidden rounded-[36px] border  backdrop-blur-2xl transition-all duration-500 ${!isDisabled ? 'hover:border-primary/30 hover:shadow-2xl' : ''}`}>
                       {/* Disabled Overlay */}
                       {isDisabled && (
                         <div className="absolute inset-0 z-20 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center rounded-[36px] pointer-events-none">
@@ -494,10 +494,10 @@ return (
                       <div className="p-7">
                         <div className="flex items-start justify-between gap-4">
                           <div>
-                            <h3 className={`text-3xl font-black transition-colors ${!isDisabled ? 'group-hover:text-primary' : ''}`}>
+                            <h3 className={`text-3xl text-[#2266bf] dark:text-white transition-colors ${!isDisabled ? 'group-hover:text-primary' : ''}`}>
                               {stageName}
                             </h3>
-                            <p className="mt-3 line-clamp-2 leading-8 text-foreground/60">
+                            <p className="mt-3 line-clamp-2 leading-8 text-white">
                               {pick(s.description, s.description_ar) ||
                                 (lang === "ar"
                                   ? "برامج تعليمية احترافية ومناهج متطورة."

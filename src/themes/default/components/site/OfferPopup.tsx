@@ -18,6 +18,7 @@ interface Offer {
   active: boolean;
   type: 'offer' | 'banner';
   imageUrl: string;
+  url?: string; // ✅ إضافة حقل url
   image: { id: number; fullUrl: string } | null;
   teacher_id: number;
   createdAt: string;
@@ -35,10 +36,6 @@ export const OfferPopup: React.FC<OfferPopupProps> = ({ lang, onClose }) => {
   const [isLoading, setIsLoading] = useState(true);
   const { teacher } = useTeacher();
 
-  // مفتاح localStorage عشان ما يظهرش أكتر من مرة
-  const STORAGE_KEY = `offer_popup_shown_${teacher?.id || 'default'}`;
-  const POPUP_DURATION = 1000 * 60 * 60 * 24; // 24 ساعة
-
   // جلب العروض من API
   useEffect(() => {
     const fetchOffers = async () => {
@@ -49,6 +46,7 @@ export const OfferPopup: React.FC<OfferPopupProps> = ({ lang, onClose }) => {
           filters: {
             teacher_id: teacher.id,
             active: true,
+            type: "banner" // ✅ جلب البانرات فقط
           },
           orderByDirection: 'desc',
           perPage: 10,
@@ -67,20 +65,8 @@ export const OfferPopup: React.FC<OfferPopupProps> = ({ lang, onClose }) => {
     fetchOffers();
   }, [teacher?.id]);
 
-  // التحقق إذا كان البوب اب ظهر قبل كده
-  useEffect(() => {
-    const lastShown = localStorage.getItem(STORAGE_KEY);
-    const now = Date.now();
-    
-    if (lastShown && now - parseInt(lastShown) < POPUP_DURATION) {
-      setIsOpen(false);
-      onClose?.();
-    }
-  }, [STORAGE_KEY, onClose]);
-
-  // حفظ وقت ظهور البوب اب
+  // إغلاق البوب اب من غير حفظ أي حاجة
   const handleClose = () => {
-    localStorage.setItem(STORAGE_KEY, Date.now().toString());
     setIsOpen(false);
     onClose?.();
   };
@@ -94,7 +80,9 @@ export const OfferPopup: React.FC<OfferPopupProps> = ({ lang, onClose }) => {
   if (!currentOffer) return null;
 
   const isOffer = currentOffer.type === 'offer';
+  const isBanner = currentOffer.type === 'banner';
   const hasDiscount = isOffer && currentOffer.offer_discount;
+  const hasUrl = currentOffer.url && currentOffer.url.trim() !== '';
 
   // حساب الوقت المتبقي
   const getTimeRemaining = () => {
@@ -119,12 +107,33 @@ export const OfferPopup: React.FC<OfferPopupProps> = ({ lang, onClose }) => {
 
   const timeRemaining = getTimeRemaining();
 
-  // رابط التحويل - لو فيه ربط للعرض
+  // ✅ رابط التحويل - يستخدم url من البانر إذا موجود
   const getOfferLink = () => {
+    // إذا كان بانر وله رابط مخصص
+    if (isBanner && hasUrl) {
+      return currentOffer.url;
+    }
+    // إذا كان عرض خصم
     if (isOffer) {
       return `/${teacher?.sub_domain}/courses?discount=${currentOffer.offer_discount}`;
     }
+    // الرابط الافتراضي
     return `/${teacher?.sub_domain}`;
+  };
+
+  // ✅ فتح الرابط (يتعامل مع الروابط الداخلية والخارجية)
+  const handleNavigate = () => {
+    const link = getOfferLink();
+    setIsOpen(false);
+    onClose?.();
+    
+    // إذا كان الرابط داخلي (يبدأ بـ /)
+    if (link.startsWith('/')) {
+      window.location.href = link;
+    } else {
+      // رابط خارجي - يفتح في تبويب جديد
+      window.open(link, '_blank');
+    }
   };
 
   return (
@@ -135,7 +144,7 @@ export const OfferPopup: React.FC<OfferPopupProps> = ({ lang, onClose }) => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 backdrop-blur-md"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
           onClick={handleClose}
         >
           <motion.div
@@ -199,6 +208,18 @@ export const OfferPopup: React.FC<OfferPopupProps> = ({ lang, onClose }) => {
                   </motion.div>
                 )}
 
+                {/* شارة الرابط (للبانرات) */}
+                {isBanner && hasUrl && (
+                  <div className="absolute bottom-2 right-2">
+                    <div className="bg-black/50 backdrop-blur-sm rounded-full px-2 py-1">
+                      <span className="text-white/70 text-[10px] flex items-center gap-1">
+                        <Zap size={10} />
+                        {lang === 'ar' ? 'رابط تفاعلي' : 'Interactive Link'}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Overlay gradient */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent md:bg-gradient-to-r md:from-black/30" />
               </div>
@@ -248,7 +269,22 @@ export const OfferPopup: React.FC<OfferPopupProps> = ({ lang, onClose }) => {
                   </motion.p>
                 )}
 
-                {/* تفاصيل العرض */}
+                {/* الرابط (للبانرات) - يظهر كـ نص صغير */}
+                {isBanner && hasUrl && (
+                  <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.35 }}
+                    className="mb-4"
+                  >
+                    <div className="flex items-center gap-2 text-white/70 bg-white/10 rounded-lg px-3 py-2 backdrop-blur-sm text-xs">
+                      <LinkIcon size={14} />
+                      <span className="truncate flex-1">{currentOffer.url}</span>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* تفاصيل العرض (للعروض فقط) */}
                 {isOffer && (
                   <motion.div
                     initial={{ y: 20, opacity: 0 }}
@@ -256,7 +292,6 @@ export const OfferPopup: React.FC<OfferPopupProps> = ({ lang, onClose }) => {
                     transition={{ delay: 0.35 }}
                     className="space-y-2 mb-6"
                   >
-                    {/* الخصم */}
                     {hasDiscount && (
                       <div className="flex items-center gap-2 text-white/90 bg-white/10 rounded-lg px-3 py-2 backdrop-blur-sm">
                         <Tag size={16} className="text-yellow-300" />
@@ -268,7 +303,6 @@ export const OfferPopup: React.FC<OfferPopupProps> = ({ lang, onClose }) => {
                       </div>
                     )}
 
-                    {/* الوقت المتبقي */}
                     {timeRemaining && (
                       <div className="flex items-center gap-2 text-white/90 bg-white/10 rounded-lg px-3 py-2 backdrop-blur-sm">
                         <Clock size={16} className="text-yellow-300 animate-pulse" />
@@ -276,7 +310,6 @@ export const OfferPopup: React.FC<OfferPopupProps> = ({ lang, onClose }) => {
                       </div>
                     )}
 
-                    {/* الفترة */}
                     {currentOffer.start_date && currentOffer.end_date && (
                       <div className="flex items-center gap-2 text-white/70 text-xs bg-white/10 rounded-lg px-3 py-2 backdrop-blur-sm">
                         <Calendar size={14} />
@@ -307,22 +340,19 @@ export const OfferPopup: React.FC<OfferPopupProps> = ({ lang, onClose }) => {
                   </div>
                 )}
 
-                {/* زر الإجراء الرئيسي - يفتح الرابط */}
+                {/* ✅ زر الإجراء الرئيسي - يفتح الرابط */}
                 <motion.button
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.45 }}
-                  onClick={() => {
-                    // حفظ أن البوب اب ظهر
-                    localStorage.setItem(STORAGE_KEY, Date.now().toString());
-                    setIsOpen(false);
-                    onClose?.();
-                    // فتح الرابط
-                    window.location.href = getOfferLink();
-                  }}
+                  onClick={handleNavigate}
                   className="group w-full py-3 px-4 rounded-xl bg-white text-gray-900 hover:shadow-xl transition-all duration-300 font-bold flex items-center justify-center gap-2"
                 >
-                  <span>{lang === 'ar' ? 'استفد من العرض الآن' : 'Get This Offer Now'}</span>
+                  <span>
+                    {isBanner && hasUrl 
+                      ? (lang === 'ar' ? 'انتقل إلى الرابط' : 'Go to Link')
+                      : (lang === 'ar' ? 'استفد من العرض الآن' : 'Get This Offer Now')}
+                  </span>
                   <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </motion.button>
 
@@ -350,3 +380,22 @@ export const OfferPopup: React.FC<OfferPopupProps> = ({ lang, onClose }) => {
     </AnimatePresence>
   );
 };
+
+// ✅ أضف أيقونة LinkIcon
+const LinkIcon = ({ size = 16, className = "" }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+  </svg>
+);

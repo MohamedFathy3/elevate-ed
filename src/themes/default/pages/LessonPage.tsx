@@ -12,7 +12,7 @@ import { useDetectDevTools } from '@/hooks/useDetectDevTools';
 import { motion, AnimatePresence } from "framer-motion";
 import { useStudentAuth } from "@/context/StudentAuthContext";
 import VideoPlayer from '@/components/VideoPlayer';
-
+import { useAttendance } from "@/hooks/useAttendance"; 
 import { 
   Play, CheckCircle, Clock, Calendar, ChevronRight, ChevronLeft,
   FileText, Download, ExternalLink, Loader2, Lock, Unlock, 
@@ -31,9 +31,10 @@ const LessonPage = () => {
   const { slug, lessonId } = useParams();
   const navigate = useNavigate();
   const { student } = useCurrentStudent();
-  
+  useDetectDevTools(true); 
   const { data: lessonData, isLoading: lessonLoading, refetch: refetchLesson } = useLessonDetails(parseInt(lessonId || '0'));
-  
+    const { mutate: markAttendance, isPending: attendancePending, isSuccess: attendanceSuccess } = useAttendance();
+
   const [lesson, setLesson] = useState<any>(null);
   const [attended, setAttended] = useState(false);
   const [videoError, setVideoError] = useState(false);
@@ -41,7 +42,7 @@ const LessonPage = () => {
   const [examPassed, setExamPassed] = useState(false);
   const [examsList, setExamsList] = useState<any[]>([]);
   const [assignmentsList, setAssignmentsList] = useState<any[]>([]);
-
+    const [attendanceRecorded, setAttendanceRecorded] = useState(false)
   // ✅ State للمقطع المختار حالياً
   const [selectedPartIndex, setSelectedPartIndex] = useState<number>(0);
 
@@ -95,6 +96,32 @@ if (lessonInfo.assignments && lessonInfo.assignments.length > 0) {
       });
     }
   }, [lessonData]);
+
+
+
+useEffect(() => {
+  if (student?.id && lessonId && !attendanceRecorded && !attended) {
+    console.log("✅ Automatically marking attendance for lesson:", lessonId);
+    markAttendance({
+      lesson_id: parseInt(lessonId),
+      student_id: student.id,
+      slug: slug, // ✅ إضافة slug
+    });
+    setAttendanceRecorded(true);
+  }
+}, [student?.id, lessonId, attendanceRecorded, attended, markAttendance, slug]);
+  
+  // ✅ تحديث حالة الحضور عند نجاح التسجيل
+  useEffect(() => {
+    if (attendanceSuccess) {
+      setAttended(true);
+      // إعادة تحميل بيانات الدرس لتحديث حالة الحضور
+      refetchLesson();
+    }
+  }, [attendanceSuccess, refetchLesson]);
+
+
+
   const handleStartAssignment = (exam: any) => {
     navigate(`/${slug}/exam/${exam.id}?redirect=${encodeURIComponent(window.location.pathname)}`);
 };
@@ -222,7 +249,7 @@ if (lessonInfo.assignments && lessonInfo.assignments.length > 0) {
       <div className="container-tight">
         {/* Breadcrumb */}
         <div className="mb-6">
-          <div className="flex items-center gap-2 text-sm text-foreground/60 flex-wrap">
+          <div className="flex items-center gap-2 text-sm text-[#000] flex-wrap">
             <Link to={`/${slug}/dashboard`} className="hover:text-primary transition-colors">
               {lang === "ar" ? "لوحة التحكم" : "Dashboard"}
             </Link>
@@ -526,7 +553,7 @@ if (lessonInfo.assignments && lessonInfo.assignments.length > 0) {
             {/* After Passing Exam Card */}
          
             {/* Attendance Card */}
-            {canWatch && (
+            {/* {canWatch && (
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -559,7 +586,7 @@ if (lessonInfo.assignments && lessonInfo.assignments.length > 0) {
                   </>
                 )}
               </motion.div>
-            )}
+            )} */}
             
             {/* Navigation Buttons */}
             <div className="flex gap-3">

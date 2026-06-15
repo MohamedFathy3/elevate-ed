@@ -76,34 +76,35 @@ const StudentDashboard = () => {
   
   const cardBg = 'bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800';
   
-  // ✅ ألوان الـ Sidebar في الدارك مود - النصوص تكون بيضاء
+  // ✅ ألوان الـ Sidebar - تتحسن للـ White Mode
   const getSidebarTextColor = () => {
     if (isDark) {
-      return 'text-white'; // ✅ أبيض في الدارك
+      return 'text-white';
     }
-    return 'text-gray-700'; // رمادي في اللايت
+    return 'text-gray-800'; // ✅ أغمق شوية عشان يبان في الوايت مود
   };
   
   const getSidebarMutedColor = () => {
     if (isDark) {
-      return 'text-gray-300'; // رمادي فاتح مائل للأبيض في الدارك
+      return 'text-gray-300';
     }
-    return 'text-gray-400';
+    return 'text-gray-500'; // ✅ رمادي واضح
   };
   
   const getSidebarHoverBg = () => {
     if (isDark) {
-      return 'hover:bg-white/10'; // خلفية شفافة مع بياض عند الـ hover
+      return 'hover:bg-white/10';
     }
-    return 'hover:bg-gray-100 dark:hover:bg-gray-800';
+    return 'hover:bg-gray-100';
   };
   
   const getActiveTabBg = () => {
     if (isDark) {
-      return 'bg-white/20 text-white font-semibold backdrop-blur-sm'; // خلفية شفافة مع بياض ونص أبيض
+      return 'bg-white/20 text-white font-semibold backdrop-blur-sm';
     }
+    // ✅ وايت مود - خلفية رمادية فاتحة ونص غامق
     return isNature 
-      ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' 
+      ? 'bg-amber-100 text-amber-700' 
       : 'bg-primary/10 text-primary';
   };
   
@@ -207,7 +208,7 @@ const StudentDashboard = () => {
           <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/20 grid place-items-center">
             <User className="w-12 h-12 text-red-500" />
           </div>
-          <h2 className="text-xl font-bold mb-2">
+          <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">
             {lang === "ar" ? "الرجاء تسجيل الدخول" : "Please login"}
           </h2>
           <Link to={`/${slug}/login`} className={`text-${primaryColor} hover:underline`}>
@@ -246,9 +247,9 @@ const StudentDashboard = () => {
               overflow-y-auto custom-scrollbar
               ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
               ${isRtl ? 'lg:right-0 lg:left-auto lg:border-l lg:border-r-0' : ''}
-            `} >
+            ` }>
               <div className="p-5">
-                {/* Profile Section - النصوص بيضاء في الدارك */}
+                {/* Profile Section */}
                 <div className="text-center mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
                   <div className={`w-20 h-20 mx-auto rounded-full bg-gradient-to-r ${primaryGradient} p-0.5 mb-3`}>
                     <div className="w-full h-full rounded-full bg-white dark:bg-gray-950 flex items-center justify-center overflow-hidden">
@@ -280,7 +281,7 @@ const StudentDashboard = () => {
                   </p>
                 </div>
 
-                {/* Navigation - الأزرار والنصوص بيضاء في الدارك */}
+                {/* Navigation */}
                 <nav className="space-y-1.5">
                   {tabs.map((tab) => (
                     <button
@@ -314,7 +315,7 @@ const StudentDashboard = () => {
                   ))}
                 </nav>
 
-                {/* Logout Button - لون النص أحمر في الدارك برضه */}
+                {/* Logout Button */}
                 <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <button
                     onClick={logout}
@@ -322,7 +323,7 @@ const StudentDashboard = () => {
                       w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all
                       ${isDark 
                         ? 'text-red-400 hover:bg-white/10' 
-                        : 'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
+                        : 'text-red-600 hover:bg-red-50'
                       }
                     `}
                   >
@@ -350,6 +351,7 @@ const StudentDashboard = () => {
                     studentInfo={studentInfo} 
                     lang={lang} 
                     isNature={isNature}
+                    isDark={isDark}
                     profileData={profileData}
                     cardBg={cardBg}
                   />
@@ -376,6 +378,7 @@ const StudentDashboard = () => {
                     creatingCode={creatingCode}
                     lang={lang}
                     isNature={isNature}
+                    isDark={isDark}
                     primaryGradient={primaryGradient}
                     cardBg={cardBg}
                   />
@@ -387,6 +390,7 @@ const StudentDashboard = () => {
                     slug={slug!}
                     lang={lang}
                     isNature={isNature}
+                    isDark={isDark}
                     cardBg={cardBg}
                   />
                 )}
@@ -397,6 +401,7 @@ const StudentDashboard = () => {
                     slug={slug!}
                     lang={lang}
                     isNature={isNature}
+                    isDark={isDark}
                     cardBg={cardBg}
                   />
                 )}
@@ -407,6 +412,7 @@ const StudentDashboard = () => {
                     slug={slug!}
                     lang={lang}
                     isNature={isNature}
+                    isDark={isDark}
                     cardBg={cardBg}
                   />
                 )}
@@ -417,6 +423,7 @@ const StudentDashboard = () => {
                     slug={slug!}
                     lang={lang}
                     isNature={isNature}
+                    isDark={isDark}
                     cardBg={cardBg}
                   />
                 )}
@@ -427,6 +434,7 @@ const StudentDashboard = () => {
                     slug={slug!}
                     lang={lang}
                     isNature={isNature}
+                    isDark={isDark}
                     cardBg={cardBg}
                   />
                 )}
@@ -437,6 +445,7 @@ const StudentDashboard = () => {
                     slug={slug!}
                     lang={lang}
                     isNature={isNature}
+                    isDark={isDark}
                     cardBg={cardBg}
                   />
                 )}
@@ -456,6 +465,7 @@ const StudentDashboard = () => {
           recharging={recharging}
           lang={lang}
           isNature={isNature}
+          isDark={isDark}
         />
       )}
 
@@ -468,6 +478,7 @@ const StudentDashboard = () => {
           redeeming={redeeming}
           lang={lang}
           isNature={isNature}
+          isDark={isDark}
         />
       )}
     </div>
@@ -475,30 +486,32 @@ const StudentDashboard = () => {
 };
 
 
-// ==================== ProfileTab - المُعدل ✅ ====================
-const ProfileTab = ({ studentInfo, lang, isNature, profileData, cardBg }: any) => {
+const ProfileTab = ({ studentInfo, lang, isNature, isDark, profileData, cardBg }: any) => {
   const isRtl = lang === 'ar';
   const [imageError, setImageError] = useState(false);
   
-  // ✅ نحدد إذا كان الوضع مظلم
-  const isDark = document.documentElement.classList.contains('dark');
-  
-  // ✅ ألوان النصوص - في الدارك مود تكون بيضاء
+  // ✅ ألوان النصوص - من الـ props عشان الدارك مود
   const getTextColor = () => {
-    return isDark ? 'text-white' : 'text-foreground';
+    return isDark ? 'text-white' : 'text-gray-900';
   };
   
   const getMutedColor = () => {
-    return isDark ? 'text-gray-300' : 'text-foreground/50';
+    return isDark ? 'text-gray-300' : 'text-gray-500';
   };
   
-  // ✅ خلفية ولون الأيقونة (نفس الألوان الأساسية)
+  // ✅ خلفية ولون الأيقونة
   const getIconBg = () => {
+    if (isDark) {
+      return `bg-${isNature ? 'amber' : 'primary'}/20`;
+    }
     return `bg-${isNature ? 'amber' : 'primary'}/10`;
   };
   
   const getIconColor = () => {
-    return `text-${isNature ? 'amber' : 'primary'}`;
+    if (isDark) {
+      return `text-${isNature ? 'white' : 'black'}-400`;
+    }
+    return `text-${isNature ? 'white' : 'black'}-600`;
   };
 
   const infoCards = [
@@ -522,7 +535,7 @@ const ProfileTab = ({ studentInfo, lang, isNature, profileData, cardBg }: any) =
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className={`p-2 rounded-xl ${getIconBg()}`}>
-          <User className={`w-6 h-6 ${getIconColor()}`} />
+          <User className="text-[#000] dark:text-[#fff]"/>
         </div>
         <h2 className={`text-2xl font-bold ${getTextColor()}`}>
           {lang === "ar" ? "الملف الشخصي" : "My Profile"}
@@ -573,12 +586,14 @@ const ProfileTab = ({ studentInfo, lang, isNature, profileData, cardBg }: any) =
           >
             <div className="flex items-start gap-3">
               <div className={`p-2 rounded-lg ${getIconBg()} flex-shrink-0`}>
-                {card.icon}
+                <div className="text-[#000] dark:text-[#fff]">
+                  {card.icon}
+                </div>
               </div>
               <div className="flex-1 min-w-0">
                 <p className={`text-xs ${getMutedColor()}`}>{card.label}</p>
                 {card.isBarcode && card.value ? (
-                  <div className={`mt-2 p-2 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+                  <div className={`mt-2 p-2 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
                     <Barcode
                       value={card.value.toString()}
                       width={1.5}
@@ -593,7 +608,7 @@ const ProfileTab = ({ studentInfo, lang, isNature, profileData, cardBg }: any) =
                     </p>
                   </div>
                 ) : (
-                  <p className={`font-semibold break-all ${card.highlight ? 'text-primary' : getTextColor()}`}>
+                  <p className={`font-semibold break-all ${card.highlight ? (isNature ? 'text-amber-600 dark:text-amber-400' : 'text-primary') : getTextColor()}`}>
                     {card.value || '-'}
                   </p>
                 )}
@@ -606,19 +621,18 @@ const ProfileTab = ({ studentInfo, lang, isNature, profileData, cardBg }: any) =
   );
 };
 
-// Wallet Tab
+// ==================== Wallet Tab - المُعدل ✅ ====================
 const WalletTab = ({
   walletBalance, generatedCode, showRechargeModal, setShowRechargeModal,
   showRedeemModal, setShowRedeemModal, rechargeCode, setRechargeCode,
   redeemCodeInput, setRedeemCodeInput, handleRecharge, handleRedeemCode,
   handleCreateCode, copyToClipboard, recharging, redeeming, creatingCode,
-  lang, isNature, primaryGradient, cardBg
+  lang, isNature, isDark, primaryGradient, cardBg
 }: any) => {
   const isRtl = lang === 'ar';
-  const isDark = document.documentElement.classList.contains('dark');
   
-  const getTextColor = () => isDark ? 'text-white' : 'text-foreground';
-  const getMutedColor = () => isDark ? 'text-gray-300' : 'text-foreground/50';
+  const getTextColor = () => isDark ? 'text-white' : 'text-gray-900';
+  const getMutedColor = () => isDark ? 'text-gray-300' : 'text-gray-500';
 
   return (
     <div className="space-y-6">
@@ -714,11 +728,10 @@ const WalletTab = ({
   );
 };
 
-// Courses Tab
-const CoursesTab = ({ courses, slug, lang, isNature, cardBg }: any) => {
-  const isDark = document.documentElement.classList.contains('dark');
-  const getTextColor = () => isDark ? 'text-white' : 'text-foreground';
-  const getMutedColor = () => isDark ? 'text-gray-300' : 'text-foreground/50';
+// ==================== Courses Tab - المُعدل ✅ ====================
+const CoursesTab = ({ courses, slug, lang, isNature, isDark, cardBg }: any) => {
+  const getTextColor = () => isDark ? 'text-white' : 'text-gray-900';
+  const getMutedColor = () => isDark ? 'text-gray-300' : 'text-gray-500';
   
   if (courses.length === 0) {
     return (
@@ -729,6 +742,7 @@ const CoursesTab = ({ courses, slug, lang, isNature, cardBg }: any) => {
         actionLink={`/${slug}/courses`}
         actionText={lang === "ar" ? "تصفح الكورسات" : "Browse Courses"}
         isNature={isNature}
+        isDark={isDark}
       />
     );
   }
@@ -776,10 +790,10 @@ const CoursesTab = ({ courses, slug, lang, isNature, cardBg }: any) => {
   );
 };
 
-const LessonsTab = ({ lessons, slug, lang, isNature, cardBg }: any) => {
-  const isDark = document.documentElement.classList.contains('dark');
-  const getTextColor = () => isDark ? 'text-white' : 'text-foreground';
-  const getMutedColor = () => isDark ? 'text-gray-300' : 'text-foreground/50';
+// ==================== Lessons Tab - المُعدل ✅ ====================
+const LessonsTab = ({ lessons, slug, lang, isNature, isDark, cardBg }: any) => {
+  const getTextColor = () => isDark ? 'text-white' : 'text-gray-900';
+  const getMutedColor = () => isDark ? 'text-gray-300' : 'text-gray-500';
   
   if (lessons.length === 0) {
     return (
@@ -788,6 +802,7 @@ const LessonsTab = ({ lessons, slug, lang, isNature, cardBg }: any) => {
         title={lang === "ar" ? "لا توجد دروس" : "No Lessons"}
         message={lang === "ar" ? "لم يتم إضافة أي دروس بعد" : "No lessons have been added yet"}
         isNature={isNature}
+        isDark={isDark}
       />
     );
   }
@@ -843,11 +858,10 @@ const LessonsTab = ({ lessons, slug, lang, isNature, cardBg }: any) => {
   );
 };
 
-// Semesters Tab
-const SemestersTab = ({ semesters, slug, lang, isNature, cardBg }: any) => {
-  const isDark = document.documentElement.classList.contains('dark');
-  const getTextColor = () => isDark ? 'text-white' : 'text-foreground';
-  const getMutedColor = () => isDark ? 'text-gray-300' : 'text-foreground/50';
+// ==================== Semesters Tab - المُعدل ✅ ====================
+const SemestersTab = ({ semesters, slug, lang, isNature, isDark, cardBg }: any) => {
+  const getTextColor = () => isDark ? 'text-white' : 'text-gray-900';
+  const getMutedColor = () => isDark ? 'text-gray-300' : 'text-gray-500';
   
   if (semesters.length === 0) {
     return (
@@ -856,6 +870,7 @@ const SemestersTab = ({ semesters, slug, lang, isNature, cardBg }: any) => {
         title={lang === "ar" ? "لا توجد ترمات" : "No Semesters"}
         message={lang === "ar" ? "لم تشترك في أي ترمات بعد" : "You haven't enrolled in any semesters yet"}
         isNature={isNature}
+        isDark={isDark}
       />
     );
   }
@@ -890,7 +905,7 @@ const SemestersTab = ({ semesters, slug, lang, isNature, cardBg }: any) => {
                       {semester.courses?.length || 0} {lang === "ar" ? "كورسات" : "courses"}
                     </p>
                   </div>
-                  <ChevronRight className={`w-5 h-5 ${isNature ? 'text-amber-400' : 'text-foreground/30'}`} />
+                  <ChevronRight className={`w-5 h-5 ${isNature ? 'text-amber-400' : 'text-gray-400'}`} />
                 </div>
               </div>
             </Link>
@@ -901,11 +916,10 @@ const SemestersTab = ({ semesters, slug, lang, isNature, cardBg }: any) => {
   );
 };
 
-// Books Tab
-const BooksTab = ({ books, slug, lang, isNature, cardBg }: any) => {
-  const isDark = document.documentElement.classList.contains('dark');
-  const getTextColor = () => isDark ? 'text-white' : 'text-foreground';
-  const getMutedColor = () => isDark ? 'text-gray-300' : 'text-foreground/50';
+// ==================== Books Tab - المُعدل ✅ ====================
+const BooksTab = ({ books, slug, lang, isNature, isDark, cardBg }: any) => {
+  const getTextColor = () => isDark ? 'text-white' : 'text-gray-900';
+  const getMutedColor = () => isDark ? 'text-gray-300' : 'text-gray-500';
   
   if (books.length === 0) {
     return (
@@ -916,6 +930,7 @@ const BooksTab = ({ books, slug, lang, isNature, cardBg }: any) => {
         actionLink={`/${slug}#books`}
         actionText={lang === "ar" ? "تصفح الكتب" : "Browse Books"}
         isNature={isNature}
+        isDark={isDark}
       />
     );
   }
@@ -976,8 +991,8 @@ const BooksTab = ({ books, slug, lang, isNature, cardBg }: any) => {
   );
 };
 
-// Exams Tab
-const ExamsTab = ({ examsList, slug, lang, isNature, cardBg }: any) => {
+// ==================== Exams Tab - المُعدل ✅ ====================
+const ExamsTab = ({ examsList, slug, lang, isNature, isDark, cardBg }: any) => {
   if (examsList.length === 0) {
     return (
       <EmptyState
@@ -985,6 +1000,7 @@ const ExamsTab = ({ examsList, slug, lang, isNature, cardBg }: any) => {
         title={lang === "ar" ? "لا توجد امتحانات" : "No Exams"}
         message={lang === "ar" ? "لم تقم بأي امتحانات بعد" : "You haven't taken any exams yet"}
         isNature={isNature}
+        isDark={isDark}
       />
     );
   }
@@ -995,7 +1011,7 @@ const ExamsTab = ({ examsList, slug, lang, isNature, cardBg }: any) => {
         <div className={`p-2 rounded-xl bg-${isNature ? 'amber' : 'primary'}/10`}>
           <FileQuestion className={`w-6 h-6 text-${isNature ? 'amber' : 'primary'}`} />
         </div>
-        <h2 className="text-2xl font-bold">
+        <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
           {lang === "ar" ? "الامتحانات التي قمت بها" : "Completed Exams"}
         </h2>
       </div>
@@ -1008,6 +1024,7 @@ const ExamsTab = ({ examsList, slug, lang, isNature, cardBg }: any) => {
             lang={lang}
             slug={slug!}
             isNature={isNature}
+            isDark={isDark}
             cardBg={cardBg}
           />
         ))}
@@ -1016,8 +1033,8 @@ const ExamsTab = ({ examsList, slug, lang, isNature, cardBg }: any) => {
   );
 };
 
-// Assignments Tab
-const AssignmentsTab = ({ assignmentsList, slug, lang, isNature, cardBg }: any) => {
+// ==================== Assignments Tab - المُعدل ✅ ====================
+const AssignmentsTab = ({ assignmentsList, slug, lang, isNature, isDark, cardBg }: any) => {
   if (assignmentsList.length === 0) {
     return (
       <EmptyState
@@ -1025,6 +1042,7 @@ const AssignmentsTab = ({ assignmentsList, slug, lang, isNature, cardBg }: any) 
         title={lang === "ar" ? "لا توجد واجبات" : "No Assignments"}
         message={lang === "ar" ? "لم تقم بأي واجبات بعد" : "You haven't completed any assignments yet"}
         isNature={isNature}
+        isDark={isDark}
       />
     );
   }
@@ -1035,7 +1053,7 @@ const AssignmentsTab = ({ assignmentsList, slug, lang, isNature, cardBg }: any) 
         <div className={`p-2 rounded-xl bg-${isNature ? 'amber' : 'primary'}/10`}>
           <ClipboardList className={`w-6 h-6 text-${isNature ? 'amber' : 'primary'}`} />
         </div>
-        <h2 className="text-2xl font-bold">
+        <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
           {lang === "ar" ? "الواجبات التي قمت بها" : "Completed Assignments"}
         </h2>
       </div>
@@ -1048,6 +1066,7 @@ const AssignmentsTab = ({ assignmentsList, slug, lang, isNature, cardBg }: any) 
             lang={lang}
             slug={slug!}
             isNature={isNature}
+            isDark={isDark}
             cardBg={cardBg}
           />
         ))}
@@ -1056,10 +1075,10 @@ const AssignmentsTab = ({ assignmentsList, slug, lang, isNature, cardBg }: any) 
   );
 };
 
-// ==================== Shared Components ====================
+// ==================== Shared Components المُعدلة ====================
 
-// Exam Result Card
-const ExamResultCard = ({ examItem, lang, slug, isNature, cardBg }: any) => {
+// Exam Result Card - المُعدل ✅
+const ExamResultCard = ({ examItem, lang, slug, isNature, isDark, cardBg }: any) => {
   const [expanded, setExpanded] = useState(false);
   const exam = examItem.exam;
   const studentMark = examItem.student_mark || 0;
@@ -1073,8 +1092,8 @@ const ExamResultCard = ({ examItem, lang, slug, isNature, cardBg }: any) => {
     ? "from-amber-500 to-orange-600" 
     : "from-primary to-accent";
   
-  const isDark = document.documentElement.classList.contains('dark');
-  const getTextColor = () => isDark ? 'text-white' : 'text-foreground';
+  const getTextColor = () => isDark ? 'text-white' : 'text-gray-900';
+  const getMutedColor = () => isDark ? 'text-gray-300' : 'text-gray-500';
   
   return (
     <motion.div
@@ -1098,20 +1117,20 @@ const ExamResultCard = ({ examItem, lang, slug, isNature, cardBg }: any) => {
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mt-3">
             <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2 text-center">
-              <p className="text-xs text-foreground/50">{lang === "ar" ? "درجتك" : "Your Score"}</p>
-              <p className="text-lg font-bold">{studentMark}</p>
+              <p className={`text-xs ${getMutedColor()}`}>{lang === "ar" ? "درجتك" : "Your Score"}</p>
+              <p className={`text-lg font-bold ${getTextColor()}`}>{studentMark}</p>
             </div>
             <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2 text-center">
-              <p className="text-xs text-foreground/50">{lang === "ar" ? "الدرجة الكلية" : "Total Marks"}</p>
-              <p className="text-lg font-bold">{totalMarks}</p>
+              <p className={`text-xs ${getMutedColor()}`}>{lang === "ar" ? "الدرجة الكلية" : "Total Marks"}</p>
+              <p className={`text-lg font-bold ${getTextColor()}`}>{totalMarks}</p>
             </div>
             <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2 text-center">
-              <p className="text-xs text-foreground/50">{lang === "ar" ? "النسبة" : "Percentage"}</p>
-              <p className="text-lg font-bold">{percentage.toFixed(1)}%</p>
+              <p className={`text-xs ${getMutedColor()}`}>{lang === "ar" ? "النسبة" : "Percentage"}</p>
+              <p className={`text-lg font-bold ${getTextColor()}`}>{percentage.toFixed(1)}%</p>
             </div>
             <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2 text-center">
-              <p className="text-xs text-foreground/50">{lang === "ar" ? "الإجابات الصحيحة" : "Correct Answers"}</p>
-              <p className="text-lg font-bold">{correctCount}/{questions.length}</p>
+              <p className={`text-xs ${getMutedColor()}`}>{lang === "ar" ? "الإجابات الصحيحة" : "Correct Answers"}</p>
+              <p className={`text-lg font-bold ${getTextColor()}`}>{correctCount}/{questions.length}</p>
             </div>
           </div>
         </div>
@@ -1132,12 +1151,12 @@ const ExamResultCard = ({ examItem, lang, slug, isNature, cardBg }: any) => {
           animate={{ opacity: 1, height: "auto" }}
           className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800"
         >
-          <h4 className="font-semibold mb-3 text-sm">
+          <h4 className={`font-semibold mb-3 text-sm ${getTextColor()}`}>
             {lang === "ar" ? "تفاصيل الأسئلة" : "Question Details"}
           </h4>
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {questions.map((q: any, idx: number) => (
-              <QuestionDetailCard key={q.id} question={q} index={idx} lang={lang} isNature={isNature} />
+              <QuestionDetailCard key={q.id} question={q} index={idx} lang={lang} isNature={isNature} isDark={isDark} />
             ))}
           </div>
         </motion.div>
@@ -1146,8 +1165,8 @@ const ExamResultCard = ({ examItem, lang, slug, isNature, cardBg }: any) => {
   );
 };
 
-// Assignment Result Card
-const AssignmentResultCard = ({ assignmentItem, lang, slug, isNature, cardBg }: any) => {
+// Assignment Result Card - المُعدل ✅
+const AssignmentResultCard = ({ assignmentItem, lang, slug, isNature, isDark, cardBg }: any) => {
   const [expanded, setExpanded] = useState(false);
   const assignment = assignmentItem.exam;
   const studentMark = assignmentItem.student_mark || 0;
@@ -1159,8 +1178,8 @@ const AssignmentResultCard = ({ assignmentItem, lang, slug, isNature, cardBg }: 
     ? "from-amber-500 to-orange-600" 
     : "from-accent to-pink-500";
   
-  const isDark = document.documentElement.classList.contains('dark');
-  const getTextColor = () => isDark ? 'text-white' : 'text-foreground';
+  const getTextColor = () => isDark ? 'text-white' : 'text-gray-900';
+  const getMutedColor = () => isDark ? 'text-gray-300' : 'text-gray-500';
   
   return (
     <motion.div
@@ -1181,16 +1200,16 @@ const AssignmentResultCard = ({ assignmentItem, lang, slug, isNature, cardBg }: 
           
           <div className="grid grid-cols-3 gap-3 text-sm mt-3">
             <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2 text-center">
-              <p className="text-xs text-foreground/50">{lang === "ar" ? "درجتك" : "Your Score"}</p>
-              <p className="text-lg font-bold">{studentMark}</p>
+              <p className={`text-xs ${getMutedColor()}`}>{lang === "ar" ? "درجتك" : "Your Score"}</p>
+              <p className={`text-lg font-bold ${getTextColor()}`}>{studentMark}</p>
             </div>
             <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2 text-center">
-              <p className="text-xs text-foreground/50">{lang === "ar" ? "الدرجة الكلية" : "Total Marks"}</p>
-              <p className="text-lg font-bold">{totalMarks}</p>
+              <p className={`text-xs ${getMutedColor()}`}>{lang === "ar" ? "الدرجة الكلية" : "Total Marks"}</p>
+              <p className={`text-lg font-bold ${getTextColor()}`}>{totalMarks}</p>
             </div>
             <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2 text-center">
-              <p className="text-xs text-foreground/50">{lang === "ar" ? "النسبة" : "Percentage"}</p>
-              <p className="text-lg font-bold">{percentage.toFixed(1)}%</p>
+              <p className={`text-xs ${getMutedColor()}`}>{lang === "ar" ? "النسبة" : "Percentage"}</p>
+              <p className={`text-lg font-bold ${getTextColor()}`}>{percentage.toFixed(1)}%</p>
             </div>
           </div>
         </div>
@@ -1211,12 +1230,12 @@ const AssignmentResultCard = ({ assignmentItem, lang, slug, isNature, cardBg }: 
           animate={{ opacity: 1, height: "auto" }}
           className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800"
         >
-          <h4 className="font-semibold mb-3 text-sm">
+          <h4 className={`font-semibold mb-3 text-sm ${getTextColor()}`}>
             {lang === "ar" ? "تفاصيل الأسئلة" : "Question Details"}
           </h4>
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {questions.map((q: any, idx: number) => (
-              <QuestionDetailCard key={q.id} question={q} index={idx} lang={lang} isNature={isNature} />
+              <QuestionDetailCard key={q.id} question={q} index={idx} lang={lang} isNature={isNature} isDark={isDark} />
             ))}
           </div>
         </motion.div>
@@ -1225,11 +1244,13 @@ const AssignmentResultCard = ({ assignmentItem, lang, slug, isNature, cardBg }: 
   );
 };
 
-// Question Detail Card
-const QuestionDetailCard = ({ question, index, lang, isNature }: any) => {
+// Question Detail Card - المُعدل ✅
+const QuestionDetailCard = ({ question, index, lang, isNature, isDark }: any) => {
   const isCorrect = question.is_correct === true;
   const isEssay = question.correct_answer === null;
-  const isDark = document.documentElement.classList.contains('dark');
+  const isDarkMode = isDark;
+  
+  const getTextColor = () => isDarkMode ? 'text-gray-200' : 'text-gray-900';
   
   return (
     <div className={`p-3 rounded-lg ${isCorrect ? 'bg-green-50 dark:bg-green-900/20' : isEssay ? 'bg-yellow-50 dark:bg-yellow-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
@@ -1238,15 +1259,15 @@ const QuestionDetailCard = ({ question, index, lang, isNature }: any) => {
           {isCorrect ? <CheckCircle className="w-4 h-4 text-green-500" /> : isEssay ? <Clock className="w-4 h-4 text-yellow-500" /> : <XCircle className="w-4 h-4 text-red-500" />}
         </div>
         <div className="flex-1">
-          <p className={`font-medium text-sm ${isDark ? 'text-gray-200' : 'text-foreground'}`}>
+          <p className={`font-medium text-sm ${getTextColor()}`}>
             {index + 1}. {question.question}
           </p>
           <div className="mt-1 text-xs space-y-1">
-            <p><span className="text-foreground/50">{lang === "ar" ? "إجابتك:" : "Your answer:"}</span> {question.student_answer || "-"}</p>
+            <p><span className="text-gray-500 dark:text-gray-400">{lang === "ar" ? "إجابتك:" : "Your answer:"}</span> {question.student_answer || "-"}</p>
             {question.correct_answer && (
-              <p><span className="text-foreground/50">{lang === "ar" ? "الإجابة الصحيحة:" : "Correct answer:"}</span> <span className="text-green-600">{question.correct_answer}</span></p>
+              <p><span className="text-gray-500 dark:text-gray-400">{lang === "ar" ? "الإجابة الصحيحة:" : "Correct answer:"}</span> <span className="text-green-600">{question.correct_answer}</span></p>
             )}
-            <p><span className="text-foreground/50">{lang === "ar" ? "الدرجة:" : "Mark:"}</span> {question.mark_obtained || 0}/{question.mark}</p>
+            <p><span className="text-gray-500 dark:text-gray-400">{lang === "ar" ? "الدرجة:" : "Mark:"}</span> {question.mark_obtained || 0}/{question.mark}</p>
           </div>
         </div>
       </div>
@@ -1254,16 +1275,15 @@ const QuestionDetailCard = ({ question, index, lang, isNature }: any) => {
   );
 };
 
-// Empty State Component
-const EmptyState = ({ icon, title, message, actionLink, actionText, isNature }: any) => {
-  const isDark = document.documentElement.classList.contains('dark');
-  const getTextColor = () => isDark ? 'text-white' : 'text-foreground';
-  const getMutedColor = () => isDark ? 'text-gray-300' : 'text-foreground/60';
+// Empty State Component - المُعدل ✅
+const EmptyState = ({ icon, title, message, actionLink, actionText, isNature, isDark }: any) => {
+  const getTextColor = () => isDark ? 'text-white' : 'text-gray-900';
+  const getMutedColor = () => isDark ? 'text-gray-300' : 'text-gray-500';
   
   return (
     <div className="text-center py-12">
       <div className={`w-24 h-24 mx-auto mb-4 rounded-full ${isNature ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-gray-100 dark:bg-gray-800'} grid place-items-center`}>
-        <div className={`w-12 h-12 ${isNature ? 'text-amber-400' : 'text-foreground/30'}`}>
+        <div className={`w-12 h-12 ${isNature ? 'text-amber-400' : 'text-gray-400'}`}>
           {icon}
         </div>
       </div>
@@ -1282,9 +1302,9 @@ const EmptyState = ({ icon, title, message, actionLink, actionText, isNature }: 
   );
 };
 
-// Recharge Modal
-const RechargeModal = ({ rechargeCode, setRechargeCode, handleRecharge, onClose, recharging, lang, isNature }: any) => {
-  const isDark = document.documentElement.classList.contains('dark');
+// Recharge Modal - المُعدل ✅
+const RechargeModal = ({ rechargeCode, setRechargeCode, handleRecharge, onClose, recharging, lang, isNature, isDark }: any) => {
+  const getTextColor = () => isDark ? 'text-white' : 'text-gray-900';
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -1293,10 +1313,10 @@ const RechargeModal = ({ rechargeCode, setRechargeCode, handleRecharge, onClose,
         animate={{ opacity: 1, scale: 1 }}
         className={`rounded-2xl p-6 max-w-md w-full mx-4 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950`}
       >
-        <h3 className={`text-xl font-bold mb-4 ${isDark ? 'text-white' : 'text-foreground'}`}>
+        <h3 className={`text-xl font-bold mb-4 ${getTextColor()}`}>
           {lang === "ar" ? "شحن المحفظة" : "Recharge Wallet"}
         </h3>
-        <p className={`text-foreground/60 text-sm mb-4`}>
+        <p className={`text-gray-500 dark:text-gray-400 text-sm mb-4`}>
           {lang === "ar" ? "أدخل كود الشحن لشحن رصيد محفظتك" : "Enter the recharge code to add balance to your wallet"}
         </p>
         <input
@@ -1304,13 +1324,13 @@ const RechargeModal = ({ rechargeCode, setRechargeCode, handleRecharge, onClose,
           value={rechargeCode}
           onChange={(e) => setRechargeCode(e.target.value.toUpperCase())}
           placeholder={lang === "ar" ? "أدخل كود الشحن" : "Enter recharge code"}
-          className={`w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary/50 mb-4 font-mono tracking-wider ${isDark ? 'text-white' : 'text-foreground'}`}
+          className={`w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary/50 mb-4 font-mono tracking-wider ${getTextColor()}`}
           autoFocus
         />
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-foreground font-semibold"
+            className="flex-1 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-semibold"
           >
             {lang === "ar" ? "إلغاء" : "Cancel"}
           </button>
@@ -1327,9 +1347,9 @@ const RechargeModal = ({ rechargeCode, setRechargeCode, handleRecharge, onClose,
   );
 };
 
-// Redeem Modal
-const RedeemModal = ({ redeemCodeInput, setRedeemCodeInput, handleRedeemCode, onClose, redeeming, lang, isNature }: any) => {
-  const isDark = document.documentElement.classList.contains('dark');
+// Redeem Modal - المُعدل ✅
+const RedeemModal = ({ redeemCodeInput, setRedeemCodeInput, handleRedeemCode, onClose, redeeming, lang, isNature, isDark }: any) => {
+  const getTextColor = () => isDark ? 'text-white' : 'text-gray-900';
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -1339,7 +1359,7 @@ const RedeemModal = ({ redeemCodeInput, setRedeemCodeInput, handleRedeemCode, on
         className={`rounded-2xl p-6 max-w-md w-full mx-4 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950`}
       >
         <div className="flex items-center justify-between mb-4">
-          <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
+          <h3 className={`text-xl font-bold ${getTextColor()}`}>
             {lang === "ar" ? "استخدام كود الخصم" : "Redeem Code"}
           </h3>
           <button
@@ -1350,14 +1370,14 @@ const RedeemModal = ({ redeemCodeInput, setRedeemCodeInput, handleRedeemCode, on
           </button>
         </div>
         
-        <p className={`text-foreground/60 text-sm mb-4`}>
+        <p className={`text-gray-500 dark:text-gray-400 text-sm mb-4`}>
           {lang === "ar" 
             ? "أدخل الكود الذي حصلت عليه من المدرس لتفعيل الخصم أو الحصول على محتوى مجاني"
             : "Enter the code you received from the teacher to activate discount or get free content"}
         </p>
         
         <div className="mb-6">
-          <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-white' : 'text-foreground'}`}>
+          <label className={`block text-sm font-medium mb-2 ${getTextColor()}`}>
             {lang === "ar" ? "الكود" : "Code"}
           </label>
           <input
@@ -1365,7 +1385,7 @@ const RedeemModal = ({ redeemCodeInput, setRedeemCodeInput, handleRedeemCode, on
             value={redeemCodeInput}
             onChange={(e) => setRedeemCodeInput(e.target.value.toUpperCase())}
             placeholder="مثال: LOT4LBNW"
-            className={`w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none font-mono tracking-wider uppercase ${isDark ? 'text-white' : 'text-foreground'}`}
+            className={`w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none font-mono tracking-wider uppercase ${getTextColor()}`}
             autoFocus
           />
         </div>
@@ -1373,7 +1393,7 @@ const RedeemModal = ({ redeemCodeInput, setRedeemCodeInput, handleRedeemCode, on
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-foreground font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
+            className="flex-1 px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
           >
             {lang === "ar" ? "إلغاء" : "Cancel"}
           </button>
@@ -1397,7 +1417,7 @@ const RedeemModal = ({ redeemCodeInput, setRedeemCodeInput, handleRedeemCode, on
   );
 };
 
-// Dashboard Skeleton
+// Dashboard Skeleton - المُعدل ✅
 const DashboardSkeleton = ({ isNature, isRtl }: { isNature: boolean; isRtl: boolean }) => (
   <div className={`min-h-screen pt-24 pb-20 bg-white dark:bg-gray-950 ${isRtl ? 'rtl' : 'ltr'}`}>
     <div className="container-tight">

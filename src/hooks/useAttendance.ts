@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 interface AttendanceRequest {
   lesson_id: number;
   student_id: number;
+  slug?: string; // ✅ إضافة slug
 }
 
 interface AttendanceResponse {
@@ -33,16 +34,19 @@ export const useAttendance = () => {
         throw new Error("No authentication token found. Please login again.");
       }
       
-      console.log("📝 Attendance request:", attendanceData);
+      const { lesson_id, student_id, slug } = attendanceData;
       
-      // ✅ جرب هذا الـ endpoint - غيره حسب API حقك
-      const { data } = await api.post('/attendance/mark', attendanceData);
-      // لو endpoint مختلف: '/lessons/attendance' أو '/student/attendance'
+      console.log("📝 Attendance request:", { lesson_id, student_id, slug });
+      
+      // ✅ استخدام الـ endpoint الصحيح
+      const { data } = await api.post(`/lessons/${lesson_id}/attendance`, {
+        student_id: student_id
+      });
       
       console.log("✅ Attendance response:", data);
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       if (data.status === 200) {
         toast.success(data.message || "تم تسجيل حضورك بنجاح! ✅", {
           duration: 3000,
@@ -50,6 +54,7 @@ export const useAttendance = () => {
         });
         
         // تحديث الكاشات الخاصة بالدرس
+        queryClient.invalidateQueries({ queryKey: ['lesson-details', variables.lesson_id] });
         queryClient.invalidateQueries({ queryKey: ['lesson-details'] });
         queryClient.invalidateQueries({ queryKey: ['student-lessons'] });
         queryClient.invalidateQueries({ queryKey: ['course-details'] });
@@ -69,7 +74,7 @@ export const useAttendance = () => {
         });
       }
     },
-    onError: (error: any) => {
+    onError: (error: any, variables) => {
       console.error("❌ Attendance error:", error);
       
       if (error.response?.status === 401) {

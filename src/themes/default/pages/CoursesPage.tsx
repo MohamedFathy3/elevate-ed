@@ -604,12 +604,7 @@ const CourseCardFull = ({ course, slug, pick, lang, dir, isNature, primaryGradie
               <span>{lessonsCount} {lang === "ar" ? "دروس" : "lessons"}</span>
             </div>
           )}
-          {studentsCount > 0 && (
-            <div className="flex items-center gap-1">
-              <Users className="w-3 h-3" />
-              <span>{studentsCount} {lang === "ar" ? "طالب" : "students"}</span>
-            </div>
-          )}
+   
           <div className="flex items-center gap-1">
             <Clock className="w-3 h-3" />
             <span>{lang === "ar" ? "مرن" : "Flexible"}</span>
