@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// src/themes/nature/pages/Register.tsx
+// src/pages/Register.tsx
 
 import { useState, useEffect } from "react";
 import { useLang } from "@/i18n/LanguageContext";
@@ -14,7 +14,7 @@ import {
   MapPin, AlertCircle, ChevronDown, Users, School, Landmark, BookOpen, Image,
   X, CheckCircle, Info, Shield, WifiOff, CreditCard, RefreshCw, Smartphone
 } from "lucide-react";
-import { toast  } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
 const Register = () => {
@@ -24,7 +24,7 @@ const Register = () => {
   const { mutate: register, isPending } = useStudentRegister();
   const { data: centerHours, isLoading: hoursLoading } = useCenterHours(teacher?.id);
   
-  // ✅ State لإظهار/إخفاء popup التعليمات - يظهر كل مرة
+  // ✅ State لإظهار/إخفاء popup التعليمات
   const [showInstructions, setShowInstructions] = useState(true);
   
   const [showPassword, setShowPassword] = useState(false);
@@ -42,7 +42,7 @@ const Register = () => {
     school_name: "",
     type_of_study: "general",
     image: "",
-    region:"",
+    region: "",
   });
 
   const Arrow = dir === "rtl" ? ArrowRight : ArrowLeft;
@@ -130,6 +130,12 @@ const Register = () => {
       return;
     }
     
+    // ✅ التحقق من وجود الصورة (مطلوبة)
+    if (!formData.image) {
+      toast.error(lang === "ar" ? "الرجاء رفع الصورة الشخصية" : "Please upload profile picture");
+      return;
+    }
+    
     const submitData = {
       name: formData.name,
       phone: formData.phone,
@@ -199,14 +205,34 @@ const Register = () => {
 
   if (isLoading || hoursLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
+        <Loader2 className="w-8 h-8 animate-spin text-emerald-600 dark:text-emerald-400" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen py-16 md:py-24 ">
+    <div className="min-h-screen py-16 md:py-24 bg-white dark:bg-gray-950">
+      {/* ✅ خلفية متحركة خفيفة */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-emerald-400/10 dark:bg-emerald-400/5 blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full bg-blue-400/10 dark:bg-blue-400/5 blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-emerald-300/5 dark:bg-emerald-300/5 blur-3xl" />
+        
+        {/* نقط متحركة */}
+        {[...Array(12)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 rounded-full bg-emerald-400/30 dark:bg-emerald-400/20"
+            style={{
+              top: Math.random() * 100 + '%',
+              left: Math.random() * 100 + '%',
+              animation: `float ${3 + Math.random() * 4}s ease-in-out infinite ${Math.random() * 3}s`,
+            }}
+          />
+        ))}
+      </div>
+
       {/* ✅ Modal التعليمات - يظهر كل مرة */}
       <AnimatePresence>
         {showInstructions && (
@@ -222,11 +248,11 @@ const Register = () => {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               transition={{ type: "spring", damping: 25 }}
-              className="max-w-2xl w-full max-h-[85vh] overflow-y-auto rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-amber-200 dark:border-amber-800"
+              className="max-w-2xl w-full max-h-[85vh] overflow-y-auto rounded-3xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-700"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="sticky top-0 z-10 bg-gradient-to-r from-amber-500 to-orange-600 text-white p-5 rounded-t-3xl">
+              <div className="sticky top-0 z-10 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white p-5 rounded-t-3xl">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
@@ -373,7 +399,7 @@ const Register = () => {
               </div>
 
               {/* Footer */}
-              <div className="sticky bottom-0 bg-gray-50 dark:bg-slate-800 p-4 rounded-b-3xl border-t border-gray-200 dark:border-slate-700">
+              <div className="sticky bottom-0 bg-gray-50 dark:bg-gray-800 p-4 rounded-b-3xl border-t border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                     <CheckCircle className="w-3 h-3 text-green-500" />
@@ -381,7 +407,7 @@ const Register = () => {
                   </div>
                   <button
                     onClick={handleCloseInstructions}
-                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold text-sm hover:shadow-lg transition-all"
+                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold text-sm hover:shadow-lg transition-all"
                   >
                     {lang === "ar" ? "فهمت ✓" : "I Understand ✓"}
                   </button>
@@ -392,46 +418,55 @@ const Register = () => {
         )}
       </AnimatePresence>
 
-      <div className="container mx-auto px-4 max-w-3xl">
-        {/* باقي الفورم كما هو */}
-        <Link to={`/${slug}`} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary mb-4 transition-colors">
+      <div className="container mx-auto px-4 max-w-3xl relative z-10">
+        {/* Back to Home Link */}
+        <Link 
+          to={`/${slug}`} 
+          className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors mb-4"
+        >
           <Arrow className="w-4 h-4" />
           {lang === "ar" ? "العودة للرئيسية" : "Back to Home"}
         </Link>
 
-        <div className="bg-card rounded-3xl shadow-soft border p-8 md:p-10 animate-fade-up">
+        {/* Main Card */}
+        <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700 p-8 md:p-10">
           {/* Header */}
           <div className="flex items-center gap-3 mb-6">
-            <div className="size-12 rounded-2xl bg-brand text-brand-foreground grid place-items-center shadow-soft animate-float">
+            <div className="size-12 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white grid place-items-center shadow-lg shadow-emerald-500/25">
               <UserPlus className="size-5" />
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-black">
+              <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white">
                 {lang === "ar" ? "إنشاء حساب جديد" : "Create Account"}
               </h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 {lang === "ar" ? "انضم إلى منصة " : "Join "}{teacherName}
               </p>
             </div>
           </div>
 
-          {/* Steps Indicator - خطوتين */}
+          {/* Steps Indicator */}
           <div className="flex items-center justify-center gap-2 mb-8">
-            <div className={`flex items-center gap-2 ${step === 1 ? 'text-primary' : 'text-foreground/30'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step === 1 ? 'bg-primary text-white' : 'bg-muted'}`}>1</div>
+            <div className={`flex items-center gap-2 ${step === 1 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-gray-600'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step === 1 ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600'}`}>1</div>
               <span className="text-sm hidden sm:inline">{lang === "ar" ? "المعلومات الأساسية" : "Basic Info"}</span>
             </div>
-            <div className="w-8 h-px bg-border" />
-            <div className={`flex items-center gap-2 ${step === 2 ? 'text-primary' : 'text-foreground/30'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step === 2 ? 'bg-primary text-white' : 'bg-muted'}`}>2</div>
+            <div className="w-8 h-px bg-gray-200 dark:bg-gray-700" />
+            <div className={`flex items-center gap-2 ${step === 2 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-gray-600'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step === 2 ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600'}`}>2</div>
               <span className="text-sm hidden sm:inline">{lang === "ar" ? "البيانات الدراسية" : "Study Info"}</span>
+            </div>
+            <div className="w-8 h-px bg-gray-200 dark:bg-gray-700" />
+            <div className={`flex items-center gap-2 ${step === 3 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-gray-600'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step === 3 ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600'}`}>3</div>
+              <span className="text-sm hidden sm:inline">{lang === "ar" ? "الصورة" : "Photo"}</span>
             </div>
           </div>
 
           <form 
             onSubmit={(e) => {
               e.preventDefault();
-              if (step === 2) {
+              if (step === 3) {
                 handleSubmit(e);
               }
             }} 
@@ -440,62 +475,75 @@ const Register = () => {
             {step === 1 && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-bold mb-1.5">
+                  <label className="block text-sm font-bold mb-1.5 text-gray-700 dark:text-gray-300">
                     {lang === "ar" ? "الاسم الكامل" : "Full Name"} <span className="text-red-500">*</span>
                   </label>
-                  <div className="relative flex items-center bg-background border rounded-2xl focus-within:ring-2 focus-within:ring-primary/40 transition">
-                    <span className="px-4 text-muted-foreground"><User className="size-4" /></span>
+                  <div className="relative flex items-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus-within:ring-2 focus-within:ring-emerald-400/40 dark:focus-within:ring-emerald-500/30 transition">
+                    <span className="px-4 text-gray-400 dark:text-gray-500"><User className="size-4" /></span>
                     <input
                       type="text"
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
-                      className="flex-1 bg-transparent py-3 outline-none text-sm"
+                      className="flex-1 bg-transparent py-3 outline-none text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                       required
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold mb-1.5">
+                  <label className="block text-sm font-bold mb-1.5 text-gray-700 dark:text-gray-300">
                     {lang === "ar" ? "رقم الهاتف" : "Phone Number"} <span className="text-red-500">*</span>
                   </label>
-                  <div className="relative flex items-center bg-background border rounded-2xl focus-within:ring-2 focus-within:ring-primary/40 transition">
-                    <span className="px-4 text-muted-foreground"><Phone className="size-4" /></span>
+                  <div className="relative flex items-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus-within:ring-2 focus-within:ring-emerald-400/40 dark:focus-within:ring-emerald-500/30 transition">
+                    <span className="px-4 text-gray-400 dark:text-gray-500"><Phone className="size-4" /></span>
                     <input
                       type="tel"
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
-                      className="flex-1 bg-transparent py-3 outline-none text-sm"
+                      className="flex-1 bg-transparent py-3 outline-none text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                       required
                     />
                   </div>
                 </div>
- <div>
-                  <label className="block text-sm font-bold mb-1.5">
-                    {lang === "ar" ? "  المنطقه" : " region"} <span className="text-red-500">*</span>
+
+                <div>
+                  <label className="block text-sm font-bold mb-1.5 text-gray-700 dark:text-gray-300">
+                    {lang === "ar" ? "المنطقة" : "Region"} <span className="text-red-500">*</span>
                   </label>
-                  <div className="relative flex items-center bg-background border rounded-2xl focus-within:ring-2 focus-within:ring-primary/40 transition">
-                    <span className="px-4 text-muted-foreground"></span>
-                    <input type="text" name="region" value={formData.region} onChange={handleChange} className="flex-1 bg-transparent py-3 outline-none text-sm" required />
+                  <div className="relative flex items-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus-within:ring-2 focus-within:ring-emerald-400/40 dark:focus-within:ring-emerald-500/30 transition">
+                    <span className="px-4 text-gray-400 dark:text-gray-500"><MapPin className="size-4" /></span>
+                    <input
+                      type="text"
+                      name="region"
+                      value={formData.region}
+                      onChange={handleChange}
+                      className="flex-1 bg-transparent py-3 outline-none text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                      required
+                    />
                   </div>
                 </div>
+
                 <div>
-                  <label className="block text-sm font-bold mb-1.5">
+                  <label className="block text-sm font-bold mb-1.5 text-gray-700 dark:text-gray-300">
                     {lang === "ar" ? "كلمة المرور" : "Password"} <span className="text-red-500">*</span>
                   </label>
-                  <div className="relative flex items-center bg-background border rounded-2xl focus-within:ring-2 focus-within:ring-primary/40 transition">
-                    <span className="px-4 text-muted-foreground"><Lock className="size-4" /></span>
+                  <div className="relative flex items-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus-within:ring-2 focus-within:ring-emerald-400/40 dark:focus-within:ring-emerald-500/30 transition">
+                    <span className="px-4 text-gray-400 dark:text-gray-500"><Lock className="size-4" /></span>
                     <input
                       type={showPassword ? "text" : "password"}
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
-                      className="flex-1 bg-transparent py-3 outline-none text-sm"
+                      className="flex-1 bg-transparent py-3 outline-none text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                       required
                     />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="px-4 text-muted-foreground">
+                    <button 
+                      type="button" 
+                      onClick={() => setShowPassword(!showPassword)} 
+                      className="px-4 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition"
+                    >
                       {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                     </button>
                   </div>
@@ -507,33 +555,33 @@ const Register = () => {
             {step === 2 && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-bold mb-1.5">
+                  <label className="block text-sm font-bold mb-1.5 text-gray-700 dark:text-gray-300">
                     {lang === "ar" ? "رقم هاتف ولي الأمر" : "Parent Phone"}
                   </label>
-                  <div className="relative flex items-center bg-background border rounded-2xl focus-within:ring-2 focus-within:ring-primary/40 transition">
-                    <span className="px-4 text-muted-foreground"><Users className="size-4" /></span>
+                  <div className="relative flex items-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus-within:ring-2 focus-within:ring-emerald-400/40 dark:focus-within:ring-emerald-500/30 transition">
+                    <span className="px-4 text-gray-400 dark:text-gray-500"><Users className="size-4" /></span>
                     <input
                       type="tel"
                       name="phone_parent"
                       value={formData.phone_parent}
                       onChange={handleChange}
-                      className="flex-1 bg-transparent py-3 outline-none text-sm"
+                      className="flex-1 bg-transparent py-3 outline-none text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                     />
                   </div>
                 </div>
 
                 {/* المحافظة */}
                 <div>
-                  <label className="block text-sm font-bold mb-1.5">
+                  <label className="block text-sm font-bold mb-1.5 text-gray-700 dark:text-gray-300">
                     {lang === "ar" ? "المحافظة" : "Governorate"} <span className="text-red-500">*</span>
                   </label>
-                  <div className="relative flex items-center bg-background border rounded-2xl focus-within:ring-2 focus-within:ring-primary/40 transition">
-                    <span className="px-4 text-muted-foreground"><MapPin className="size-4" /></span>
+                  <div className="relative flex items-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus-within:ring-2 focus-within:ring-emerald-400/40 dark:focus-within:ring-emerald-500/30 transition">
+                    <span className="px-4 text-gray-400 dark:text-gray-500"><MapPin className="size-4" /></span>
                     <select
                       name="governorate"
                       value={formData.governorate}
                       onChange={handleChange}
-                      className="flex-1 bg-transparent py-3 outline-none text-sm appearance-none pr-4"
+                      className="flex-1 bg-transparent py-3 outline-none text-sm appearance-none pr-4 text-gray-900 dark:text-white"
                       required
                     >
                       <option value="">{lang === "ar" ? "اختر المحافظة" : "Select governorate"}</option>
@@ -543,47 +591,47 @@ const Register = () => {
                         </option>
                       ))}
                     </select>
-                    <ChevronDown className="absolute right-4 text-muted-foreground pointer-events-none" />
+                    <ChevronDown className="absolute right-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
                   </div>
                 </div>
 
                 {/* اسم المدرسة */}
                 <div>
-                  <label className="block text-sm font-bold mb-1.5">
+                  <label className="block text-sm font-bold mb-1.5 text-gray-700 dark:text-gray-300">
                     {lang === "ar" ? "اسم المدرسة" : "School Name"} <span className="text-red-500">*</span>
                   </label>
-                  <div className="relative flex items-center bg-background border rounded-2xl focus-within:ring-2 focus-within:ring-primary/40 transition">
-                    <span className="px-4 text-muted-foreground"><School className="size-4" /></span>
+                  <div className="relative flex items-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus-within:ring-2 focus-within:ring-emerald-400/40 dark:focus-within:ring-emerald-500/30 transition">
+                    <span className="px-4 text-gray-400 dark:text-gray-500"><School className="size-4" /></span>
                     <input
                       type="text"
                       name="school_name"
                       value={formData.school_name}
                       onChange={handleChange}
-                      className="flex-1 bg-transparent py-3 outline-none text-sm"
+                      className="flex-1 bg-transparent py-3 outline-none text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                       required
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold mb-1.5">
+                  <label className="block text-sm font-bold mb-1.5 text-gray-700 dark:text-gray-300">
                     {lang === "ar" ? "المرحلة الدراسية" : "Grade"} <span className="text-red-500">*</span>
                   </label>
                   {!hasStages ? (
-                    <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
-                      <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
+                    <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-amber-500 dark:text-amber-400 flex-shrink-0" />
                       <p className="text-sm text-amber-700 dark:text-amber-400">
                         {lang === "ar" ? "لا توجد مراحل متاحة حالياً" : "No stages available"}
                       </p>
                     </div>
                   ) : (
-                    <div className="relative flex items-center bg-background border rounded-2xl focus-within:ring-2 focus-within:ring-primary/40 transition">
-                      <span className="px-4 text-muted-foreground"><GraduationCap className="size-4" /></span>
+                    <div className="relative flex items-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus-within:ring-2 focus-within:ring-emerald-400/40 dark:focus-within:ring-emerald-500/30 transition">
+                      <span className="px-4 text-gray-400 dark:text-gray-500"><GraduationCap className="size-4" /></span>
                       <select
                         name="stage_id"
                         value={formData.stage_id}
                         onChange={handleChange}
-                        className="flex-1 bg-transparent py-3 outline-none text-sm appearance-none pr-4"
+                        className="flex-1 bg-transparent py-3 outline-none text-sm appearance-none pr-4 text-gray-900 dark:text-white"
                         required
                       >
                         <option value="">{lang === "ar" ? "اختر المرحلة" : "Select grade"}</option>
@@ -591,28 +639,36 @@ const Register = () => {
                           <option key={stage.id} value={stage.id}>{getStageName(stage)}</option>
                         ))}
                       </select>
-                      <ChevronDown className="absolute right-4 text-muted-foreground pointer-events-none" />
+                      <ChevronDown className="absolute right-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
                     </div>
                   )}
                 </div>
 
                 {/* نوع الدراسة */}
                 <div>
-                  <label className="block text-sm font-bold mb-1.5">
+                  <label className="block text-sm font-bold mb-1.5 text-gray-700 dark:text-gray-300">
                     {lang === "ar" ? "نوع الدراسة" : "Type of Study"} <span className="text-red-500">*</span>
                   </label>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, type_of_study: "general" })}
-                      className={`px-4 py-3 rounded-2xl border transition-all ${formData.type_of_study === "general" ? "bg-primary text-white border-primary" : "bg-background border-border"}`}
+                      className={`px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
+                        formData.type_of_study === "general" 
+                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25" 
+                          : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
+                      }`}
                     >
                       {lang === "ar" ? "عام" : "General"}
                     </button>
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, type_of_study: "azhar" })}
-                      className={`px-4 py-3 rounded-2xl border transition-all ${formData.type_of_study === "azhar" ? "bg-primary text-white border-primary" : "bg-background border-border"}`}
+                      className={`px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
+                        formData.type_of_study === "azhar" 
+                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25" 
+                          : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
+                      }`}
                     >
                       {lang === "ar" ? "أزهري" : "Azhar"}
                     </button>
@@ -621,21 +677,29 @@ const Register = () => {
 
                 {/* نوع الحضور */}
                 <div>
-                  <label className="block text-sm font-bold mb-1.5">
+                  <label className="block text-sm font-bold mb-1.5 text-gray-700 dark:text-gray-300">
                     {lang === "ar" ? "نوع الحضور" : "Attendance Type"} <span className="text-red-500">*</span>
                   </label>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, type_of_attendance: "online", center_hour_id: "" })}
-                      className={`px-4 py-3 rounded-2xl border transition-all ${formData.type_of_attendance === "online" ? "bg-primary text-white border-primary" : "bg-background border-border"}`}
+                      className={`px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
+                        formData.type_of_attendance === "online" 
+                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25" 
+                          : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
+                      }`}
                     >
                       {lang === "ar" ? "أونلاين" : "Online"}
                     </button>
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, type_of_attendance: "center" })}
-                      className={`px-4 py-3 rounded-2xl border transition-all ${formData.type_of_attendance === "center" ? "bg-primary text-white border-primary" : "bg-background border-border"}`}
+                      className={`px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
+                        formData.type_of_attendance === "center" 
+                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25" 
+                          : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
+                      }`}
                     >
                       {lang === "ar" ? "سنتر" : "Center"}
                     </button>
@@ -643,15 +707,15 @@ const Register = () => {
                 </div>
 
                 {isCenter && (
-                  <div className="bg-primary/5 rounded-2xl p-4 space-y-3 border border-primary/20">
-                    <div className="flex items-center gap-2 text-primary font-semibold text-sm">
+                  <div className="bg-emerald-50/50 dark:bg-emerald-950/20 rounded-2xl p-4 space-y-3 border border-emerald-200 dark:border-emerald-800">
+                    <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-semibold text-sm">
                       <Calendar className="size-4" />
                       {lang === "ar" ? "اختر الميعاد المناسب" : "Select suitable time"}
                     </div>
                     
                     {!hasHours ? (
-                      <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 rounded-xl p-3 flex items-start gap-2">
-                        <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3 flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 text-amber-500 dark:text-amber-400 flex-shrink-0 mt-0.5" />
                         <p className="text-xs text-amber-700 dark:text-amber-400">
                           {lang === "ar" ? "لا توجد مواعيد متاحة حالياً" : "No available times"}
                         </p>
@@ -661,7 +725,7 @@ const Register = () => {
                         name="center_hour_id"
                         value={formData.center_hour_id}
                         onChange={handleChange}
-                        className="w-full bg-background border rounded-xl px-4 py-2.5 outline-none text-sm"
+                        className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 outline-none text-sm text-gray-900 dark:text-white"
                         required
                       >
                         <option value="">{lang === "ar" ? "اختر الميعاد" : "Select time"}</option>
@@ -675,29 +739,54 @@ const Register = () => {
 
                 {/* النوع */}
                 <div>
-                  <label className="block text-sm font-bold mb-1.5">
+                  <label className="block text-sm font-bold mb-1.5 text-gray-700 dark:text-gray-300">
                     {lang === "ar" ? "النوع" : "Gender"} <span className="text-red-500">*</span>
                   </label>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, gender: "male" })}
-                      className={`px-4 py-3 rounded-2xl border transition-all ${formData.gender === "male" ? "bg-primary text-white border-primary" : "bg-background border-border"}`}
+                      className={`px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
+                        formData.gender === "male" 
+                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25" 
+                          : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
+                      }`}
                     >
                       {lang === "ar" ? "ذكر" : "Male"}
                     </button>
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, gender: "female" })}
-                      className={`px-4 py-3 rounded-2xl border transition-all ${formData.gender === "female" ? "bg-primary text-white border-primary" : "bg-background border-border"}`}
+                      className={`px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
+                        formData.gender === "female" 
+                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25" 
+                          : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
+                      }`}
                     >
                       {lang === "ar" ? "أنثى" : "Female"}
                     </button>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Step 3: الصورة الشخصية */}
+            {step === 3 && (
+              <div className="space-y-6">
+                <div className="text-center">
+                  <div className="w-20 h-20 rounded-full bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center mx-auto mb-4 border-2 border-emerald-200 dark:border-emerald-800">
+                    <Image className="w-8 h-8 text-emerald-500 dark:text-emerald-400" />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                    {lang === "ar" ? "📸 الصورة الشخصية" : "📸 Profile Picture"}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    {lang === "ar" ? "برجاء رفع صورتك الشخصية" : "Please upload your profile picture"}
+                  </p>
+                </div>
 
                 <FileUploader
-                  label={lang === "ar" ? "📸 تحميل الصورة الشخصية" : "📸 Upload Profile Picture"}
+                  label={lang === "ar" ? "📸 تحميل الصورة الشخصية (مطلوبة)" : "📸 Upload Profile Picture (Required)"}
                   onUploadSuccess={handleProfileUpload}
                   multiple={false}
                   accept="image/*"
@@ -706,52 +795,82 @@ const Register = () => {
                   maxFiles={1}
                   defaultImageId={formData.image ? parseInt(formData.image) : null}
                   onRemoveImage={handleRemoveProfile}
+                  required={true}
                 />
+
+                {!formData.image && (
+                  <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3 flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-amber-500 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-amber-700 dark:text-amber-400">
+                      {lang === "ar" ? "⚠️ الصورة الشخصية مطلوبة" : "⚠️ Profile picture is required"}
+                    </p>
+                  </div>
+                )}
+
+                {formData.image && (
+                  <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-3 flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+                    <p className="text-xs text-emerald-700 dark:text-emerald-400">
+                      {lang === "ar" ? "✅ تم رفع الصورة بنجاح" : "✅ Image uploaded successfully"}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
             {/* Buttons */}
-            <div className="flex gap-3 mt-8 pt-4 border-t border-border">
+            <div className="flex gap-3 mt-8 pt-4 border-t border-gray-200 dark:border-gray-700">
               {step > 1 && (
                 <button
                   type="button"
                   onClick={prevStep}
-                  className="px-6 py-3 rounded-2xl bg-card border border-border font-semibold text-sm hover:bg-secondary transition"
+                  className="px-6 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 font-semibold text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
                 >
                   {lang === "ar" ? "السابق" : "Previous"}
                 </button>
               )}
               
-              {step < 2 ? (
+              {step < 3 ? (
                 <button
                   type="button"
                   onClick={nextStep}
-                  className="flex-1 py-3 rounded-2xl bg-primary text-primary-foreground font-extrabold shadow-soft hover:shadow-glow transition"
+                  className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-extrabold shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
                 >
                   {lang === "ar" ? "التالي" : "Next"}
-                  <Arrow className="w-4 h-4 inline mr-2" />
+                  <Arrow className="w-4 h-4 inline ml-2" />
                 </button>
               ) : (
                 <button
                   type="submit"
-                  disabled={isPending || !hasStages || (isCenter && !hasHours)}
-                  className="flex-1 py-3 rounded-2xl bg-primary text-primary-foreground font-extrabold shadow-soft hover:shadow-glow transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isPending || !hasStages || (isCenter && !hasHours) || !formData.image}
+                  className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-extrabold shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
-                  {isPending ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : (lang === "ar" ? "إنشاء حساب" : "Create Account")}
+                  {isPending ? (
+                    <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+                  ) : (
+                    lang === "ar" ? "إنشاء حساب" : "Create Account"
+                  )}
                 </button>
               )}
             </div>
           </form>
 
           {/* Login Link */}
-          <p className="text-center text-sm text-muted-foreground mt-6">
+          <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
             {lang === "ar" ? "لديك حساب بالفعل؟" : "Already have an account?"}{" "}
-            <Link to={`/${slug}/login`} className="text-primary font-bold hover:underline">
+            <Link to={`/${slug}/login`} className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline">
               {lang === "ar" ? "تسجيل الدخول" : "Login"}
             </Link>
           </p>
         </div>
       </div>
+
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) scale(1); opacity: 0.3; }
+          50% { transform: translateY(-20px) scale(1.5); opacity: 0.8; }
+        }
+      `}</style>
     </div>
   );
 };

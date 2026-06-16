@@ -391,7 +391,7 @@ export const StagesPage = () => {
                   whileHover={!isDisabled ? { y: -8 } : {}}
                   onClick={() => {
                     if (!isDisabled) {
-                      navigate(`/${slug}/semesters?stage_id=${stage.id}&stage_name=${encodeURIComponent(stageName)}`);
+                    navigate(`/${slug}/subjects?stage_id=${stage.id}&stage_name=${encodeURIComponent(stageName)}`);
                     }
                   }}
                   className={`group relative ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'} ${isDisabled ? 'opacity-60' : ''}`}

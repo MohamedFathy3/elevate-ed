@@ -25,13 +25,13 @@ interface SemestersResponse {
   status: number;
 }
 
-export const useSemesters = (teacherId?: number, subjectId?: number) => {
+export const useSemesters = (teacherId?: number, stageId?: number) => {
   return useQuery({
-    queryKey: ['semesters', teacherId, subjectId],
+    queryKey: ['semesters', teacherId, stageId],
     queryFn: async () => {
       const filters: any = {};
       if (teacherId) filters.teacher_id = teacherId;
-      if (subjectId) filters.subject_id = subjectId;
+      if (stageId) filters.subject_id = stageId;
       
       const { data } = await api.post<SemestersResponse>('/semesters/index', {
         filters,

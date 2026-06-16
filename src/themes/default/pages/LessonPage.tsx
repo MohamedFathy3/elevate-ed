@@ -240,7 +240,7 @@ useEffect(() => {
     );
   }
   return (
-    <div className="min-h-screen pt-32 pb-20" dir={dir}>
+    <div className="min-h-screen pt-32 pb-20 " dir={dir}>
 
           {BlueScreen}
 
@@ -364,241 +364,216 @@ useEffect(() => {
             )}
             
             {/* Lesson Info */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="mt-6 p-6 bg-card rounded-2xl border border-border"
-            >
-              <h1 className="text-2xl font-bold mb-2">
-                {lang === "ar" && lesson.title_ar ? lesson.title_ar : lesson.title}
-              </h1>
-              <p className="text-foreground/60 mb-4">
-                {lang === "ar" && lesson.description_ar ? lesson.description_ar : lesson.description}
-              </p>
-              
-              <div className="flex flex-wrap gap-4 text-sm text-foreground/50">
-                <div className="flex items-center gap-1">
-                  <Calendar className="w-4 h-4" />
-                  <span>{new Date(lesson.lession_date).toLocaleDateString()}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
-                  <span>{lesson.lession_time}</span>
-                </div>
-                {hasSubParts && (
-                  <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-primary/20 text-primary text-xs">
-                    <Video className="w-3 h-3" />
-                    {subParts.length} {lang === "ar" ? "أجزاء" : "parts"}
-                  </div>
-                )}
-                {lesson.must_pass_to_unlock === true && (
-                  <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/20 text-amber-600 text-xs">
-                    <Lock className="w-3 h-3" />
-                    {lang === "ar" ? "يتطلب اجتياز امتحان" : "Requires exam"}
-                  </div>
-                )}
-              </div>
-            </motion.div>
+          <motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ delay: 0.1 }}
+  className="mt-6 p-6 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700"
+>
+  <h1 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">
+    {lang === "ar" && lesson.title_ar ? lesson.title_ar : lesson.title}
+  </h1>
+  <p className="text-gray-500 dark:text-gray-400 mb-4">
+    {lang === "ar" && lesson.description_ar ? lesson.description_ar : lesson.description}
+  </p>
+  
+  <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400">
+    <div className="flex items-center gap-1">
+      <Calendar className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+      <span>{new Date(lesson.lession_date).toLocaleDateString()}</span>
+    </div>
+    <div className="flex items-center gap-1">
+      <Clock className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+      <span>{lesson.lession_time}</span>
+    </div>
+    {hasSubParts && (
+      <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 text-xs">
+        <Video className="w-3 h-3" />
+        {subParts.length} {lang === "ar" ? "أجزاء" : "parts"}
+      </div>
+    )}
+    {lesson.must_pass_to_unlock === true && (
+      <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 text-xs">
+        <Lock className="w-3 h-3" />
+        {lang === "ar" ? "يتطلب اجتياز امتحان" : "Requires exam"}
+      </div>
+    )}
+  </div>
+</motion.div>
           </div>
           
           {/* Sidebar - Parts Cards + Actions */}
-          <div className="space-y-6">
-            {/* ✅ كروت أجزاء الدرس - مع الصورة */}
-            {canWatch && hasSubParts && (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="bg-card rounded-2xl border border-border p-4"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold flex items-center gap-2">
-                    <Video className="w-5 h-5 text-primary" />
-                    {lang === "ar" ? "أجزاء الدرس" : "Lesson Parts"}
-                  </h3>
-                  <span className="text-xs text-foreground/50 bg-secondary px-2 py-1 rounded-full">
-                    {subParts.length}
-                  </span>
-                </div>
-                
-                <div className="grid grid-cols-1 gap-3 max-h-[450px] overflow-y-auto pr-1 custom-scrollbar">
-                  {subParts.map((part: any, idx: number) => (
-                    <motion.button
-                      key={idx}
-                      onClick={() => handleSelectPart(idx)}
-                      className={`w-full text-left rounded-xl transition-all overflow-hidden border-2
-                        ${selectedPartIndex === idx 
-                          ? 'border-primary shadow-md bg-primary/5' 
-                          : 'border-border hover:border-primary/40 bg-card'}`}
-                    >
-                      <div className="flex items-center gap-3 p-3">
-                        {/* صورة الجزء (من الدرس الأب) */}
-                        <img 
-                          src={part.imageUrl || "/default-course.jpg"} 
-                          alt={part.title}
-                          className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
-                        />
-                        
-                        {/* معلومات الجزء */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-5 h-5 rounded-md flex items-center justify-center text-white text-xs font-bold flex-shrink-0
-                              ${selectedPartIndex === idx 
-                                ? 'bg-primary' 
-                                : 'bg-gray-300 dark:bg-gray-600'}`}>
-                              {idx + 1}
-                            </div>
-                            <p className={`font-medium text-sm truncate ${selectedPartIndex === idx ? 'text-primary' : ''}`}>
-                              {lang === "ar" ? part.title_ar : part.title}
-                            </p>
-                          </div>
-                          <p className="text-xs text-foreground/50 flex items-center gap-1 mt-1">
-                            <PlayCircle className="w-3 h-3" />
-                            {lang === "ar" ? "فيديو تعليمي" : "Educational video"}
-                          </p>
-                        </div>
-                        
-                        {/* أيون التشغيل */}
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all
-                          ${selectedPartIndex === idx 
-                            ? 'bg-primary text-white' 
-                            : 'bg-gray-100 dark:bg-gray-800 text-foreground/40'}`}>
-                          {selectedPartIndex === idx ? (
-                            <Play className="w-4 h-4" />
-                          ) : (
-                            <Eye className="w-4 h-4" />
-                          )}
-                        </div>
-                      </div>
-                    </motion.button>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-            
-            {/* Required Exam Card */}
-            {needsExamToUnlock && requiredExam && (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-2xl border border-amber-500/30 p-6"
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
-                    <FileQuestion className="w-5 h-5 text-amber-500" />
-                  </div>
-                  <h3 className="font-bold text-lg">
-                    {lang === "ar" ? "الامتحان المطلوب" : "Required Exam"}
-                  </h3>
-                </div>
-                
-                <div className="mb-4">
-                  <p className="font-semibold">{requiredExam.title}</p>
-                  <p className="text-sm text-foreground/60 mt-1">{requiredExam.description}</p>
-                  <div className="flex items-center gap-4 mt-3 text-xs text-foreground/50">
-                    <span><HelpCircle className="w-3 h-3 inline" /> {requiredExam.questions?.length || 0} {lang === "ar" ? "سؤال" : "questions"}</span>
-                    <span><Award className="w-3 h-3 inline" /> {requiredExam.total_marks} {lang === "ar" ? "درجة" : "marks"}</span>
-                    <span><Clock className="w-3 h-3 inline" /> {requiredExam.duration_minutes} {lang === "ar" ? "دقيقة" : "min"}</span>
-                  </div>
-                </div>
-                
-                <button
-                  onClick={() => handleStartExam(requiredExam)}
-                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold flex items-center justify-center gap-2"
-                >
-                  <Play className="w-4 h-4" />
-                  {lang === "ar" ? "ابدأ الامتحان" : "Start Exam"}
-                </button>
-              </motion.div>
-            )}
-            {/* ✅ كارد الواجبات (Assignments) */}
-{assignmentsList.length > 0 && (
-  <motion.div
-    initial={{ opacity: 0, x: 20 }}
-    animate={{ opacity: 1, x: 0 }}
-    className="bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-2xl border border-blue-500/30 p-6"
-  >
-    <div className="flex items-center gap-3 mb-4">
-      <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-        <ClipboardList className="w-5 h-5 text-blue-500" />
+       <div className="space-y-6">
+  {/* ✅ كروت أجزاء الدرس - مع الصورة */}
+  {canWatch && hasSubParts && (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4"
+    >
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-bold flex items-center gap-2 text-gray-900 dark:text-white">
+          <Video className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          {lang === "ar" ? "أجزاء الدرس" : "Lesson Parts"}
+        </h3>
+        <span className="text-xs bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-full">
+          {subParts.length}
+        </span>
       </div>
-      <h3 className="font-bold text-lg">
-        {lang === "ar" ? "الواجبات" : "Assignments"}
-      </h3>
-    </div>
-    
-    <div className="space-y-3">
-      {assignmentsList.map((assignment) => (
-        <div key={assignment.id} className="bg-white/5 rounded-xl p-3">
-          <p className="font-semibold text-sm">{assignment.title}</p>
-          <p className="text-xs text-foreground/60 mt-1 line-clamp-2">{assignment.description}</p>
-          <div className="flex items-center gap-3 mt-2 text-xs text-foreground/50">
-            <span><Award className="w-3 h-3 inline" /> {assignment.total_marks} {lang === "ar" ? "درجة" : "marks"}</span>
-            {assignment.time_end && (
-              <span><Calendar className="w-3 h-3 inline" /> {new Date(assignment.time_end).toLocaleDateString()}</span>
-            )}
-          </div>
-          <button
-            onClick={() => handleStartAssignment(assignment)}
-            className="w-full mt-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-semibold flex items-center justify-center gap-2"
+      
+      <div className="grid grid-cols-1 gap-3 max-h-[450px] overflow-y-auto pr-1 custom-scrollbar">
+        {subParts.map((part: any, idx: number) => (
+          <motion.button
+            key={idx}
+            onClick={() => handleSelectPart(idx)}
+            className={`
+              w-full text-left rounded-xl transition-all overflow-hidden border-2
+              ${selectedPartIndex === idx 
+                ? 'border-blue-500 dark:border-blue-400 shadow-md shadow-blue-500/20 bg-blue-50 dark:bg-blue-950/30' 
+                : 'border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 bg-white dark:bg-gray-900'}
+            `}
           >
-            <FileText className="w-3 h-3" />
-            {lang === "ar" ? "حل الواجب" : "Solve Assignment"}
-          </button>
-        </div>
-      ))}
-    </div>
-  </motion.div>
-)}
-            {/* After Passing Exam Card */}
-         
-            {/* Attendance Card */}
-            {/* {canWatch && (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="bg-card rounded-2xl border border-border p-6"
-              >
-                <h3 className="font-bold mb-4 flex items-center gap-2">
-                  <Users className="w-5 h-5 text-primary" />
-                  {lang === "ar" ? "تسجيل الحضور" : "Attendance"}
-                </h3>
-                
-                {attended ? (
-                  <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
-                    <CheckCircle className="w-5 h-5" />
-                    <span>{lang === "ar" ? "تم تسجيل حضورك" : "Attendance recorded"}</span>
+            <div className="flex items-center gap-3 p-3">
+              {/* صورة الجزء */}
+              <img 
+                src={part.imageUrl || "/default-course.jpg"} 
+                alt={part.title}
+                className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
+              />
+              
+              {/* معلومات الجزء */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <div className={`
+                    w-5 h-5 rounded-md flex items-center justify-center text-white text-xs font-bold flex-shrink-0
+                    ${selectedPartIndex === idx 
+                      ? 'bg-gradient-to-r from-blue-600 to-blue-700' 
+                      : 'bg-gray-300 dark:bg-gray-600'}
+                  `}>
+                    {idx + 1}
                   </div>
+                  <p className={`
+                    font-medium text-sm truncate 
+                    ${selectedPartIndex === idx 
+                      ? 'text-blue-600 dark:text-blue-400' 
+                      : 'text-gray-900 dark:text-white'}
+                  `}>
+                    {lang === "ar" ? part.title_ar : part.title}
+                  </p>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-1">
+                  <PlayCircle className="w-3 h-3" />
+                  {lang === "ar" ? "فيديو تعليمي" : "Educational video"}
+                </p>
+              </div>
+              
+              {/* أيون التشغيل */}
+              <div className={`
+                w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all
+                ${selectedPartIndex === idx 
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25' 
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500'}
+              `}>
+                {selectedPartIndex === idx ? (
+                  <Play className="w-4 h-4" />
                 ) : (
-                  <>
-                    <p className="text-sm text-foreground/60 mb-4">
-                      {lang === "ar" 
-                        ? "يرجى تأكيد حضورك بعد مشاهدة الدرس"
-                        : "Please confirm your attendance after watching the lesson"}
-                    </p>
-                    <button
-                      onClick={handleMarkAttendance}
-                      className="w-full py-3 rounded-xl bg-gradient-to-r from-primary to-accent text-white font-semibold flex items-center justify-center gap-2"
-                    >
-                      <ThumbsUp className="w-5 h-5" />
-                      {lang === "ar" ? "تأكيد الحضور" : "Confirm Attendance"}
-                    </button>
-                  </>
+                  <Eye className="w-4 h-4" />
                 )}
-              </motion.div>
-            )} */}
-            
-            {/* Navigation Buttons */}
-            <div className="flex gap-3">
-              <Link
-                to={`/${slug}/courses/${lesson.course_id}`}
-                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-card border border-border hover:border-primary/40 transition-all"
-              >
-                <ArrowRight className="w-4 h-4 rtl:rotate-180" />
-                {lang === "ar" ? "العودة للكورس" : "Back to Course"}
-              </Link>
+              </div>
             </div>
+          </motion.button>
+        ))}
+      </div>
+    </motion.div>
+  )}
+  
+  {/* Required Exam Card */}
+  {needsExamToUnlock && requiredExam && (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-2xl border border-amber-200 dark:border-amber-800 p-6"
+    >
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
+          <FileQuestion className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+        </div>
+        <h3 className="font-bold text-lg text-gray-900 dark:text-white">
+          {lang === "ar" ? "الامتحان المطلوب" : "Required Exam"}
+        </h3>
+      </div>
+      
+      <div className="mb-4">
+        <p className="font-semibold text-gray-900 dark:text-white">{requiredExam.title}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{requiredExam.description}</p>
+        <div className="flex items-center gap-4 mt-3 text-xs text-gray-500 dark:text-gray-400">
+          <span><HelpCircle className="w-3 h-3 inline" /> {requiredExam.questions?.length || 0} {lang === "ar" ? "سؤال" : "questions"}</span>
+          <span><Award className="w-3 h-3 inline" /> {requiredExam.total_marks} {lang === "ar" ? "درجة" : "marks"}</span>
+          <span><Clock className="w-3 h-3 inline" /> {requiredExam.duration_minutes} {lang === "ar" ? "دقيقة" : "min"}</span>
+        </div>
+      </div>
+      
+      <button
+        onClick={() => handleStartExam(requiredExam)}
+        className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25 transition-all"
+      >
+        <Play className="w-4 h-4" />
+        {lang === "ar" ? "ابدأ الامتحان" : "Start Exam"}
+      </button>
+    </motion.div>
+  )}
+  
+  {/* ✅ كارد الواجبات (Assignments) */}
+  {assignmentsList.length > 0 && (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-2xl border border-blue-200 dark:border-blue-800 p-6"
+    >
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+          <ClipboardList className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+        </div>
+        <h3 className="font-bold text-lg text-gray-900 dark:text-white">
+          {lang === "ar" ? "الواجبات" : "Assignments"}
+        </h3>
+      </div>
+      
+      <div className="space-y-3">
+        {assignmentsList.map((assignment) => (
+          <div key={assignment.id} className="bg-white/50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-200 dark:border-gray-700">
+            <p className="font-semibold text-sm text-gray-900 dark:text-white">{assignment.title}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{assignment.description}</p>
+            <div className="flex items-center gap-3 mt-2 text-xs text-gray-500 dark:text-gray-400">
+              <span><Award className="w-3 h-3 inline" /> {assignment.total_marks} {lang === "ar" ? "درجة" : "marks"}</span>
+              {assignment.time_end && (
+                <span><Calendar className="w-3 h-3 inline" /> {new Date(assignment.time_end).toLocaleDateString()}</span>
+              )}
+            </div>
+            <button
+              onClick={() => handleStartAssignment(assignment)}
+              className="w-full mt-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 transition-all"
+            >
+              <FileText className="w-3 h-3" />
+              {lang === "ar" ? "حل الواجب" : "Solve Assignment"}
+            </button>
           </div>
+        ))}
+      </div>
+    </motion.div>
+  )}
+  
+  {/* Navigation Buttons */}
+  <div className="flex gap-3">
+    <Link
+      to={`/${slug}/courses/${lesson.course_id}`}
+      className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all text-gray-700 dark:text-gray-300"
+    >
+      <ArrowRight className="w-4 h-4 rtl:rotate-180" />
+      {lang === "ar" ? "العودة للكورس" : "Back to Course"}
+    </Link>
+  </div>
+</div>
         </div>
       </div>
       <style>{`

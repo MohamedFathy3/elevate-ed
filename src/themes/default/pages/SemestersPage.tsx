@@ -408,7 +408,7 @@ export const SemestersPage = () => {
                 {isNature ? <Leaf className="w-5 h-5 text-white" /> : <Flame className="w-5 h-5 text-white" />}
               </div>
               <h2 className={`text-2xl font-bold ${textPrimary}`}>
-                {lang === "ar" ? "كورسات منفصلة" : "Separate Courses"}
+                {lang === "ar" ? "كورسات المراجعه النهائيه" : "Final revision courses "}
               </h2>
               <span className={`text-sm px-2 py-0.5 rounded-full ${isNature ? 'bg-amber-100 text-amber-700' : 'bg-secondary text-foreground/50'}`}>
                 {filteredDirectCourses.length}
@@ -746,9 +746,17 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
             
             <Link
               to={`/${slug}/courses?semester_id=${semester.id}&semester_name=${encodeURIComponent(pick(semester.name, semester.name_ar))}`}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-foreground font-semibold text-sm transition-all
-                ${isNature ? 'border-amber-200 bg-white hover:bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20 dark:hover:bg-amber-900/30' : 'border-border bg-card hover:border-primary/40 hover:bg-primary/5'}`}
-            >
+             className={`
+  inline-flex items-center gap-2 
+  px-4 py-2.5 
+  rounded-xl 
+  border border-gray-200 dark:border-gray-700 
+  text-gray-900 dark:text-white 
+  font-semibold text-sm 
+  transition-all duration-300
+  hover:border-blue-400 dark:hover:border-blue-500 
+  hover:bg-blue-50 dark:hover:bg-blue-950/30
+`}  >
               {lang === "ar" ? "عرض الكورسات" : "View Courses"}
               <ChevronRight className="w-4 h-4" />
             </Link>

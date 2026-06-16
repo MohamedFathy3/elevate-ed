@@ -734,179 +734,188 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
   const selectedBorder = isNature ? 'border-amber-500 ring-2 ring-amber-500' : 'border-primary ring-2 ring-primary';
   
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
-      className={`border rounded-2xl overflow-hidden transition-all ${cardBg} ${borderColor} ${isSelected ? selectedBorder : ''}`}
-    >
-      <div 
-        className={`p-4 flex items-center justify-between cursor-pointer transition-colors ${hoverBg}`} 
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div className="flex items-center gap-4 flex-1">
-          <img 
-            src={lessonImage || "/default-course.jpg"} 
-            alt={lessonTitle}
-            className="w-12 h-12 rounded-xl object-cover"
-          />
-          <div className="flex-1">
-            <h3 className={`font-semibold ${titleColor}`}>{lessonTitle}</h3>
-            <div className="flex items-center gap-3 text-xs text-foreground/50 mt-1">
-              <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{new Date(lesson.lession_date).toLocaleDateString()}</span>
-              <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{lesson.lession_time}</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          {!isFree && !isPurchased && (
-            <span className={`text-lg font-bold ${isNature ? 'text-amber-600 dark:text-amber-400' : 'text-primary'}`}>
-              {parseFloat(lesson.price).toFixed(2)} EGP
-            </span>
-          )}
-          
-          {isPurchased && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={(e) => { e.stopPropagation(); onWatch(); }} 
-              className={`px-4 py-2 rounded-xl text-white text-sm font-semibold flex items-center gap-2
-                ${isNature ? 'bg-gradient-to-r from-amber-600 to-orange-600' : 'gradient-primary'}`}
-            >
-              <Eye className="w-4 h-4" />
-              {lang === "ar" ? "مشاهدة" : "Watch"}
-            </motion.button>
-          )}
-          
-          {!isFree && !isPurchased && isAuthenticated && !hasPurchasedFullCourse && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={(e) => { e.stopPropagation(); onBuy(); }} 
-              disabled={isBuying} 
-              className={`px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-50
-                ${isNature ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-gradient-to-r from-emerald-500 to-teal-600'}`}
-            >
-              {isBuying ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
-            </motion.button>
-          )}
-          
-          {!isAuthenticated && !hasPurchasedFullCourse && (
-            <div className="px-4 py-2 rounded-xl bg-gray-200 dark:bg-gray-700 text-foreground/40 text-sm font-semibold flex items-center gap-1">
-              <Lock className="w-3 h-3" /> {lang === "ar" ? "مقفل" : "Locked"}
-            </div>
-          )}
-          
-          <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.3 }}>
-            <svg className="w-5 h-5 text-foreground/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </motion.div>
+ <motion.div
+  initial={{ opacity: 0, y: 10 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ delay: index * 0.05 }}
+  className={`
+    border border-gray-200 dark:border-gray-700 
+    rounded-2xl 
+    overflow-hidden 
+    transition-all duration-300
+    ${isSelected ? 'ring-2 ring-blue-500 dark:ring-blue-400 shadow-lg shadow-blue-500/20' : ''}
+  `}
+>
+  <div 
+    className={`
+      p-4 
+      flex items-center justify-between 
+      cursor-pointer 
+      transition-colors duration-300
+      hover:bg-blue-50 dark:hover:bg-blue-950/30
+    `} 
+    onClick={() => setIsExpanded(!isExpanded)}
+  >
+    <div className="flex items-center gap-4 flex-1">
+      <img 
+        src={lessonImage || "/default-course.jpg"} 
+        alt={lessonTitle}
+        className="w-12 h-12 rounded-xl object-cover"
+      />
+      <div className="flex-1">
+        <h3 className="font-semibold text-gray-900 dark:text-white">
+          {lessonTitle}
+        </h3>
+        <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 mt-1">
+          <span className="flex items-center gap-1">
+            <Calendar className="w-3 h-3" />
+            {new Date(lesson.lession_date).toLocaleDateString()}
+          </span>
+          <span className="flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            {lesson.lession_time}
+          </span>
         </div>
       </div>
+    </div>
+    
+    <div className="flex items-center gap-3">
+      {!isFree && !isPurchased && (
+        <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
+          {parseFloat(lesson.price).toFixed(2)} EGP
+        </span>
+      )}
       
-      <AnimatePresence>
-        {isExpanded && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="px-4 pb-4 pt-0"
-          >
-            <div className={`pt-3 border-t ${isNature ? 'border-amber-200 dark:border-amber-800' : 'border-border'}`}>
-              {lessonDesc && (
-                <p className={`text-sm mb-4 ${isNature ? 'text-amber-700/70 dark:text-amber-300/70' : 'text-foreground/60'}`}>
-                  {lessonDesc}
-                </p>
-              )}
-              
-              {hasSubParts && isPurchased && (
-                <div className="mt-2">
-                  <h4 className={`text-sm font-semibold mb-3 ${isNature ? 'text-amber-700 dark:text-amber-300' : 'text-foreground'}`}>
-                    {lang === "ar" ? "📚 أجزاء الدرس:" : "📚 Lesson parts:"}
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {subParts.map((part: any, idx: number) => (
-                      <motion.div
-                        key={idx}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: idx * 0.05 }}
-                        onClick={() => goToLessonWithPart(lesson.id, idx)}
-                        className={`rounded-xl overflow-hidden border transition-all hover:shadow-lg cursor-pointer
-                          ${isNature 
-                            ? 'bg-white dark:bg-amber-900/30 border-amber-200 dark:border-amber-800' 
-                            : 'bg-card border-border'}`}
-                      >
-                        <div className="relative h-32 overflow-hidden">
-                          <img 
-                            src={lessonImage || "/default-course.jpg"} 
-                            alt={part.title}
-                            className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
-                          />
-                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                            <PlayCircle className="w-12 h-12 text-white drop-shadow-lg" />
-                          </div>
-                        </div>
-                        <div className="p-3">
-                          <div className="flex items-start gap-2">
-                            <div className={`w-6 h-6 rounded-lg ${numberBg} grid place-items-center text-white font-bold text-xs flex-shrink-0`}>
-                              {idx + 1}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h5 className={`font-semibold text-sm truncate ${titleColor}`}>
-                                {lang === "ar" ? part.title_ar : part.title}
-                              </h5>
-                              <p className="text-xs text-foreground/50 mt-1 flex items-center gap-1">
-                                <Video className="w-3 h-3" />
-                                {lang === "ar" ? "مقطع فيديو" : "Video part"}
-                              </p>
-                            </div>
-                          </div>
-                          <div
-                            className={`mt-3 w-full py-2 rounded-lg text-center text-sm font-medium transition-all flex items-center justify-center gap-2
-                              ${isNature 
-                                ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-800/50 dark:text-amber-300' 
-                                : 'bg-primary/10 text-primary hover:bg-primary/20'}`}
-                          >
-                            <Eye className="w-3 h-3" />
-                            {lang === "ar" ? "مشاهدة" : "Watch"}
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {hasSubParts && !isPurchased && (
-                <div className="mt-2 p-8 rounded-xl bg-gray-100 dark:bg-gray-800 text-center">
-                  <Lock className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                  <p className="text-sm text-gray-500">
-                    {lang === "ar" ? "اشتر الدرس لمشاهدة الأجزاء" : "Buy the lesson to watch parts"}
-                  </p>
-                  <button
-                    onClick={onBuy}
-                    className={`mt-3 px-4 py-2 rounded-lg text-sm font-semibold text-white
-                      ${isNature ? 'bg-amber-600' : 'bg-primary'}`}
+      {isPurchased && (
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={(e) => { e.stopPropagation(); onWatch(); }} 
+          className="px-4 py-2 rounded-xl text-white text-sm font-semibold flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-500/25"
+        >
+          <Eye className="w-4 h-4" />
+          {lang === "ar" ? "مشاهدة" : "Watch"}
+        </motion.button>
+      )}
+      
+      {!isFree && !isPurchased && isAuthenticated && !hasPurchasedFullCourse && (
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={(e) => { e.stopPropagation(); onBuy(); }} 
+          disabled={isBuying} 
+          className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-50 flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/25"
+        >
+          {isBuying ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
+        </motion.button>
+      )}
+      
+      {!isAuthenticated && !hasPurchasedFullCourse && (
+        <div className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 text-sm font-semibold flex items-center gap-1">
+          <Lock className="w-3 h-3" /> {lang === "ar" ? "مقفل" : "Locked"}
+        </div>
+      )}
+      
+      <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.3 }}>
+        <svg className="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </motion.div>
+    </div>
+  </div>
+  
+  <AnimatePresence>
+    {isExpanded && (
+      <motion.div
+        initial={{ opacity: 0, height: 0 }}
+        animate={{ opacity: 1, height: "auto" }}
+        exit={{ opacity: 0, height: 0 }}
+        className="px-4 pb-4 pt-0"
+      >
+        <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+          {lessonDesc && (
+            <p className="text-sm mb-4 text-gray-500 dark:text-gray-400">
+              {lessonDesc}
+            </p>
+          )}
+          
+          {hasSubParts && isPurchased && (
+            <div className="mt-2">
+              <h4 className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">
+                {lang === "ar" ? "📚 أجزاء الدرس:" : "📚 Lesson parts:"}
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {subParts.map((part: any, idx: number) => (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: idx * 0.05 }}
+                    onClick={() => goToLessonWithPart(lesson.id, idx)}
+                    className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 transition-all hover:shadow-lg cursor-pointer bg-white dark:bg-gray-900 hover:border-blue-400 dark:hover:border-blue-500"
                   >
-                    {lang === "ar" ? "شراء الدرس" : "Buy Lesson"}
-                  </button>
-                </div>
-              )}
-              
-              {lesson.must_pass_to_unlock && !isPurchased && (
-                <div className="flex items-center gap-2 text-amber-600 text-sm mt-3">
-                  <Lock className="w-4 h-4" /> 
-                  {lang === "ar" ? "يجب اجتياز الامتحان السابق" : "Must pass previous exam"}
-                </div>
-              )}
+                    <div className="relative h-32 overflow-hidden">
+                      <img 
+                        src={lessonImage || "/default-course.jpg"} 
+                        alt={part.title}
+                        className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
+                      />
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                        <PlayCircle className="w-12 h-12 text-white drop-shadow-lg" />
+                      </div>
+                    </div>
+                    <div className="p-3">
+                      <div className="flex items-start gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 grid place-items-center text-white font-bold text-xs flex-shrink-0">
+                          {idx + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h5 className="font-semibold text-sm truncate text-gray-900 dark:text-white">
+                            {lang === "ar" ? part.title_ar : part.title}
+                          </h5>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
+                            <Video className="w-3 h-3" />
+                            {lang === "ar" ? "مقطع فيديو" : "Video part"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="mt-3 w-full py-2 rounded-lg text-center text-sm font-medium transition-all flex items-center justify-center gap-2 bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-950/50">
+                        <Eye className="w-3 h-3" />
+                        {lang === "ar" ? "مشاهدة" : "Watch"}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+          )}
+          
+          {hasSubParts && !isPurchased && (
+            <div className="mt-2 p-8 rounded-xl bg-gray-50 dark:bg-gray-800/50 text-center border border-gray-200 dark:border-gray-700">
+              <Lock className="w-8 h-8 mx-auto mb-2 text-gray-400 dark:text-gray-500" />
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {lang === "ar" ? "اشتر الدرس لمشاهدة الأجزاء" : "Buy the lesson to watch parts"}
+              </p>
+              <button
+                onClick={onBuy}
+                className="mt-3 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-500/25"
+              >
+                {lang === "ar" ? "شراء الدرس" : "Buy Lesson"}
+              </button>
+            </div>
+          )}
+          
+          {lesson.must_pass_to_unlock && !isPurchased && (
+            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-sm mt-3">
+              <Lock className="w-4 h-4" /> 
+              {lang === "ar" ? "يجب اجتياز الامتحان السابق" : "Must pass previous exam"}
+            </div>
+          )}
+        </div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+</motion.div>
   );
 };
 
