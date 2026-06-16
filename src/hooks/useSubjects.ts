@@ -35,7 +35,9 @@ export const useSubjects = (stageId?: number, teacherId?: number) => {
   return useQuery({
     queryKey: ['subjects', stageId,],
     queryFn: async () => {
-      const filters: any = {};
+      const filters: any = {
+        teacher_id:teacherId,
+      };
       if (stageId) filters.stage_id = stageId;
       
       const { data } = await api.post<SubjectsResponse>('/subject/index', {
