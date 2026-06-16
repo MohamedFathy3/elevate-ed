@@ -40,7 +40,7 @@ export const useSubjects = (stageId?: number, teacherId?: number) => {
       };
       if (stageId) filters.stage_id = stageId;
       
-      const { data } = await api.post<SubjectsResponse>('/subject/index', {
+      const { data } = await api.post<SubjectsResponse>('/index-subject/index', {
         filters,
         orderBy: "position",
         orderByDirection: "asc",

@@ -39,10 +39,10 @@ export const SubjectsPage = () => {
   const isDark = colorMode === 'dark';
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
 
-  // ✅ جلب المواد باستخدام useSubjects مع stage_id من الـ URL
+  // ✅ جلب المواد باستخدام useSubjects مع stage_id من الـ URL و teacher_id
   const { data: subjectsData, isLoading: subjectsLoading, refetch } = useSubjects(
     stageId, // ✅ stage_id من الـ URL
-    teacher?.id
+    teacher?.id // ✅ teacher_id من الـ Teacher Context
   );
 
   // ✅ المواد من الـ API
