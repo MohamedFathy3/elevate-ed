@@ -2,7 +2,7 @@
 // hooks/useAttendance.ts
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
-import { toast } from "sonner";
+import { toast  } from "@/hooks/use-toast";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
 

@@ -8,7 +8,7 @@ import { BookOpen, Clock, Award, Calendar, ChevronRight, User, Phone, Mail, Grad
 import { Link, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
-import { toast } from "sonner";
+import { toast  } from "@/hooks/use-toast";
 
 const StudentDashboard = () => {
   const { lang } = useLang();

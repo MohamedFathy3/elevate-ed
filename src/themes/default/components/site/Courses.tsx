@@ -6,7 +6,7 @@ import { useLang } from "@/i18n/LanguageContext";
 import { useSafeTeacherData } from "@/hooks/useSafeTeacherData";
 import { useBuyCourse } from "@/hooks/useEnroll";
 import { useTheme } from "@/context/ThemeContext";
-import { OfferTimerDisplay } from "@/components/ui/OfferTimer";
+import OfferTimerDisplay from "@/components/ui/OfferTimer";
 
 import { 
   ArrowRight, ArrowLeft, BookOpen, Atom, Zap, Sparkles, 
@@ -94,139 +94,147 @@ const DefaultCourseCard = ({ course, index, slug, pick, lang, Arrow, isDark }: a
   };
   
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: 0.6, delay: (index || 0) * 0.08, ease: [0.4, 0, 0.2, 1] }}
-      whileHover={{ y: -8 }}
-      className="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 overflow-hidden flex flex-col h-full border border-gray-100 dark:border-gray-700"
-    >
-      {/* Header Section */}
-      <div className="relative h-36 overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800">
-        {courseImage ? (
-          <>
-            <img
-              src={courseImage}
-              alt={courseTitle}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-          </>
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Icon className="w-16 h-16 text-white/20" strokeWidth={1} />
-          </div>
-        )}
-        
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-          className="absolute -right-6 -top-6 opacity-10"
-        >
-          <Icon className="w-32 h-32 text-white" strokeWidth={1} />
-        </motion.div>
-        
-        {/* ✅ Badge الخصم مع المؤقت */}
-        {hasDiscount && (
-          <div className="absolute top-3 left-3 z-10 flex flex-col gap-1">
-            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r from-red-500 to-rose-500 text-white text-xs font-bold shadow-lg">
-              <Percent className="w-3 h-3" />
-              <span>{discountPercent}% OFF</span>
-            </div>
-            
-            {/* ⏱️ عرض المؤقت إذا كان هناك تواريخ للعرض */}
-            {hasOfferDates && (
-              <OfferTimerDisplay 
-                startDate={offerStartDate} 
-                endDate={offerEndDate} 
-                lang={lang}
-                isDark={isDark}
+    <div className="flex flex-col h-full">
+      <motion.article
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-60px" }}
+        transition={{ duration: 0.6, delay: (index || 0) * 0.08, ease: [0.4, 0, 0.2, 1] }}
+        whileHover={{ y: -8 }}
+        className="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 overflow-hidden flex flex-col h-full border border-gray-100 dark:border-gray-700"
+      >
+        {/* Header Section */}
+        <div className="relative h-36 overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800">
+          {courseImage ? (
+            <>
+              <img
+                src={courseImage}
+                alt={courseTitle}
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
               />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+            </>
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Icon className="w-16 h-16 text-white/20" strokeWidth={1} />
+            </div>
+          )}
+          
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+            className="absolute -right-6 -top-6 opacity-10"
+          >
+            <Icon className="w-32 h-32 text-white" strokeWidth={1} />
+          </motion.div>
+          
+          {/* ✅ Badge الخصم فقط */}
+          {hasDiscount && (
+            <div className="absolute top-3 left-3 z-10">
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r from-red-500 to-rose-500 text-white text-xs font-bold shadow-lg">
+                <Percent className="w-3 h-3" />
+                <span>{discountPercent}% OFF</span>
+              </div>
+            </div>
+          )}
+          
+          {/* ✅ نوع الكورس (يمين) */}
+          <div className="absolute top-3 right-3 z-10 px-2 py-1 rounded-lg bg-black/60 backdrop-blur-sm text-white text-xs font-medium">
+            {type}
+          </div>
+        </div>
+        
+        <div className="p-4 flex-1 flex flex-col">
+          {/* Tags */}
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {stageName && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 text-xs">
+                <GraduationCap className="w-3 h-3" />
+                <span className="line-clamp-1 max-w-[80px]">{stageName}</span>
+              </span>
+            )}
+            {subjectName && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 text-xs">
+                <BookMarked className="w-3 h-3" />
+                <span className="line-clamp-1 max-w-[80px]">{subjectName}</span>
+              </span>
+            )}
+            {semesterName && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 text-xs">
+                <Calendar className="w-3 h-3" />
+                <span className="line-clamp-1 max-w-[80px]">{semesterName}</span>
+              </span>
             )}
           </div>
-        )}
-        
-        <div className="absolute top-3 right-3 z-10 px-2 py-1 rounded-lg bg-black/60 backdrop-blur-sm text-white text-xs font-medium">
-          {type}
-        </div>
-      </div>
-      
-      <div className="p-4 flex-1 flex flex-col">
-        {/* Tags */}
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          {stageName && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 text-xs">
-              <GraduationCap className="w-3 h-3" />
-              <span className="line-clamp-1 max-w-[80px]">{stageName}</span>
-            </span>
+          
+          {/* Title */}
+          <h3 className="font-bold text-base mb-2 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors min-h-[48px] text-gray-900 dark:text-white">
+            {courseTitle}
+          </h3>
+          
+          {/* Description */}
+          {courseDescription && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-3 min-h-[32px]">
+              {courseDescription.replace(/<[^>]*>/g, '')}
+            </p>
           )}
-          {subjectName && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 text-xs">
-              <BookMarked className="w-3 h-3" />
-              <span className="line-clamp-1 max-w-[80px]">{subjectName}</span>
-            </span>
-          )}
-          {semesterName && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 text-xs">
-              <Calendar className="w-3 h-3" />
-              <span className="line-clamp-1 max-w-[80px]">{semesterName}</span>
-            </span>
-          )}
-        </div>
-        
-        {/* Title */}
-        <h3 className="font-bold text-base mb-2 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors min-h-[48px] text-gray-900 dark:text-white">
-          {courseTitle}
-        </h3>
-        
-        {/* Description */}
-        {courseDescription && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-3 min-h-[32px]">
-            {courseDescription.replace(/<[^>]*>/g, '')}
-          </p>
-        )}
-        
-        {/* Price and Buttons */}
-        <div className="mt-auto pt-3 border-t border-gray-100 dark:border-gray-700">
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              {hasDiscount ? (
-                <div className="flex flex-col">
-                  <span className="text-xl font-black text-blue-600 dark:text-blue-400">{finalPrice.toFixed(2)} EGP</span>
-                  <span className="text-xs text-gray-400 dark:text-gray-500 line-through">{originalPrice.toFixed(2)} EGP</span>
-                </div>
-              ) : (
-                <span className="text-xl font-black text-blue-600 dark:text-blue-400">{originalPrice.toFixed(2)} EGP</span>
-              )}
-            </div>
-            
-            <div className="flex gap-2">
-              <button
-                onClick={handleBuy}
-                disabled={isBuying}
-                className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-500 dark:to-blue-600 text-white font-semibold text-xs shadow-md hover:shadow-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
-              >
-                {isBuying ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+          
+          {/* Price and Buttons */}
+          <div className="mt-auto pt-3 border-t border-gray-100 dark:border-gray-700">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                {hasDiscount ? (
+                  <div className="flex flex-col">
+                    <span className="text-xl font-black text-blue-600 dark:text-blue-400">{finalPrice.toFixed(2)} EGP</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500 line-through">{originalPrice.toFixed(2)} EGP</span>
+                  </div>
                 ) : (
-                  <ShoppingCart className="w-4 h-4" />
+                  <span className="text-xl font-black text-blue-600 dark:text-blue-400">{originalPrice.toFixed(2)} EGP</span>
                 )}
-                <span>{lang === "ar" ? "شراء" : "Buy"}</span>
-              </button>
+              </div>
               
-              <Link
-                to={`/${slug}/courses/${course?.id}`}
-                className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold text-xs hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
-              >
-                <span>{lang === "ar" ? "تفاصيل" : "Details"}</span>
-                <Arrow className="w-3 h-3" />
-              </Link>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleBuy}
+                  disabled={isBuying}
+                  className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-500 dark:to-blue-600 text-white font-semibold text-xs shadow-md hover:shadow-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+                >
+                  {isBuying ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <ShoppingCart className="w-4 h-4" />
+                  )}
+                  <span>{lang === "ar" ? "شراء" : "Buy"}</span>
+                </button>
+                
+                <Link
+                  to={`/${slug}/courses/${course?.id}`}
+                  className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold text-xs hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+                >
+                  <span>{lang === "ar" ? "تفاصيل" : "Details"}</span>
+                  <Arrow className="w-3 h-3" />
+                </Link>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </motion.article>
+      </motion.article>
+      
+      {/* ✅ Timer تحت الكارد بالكامل */}
+      {hasDiscount && hasOfferDates && (
+        <div className="mt-2 px-1">
+          <OfferTimerDisplay 
+            startDate={offerStartDate} 
+            endDate={offerEndDate} 
+            lang={lang}
+            isDark={isDark}
+            compact={true}
+            variant="red"
+            className="w-full justify-center text-[10px]"
+          />
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -259,120 +267,125 @@ const NatureCarouselCourses = ({ courses, pick, slug, lang, Arrow, dir, isDark }
   const courseDescription = pick(c?.description, c?.description_ar) || "";
   const type = c?.type === "online" ? (lang === "ar" ? "أونلاين" : "Online") : (lang === "ar" ? "سنتر" : "Center");
   
-  return (
-    <section className="py-20 overflow-hidden bg-gradient-to-b from-amber-50/50 to-white dark:from-gray-900 dark:to-gray-950">
-      <div className="container mx-auto px-4 grid lg:grid-cols-2 gap-12 items-center">
-        {/* Carousel */}
-        <div className="relative order-2 lg:order-1">
-          <div className="relative rounded-[2rem] p-1.5 bg-gradient-to-br from-amber-500 to-amber-600 shadow-xl">
-            <div className="relative bg-white dark:bg-gray-800 rounded-[1.7rem] overflow-hidden">
-              <div className="relative h-72 bg-gradient-to-br from-amber-100 to-amber-50 dark:from-gray-700 dark:to-gray-800 grid place-items-center overflow-hidden">
-                {courseImage ? (
-                  <img 
-                    src={courseImage} 
-                    alt={courseTitle} 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <Leaf className="w-24 h-24 text-amber-300 dark:text-amber-600" />
-                )}
-                
-                {/* ✅ Badge الخصم مع المؤقت */}
-                {hasDiscount && (
-                  <div className="absolute top-4 right-4 z-10 flex flex-col gap-1">
-                    <span className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-red-500 to-rose-500 text-white text-xs font-black shadow-lg">
-                      {discount}% OFF
-                    </span>
-                    
-                    {/* ⏱️ عرض المؤقت */}
-                    {hasOfferDates && (
-                      <OfferTimerDisplay 
-                        startDate={offerStartDate} 
-                        endDate={offerEndDate} 
-                        lang={lang}
-                        isDark={isDark}
-                      />
-                    )}
-                  </div>
-                )}
-                
-                <div className="absolute bottom-3 left-3 px-2 py-1 rounded-lg bg-black/60 backdrop-blur-sm text-white text-xs font-medium">
-                  {type}
+return (
+  <section className="py-20 overflow-hidden bg-gradient-to-b from-amber-50/50 to-white dark:from-gray-900 dark:to-gray-950">
+    <div className="container mx-auto px-4 grid lg:grid-cols-2 gap-12 items-center">
+      {/* Carousel */}
+      <div className="relative order-2 lg:order-1">
+        <div className="relative rounded-[2rem] p-1.5 bg-gradient-to-br from-amber-500 to-amber-600 shadow-xl">
+          <div className="relative bg-white dark:bg-gray-800 rounded-[1.7rem] overflow-hidden">
+            <div className="relative h-72 bg-gradient-to-br from-amber-100 to-amber-50 dark:from-gray-700 dark:to-gray-800 grid place-items-center overflow-hidden">
+              {courseImage ? (
+                <img 
+                  src={courseImage} 
+                  alt={courseTitle} 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Leaf className="w-24 h-24 text-amber-300 dark:text-amber-600" />
+              )}
+              
+              {/* ✅ Badge الخصم فقط */}
+              {hasDiscount && (
+                <div className="absolute top-4 left-4 z-10">
+                  <span className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-red-500 to-rose-500 text-white text-xs font-black shadow-lg">
+                    {discount}% OFF
+                  </span>
                 </div>
-                
-                <button
-                  onClick={() => go(-1)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 size-11 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur grid place-items-center shadow-md hover:bg-white dark:hover:bg-gray-700 hover:scale-110 transition"
-                >
-                  <ArrowRight className="size-5 text-amber-600 dark:text-amber-400" />
-                </button>
-                <button
-                  onClick={() => go(1)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 size-11 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur grid place-items-center shadow-md hover:bg-white dark:hover:bg-gray-700 hover:scale-110 transition"
-                >
-                  <ArrowIcon className="size-5 text-amber-600 dark:text-amber-400" />
-                </button>
+              )}
+              
+              <div className="absolute bottom-3 left-3 px-2 py-1 rounded-lg bg-black/60 backdrop-blur-sm text-white text-xs font-medium">
+                {type}
+              </div>
+              
+              <button
+                onClick={() => go(-1)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 size-11 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur grid place-items-center shadow-md hover:bg-white dark:hover:bg-gray-700 hover:scale-110 transition"
+              >
+                <ArrowRight className="size-5 text-amber-600 dark:text-amber-400" />
+              </button>
+              <button
+                onClick={() => go(1)}
+                className="absolute left-3 top-1/2 -translate-y-1/2 size-11 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur grid place-items-center shadow-md hover:bg-white dark:hover:bg-gray-700 hover:scale-110 transition"
+              >
+                <ArrowIcon className="size-5 text-amber-600 dark:text-amber-400" />
+              </button>
+            </div>
+
+            <div className="p-6 text-center">
+              <h3 className="font-extrabold text-xl text-amber-800 dark:text-amber-300">{courseTitle}</h3>
+              <p className="mt-1 text-sm text-amber-600/70 dark:text-amber-400/70">{courseDescription.replace(/<[^>]*>/g, '')}</p>
+
+              <div className="mt-4 flex items-center justify-center gap-3">
+                {hasDiscount ? (
+                  <>
+                    <span className="text-2xl font-black text-amber-700 dark:text-amber-400">{finalPrice.toFixed(2)} جنيه</span>
+                    <span className="text-sm text-amber-400 dark:text-amber-500 line-through font-bold">{originalPrice.toFixed(2)} جنيه</span>
+                  </>
+                ) : (
+                  <span className="text-2xl font-black text-amber-700 dark:text-amber-400">{originalPrice.toFixed(2)} جنيه</span>
+                )}
               </div>
 
-              <div className="p-6 text-center">
-                <h3 className="font-extrabold text-xl text-amber-800 dark:text-amber-300">{courseTitle}</h3>
-                <p className="mt-1 text-sm text-amber-600/70 dark:text-amber-400/70">{courseDescription.replace(/<[^>]*>/g, '')}</p>
-
-                <div className="mt-4 flex items-center justify-center gap-3">
-                  {hasDiscount ? (
-                    <>
-                      <span className="text-2xl font-black text-amber-700 dark:text-amber-400">{finalPrice.toFixed(2)} جنيه</span>
-                      <span className="text-sm text-amber-400 dark:text-amber-500 line-through font-bold">{originalPrice.toFixed(2)} جنيه</span>
-                    </>
-                  ) : (
-                    <span className="text-2xl font-black text-amber-700 dark:text-amber-400">{originalPrice.toFixed(2)} جنيه</span>
-                  )}
-                </div>
-
-                <div className="mt-5 grid grid-cols-2 gap-3">
-                  <Link to={`/${slug}/courses/${c?.id}`} className="px-4 py-3 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 text-white text-sm font-bold shadow-md hover:shadow-lg transition-all hover:scale-105">
-                    {lang === "ar" ? "اشترك الآن" : "Enroll Now"}
-                  </Link>
-                  <Link to={`/${slug}/courses/${c?.id}`} className="px-4 py-3 rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-sm font-bold border border-amber-200 dark:border-amber-800 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-all">
-                    {lang === "ar" ? "تفاصيل الكورس" : "Details"}
-                  </Link>
-                </div>
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <Link to={`/${slug}/courses/${c?.id}`} className="px-4 py-3 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 text-white text-sm font-bold shadow-md hover:shadow-lg transition-all hover:scale-105">
+                  {lang === "ar" ? "اشترك الآن" : "Enroll Now"}
+                </Link>
+                <Link to={`/${slug}/courses/${c?.id}`} className="px-4 py-3 rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-sm font-bold border border-amber-200 dark:border-amber-800 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-all">
+                  {lang === "ar" ? "تفاصيل الكورس" : "Details"}
+                </Link>
               </div>
             </div>
-          </div>
-
-          <div className="mt-5 flex justify-center gap-2">
-            {courses.map((_: any, i: number) => (
-              <button
-                key={i}
-                onClick={() => setIndex(i)}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  i === index 
-                    ? "w-8 bg-amber-600 dark:bg-amber-500" 
-                    : "w-2 bg-amber-300 dark:bg-amber-700"
-                }`}
-              />
-            ))}
           </div>
         </div>
 
-        {/* Heading */}
-        <div className="order-1 lg:order-2 text-center">
-          <h2 className="text-4xl md:text-5xl font-black leading-tight flex flex-col items-center gap-3">
-            <div className="flex items-center justify-center gap-3 flex-wrap">
-              <Leaf className="size-9 text-amber-600 dark:text-amber-400 animate-spin-slow" />
-              <span className="text-amber-800 dark:text-amber-300">{lang === "ar" ? "الكورسات" : "Courses"}</span>
-              <span className="text-amber-600 dark:text-amber-400"> {lang === "ar" ? "المُرشّحة" : "Featured"}</span>
-              <Leaf className="size-9 text-amber-600 dark:text-amber-400 animate-spin-slow" />
-            </div>
-          </h2>
-          <p className="mt-4 text-lg text-amber-600/70 dark:text-amber-400/70 max-w-md mx-auto">
-            {lang === "ar" ? "دول أهم الكورسات اللي جمعناهالك هنا" : "Our featured courses for you"}
-          </p>
+        {/* ✅ Timer تحت الكاروسيل */}
+        {hasDiscount && hasOfferDates && (
+          <div className="mt-3 px-1">
+            <OfferTimerDisplay 
+              startDate={offerStartDate} 
+              endDate={offerEndDate} 
+              lang={lang}
+              isDark={isDark}
+              compact={true}
+              variant="gold"
+              className="w-full justify-center text-[10px]"
+            />
+          </div>
+        )}
+
+        <div className="mt-5 flex justify-center gap-2">
+          {courses.map((_: any, i: number) => (
+            <button
+              key={i}
+              onClick={() => setIndex(i)}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                i === index 
+                  ? "w-8 bg-amber-600 dark:bg-amber-500" 
+                  : "w-2 bg-amber-300 dark:bg-amber-700"
+              }`}
+            />
+          ))}
         </div>
       </div>
-    </section>
-  );
+
+      {/* Heading */}
+      <div className="order-1 lg:order-2 text-center">
+        <h2 className="text-4xl md:text-5xl font-black leading-tight flex flex-col items-center gap-3">
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            <Leaf className="size-9 text-amber-600 dark:text-amber-400 animate-spin-slow" />
+            <span className="text-amber-800 dark:text-amber-300">{lang === "ar" ? "الكورسات" : "Courses"}</span>
+            <span className="text-amber-600 dark:text-amber-400"> {lang === "ar" ? "المُرشّحة" : "Featured"}</span>
+            <Leaf className="size-9 text-amber-600 dark:text-amber-400 animate-spin-slow" />
+          </div>
+        </h2>
+        <p className="mt-4 text-lg text-amber-600/70 dark:text-amber-400/70 max-w-md mx-auto">
+          {lang === "ar" ? "دول أهم الكورسات اللي جمعناهالك هنا" : "Our featured courses for you"}
+        </p>
+      </div>
+    </div>
+  </section>
+);
 };
 
 // ============================================

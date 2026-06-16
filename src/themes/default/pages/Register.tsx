@@ -15,7 +15,7 @@ import {
   X, CheckCircle, AlertTriangle, Info, Shield, WifiOff, Users as UsersIcon, 
   BookMarked, CreditCard, RefreshCw, Smartphone, Laptop, Globe
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast  } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
 const Register = () => {

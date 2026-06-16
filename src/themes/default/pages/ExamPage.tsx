@@ -12,7 +12,7 @@ import {
   Send, Shield, Zap, Brain, HelpCircle, BookOpen,
   ChevronDown, ChevronUp
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast  } from "@/hooks/use-toast";
 
 const ExamPage = () => {
   const { lang, dir } = useLang();

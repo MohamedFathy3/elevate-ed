@@ -5,7 +5,7 @@ import { useParams, Link } from "react-router-dom";
 import { useTeacher } from "@/context/TeacherContext";
 import { useStudentLogin } from "@/hooks/useStudent";
 import { LogIn, Phone, Lock, Eye, EyeOff, ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast  } from "@/hooks/use-toast";
 
 const Login = () => {
   const { lang, dir } = useLang();

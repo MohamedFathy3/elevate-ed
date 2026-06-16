@@ -1,18 +1,24 @@
 // components/ui/OfferTimer.tsx
 
 import { useEffect, useState } from "react";
-import { Clock, Timer, AlertCircle } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import {
+  Clock,
+  AlertCircle,
+  Timer,
+  Sparkles,
+  Crown,
+  Zap,
+  Flame,
+} from "lucide-react";
+import { motion } from "framer-motion";
 
 interface OfferTimerProps {
   startDate: string;
   endDate: string;
   lang: string;
-  isDark?: boolean;
-  isNature?: boolean;
-  compact?: boolean; // ✅ عرض مصغر
-  showIcon?: boolean; // ✅ إظهار/إخفاء الأيقونة
-  className?: string; // ✅ تخصيص إضافي
+  className?: string;
+  showIcon?: boolean;
+  variant?: "red" | "purple" | "gold" | "blue" | "green";
 }
 
 interface TimeLeft {
@@ -25,7 +31,49 @@ interface TimeLeft {
   isUpcoming: boolean;
 }
 
-const useOfferTimer = ({ startDate, endDate }: { startDate: string; endDate: string }): TimeLeft => {
+const VARIANTS = {
+  red: {
+    gradient:
+      "from-red-500 via-rose-500 to-orange-500",
+    shadow: "shadow-red-500/30",
+  },
+  purple: {
+    gradient:
+      "from-purple-500 via-fuchsia-500 to-pink-500",
+    shadow: "shadow-purple-500/30",
+  },
+  gold: {
+    gradient:
+      "from-amber-400 via-yellow-500 to-orange-500",
+    shadow: "shadow-amber-500/30",
+  },
+  blue: {
+    gradient:
+      "from-sky-500 via-blue-500 to-indigo-500",
+    shadow: "shadow-blue-500/30",
+  },
+  green: {
+    gradient:
+      "from-emerald-500 via-green-500 to-teal-500",
+    shadow: "shadow-emerald-500/30",
+  },
+};
+
+const ICONS = {
+  red: Timer,
+  purple: Crown,
+  gold: Sparkles,
+  blue: Zap,
+  green: Flame,
+};
+
+const useOfferTimer = ({
+  startDate,
+  endDate,
+}: {
+  startDate: string;
+  endDate: string;
+}): TimeLeft => {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({
     days: 0,
     hours: 0,
@@ -37,32 +85,35 @@ const useOfferTimer = ({ startDate, endDate }: { startDate: string; endDate: str
   });
 
   useEffect(() => {
-    const calculateTimeLeft = () => {
-      const now = new Date().getTime();
+    const calculate = () => {
+      const now = Date.now();
       const start = new Date(startDate).getTime();
       const end = new Date(endDate).getTime();
 
-      // العرض لم يبدأ بعد
       if (now < start) {
         const diff = start - now;
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-        
+
         setTimeLeft({
-          days,
-          hours,
-          minutes,
-          seconds,
+          days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+          hours: Math.floor(
+            (diff % (1000 * 60 * 60 * 24)) /
+              (1000 * 60 * 60)
+          ),
+          minutes: Math.floor(
+            (diff % (1000 * 60 * 60)) /
+              (1000 * 60)
+          ),
+          seconds: Math.floor(
+            (diff % (1000 * 60)) / 1000
+          ),
           isActive: false,
           isExpired: false,
           isUpcoming: true,
         });
+
         return;
       }
 
-      // العرض انتهى
       if (now > end) {
         setTimeLeft({
           days: 0,
@@ -73,29 +124,34 @@ const useOfferTimer = ({ startDate, endDate }: { startDate: string; endDate: str
           isExpired: true,
           isUpcoming: false,
         });
+
         return;
       }
 
-      // العرض نشط
       const diff = end - now;
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
       setTimeLeft({
-        days,
-        hours,
-        minutes,
-        seconds,
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor(
+          (diff % (1000 * 60 * 60 * 24)) /
+            (1000 * 60 * 60)
+        ),
+        minutes: Math.floor(
+          (diff % (1000 * 60 * 60)) /
+            (1000 * 60)
+        ),
+        seconds: Math.floor(
+          (diff % (1000 * 60)) / 1000
+        ),
         isActive: true,
         isExpired: false,
         isUpcoming: false,
       });
     };
 
-    calculateTimeLeft();
-    const interval = setInterval(calculateTimeLeft, 1000);
+    calculate();
+
+    const interval = setInterval(calculate, 1000);
 
     return () => clearInterval(interval);
   }, [startDate, endDate]);
@@ -103,108 +159,241 @@ const useOfferTimer = ({ startDate, endDate }: { startDate: string; endDate: str
   return timeLeft;
 };
 
-export const OfferTimerDisplay = ({ 
-  startDate, 
-  endDate, 
-  lang, 
-  isDark = false, 
-  isNature = false,
-  compact = false,
-  showIcon = true,
-  className = ""
-}: OfferTimerProps) => {
-  const timer = useOfferTimer({ startDate, endDate });
-
-  // ✅ حالة: العرض انتهى
-  if (timer.isExpired) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className={`flex items-center gap-1 px-2 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-[10px] font-medium ${className}`}
-      >
-        <AlertCircle className="w-3 h-3" />
-        <span>{lang === "ar" ? "انتهى" : "Expired"}</span>
-      </motion.div>
-    );
-  }
-
-  // ✅ حالة: العرض لم يبدأ بعد
-  if (timer.isUpcoming) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className={`flex items-center gap-1 px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[10px] font-medium ${className}`}
-      >
-        {showIcon && <Clock className="w-3 h-3" />}
-        <span>{lang === "ar" ? "يبدأ" : "Starts"}</span>
-        <span className="font-mono font-bold">
-          {timer.days > 0 && `${timer.days}d `}
-          {timer.hours > 0 && `${timer.hours}h `}
-          {!compact && timer.minutes > 0 && `${timer.minutes}m`}
-        </span>
-      </motion.div>
-    );
-  }
-
-  // ❌ العرض غير نشط
-  if (!timer.isActive) return null;
-
-  // ✅ العرض نشط - عرض المؤقت التنازلي
-  const formatNumber = (num: number) => String(num).padStart(2, '0');
-
-  // ✅ نسخة مدمجة (compact)
-  if (compact) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className={`flex items-center gap-1 px-2 py-0.5 rounded bg-gradient-to-r from-red-500 to-rose-500 text-white text-[10px] font-medium shadow-lg ${className}`}
-      >
-        {showIcon && <Timer className="w-3 h-3 animate-pulse" />}
-        <span className="font-mono font-bold flex items-center gap-0.5">
-          {timer.days > 0 && (
-            <>
-              <span className="bg-white/20 px-1 rounded">{formatNumber(timer.days)}</span>
-              <span>d</span>
-            </>
-          )}
-          <span className="bg-white/20 px-1 rounded">{formatNumber(timer.hours)}</span>
-          <span>:</span>
-          <span className="bg-white/20 px-1 rounded">{formatNumber(timer.minutes)}</span>
-          <span>:</span>
-          <span className="bg-white/20 px-1 rounded">{formatNumber(timer.seconds)}</span>
-        </span>
-      </motion.div>
-    );
-  }
-
-  // ✅ نسخة كاملة
+const TimeBox = ({
+  value,
+}: {
+  value: number;
+}) => {
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className={`flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gradient-to-r from-red-500 to-rose-500 text-white text-xs font-medium shadow-lg ${className}`}
+      key={value}
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{
+        scale: 1,
+        opacity: 1,
+      }}
+      transition={{
+        duration: 0.3,
+      }}
+      className="
+        min-w-[34px]
+        h-9
+        rounded-xl
+        bg-white/15
+        border
+        border-white/20
+        backdrop-blur-md
+        flex
+        items-center
+        justify-center
+        font-bold
+        text-sm
+      "
     >
-      {showIcon && <Timer className="w-4 h-4 animate-pulse" />}
-      <span>{lang === "ar" ? "ينتهي" : "Ends"}</span>
-      <div className="flex items-center gap-0.5 font-mono font-bold">
-        {timer.days > 0 && (
-          <>
-            <span className="bg-white/20 px-1.5 py-0.5 rounded">{formatNumber(timer.days)}</span>
-            <span>d</span>
-          </>
-        )}
-        <span className="bg-white/20 px-1.5 py-0.5 rounded">{formatNumber(timer.hours)}</span>
-        <span>:</span>
-        <span className="bg-white/20 px-1.5 py-0.5 rounded">{formatNumber(timer.minutes)}</span>
-        <span>:</span>
-        <span className="bg-white/20 px-1.5 py-0.5 rounded">{formatNumber(timer.seconds)}</span>
-      </div>
+      {String(value).padStart(2, "0")}
     </motion.div>
   );
 };
 
-// ✅ Export افتراضي
-export default OfferTimerDisplay;
+export default function OfferTimerDisplay({
+  startDate,
+  endDate,
+  lang,
+  className = "",
+  showIcon = true,
+  variant = "red",
+}: OfferTimerProps) {
+  const timer = useOfferTimer({
+    startDate,
+    endDate,
+  });
+
+  const Icon = ICONS[variant];
+  const style = VARIANTS[variant];
+
+  const isRTL = lang === "ar";
+
+  const urgent =
+    timer.days === 0 &&
+    timer.hours < 6;
+
+  if (timer.isExpired) {
+    return (
+      <div
+        className="
+          inline-flex
+          items-center
+          gap-2
+          px-3
+          py-2
+          rounded-full
+          bg-gray-100
+          dark:bg-gray-900
+          text-gray-500
+        "
+      >
+        <AlertCircle className="w-4 h-4" />
+        {isRTL
+          ? "انتهى العرض"
+          : "Offer Expired"}
+      </div>
+    );
+  }
+
+  if (timer.isUpcoming) {
+    return (
+      <div
+        className="
+          inline-flex
+          items-center
+          gap-2
+          px-3
+          py-2
+          rounded-full
+          bg-amber-500/10
+          border
+          border-amber-500/20
+          text-amber-500
+        "
+      >
+        <Clock className="w-4 h-4" />
+
+        <span>
+          {isRTL
+            ? "سيبدأ قريباً"
+            : "Starts Soon"}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{
+        opacity: 0,
+        y: 20,
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+      }}
+      whileHover={{
+        scale: 1.03,
+      }}
+      className={`
+        relative
+        overflow-hidden
+        rounded-3xl
+        px-4
+        py-3
+
+        bg-gradient-to-r
+        ${style.gradient}
+
+        text-white
+
+        shadow-xl
+        ${style.shadow}
+
+        border
+        border-white/10
+
+        backdrop-blur-xl
+
+        ${urgent ? "animate-pulse" : ""}
+
+        ${className}
+      `}
+    >
+      {/* Glow */}
+      <div
+        className="
+          absolute
+          inset-0
+          bg-white/5
+        "
+      />
+
+      {/* Shine */}
+      <motion.div
+        animate={{
+          x: ["-200%", "300%"],
+        }}
+        transition={{
+          duration: 4,
+          repeat: Infinity,
+          ease: "linear",
+        }}
+        className="
+          absolute
+          top-0
+          left-0
+          w-20
+          h-full
+          bg-white/20
+          blur-xl
+          rotate-12
+        "
+      />
+
+      <div className="relative z-10 flex items-center gap-3">
+        {showIcon && (
+          <motion.div
+            animate={{
+              scale: [1, 1.15, 1],
+              rotate: [0, 10, -10, 0],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+            }}
+            className="
+              w-10
+              h-10
+              rounded-2xl
+              bg-white/15
+              border
+              border-white/20
+              flex
+              items-center
+              justify-center
+            "
+          >
+            <Icon className="w-5 h-5" />
+          </motion.div>
+        )}
+
+        <div>
+          <div className="text-xs opacity-80 mb-1">
+            {urgent
+              ? isRTL
+                ? "🔥 العرض ينتهي قريباً"
+                : "🔥 Ending Soon"
+              : isRTL
+              ? "⏳ الوقت المتبقي"
+              : "⏳ Time Left"}
+          </div>
+
+          <div className="flex items-center gap-1">
+            {timer.days > 0 && (
+              <>
+                <TimeBox value={timer.days} />
+                <span className="text-xs px-1">
+                  {isRTL ? "ي" : "D"}
+                </span>
+              </>
+            )}
+
+            <TimeBox value={timer.hours} />
+            <span>:</span>
+
+            <TimeBox value={timer.minutes} />
+            <span>:</span>
+
+            <TimeBox value={timer.seconds} />
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}

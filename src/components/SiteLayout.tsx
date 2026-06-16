@@ -73,13 +73,7 @@ const SiteLayoutContent = () => {
       {/* ✅ Floating button for offers */}
       <FloatingOfferButton />
       
-      {/* ✅ Offer Popup */}
-      {showPopup && teacher && (
-        <OfferPopup 
-          lang={lang} 
-          onClose={() => setShowPopup(false)} 
-        />
-      )}
+    
     </>
   );
 };

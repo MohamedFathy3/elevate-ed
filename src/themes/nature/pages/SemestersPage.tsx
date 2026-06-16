@@ -14,7 +14,7 @@ import {
   ChevronDown, ChevronUp, Tag, Flame
 } from "lucide-react";
 import { useState, useMemo } from "react";
-import { toast } from "sonner";
+import { toast  } from "@/hooks/use-toast";
 
 export const SemestersPage = () => {
   const { lang, dir } = useLang();

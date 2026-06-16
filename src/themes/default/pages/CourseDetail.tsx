@@ -14,7 +14,7 @@ import {
   AlertTriangle, LogIn
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { toast } from "sonner";
+import { toast  } from "@/hooks/use-toast";
 import { enableFullProtection } from "@/utils/protection";
 import Cookies from "js-cookie";
 

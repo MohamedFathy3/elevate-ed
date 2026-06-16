@@ -85,13 +85,13 @@ export const Navbar = () => {
 
         {/* Links - تخفي للطلاب المسجلين */}
         {!isAuthenticated && (
-          <ul className="hidden lg:flex items-center gap-1 text-sm">
+          <ul className="hidden lg:flex items-center gap-1 text-sm text-[#000] dark:text-[#fff] ">
             {links.map((l) => (
               <li key={l.href}>
-                <Link to={l.href} className={`px-4 py-2 rounded-full transition-colors flex items-center gap-2
+                <Link to={l.href} className={`px-4 py-2 rounded-full text-[#000] dark:text-[#fff] flex items-center gap-2
                   ${isNature 
-                    ? 'text-amber-700/70 hover:text-amber-700 hover:bg-amber-100' 
-                    : 'text-foreground/70 hover:text-primary hover:bg-primary/5'}`}>
+                    ? 'text-[#000] dark:text-[#fff] hover:text-amber-700 hover:bg-amber-100' 
+                    : 'text-[#000] dark:text-[#fff] hover:text-primary hover:bg-primary/5'}`}>
                   <span className={`w-1.5 h-1.5 rounded-full ${isNature ? 'bg-amber-500' : 'bg-primary/60'}`} />
                   {l.label}
                 </Link>

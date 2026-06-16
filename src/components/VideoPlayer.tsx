@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "re
 import { Play, AlertCircle, Lock, FileQuestion, Shield, XCircle } from "lucide-react";
 import { useLang } from "@/i18n/LanguageContext";
 import { useAdvancedProtection } from '@/hooks/useScreenRecorderProtection';
-import { toast } from "sonner";
+import { toast  } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface VideoPlayerProps {

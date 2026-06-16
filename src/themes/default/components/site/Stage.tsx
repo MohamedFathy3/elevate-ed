@@ -377,13 +377,13 @@ return (
         <div className="mt-20 relative">
           <button
             onClick={() => swiperRef.current?.slidePrev()}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border border-border bg-card shadow-lg flex items-center justify-center transition-all -ml-6 hover:bg-primary hover:text-white hidden lg:flex"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border text-primary  shadow-lg flex items-center justify-center transition-all -ml-6 hover:bg-primary hover:text-primary hidden lg:flex"
           >
             <PrevIcon className="w-5 h-5" />
           </button>
           <button
             onClick={() => swiperRef.current?.slideNext()}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border border-border bg-card shadow-lg flex items-center justify-center transition-all -mr-6 hover:bg-primary hover:text-white hidden lg:flex"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border text-primary  shadow-lg flex items-center justify-center transition-all -mr-6 hover:bg-primary hover:text-primary hidden lg:flex"
           >
             <NextIcon className="w-5 h-5" />
           </button>
@@ -497,12 +497,7 @@ return (
                             <h3 className={`text-3xl text-[#2266bf] dark:text-white transition-colors ${!isDisabled ? 'group-hover:text-primary' : ''}`}>
                               {stageName}
                             </h3>
-                            <p className="mt-3 line-clamp-2 leading-8 text-white">
-                              {pick(s.description, s.description_ar) ||
-                                (lang === "ar"
-                                  ? "برامج تعليمية احترافية ومناهج متطورة."
-                                  : "Professional educational programs.")}
-                            </p>
+                        
                           </div>
                           <div className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-all group-hover:scale-110 group-hover:bg-primary group-hover:text-white`}>
                             <GraduationCap className="h-6 w-6" />

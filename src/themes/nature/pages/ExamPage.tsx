@@ -14,7 +14,7 @@ import {
   Send, Shield, Zap, Brain, HelpCircle, BookOpen,
   ChevronDown, ChevronUp, Timer, AlarmClock, Hourglass
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast  } from "@/hooks/use-toast";
 
 // ✅ Improved Analog Clock Component - شكل أنيق وجميل
 const AnalogClock = ({ timeLeft, totalSeconds }: { timeLeft: number; totalSeconds: number }) => {

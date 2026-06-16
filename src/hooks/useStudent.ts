@@ -2,7 +2,7 @@
 // hooks/useStudent.ts
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
-import { toast } from "sonner";
+import { toast  } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import { useTeacher } from "@/context/TeacherContext";

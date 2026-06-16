@@ -5,7 +5,7 @@ import { useSafeTeacher } from "@/context/TeacherContext";
 import { useTheme } from "@/context/ThemeContext";
 import { BookOpen, FileText, Leaf, Flower2, BookMarked, AlertCircle } from "lucide-react";
 import { useBuyCourse } from "@/hooks/useEnroll";
-import { toast } from "sonner";
+import { toast  } from "@/hooks/use-toast";
 
 export const Books = () => {
   const { lang } = useLang();

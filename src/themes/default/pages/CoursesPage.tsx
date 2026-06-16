@@ -14,7 +14,7 @@ import {
   Star, TrendingUp, Award, Percent
 } from "lucide-react";
 import DOMPurify from "dompurify";
-import { OfferTimerDisplay } from "@/components/ui/OfferTimer";
+import  OfferTimerDisplay  from "@/components/ui/OfferTimer";
 
 const CoursesPage = () => {
   const { lang, dir } = useLang();

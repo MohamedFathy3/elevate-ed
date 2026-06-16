@@ -14,7 +14,7 @@ import {
   ThumbsUp, ThumbsDown, Eye, EyeOff, AlertCircle, FileQuestion,
   ClipboardList, HelpCircle, TrendingUp, BarChart, XCircle
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast  } from "@/hooks/use-toast";
 
 const LessonPage = () => {
   const { lang, dir } = useLang();

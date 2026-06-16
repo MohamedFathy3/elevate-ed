@@ -16,7 +16,7 @@ import {
   Eye, XCircle
 } from "lucide-react";
 import { Link as RouterLink } from "react-router-dom";
-import { toast } from "sonner";
+import { toast  } from "@/hooks/use-toast";
 
 const SemesterDetails = () => {
   const { lang, dir } = useLang();

@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import useAdvancedProtection from '@/hooks/useScreenRecorderProtection';
 
-import { toast } from "sonner";
+import { toast  } from "@/hooks/use-toast";
 import { enableFullProtection } from "@/utils/protection";
 
 const LessonPage = () => {

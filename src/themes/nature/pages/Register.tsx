@@ -14,7 +14,7 @@ import {
   MapPin, AlertCircle, ChevronDown, Users, School, Landmark, BookOpen, Image,
   X, CheckCircle, Info, Shield, WifiOff, CreditCard, RefreshCw, Smartphone
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast  } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
 const Register = () => {

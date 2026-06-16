@@ -75,7 +75,7 @@ export const Navbar = () => {
           <ul className="hidden lg:flex items-center gap-1 text-sm">
             {links.map((l) => (
               <li key={l.href}>
-                <Link to={l.href} className="px-4 py-2 rounded-full text-foreground/70 hover:text-primary hover:bg-primary/5 transition-colors flex items-center gap-2">
+                <Link to={l.href} className="px-4 py-2 rounded-full text-[#000] dark:text-[#fff] hover:text-primary hover:bg-primary/5 transition-colors flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary/60" />
                   {l.label}
                 </Link>
@@ -173,7 +173,7 @@ export const Navbar = () => {
               </Link>
               <Link
                 to={`/${slug}/login`}
-                className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
+                className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-[#000] dark:text-[#fff]  "
               >
                 {lang === "ar" ? "خش ذاكر " : "Login"}
               </Link>

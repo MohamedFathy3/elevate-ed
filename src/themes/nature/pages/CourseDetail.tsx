@@ -13,7 +13,7 @@ import {
   XCircle
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { toast } from "sonner";
+import { toast  } from "@/hooks/use-toast";
 import { enableFullProtection, preventVideoDownload, disablePictureInPicture } from "@/utils/protection";
 import Cookies from "js-cookie";
 

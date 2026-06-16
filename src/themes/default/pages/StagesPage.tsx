@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // pages/StagesPage.tsx
+
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo, useEffect } from "react";
 import { useLang } from "@/i18n/LanguageContext";
@@ -17,16 +17,23 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 
 export const StagesPage = () => {
   const { lang, dir } = useLang();
-  const { theme } = useTheme();
   const { slug } = useParams();
   const { stages, pick, isLoading, teacher } = useSafeTeacherData();
   const { student, isAuthenticated, isLoading: authLoading } = useStudentAuth();
   const navigate = useNavigate();
   
-  const isNature = theme === 'nature';
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
   const [studentStageId, setStudentStageId] = useState<number | null>(null);
   const [redirectPath, setRedirectPath] = useState<string>("");
+
+  // ✅ ألوان ثابتة (أبيض + أزرق)
+  const primaryColor = "from-blue-600 to-blue-700";
+  const primaryLight = "from-blue-500 to-blue-600";
+  const primaryBg = "bg-blue-50";
+  const primaryText = "text-blue-600";
+  const primaryBorder = "border-blue-200";
+  const primaryHover = "hover:border-blue-400";
+  const primaryShadow = "shadow-blue-500/30";
 
   // ✅ تخزين مسار الصفحة الحالية للعودة بعد تسجيل الدخول
   useEffect(() => {
@@ -38,7 +45,7 @@ export const StagesPage = () => {
   // ✅ إذا كان المستخدم غير مسجل، حوله لصفحة تسجيل الدخول
   if (!authLoading && !isAuthenticated) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${isNature ? 'bg-cream' : 'bg-background'}`}>
+      <div className="min-h-screen flex items-center justify-center ">
         <div className="text-center max-w-md p-8">
           <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
             <LogIn className="w-12 h-12 text-red-500" />
@@ -53,7 +60,7 @@ export const StagesPage = () => {
           </p>
           <Link
             to={`/${slug}/login?redirect=${encodeURIComponent(redirectPath || window.location.pathname)}`}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold hover:shadow-lg transition-all"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold hover:shadow-lg transition-all"
           >
             <LogIn className="w-5 h-5" />
             {lang === "ar" ? "تسجيل الدخول" : "Login"}
@@ -63,37 +70,14 @@ export const StagesPage = () => {
     );
   }
 
-  // الألوان حسب الثيم
-  const primaryGradient = isNature 
-    ? "from-[#8B4513] to-[#A0522D]" 
-    : "from-primary to-purple-600";
-  const badgeBg = isNature 
-    ? "bg-amber-100 text-amber-800" 
-    : "bg-gradient-to-r from-primary/10 to-accent/10 text-primary";
-  const buttonBg = isNature 
-    ? "bg-[#8B4513] hover:bg-[#A0522D]" 
-    : "gradient-primary";
-  const cardBorder = isNature ? "border-amber-200" : "border-border";
-  const cardHoverBorder = isNature ? "hover:border-amber-300" : "hover:border-primary/40";
-  const statColors = isNature 
-    ? [
-        "from-[#8B4513] to-[#A0522D]",
-        "from-[#D2691E] to-[#CD853F]",
-        "from-[#A0522D] to-[#D2691E]",
-        "from-[#8B4513] to-[#CD853F]"
-      ]
-    : [
-        "from-primary to-purple-600",
-        "from-emerald-500 to-teal-600",
-        "from-orange-500 to-red-500",
-        "from-blue-500 to-cyan-600"
-      ];
-  
-  const primaryTextClass = isNature ? "text-[#8B4513]" : "text-primary";
-  const gradientTextClass = isNature 
-    ? "bg-gradient-to-r from-[#8B4513] to-[#A0522D] bg-clip-text text-transparent"
-    : "bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent";
-  
+  // ✅ ألوان ثابتة للمراحل
+  const stageColors = [
+    "from-blue-500 to-blue-600",
+    "from-indigo-500 to-indigo-600",
+    "from-blue-600 to-blue-700",
+    "from-cyan-500 to-cyan-600"
+  ];
+
   useEffect(() => {
     if (isAuthenticated && student?.stage_id) {
       setStudentStageId(student.stage_id);
@@ -166,23 +150,23 @@ export const StagesPage = () => {
   const totalCourses = stages?.reduce((acc, stage) => acc + (stage.courses_count || 0), 0) || 0;
   const totalStudents = stages?.reduce((acc, stage) => acc + (stage.students_count || 0), 0) || 0;
   
-  // ✅ تحميل بيانات المراحل (يتم فقط بعد تأكيد تسجيل الدخول)
+  // ✅ تحميل بيانات المراحل
   if (authLoading || isLoading) {
-    return <StagesPageSkeleton isNature={isNature} />;
+    return <StagesPageSkeleton />;
   }
 
   if (!stages?.length) {
-    return <EmptyStagesPage slug={slug!} lang={lang} isNature={isNature} />;
+    return <EmptyStagesPage slug={slug!} lang={lang} />;
   }
 
   return (
-    <div className={`min-h-screen pt-32 pb-20 relative overflow-hidden ${isNature ? '' : ''}`}>
-      {/* Background Decorations */}
+    <div className="min-h-screen pt-32 pb-20 relative overflow-hidden ">
+      {/* Background Decorations - أزرق فقط */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 left-0 w-full h-full">
-          <div className={`absolute top-20 left-10 w-72 h-72 rounded-full ${isNature ? 'bg-amber-200/20' : 'bg-primary/5'} blur-3xl`} />
-          <div className={`absolute bottom-20 right-10 w-96 h-96 rounded-full ${isNature ? 'bg-amber-300/20' : 'bg-accent/5'} blur-3xl`} />
-          <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-r ${isNature ? 'from-amber-200/20 to-orange-200/20' : 'from-primary/5 to-accent/5'} blur-3xl`} />
+          <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-blue-500/5 blur-3xl" />
+          <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full bg-blue-600/5 blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-blue-400/5 blur-3xl" />
         </div>
       </div>
 
@@ -192,9 +176,9 @@ export const StagesPage = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${isNature ? 'bg-amber-100 text-amber-800' : 'bg-gradient-to-r from-primary/10 to-accent/10 text-primary'} font-semibold text-sm mb-5 backdrop-blur-sm`}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-semibold text-sm mb-5 backdrop-blur-sm"
           >
-            {isNature ? <Leaf className="w-4 h-4" /> : <GraduationCap className="w-4 h-4" />}
+            <GraduationCap className="w-4 h-4" />
             {lang === "ar" ? "جميع المراحل الدراسية" : "All Educational Stages"}
           </motion.div>
           
@@ -204,7 +188,7 @@ export const StagesPage = () => {
             transition={{ delay: 0.1 }}
             className="font-display font-black text-5xl md:text-6xl lg:text-7xl tracking-tight"
           >
-            <span className={gradientTextClass}>
+            <span className="bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
               {lang === "ar" ? "اختر مرحلتك الدراسية" : "Choose Your Educational Stage"}
             </span>
           </motion.h1>
@@ -213,7 +197,7 @@ export const StagesPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className={`mt-4 ${isNature ? 'text-amber-700/60' : 'text-foreground/60'} text-lg max-w-2xl mx-auto`}
+            className="mt-4 text-gray-500 dark:text-gray-400 text-lg max-w-2xl mx-auto"
           >
             {lang === "ar" 
               ? "نقدم برامج تعليمية متكاملة تناسب جميع المراحل الدراسية"
@@ -221,7 +205,7 @@ export const StagesPage = () => {
           </motion.p>
         </div>
 
-        {/* Stats Section */}
+        {/* Stats Section - ألوان ثابتة */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -232,46 +216,46 @@ export const StagesPage = () => {
             icon={<GraduationCap className="w-6 h-6 text-white" />}
             value={stages.length}
             label={lang === "ar" ? "مرحلة دراسية" : "Educational Stages"}
-            color={statColors[0]}
+            color="from-blue-500 to-blue-600"
           />
           <StatCard
             icon={<BookOpen className="w-6 h-6 text-white" />}
             value={`${totalCourses}+`}
             label={lang === "ar" ? "كورس تعليمي" : "Educational Courses"}
-            color={statColors[1]}
+            color="from-indigo-500 to-indigo-600"
           />
           <StatCard
             icon={<Users className="w-6 h-6 text-white" />}
             value={`${totalStudents}+`}
             label={lang === "ar" ? "طالب مسجل" : "Enrolled Students"}
-            color={statColors[2]}
+            color="from-blue-600 to-blue-700"
           />
           <StatCard
             icon={<Award className="w-6 h-6 text-white" />}
             value="100%"
             label={lang === "ar" ? "رضا الطلاب" : "Satisfaction Rate"}
-            color={statColors[3]}
+            color="from-cyan-500 to-cyan-600"
           />
         </motion.div>
 
-        {/* Search and Filters Bar */}
+        {/* Search and Filters Bar - ألوان ثابتة */}
         <div className="mb-8">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${isNature ? 'text-amber-400' : 'text-foreground/40'}`} />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={lang === "ar" ? "ابحث عن مرحلة..." : "Search for a stage..."}
-                className={`w-full ${isNature ? 'bg-white' : 'bg-card'} border ${isNature ? 'border-amber-200' : 'border-border'} rounded-xl pl-12 pr-12 py-3 text-sm focus:outline-none focus:border-${isNature ? 'amber-400' : 'primary'}/50 transition-colors`}
+                className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl pl-12 pr-12 py-3 text-sm focus:outline-none focus:border-blue-400 dark:focus:border-blue-500 transition-colors"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
                   className="absolute right-4 top-1/2 -translate-y-1/2"
                 >
-                  <X className={`w-4 h-4 ${isNature ? 'text-amber-400 hover:text-amber-600' : 'text-foreground/40 hover:text-primary'}`} />
+                  <X className="w-4 h-4 text-gray-400 hover:text-blue-600" />
                 </button>
               )}
             </div>
@@ -280,8 +264,8 @@ export const StagesPage = () => {
               onClick={() => setShowFilters(!showFilters)}
               className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl border transition-all ${
                 showFilters 
-                  ? (isNature ? 'bg-[#8B4513] text-white border-transparent' : 'gradient-primary text-white border-transparent')
-                  : (isNature ? 'bg-white border-amber-200 hover:border-amber-300' : 'bg-card border-border hover:border-primary/40')
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white border-transparent'
+                  : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 hover:border-blue-400'
               }`}
             >
               <SlidersHorizontal className="w-4 h-4" />
@@ -293,13 +277,13 @@ export const StagesPage = () => {
           </div>
           
           <div className="flex flex-wrap items-center gap-3 mt-4">
-            <span className="text-sm text-foreground/50">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
               {lang === "ar" ? "ترتيب حسب:" : "Sort by:"}
             </span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className={`${isNature ? 'bg-white border-amber-200' : 'bg-card border-border'} border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-${isNature ? 'amber-400' : 'primary'}/50`}
+              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-blue-400"
             >
               <option value="default">{lang === "ar" ? "الافتراضي" : "Default"}</option>
               <option value="name_asc">{lang === "ar" ? "الاسم (أ-ي)" : "Name (A-Z)"}</option>
@@ -308,7 +292,7 @@ export const StagesPage = () => {
               <option value="courses_asc">{lang === "ar" ? "الأقل كورسات" : "Least Courses"}</option>
             </select>
             
-            <div className={`text-sm ${isNature ? 'text-amber-600 bg-amber-100' : 'text-foreground/50 bg-secondary'} px-3 py-1.5 rounded-full`}>
+            <div className="text-sm bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 px-3 py-1.5 rounded-full">
               {totalResults} {lang === "ar" ? "مرحلة" : "stages"}
             </div>
           </div>
@@ -321,12 +305,12 @@ export const StagesPage = () => {
                 exit={{ opacity: 0, height: 0 }}
                 className="overflow-hidden"
               >
-                <div className={`mt-4 p-5 ${isNature ? 'bg-white' : 'bg-card'} rounded-xl border ${isNature ? 'border-amber-200' : 'border-border'}`}>
+                <div className="mt-4 p-5 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
                   <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                     <h4 className="font-semibold">{lang === "ar" ? "فلترة حسب الميزات" : "Filter by Features"}</h4>
                     <button
                       onClick={resetFilters}
-                      className="text-sm text-foreground/50 hover:text-primary transition-colors"
+                      className="text-sm text-gray-500 hover:text-blue-600 transition-colors"
                     >
                       {lang === "ar" ? "إعادة ضبط" : "Reset"}
                     </button>
@@ -347,8 +331,8 @@ export const StagesPage = () => {
                           }}
                           className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm transition-all ${
                             isSelected
-                              ? (isNature ? 'bg-[#8B4513] text-white' : 'gradient-primary text-white')
-                              : (isNature ? 'bg-amber-100 hover:bg-amber-200' : 'bg-secondary hover:bg-secondary/80')
+                              ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
+                              : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
                           }`}
                         >
                           <Icon className="w-4 h-4" />
@@ -366,20 +350,20 @@ export const StagesPage = () => {
         {/* No Results */}
         {!hasResults && (
           <div className="text-center py-16">
-            <div className={`w-24 h-24 mx-auto mb-4 rounded-full ${isNature ? 'bg-amber-100' : 'bg-gray-100 dark:bg-gray-800'} grid place-items-center`}>
-              <Search className={`w-12 h-12 ${isNature ? 'text-amber-400' : 'text-foreground/30'}`} />
+            <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-blue-50 dark:bg-blue-950/30 grid place-items-center">
+              <Search className="w-12 h-12 text-blue-400" />
             </div>
             <h3 className="text-xl font-semibold mb-2">
               {lang === "ar" ? "لا توجد نتائج" : "No results found"}
             </h3>
-            <p className="text-foreground/60 mb-6">
+            <p className="text-gray-500 dark:text-gray-400 mb-6">
               {lang === "ar" 
                 ? `لم نجد أي مرحلة تطابق "${searchQuery}"`
                 : `No stages match "${searchQuery}"`}
             </p>
             <button
               onClick={resetFilters}
-              className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl ${buttonBg} text-white font-semibold`}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold"
             >
               <X className="w-4 h-4" />
               {lang === "ar" ? "مسح البحث" : "Clear Search"}
@@ -387,7 +371,7 @@ export const StagesPage = () => {
           </div>
         )}
 
-        {/* Stages Grid */}
+        {/* Stages Grid - ألوان ثابتة */}
         {hasResults && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {filteredStages.map((stage: any, i: number) => {
@@ -396,6 +380,7 @@ export const StagesPage = () => {
               const coursesCount = stage.courses_count || Math.floor(Math.random() * 30) + 10;
               const isStudentStage = isAuthenticated && stage.id === studentStageId;
               const isDisabled = isAuthenticated && !isStudentStage;
+              const colorIndex = i % stageColors.length;
               
               return (
                 <motion.div
@@ -406,13 +391,12 @@ export const StagesPage = () => {
                   whileHover={!isDisabled ? { y: -8 } : {}}
                   onClick={() => {
                     if (!isDisabled) {
-                      // ✅ التعديل هنا - يودي على السمستر بدل المواد
                       navigate(`/${slug}/semesters?stage_id=${stage.id}&stage_name=${encodeURIComponent(stageName)}`);
                     }
                   }}
                   className={`group relative ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'} ${isDisabled ? 'opacity-60' : ''}`}
                 >
-                  <div className={`relative ${isNature ? 'bg-white' : 'bg-card'} rounded-2xl overflow-hidden border ${cardBorder} ${cardHoverBorder} transition-all duration-300 shadow-card hover:shadow-elegant h-full`}>
+                  <div className="relative bg-white dark:bg-gray-900 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300 shadow-card hover:shadow-elegant h-full">
                     
                     {isDisabled && (
                       <div className="absolute inset-0 z-20 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl">
@@ -445,9 +429,9 @@ export const StagesPage = () => {
                           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
                         </>
                       ) : (
-                        <div className={`w-full h-full bg-gradient-to-br ${isNature ? 'from-amber-200/50 to-amber-100/30' : 'from-primary/30 via-primary/20 to-accent/30'}`}>
+                        <div className={`w-full h-full bg-gradient-to-br from-blue-500/30 via-blue-400/20 to-blue-600/30`}>
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <div className={`w-24 h-24 rounded-2xl ${buttonBg} grid place-items-center`}>
+                            <div className="w-24 h-24 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 grid place-items-center">
                               <GraduationCap className="w-12 h-12 text-white" />
                             </div>
                           </div>
@@ -473,29 +457,29 @@ export const StagesPage = () => {
                     </div>
                     
                     <div className="p-6">
-                      <h3 className={`font-bold text-xl mb-2 ${primaryTextClass} transition-colors line-clamp-1`}>
+                      <h3 className="font-bold text-xl mb-2 text-blue-600 dark:text-blue-400 transition-colors line-clamp-1">
                         {stageName}
                       </h3>
                       
-                      <p className="text-sm text-foreground/60 leading-relaxed line-clamp-2 min-h-[40px]">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed line-clamp-2 min-h-[40px]">
                         {pick(stage.description, stage.description_ar) || (lang === "ar" 
                           ? `برامج تعليمية متكاملة لمرحلة ${stageName}`
                           : `Integrated educational programs for ${stageName}`)}
                       </p>
                       
                       <div className="mt-4 flex flex-wrap gap-2">
-                        <div className={`flex items-center gap-1 px-2 py-1 rounded-full ${isNature ? 'bg-amber-100 text-amber-700' : 'bg-primary/5 text-primary'} text-xs`}>
+                        <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 text-xs">
                           <Target className="w-3 h-3" />
                           <span>{lang === "ar" ? "منهج متكامل" : "Integrated Curriculum"}</span>
                         </div>
-                        <div className={`flex items-center gap-1 px-2 py-1 rounded-full ${isNature ? 'bg-amber-100 text-amber-700' : 'bg-accent/5 text-accent'} text-xs`}>
+                        <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 text-xs">
                           <Rocket className="w-3 h-3" />
                           <span>{lang === "ar" ? "تعلم تفاعلي" : "Interactive Learning"}</span>
                         </div>
                       </div>
                       
-                      <div className="mt-4 pt-4 border-t border-border">
-                        <div className={`inline-flex items-center gap-2 text-sm font-semibold transition-all ${!isDisabled ? primaryTextClass + ' group-hover:gap-3' : 'text-foreground/30'}`}>
+                      <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+                        <div className={`inline-flex items-center gap-2 text-sm font-semibold transition-all ${!isDisabled ? 'text-blue-600 dark:text-blue-400 group-hover:gap-3' : 'text-gray-400'}`}>
                           {lang === "ar" ? "استكشف الترم" : "Explore Semesters"}
                           <Arrow className="w-4 h-4 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
                         </div>
@@ -508,14 +492,14 @@ export const StagesPage = () => {
           </div>
         )}
         
-        {/* CTA Section */}
+        {/* CTA Section - أزرق ثابت */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           className="mt-16 text-center"
         >
-          <div className={`${isNature ? 'bg-[#8B4513]' : 'gradient-primary'} rounded-3xl p-8 md:p-12 text-white`}>
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-3xl p-8 md:p-12 text-white">
             <h3 className="text-2xl md:text-3xl font-bold mb-2">
               {isAuthenticated 
                 ? (lang === "ar" ? "واصل رحلة التعلم" : "Continue Your Learning Journey")
@@ -532,7 +516,7 @@ export const StagesPage = () => {
             </p>
             <Link
               to={isAuthenticated ? `/${slug}/courses` : `/${slug}/register`}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-primary font-semibold hover:shadow-lg transition-all hover:scale-105"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-blue-600 font-semibold hover:shadow-lg transition-all hover:scale-105"
             >
               {isAuthenticated 
                 ? (lang === "ar" ? "استعرض الكورسات" : "Browse Courses")
@@ -546,7 +530,7 @@ export const StagesPage = () => {
   );
 };
 
-// Stat Card Component
+// Stat Card Component - ألوان ثابتة
 const StatCard = ({ icon, value, label, color }: any) => (
   <motion.div
     whileHover={{ y: -5 }}
@@ -562,37 +546,37 @@ const StatCard = ({ icon, value, label, color }: any) => (
   </motion.div>
 );
 
-// Skeleton Component
-const StagesPageSkeleton = ({ isNature }: { isNature: boolean }) => {
+// Skeleton Component - ألوان ثابتة
+const StagesPageSkeleton = () => {
   return (
-    <div className={`min-h-screen pt-32 pb-20 ${isNature ? 'bg-cream' : 'bg-background'}`}>
+    <div className="min-h-screen pt-32 pb-20 bg-white dark:bg-gray-950">
       <div className="container-tight">
         <div className="text-center mb-16">
-          <div className={`h-8 w-48 rounded-full mx-auto mb-5 animate-pulse ${isNature ? 'bg-amber-200' : 'bg-gray-200 dark:bg-gray-700'}`} />
-          <div className={`h-12 w-96 rounded-lg mx-auto animate-pulse ${isNature ? 'bg-amber-100' : 'bg-gray-200 dark:bg-gray-700'}`} />
-          <div className={`h-4 w-64 rounded-lg mx-auto mt-4 animate-pulse ${isNature ? 'bg-amber-50' : 'bg-gray-200 dark:bg-gray-700'}`} />
+          <div className="h-8 w-48 rounded-full mx-auto mb-5 animate-pulse bg-blue-100 dark:bg-blue-900/30" />
+          <div className="h-12 w-96 rounded-lg mx-auto animate-pulse bg-blue-100 dark:bg-blue-900/30" />
+          <div className="h-4 w-64 rounded-lg mx-auto mt-4 animate-pulse bg-blue-50 dark:bg-blue-900/20" />
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className={`p-5 rounded-2xl ${isNature ? 'bg-white' : 'bg-card'} animate-pulse`}>
-              <div className={`w-12 h-12 rounded-xl mx-auto mb-3 ${isNature ? 'bg-amber-100' : 'bg-gray-200 dark:bg-gray-700'}`} />
-              <div className={`h-8 w-16 rounded-lg mx-auto mb-2 ${isNature ? 'bg-amber-100' : 'bg-gray-200 dark:bg-gray-700'}`} />
-              <div className={`h-3 w-20 rounded mx-auto ${isNature ? 'bg-amber-50' : 'bg-gray-200 dark:bg-gray-700'}`} />
+            <div key={i} className="p-5 rounded-2xl bg-white dark:bg-gray-900 animate-pulse border border-gray-200 dark:border-gray-700">
+              <div className="w-12 h-12 rounded-xl mx-auto mb-3 bg-blue-100 dark:bg-blue-900/30" />
+              <div className="h-8 w-16 rounded-lg mx-auto mb-2 bg-blue-100 dark:bg-blue-900/30" />
+              <div className="h-3 w-20 rounded mx-auto bg-blue-50 dark:bg-blue-900/20" />
             </div>
           ))}
         </div>
         
-        <div className={`h-12 rounded-xl mb-8 animate-pulse ${isNature ? 'bg-white' : 'bg-gray-200 dark:bg-gray-700'}`} />
+        <div className="h-12 rounded-xl mb-8 animate-pulse bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700" />
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className={`rounded-2xl overflow-hidden animate-pulse ${isNature ? 'bg-white' : 'bg-card'}`}>
-              <div className={`h-52 ${isNature ? 'bg-amber-100' : 'bg-gray-200 dark:bg-gray-700'}`} />
+            <div key={i} className="rounded-2xl overflow-hidden animate-pulse bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+              <div className="h-52 bg-blue-100 dark:bg-blue-900/30" />
               <div className="p-6">
-                <div className={`h-6 rounded-lg mb-2 w-3/4 ${isNature ? 'bg-amber-100' : 'bg-gray-200 dark:bg-gray-700'}`} />
-                <div className={`h-10 rounded-lg mb-4 ${isNature ? 'bg-amber-50' : 'bg-gray-200 dark:bg-gray-700'}`} />
-                <div className={`h-4 rounded w-1/2 ${isNature ? 'bg-amber-50' : 'bg-gray-200 dark:bg-gray-700'}`} />
+                <div className="h-6 rounded-lg mb-2 w-3/4 bg-blue-100 dark:bg-blue-900/30" />
+                <div className="h-10 rounded-lg mb-4 bg-blue-50 dark:bg-blue-900/20" />
+                <div className="h-4 rounded w-1/2 bg-blue-50 dark:bg-blue-900/20" />
               </div>
             </div>
           ))}
@@ -602,25 +586,25 @@ const StagesPageSkeleton = ({ isNature }: { isNature: boolean }) => {
   );
 };
 
-// Empty State
-const EmptyStagesPage = ({ slug, lang, isNature }: { slug: string; lang: string; isNature: boolean }) => {
+// Empty State - ألوان ثابتة
+const EmptyStagesPage = ({ slug, lang }: { slug: string; lang: string }) => {
   return (
-    <div className={`min-h-screen pt-32 pb-20 flex items-center justify-center ${isNature ? 'bg-cream' : 'bg-background'}`}>
+    <div className="min-h-screen pt-32 pb-20 flex items-center justify-center bg-white dark:bg-gray-950">
       <div className="text-center">
-        <div className={`w-32 h-32 mx-auto mb-6 rounded-full ${isNature ? 'bg-amber-100' : 'bg-gray-100 dark:bg-gray-800'} grid place-items-center`}>
-          <GraduationCap className={`w-16 h-16 ${isNature ? 'text-amber-400' : 'text-foreground/30'}`} />
+        <div className="w-32 h-32 mx-auto mb-6 rounded-full bg-blue-50 dark:bg-blue-950/30 grid place-items-center">
+          <GraduationCap className="w-16 h-16 text-blue-400" />
         </div>
         <h1 className="text-2xl font-bold mb-3">
           {lang === "ar" ? "لا توجد مراحل دراسية" : "No Stages Found"}
         </h1>
-        <p className="text-foreground/60 mb-6">
+        <p className="text-gray-500 dark:text-gray-400 mb-6">
           {lang === "ar" 
             ? "لم يتم إضافة أي مراحل دراسية بعد"
             : "No educational stages have been added yet"}
         </p>
         <Link
           to={`/${slug}`}
-          className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl ${isNature ? 'bg-[#8B4513]' : 'gradient-primary'} text-white font-semibold`}
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold"
         >
           <ArrowLeft className="w-4 h-4" />
           {lang === "ar" ? "العودة للرئيسية" : "Back to Home"}
