@@ -1,22 +1,29 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // components/site/Courses.tsx
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLang } from "@/i18n/LanguageContext";
 import { useSafeTeacherData } from "@/hooks/useSafeTeacherData";
 import { useBuyCourse } from "@/hooks/useEnroll";
 import { useTheme } from "@/context/ThemeContext";
+import { OfferTimerDisplay } from "@/components/ui/OfferTimer";
+
 import { 
   ArrowRight, ArrowLeft, BookOpen, Atom, Zap, Sparkles, 
   Users, Calendar, Percent, GraduationCap, BookMarked, Award, 
   ShoppingCart, Loader2, Leaf, Flower2, Trees, Clock,
-  Star
+  Star, Timer, AlertCircle
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 // ============================================
-// أيقونات الثيمات
+// ⏱️ Hook للمؤقت التنازلي
 // ============================================
+
+
+
+
+
 
 const NATURE_ICONS = [Leaf, Flower2, Trees, Sparkles, Award, BookMarked];
 const DEFAULT_ICONS = [Atom, Zap, BookOpen, Sparkles, Award, BookMarked];
@@ -41,42 +48,8 @@ const DARK_COLORS = [
   "from-cyan-400 to-cyan-500",
 ];
 
-// ✅ ألوان الخلفية للكارد
-const CARD_BG = {
-  light: "bg-white",
-  dark: "dark:bg-gray-800",
-};
-
-// ✅ ألوان النصوص
-const TEXT_COLORS = {
-  light: {
-    primary: "text-gray-900",
-    secondary: "text-gray-600",
-    muted: "text-gray-400",
-  },
-  dark: {
-    primary: "dark:text-white",
-    secondary: "dark:text-gray-300",
-    muted: "dark:text-gray-500",
-  },
-};
-
-// ✅ ألوان البادجات
-const BADGE_COLORS = {
-  light: {
-    stage: "bg-blue-50 text-blue-600",
-    subject: "bg-emerald-50 text-emerald-600",
-    semester: "bg-amber-50 text-amber-600",
-  },
-  dark: {
-    stage: "dark:bg-blue-900/30 dark:text-blue-300",
-    subject: "dark:bg-emerald-900/30 dark:text-emerald-300",
-    semester: "dark:bg-amber-900/30 dark:text-amber-300",
-  },
-};
-
 // ============================================
-// Course Card Component
+// Course Card Component مع المؤقت
 // ============================================
 
 const DefaultCourseCard = ({ course, index, slug, pick, lang, Arrow, isDark }: any) => {
@@ -94,6 +67,11 @@ const DefaultCourseCard = ({ course, index, slug, pick, lang, Arrow, isDark }: a
   const discountPercent = parseFloat(course?.discount) || 0;
   const finalPrice = originalPrice - (originalPrice * discountPercent / 100);
   const hasDiscount = discountPercent > 0;
+  
+  // ✅ استخراج تواريخ العرض
+  const offerStartDate = course?.offer_start_date;
+  const offerEndDate = course?.offer_end_date;
+  const hasOfferDates = offerStartDate && offerEndDate;
   
   const courseImage = course?.image?.fullUrl || course?.imageUrl || null;
   const courseTitle = pick(course?.title, course?.title_ar) || "Course";
@@ -149,10 +127,23 @@ const DefaultCourseCard = ({ course, index, slug, pick, lang, Arrow, isDark }: a
           <Icon className="w-32 h-32 text-white" strokeWidth={1} />
         </motion.div>
         
+        {/* ✅ Badge الخصم مع المؤقت */}
         {hasDiscount && (
-          <div className="absolute top-3 left-3 z-10 flex items-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r from-red-500 to-rose-500 text-white text-xs font-bold shadow-lg">
-            <Percent className="w-3 h-3" />
-            <span>{discountPercent}% OFF</span>
+          <div className="absolute top-3 left-3 z-10 flex flex-col gap-1">
+            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r from-red-500 to-rose-500 text-white text-xs font-bold shadow-lg">
+              <Percent className="w-3 h-3" />
+              <span>{discountPercent}% OFF</span>
+            </div>
+            
+            {/* ⏱️ عرض المؤقت إذا كان هناك تواريخ للعرض */}
+            {hasOfferDates && (
+              <OfferTimerDisplay 
+                startDate={offerStartDate} 
+                endDate={offerEndDate} 
+                lang={lang}
+                isDark={isDark}
+              />
+            )}
           </div>
         )}
         
@@ -240,7 +231,7 @@ const DefaultCourseCard = ({ course, index, slug, pick, lang, Arrow, isDark }: a
 };
 
 // ============================================
-// Nature Carousel Component
+// Nature Carousel Component مع المؤقت
 // ============================================
 
 const NatureCarouselCourses = ({ courses, pick, slug, lang, Arrow, dir, isDark }: any) => {
@@ -257,6 +248,12 @@ const NatureCarouselCourses = ({ courses, pick, slug, lang, Arrow, dir, isDark }
   const discount = parseFloat(c?.discount) || 0;
   const finalPrice = originalPrice - (originalPrice * discount / 100);
   const hasDiscount = discount > 0;
+  
+  // ✅ استخراج تواريخ العرض
+  const offerStartDate = c?.offer_start_date;
+  const offerEndDate = c?.offer_end_date;
+  const hasOfferDates = offerStartDate && offerEndDate;
+  
   const courseImage = c?.image?.fullUrl || c?.imageUrl || null;
   const courseTitle = pick(c?.title, c?.title_ar) || "Course";
   const courseDescription = pick(c?.description, c?.description_ar) || "";
@@ -279,14 +276,30 @@ const NatureCarouselCourses = ({ courses, pick, slug, lang, Arrow, dir, isDark }
                 ) : (
                   <Leaf className="w-24 h-24 text-amber-300 dark:text-amber-600" />
                 )}
+                
+                {/* ✅ Badge الخصم مع المؤقت */}
                 {hasDiscount && (
-                  <span className="absolute top-4 right-4 px-3 py-1.5 rounded-lg bg-gradient-to-r from-red-500 to-rose-500 text-white text-xs font-black shadow-lg">
-                    {discount}% OFF
-                  </span>
+                  <div className="absolute top-4 right-4 z-10 flex flex-col gap-1">
+                    <span className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-red-500 to-rose-500 text-white text-xs font-black shadow-lg">
+                      {discount}% OFF
+                    </span>
+                    
+                    {/* ⏱️ عرض المؤقت */}
+                    {hasOfferDates && (
+                      <OfferTimerDisplay 
+                        startDate={offerStartDate} 
+                        endDate={offerEndDate} 
+                        lang={lang}
+                        isDark={isDark}
+                      />
+                    )}
+                  </div>
                 )}
+                
                 <div className="absolute bottom-3 left-3 px-2 py-1 rounded-lg bg-black/60 backdrop-blur-sm text-white text-xs font-medium">
                   {type}
                 </div>
+                
                 <button
                   onClick={() => go(-1)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 size-11 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur grid place-items-center shadow-md hover:bg-white dark:hover:bg-gray-700 hover:scale-110 transition"
@@ -390,9 +403,8 @@ export const Courses = ({ limit = 4 }: { limit?: number }) => {
     return <NatureCarouselCourses courses={validCourses} pick={pick} slug={slug} lang={lang} Arrow={Arrow} dir={dir} isDark={isDark} />;
   }
   
- return (
+  return (
     <section id="courses" className="py-24 md:py-32 relative overflow-hidden bg-white dark:bg-gray-950">
-      
       {/* ✅ خلفية متحركة قوية وواضحة */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         
@@ -801,29 +813,29 @@ const CoursesSkeleton = ({ isNature, isDark }: { isNature: boolean; isDark: bool
   
   return (
     <section className="py-24 md:py-32 bg-white dark:bg-gray-950">
-      <div className="container-tight">
-        <div className="text-center mb-16">
-          <div className="h-8 w-48 bg-gray-200 dark:bg-gray-800 rounded-full mx-auto mb-5 animate-pulse" />
-          <div className="h-12 w-80 bg-gray-200 dark:bg-gray-800 rounded-lg mx-auto animate-pulse" />
-        </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden animate-pulse border border-gray-100 dark:border-gray-700">
-              <div className="h-36 bg-gray-200 dark:bg-gray-700" />
-              <div className="p-4">
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-2" />
-                <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-3" />
-                <div className="flex gap-2">
-                  <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
-                  <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
-                </div>
+    <div className="container-tight">
+      <div className="text-center mb-16">
+        <div className="h-8 w-48 bg-gray-200 dark:bg-gray-800 rounded-full mx-auto mb-5 animate-pulse" />
+        <div className="h-12 w-80 bg-gray-200 dark:bg-gray-800 rounded-lg mx-auto animate-pulse" />
+      </div>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden animate-pulse border border-gray-100 dark:border-gray-700">
+            <div className="h-36 bg-gray-200 dark:bg-gray-700" />
+            <div className="p-4">
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-2" />
+              <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-3" />
+              <div className="flex gap-2">
+                <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+                <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
-    </section>
+    </div>
+  </section>
   );
 };
 

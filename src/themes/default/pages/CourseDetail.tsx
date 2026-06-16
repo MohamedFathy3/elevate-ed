@@ -145,50 +145,96 @@ const CourseDetail = () => {
   };
 
   // ✅ شراء الكورس كاملاً
-  const handleBuyFullCourse = async () => {
-    const token = Cookies.get('student_token');
-    if (!token) {
-      toast.error(lang === "ar" ? "الرجاء تسجيل الدخول أولاً" : "Please login first");
-      setTimeout(() => navigate(`/${slug}/login?redirect=${encodeURIComponent(window.location.pathname)}`), 1500);
-      return;
-    }
+ // ✅ شراء الكورس كاملاً - المعدل
+const handleBuyFullCourse = async () => {
+  const token = Cookies.get('student_token');
+  if (!token) {
+    toast.error(lang === "ar" ? "الرجاء تسجيل الدخول أولاً" : "Please login first");
+    setTimeout(() => navigate(`/${slug}/login?redirect=${encodeURIComponent(window.location.pathname)}`), 1500);
+    return;
+  }
+  
+  setBuyingFullCourse(true);
+  try {
+    const result = await buyCourse(courseIdNum, finalPrice);
+    console.log("📦 Full course purchase result:", result);
     
-    setBuyingFullCourse(true);
-    try {
-      await buyCourse(courseIdNum, finalPrice);
+    // ✅ التحقق من وجود رسالة تحذيرية
+    if (result?.message && (
+      result.message.includes("رصيد المحفظة غير كاف") ||
+      result.message.includes("insufficient balance") ||
+      result.message.includes("تم إرسال طلب للمدرس")
+    )) {
+     
+      setTimeout(() => refetchDetails(), 2000);
+    } else if (result?.status === true) {
+      // ✅ شراء ناجح
       toast.success(lang === "ar" ? "تم شراء الكورس بنجاح!" : "Course purchased successfully!");
       setHasPurchasedFullCourse(true);
       setTimeout(() => refetchDetails(), 1000);
-    } catch (error: any) {
-      console.error("Purchase error:", error);
-    } finally {
-      setBuyingFullCourse(false);
+    } else {
+      // ❌ فشل
+      toast.error(result?.message || (lang === "ar" ? "حدث خطأ أثناء الشراء" : "Purchase failed"));
     }
-  };
+  } catch (error: any) {
+    console.error("Purchase error:", error);
+    toast.error(error?.message || (lang === "ar" ? "حدث خطأ أثناء الشراء" : "Purchase failed"));
+  } finally {
+    setBuyingFullCourse(false);
+  }
+};
 
-  // ✅ شراء درس فردي
-  const handleBuyLesson = async (lessonId: number, price: number) => {
-    const token = Cookies.get('student_token');
-    if (!token) {
-      toast.error(lang === "ar" ? "الرجاء تسجيل الدخول أولاً" : "Please login first");
-      setTimeout(() => navigate(`/${slug}/login?redirect=${encodeURIComponent(window.location.pathname)}`), 1500);
-      return;
-    }
+// ✅ شراء درس فردي - المعدل
+const handleBuyLesson = async (lessonId: number, price: number) => {
+  const token = Cookies.get('student_token');
+  if (!token) {
+    toast.error(lang === "ar" ? "الرجاء تسجيل الدخول أولاً" : "Please login first");
+    setTimeout(() => navigate(`/${slug}/login?redirect=${encodeURIComponent(window.location.pathname)}`), 1500);
+    return;
+  }
+  
+  setBuyingLessonId(lessonId);
+  try {
+    const result = await buyLesson(lessonId, price);
+    console.log("📦 Lesson purchase result:", result);
     
-    setBuyingLessonId(lessonId);
-    try {
-      await buyLesson(lessonId, price);
+    // ✅ التحقق من وجود رسالة تحذيرية
+    if (result?.message && (
+      result.message.includes("رصيد المحفظة غير كاف") ||
+      result.message.includes("insufficient balance") ||
+      result.message.includes("تم إرسال طلب للمدرس")
+    )) {
+      // ⚠️ تم إرسال طلب للمدرس - لا نفتح الدرس
+      toast.warning(
+        lang === "ar" 
+          ? "تم إرسال طلب شراء الدرس للمدرس للموافقة عليه" 
+          : "Lesson purchase request sent to teacher for approval",
+        { 
+          duration: 5000,
+          position: "top-center",
+          icon: "⏳"
+        }
+      );
+      // ❌ لا نغير حالة الدرس
+      setTimeout(() => refetchDetails(), 2000);
+    } else if (result?.status === true) {
+      // ✅ شراء ناجح
       toast.success(lang === "ar" ? "تم شراء الدرس بنجاح!" : "Lesson purchased successfully!");
       setTimeout(() => refetchDetails(), 1000);
       // تحديث حالة الدرس
       const updatedLesson = { ...selectedLesson, attended: true };
       setSelectedLesson(updatedLesson);
-    } catch (error: any) {
-      console.error("Purchase error:", error);
-    } finally {
-      setBuyingLessonId(null);
+    } else {
+      // ❌ فشل
+      toast.error(result?.message || (lang === "ar" ? "حدث خطأ أثناء الشراء" : "Purchase failed"));
     }
-  };
+  } catch (error: any) {
+    console.error("Purchase error:", error);
+    toast.error(error?.message || (lang === "ar" ? "حدث خطأ أثناء الشراء" : "Purchase failed"));
+  } finally {
+    setBuyingLessonId(null);
+  }
+};
 
   // ✅ تحديد الدرس للمشاهدة
   const selectLesson = (lesson: any) => {

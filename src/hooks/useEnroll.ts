@@ -18,13 +18,13 @@ interface EnrollRequest {
 }
 
 interface EnrollResponse {
-  result: string;
+  status: boolean;  // ✅ true/false من API
   message: string;
-  status: number;
   data?: {
     enrolled: boolean;
     balance?: number;
     order_id?: number;
+    request_id?: number;
   };
 }
 
@@ -46,30 +46,50 @@ export const useEnroll = () => {
       return data;
     },
     onSuccess: (data) => {
-      if (data.status === 200) {
+      // ✅ التحقق من وجود رسالة تحذيرية (رصيد غير كافٍ)
+      const isWarning = data.message && (
+        data.message.includes("رصيد المحفظة غير كاف") ||
+        data.message.includes("insufficient balance") ||
+        data.message.includes("تم إرسال طلب للمدرس") ||
+        data.message.includes("طلب مرسل")
+      );
+      
+      // ✅ التحقق من النجاح (status: true من API)
+      const isSuccess = data.status === true;
+      
+      if (isWarning) {
+        // ⚠️ حالة خاصة: تم إرسال طلب للمدرس لأن الرصيد غير كافٍ
+        toast.warning(
+          data.message || "رصيد المحفظة غير كافٍ، تم إرسال طلب للمدرس للموافقة",
+          {
+            duration: 6000,
+            position: "top-center",
+            icon: "⏳",
+          }
+        );
+        
+        // ✅ تحديث الكاشات لإظهار الطلب في قائمة الطلبات
+        queryClient.invalidateQueries({ queryKey: ['student-requests'] });
+        queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+        queryClient.invalidateQueries({ queryKey: ['student-learning'] });
+        queryClient.invalidateQueries({ queryKey: ['student-courses'] });
+        
+    
+        
+      } else if (isSuccess) {
+        // ✅ شراء ناجح تماماً
         toast.success(data.message || "تم التسجيل بنجاح!", {
           duration: 4000,
           position: "top-center",
         });
+        
         queryClient.invalidateQueries({ queryKey: ['courses'] });
         queryClient.invalidateQueries({ queryKey: ['semesters'] });
         queryClient.invalidateQueries({ queryKey: ['course-details'] });
         queryClient.invalidateQueries({ queryKey: ['student-learning'] });
         queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
-      } else if (data.status === 401) {
-        toast.error("انتهت صلاحية الجلسة، الرجاء تسجيل الدخول مرة أخرى", {
-          duration: 5000,
-          position: "top-center",
-        });
-        Cookies.remove('student_token');
-        Cookies.remove('student_data');
-        const slug = window.location.pathname.split('/')[1];
-        setTimeout(() => navigate(`/${slug}/login`), 2000);
-      } else if (data.status === 402) {
-        toast.error("رصيد غير كافٍ! يرجى شحن الرصيد", {
-          duration: 5000,
-          position: "top-center",
-        });
+        queryClient.invalidateQueries({ queryKey: ['student-courses'] });
+        
       } else {
         toast.error(data.message || "فشل عملية التسجيل", {
           duration: 4000,

@@ -11,9 +11,10 @@ import {
   Search, BookOpen, Filter, X, Clock, Users, Calendar, 
   GraduationCap, BookMarked, ShoppingCart, Loader2, 
   AlertCircle, ArrowLeft, ArrowRight, Sparkles, Zap, Leaf,
-  Star, TrendingUp, Award
+  Star, TrendingUp, Award, Percent
 } from "lucide-react";
 import DOMPurify from "dompurify";
+import { OfferTimerDisplay } from "@/components/ui/OfferTimer";
 
 const CoursesPage = () => {
   const { lang, dir } = useLang();
@@ -420,7 +421,9 @@ const CourseCardFull = ({ course, slug, pick, lang, dir, isNature, primaryGradie
   const isDark = colorMode === 'dark';
   
   if (!course) return null;
-  
+  const offerStartDate = course?.offer_start_date;
+  const offerEndDate = course?.offer_end_date;
+  const hasOfferDates = offerStartDate && offerEndDate;
   const originalPrice = parseFloat(course?.price) || 0;
   const discountPercent = parseFloat(course?.discount) || 0;
   const finalPrice = originalPrice - (originalPrice * discountPercent / 100);
@@ -524,14 +527,30 @@ const CourseCardFull = ({ course, slug, pick, lang, dir, isNature, primaryGradie
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         
         {hasDiscount && (
-          <motion.div 
-            initial={{ x: -50, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            className="absolute top-3 left-3 flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500 text-white text-xs font-bold shadow-lg z-10"
-          >
-            🔥 {discountPercent}% OFF
-          </motion.div>
-        )}
+  <motion.div 
+    initial={{ x: -50, opacity: 0 }}
+    animate={{ x: 0, opacity: 1 }}
+    className="absolute top-3 left-3 flex flex-col gap-1 z-10"
+  >
+    <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r from-red-500 to-rose-500 text-white text-xs font-bold shadow-lg">
+      <Percent className="w-3 h-3" />
+      <span>{discountPercent}% OFF</span>
+    </div>
+    
+    {/* ⏱️ عرض المؤقت */}
+      {hasOfferDates && (
+        <OfferTimerDisplay 
+          startDate={offerStartDate} 
+          endDate={offerEndDate} 
+        lang={lang}
+        isDark={isDark}
+        isNature={isNature}
+        compact={true}
+        showIcon={true}
+      />
+    )}
+  </motion.div>
+)}
         
         <div className="absolute top-3 right-3 px-2 py-1 rounded-lg bg-black/60 backdrop-blur-sm text-white text-xs font-medium z-10">
           {course?.type === "online" 
