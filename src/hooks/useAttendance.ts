@@ -68,7 +68,7 @@ export const useAttendance = () => {
         const slug = window.location.pathname.split('/')[1];
         setTimeout(() => navigate(`/${slug}/login`), 2000);
       } else {
-        toast.error(data.message || "فشل تسجيل الحضور", {
+        toast.success(data.message || "فشل تسجيل الحضور", {
           duration: 4000,
           position: "top-center",
         });

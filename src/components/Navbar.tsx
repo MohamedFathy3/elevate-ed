@@ -116,22 +116,29 @@ export const Navbar = () => {
                 onClick={() => setProfileOpen(!profileOpen)}
                 className="flex items-center gap-2 px-3 py-2 rounded-full bg-gradient-to-r from-primary/10 to-accent/10 hover:from-primary/20 hover:to-accent/20 transition-all"
               >
-               <div className="w-10 h-10 rounded-full gradient-primary grid place-items-center">
+       <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-primary to-accent flex-shrink-0">
   {student?.imageUrl ? (
     <img 
       src={student.imageUrl} 
       alt={student?.name || 'Student'} 
-      className="w-full h-full object-cover rounded-full"
+      className="w-full h-full object-cover"
       onError={(e) => {
-        // لو الصورة مش موجودة أو فيها error
         e.currentTarget.style.display = 'none';
-        e.currentTarget.parentElement?.classList.add('show-avatar');
+        // إظهار الـ Avatar البديل
+        const parent = e.currentTarget.parentElement;
+        if (parent) {
+          const avatar = parent.querySelector('.avatar-fallback');
+          if (avatar) {
+            (avatar as HTMLElement).style.display = 'flex';
+          }
+        }
       }}
     />
   ) : null}
   
   {/* Avatar بديل */}
-  <div className="w-full h-full rounded-full flex items-center justify-center text-white font-bold text-sm bg-gradient-to-br from-primary to-accent">
+  <div className="avatar-fallback w-full h-full rounded-full flex items-center justify-center text-white font-bold text-sm bg-gradient-to-br from-primary to-accent" 
+       style={{ display: student?.imageUrl ? 'none' : 'flex' }}>
     {student?.name ? student.name.charAt(0).toUpperCase() : '?'}
   </div>
 </div>

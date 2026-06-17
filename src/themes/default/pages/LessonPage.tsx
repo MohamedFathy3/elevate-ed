@@ -70,6 +70,29 @@ const LessonPage = () => {
   }
 });
 
+const attendanceAttempted = useRef(false);
+
+useEffect(() => {
+  if (!student?.id || !lessonId || attendanceAttempted.current) {
+    return;
+  }
+  
+  if (attended) {
+    console.log("✅ Attendance already recorded from API");
+    attendanceAttempted.current = true;
+    return;
+  }
+  
+  console.log("✅ Marking attendance for lesson:", lessonId);
+  attendanceAttempted.current = true;
+  
+  markAttendance({
+    lesson_id: parseInt(lessonId),
+    student_id: student.id,
+    slug: slug,
+  });
+  
+}, [student?.id, lessonId, attended, markAttendance, slug]);
   // ✅ تعيين بيانات الدرس من الـ API
   useEffect(() => {
     if (lessonData?.data) {

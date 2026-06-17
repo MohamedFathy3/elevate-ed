@@ -10,9 +10,10 @@ import {
   Clock, ArrowLeft, ArrowRight, Loader2, CheckCircle, 
   XCircle, AlertCircle, FileQuestion, Award, TrendingUp,
   Send, Shield, Zap, Brain, HelpCircle, BookOpen,
-  ChevronDown, ChevronUp
+  ChevronDown, ChevronUp, Image as ImageIcon
 } from "lucide-react";
 import { toast  } from "@/hooks/use-toast";
+import FileUploader from "@/components/FileUploader"; // ✅ استيراد الـ FileUploader
 
 const ExamPage = () => {
   const { lang, dir } = useLang();
@@ -28,6 +29,7 @@ const ExamPage = () => {
   );
   
   const [answers, setAnswers] = useState<Record<number, any>>({});
+  const [essayImages, setEssayImages] = useState<Record<number, number[]>>({}); // ✅ تخزين صور المقالي
   const [submitted, setSubmitted] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [showExitWarning, setShowExitWarning] = useState(false);
@@ -40,6 +42,56 @@ const ExamPage = () => {
   const currentLessonId = lessonId || exam?.course_detail_id?.id;
   const answeredCount = Object.keys(answers).length;
   const progressPercent = totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0;
+  
+  // ✅ دالة لتحديث إجابة السؤال المقالي مع الصور
+  const handleEssayAnswer = (questionId: number, text: string, imageIds?: number[]) => {
+    setAnswers(prev => ({ 
+      ...prev, 
+      [questionId]: { 
+        text, 
+        images: imageIds || [] 
+      } 
+    }));
+  };
+  
+  // ✅ دالة لإضافة صورة للسؤال المقالي
+  const handleEssayImageUpload = (questionId: number, imageId: number) => {
+    setEssayImages(prev => ({
+      ...prev,
+      [questionId]: [...(prev[questionId] || []), imageId]
+    }));
+    
+    // تحديث الإجابة بالصور
+    const currentAnswer = answers[questionId];
+    if (currentAnswer) {
+      setAnswers(prev => ({
+        ...prev,
+        [questionId]: {
+          ...currentAnswer,
+          images: [...(currentAnswer.images || []), imageId]
+        }
+      }));
+    }
+  };
+  
+  // ✅ دالة لحذف صورة من السؤال المقالي
+  const handleRemoveEssayImage = (questionId: number, imageId: number) => {
+    setEssayImages(prev => ({
+      ...prev,
+      [questionId]: (prev[questionId] || []).filter(id => id !== imageId)
+    }));
+    
+    const currentAnswer = answers[questionId];
+    if (currentAnswer) {
+      setAnswers(prev => ({
+        ...prev,
+        [questionId]: {
+          ...currentAnswer,
+          images: (currentAnswer.images || []).filter((id: number) => id !== imageId)
+        }
+      }));
+    }
+  };
   
   // منع النسخ واللصق أثناء الامتحان
   useEffect(() => {
@@ -110,10 +162,22 @@ const ExamPage = () => {
       return;
     }
     
-    const formattedAnswers = Object.entries(answers).map(([questionId, answer]) => ({
-      question_id: parseInt(questionId),
-      answer: Array.isArray(answer) ? answer.join(',') : answer.toString(),
-    }));
+    // ✅ تجهيز الإجابات مع الصور
+    const formattedAnswers = Object.entries(answers).map(([questionId, answer]) => {
+      // إذا كان السؤال مقالي (object مع text و images)
+      if (typeof answer === 'object' && answer !== null && 'text' in answer) {
+        return {
+          question_id: parseInt(questionId),
+          answer: answer.text || '',
+          images: answer.images || [] // ✅ إضافة الصور
+        };
+      }
+      // الأسئلة العادية (صح/خطأ، اختيار من متعدد)
+      return {
+        question_id: parseInt(questionId),
+        answer: Array.isArray(answer) ? answer.join(',') : answer.toString(),
+      };
+    });
     
     submitExam({
       examId: parseInt(examId || '0'),
@@ -181,7 +245,7 @@ const ExamPage = () => {
   return (
     <div className="min-h-screen pt-24 pb-20 bg-gradient-to-br from-gray-50 to-white dark:from-gray-950 dark:to-gray-900">
       <div className="container mx-auto px-4 max-w-4xl">
-        {/* Exit Warning Modal */}
+        {/* Exit Warning Modal - نفس الكود */}
         <AnimatePresence>
           {showExitWarning && (
             <motion.div
@@ -231,13 +295,12 @@ const ExamPage = () => {
           )}
         </AnimatePresence>
         
-        {/* Header Card */}
+        {/* Header Card - نفس الكود */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          {/* Top Bar */}
           <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
             <button 
               onClick={() => {
@@ -254,7 +317,6 @@ const ExamPage = () => {
             </button>
             
             <div className="flex items-center gap-3">
-              {/* Timer */}
               {timeLeft !== null && !submitted && !hasResult && (
                 <motion.div 
                   animate={timeLeft < 60 ? { scale: [1, 1.05, 1] } : {}}
@@ -267,17 +329,13 @@ const ExamPage = () => {
                   <span>{formatTime(timeLeft)}</span>
                 </motion.div>
               )}
-              
-              {/* Progress Badge */}
               <div className="px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-sm font-medium">
                 {answeredCount}/{totalQuestions} {lang === "ar" ? "تمت الإجابة" : "answered"}
               </div>
             </div>
           </div>
           
-          {/* Exam Info */}
           <div className="text-center mb-6">
-            {/* Exam Image */}
             {exam?.image?.fullUrl && (
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
@@ -287,14 +345,12 @@ const ExamPage = () => {
                 <img src={exam.image.fullUrl} alt={exam.title} className="w-full h-full object-cover" />
               </motion.div>
             )}
-            
             <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
               {exam?.title}
             </h1>
             <p className="text-foreground/50 mt-2 max-w-xl mx-auto">{exam?.description}</p>
           </div>
           
-          {/* Stats Row */}
           <div className="flex flex-wrap justify-center gap-6 text-sm">
             <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800">
               <FileQuestion className="w-4 h-4 text-primary" />
@@ -312,7 +368,6 @@ const ExamPage = () => {
             )}
           </div>
           
-          {/* Progress Bar */}
           {!submitted && !hasResult && totalQuestions > 0 && (
             <div className="mt-6">
               <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -337,6 +392,9 @@ const ExamPage = () => {
               onChange={(answer: any) => handleAnswer(q.id, answer)}
               lang={lang}
               disabled={submitted || hasResult}
+              onEssayImageUpload={(imageId: number) => handleEssayImageUpload(q.id, imageId)}
+              onRemoveEssayImage={(imageId: number) => handleRemoveEssayImage(q.id, imageId)}
+              essayImages={essayImages[q.id] || []}
             />
           ))}
         </div>
@@ -366,7 +424,6 @@ const ExamPage = () => {
           </motion.div>
         )}
         
-        {/* Security Notice */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -382,10 +439,26 @@ const ExamPage = () => {
   );
 };
 
-// 🟢 Improved Question Card Component
-const QuestionCard = ({ question, index, value, onChange, lang, disabled }: any) => {
+// 🟢 Improved Question Card Component مع دعم الصور للمقالي
+const QuestionCard = ({ 
+  question, 
+  index, 
+  value, 
+  onChange, 
+  lang, 
+  disabled,
+  onEssayImageUpload,
+  onRemoveEssayImage,
+  essayImages = []
+}: any) => {
   const [expanded, setExpanded] = useState(true);
+  const [showImageUpload, setShowImageUpload] = useState(false);
   const questionText = lang === "ar" && question.question_ar ? question.question_ar : question.question;
+  const isEssay = question.question_type === 'essay';
+  
+  // ✅ الحصول على نص الإجابة والقيمة
+  const answerText = isEssay && value && typeof value === 'object' ? value.text : value;
+  const answerImages = isEssay && value && typeof value === 'object' ? value.images || [] : [];
   
   return (
     <motion.div
@@ -393,7 +466,7 @@ const QuestionCard = ({ question, index, value, onChange, lang, disabled }: any)
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
       className={`bg-white dark:bg-gray-800/50 rounded-2xl border transition-all duration-300 ${
-        value !== undefined 
+        value !== undefined && value !== '' && value !== null
           ? 'border-green-500/50 shadow-lg shadow-green-500/10' 
           : 'border-gray-200 dark:border-gray-700 hover:border-primary/30'
       }`}
@@ -405,7 +478,7 @@ const QuestionCard = ({ question, index, value, onChange, lang, disabled }: any)
       >
         <div className="flex items-start gap-4">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 ${
-            value !== undefined 
+            value !== undefined && value !== '' && value !== null
               ? 'bg-gradient-to-r from-green-500 to-emerald-500' 
               : 'bg-gradient-to-r from-primary to-primary/70'
           }`}>
@@ -454,7 +527,7 @@ const QuestionCard = ({ question, index, value, onChange, lang, disabled }: any)
           </div>
           
           {/* Status Icon */}
-          {value !== undefined && (
+          {value !== undefined && value !== '' && value !== null && (
             <div className="flex-shrink-0">
               <CheckCircle className="w-6 h-6 text-green-500" />
             </div>
@@ -523,15 +596,102 @@ const QuestionCard = ({ question, index, value, onChange, lang, disabled }: any)
               )}
               
               {question.question_type === 'essay' && (
-                <textarea
-                  value={value || ''}
-                  onChange={(e) => onChange(e.target.value)}
-                  className="w-full p-4 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 outline-none resize-y transition-all"
-                  rows={6}
-                  placeholder={lang === "ar" 
-                    ? "✍️ اكتب إجابتك بالتفصيل هنا..." 
-                    : "✍️ Write your detailed answer here..."}
-                />
+                <div className="space-y-4">
+                  <textarea
+                    value={answerText || ''}
+                    onChange={(e) => {
+                      if (isEssay) {
+                        onChange({ text: e.target.value, images: answerImages });
+                      } else {
+                        onChange(e.target.value);
+                      }
+                    }}
+                    className="w-full p-4 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 outline-none resize-y transition-all"
+                    rows={6}
+                    placeholder={lang === "ar" 
+                      ? "✍️ اكتب إجابتك بالتفصيل هنا..." 
+                      : "✍️ Write your detailed answer here..."}
+                  />
+                  
+                  {/* ✅ زر رفع الصور للمقالي */}
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowImageUpload(!showImageUpload)}
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all text-sm"
+                    >
+                      <ImageIcon className="w-4 h-4" />
+                      {lang === "ar" ? "إضافة صورة" : "Add Image"}
+                    </button>
+                    
+                    {/* عرض عدد الصور المرفوعة */}
+                    {answerImages.length > 0 && (
+                      <span className="text-xs text-green-600 dark:text-green-400">
+                        ✅ {answerImages.length} {lang === "ar" ? "صورة مرفوعة" : "images uploaded"}
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* ✅ FileUploader للصور المقالية */}
+                  {showImageUpload && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <FileUploader
+                        label={lang === "ar" ? "📷 رفع صورة للإجابة" : "📷 Upload image for answer"}
+                        onUploadSuccess={(imageId: number) => {
+                          if (onEssayImageUpload) {
+                            onEssayImageUpload(imageId);
+                          }
+                          toast.success(lang === "ar" ? "تم رفع الصورة بنجاح" : "Image uploaded successfully");
+                          // تحديث الإجابة
+                          const newImages = [...answerImages, imageId];
+                          onChange({ text: answerText || '', images: newImages });
+                        }}
+                        multiple={true}
+                        accept="image/*"
+                        preview={true}
+                        uniqueId={`essay-upload-${question.id}`}
+                        maxFiles={5}
+                      />
+                    </motion.div>
+                  )}
+                  
+                  {/* ✅ عرض الصور المرفوعة للإجابة */}
+                  {answerImages.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2 mt-2">
+                      {answerImages.map((imgId: number, idx: number) => (
+                        <div key={idx} className="relative group">
+                          <img 
+                            src={`https://lms.dentin.cloud/api/media/${imgId}`} 
+                            alt={`Answer image ${idx + 1}`}
+                            className="w-full h-20 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/default-image.jpg';
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (onRemoveEssayImage) {
+                                onRemoveEssayImage(imgId);
+                              }
+                              // تحديث الإجابة
+                              const newImages = answerImages.filter((id: number) => id !== imgId);
+                              onChange({ text: answerText || '', images: newImages });
+                            }}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <XCircle className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </motion.div>
@@ -541,12 +701,11 @@ const QuestionCard = ({ question, index, value, onChange, lang, disabled }: any)
   );
 };
 
-// 🟢 Modern Skeleton Component
+// 🟢 Skeleton Component (نفس الكود)
 const ExamSkeleton = ({ lang }: { lang: string }) => {
   return (
     <div className="min-h-screen pt-24 pb-20 bg-gradient-to-br from-gray-50 to-white dark:from-gray-950 dark:to-gray-900">
       <div className="container mx-auto px-4 max-w-4xl">
-        {/* Header Skeleton */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-6">
             <div className="h-10 w-24 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
@@ -563,8 +722,6 @@ const ExamSkeleton = ({ lang }: { lang: string }) => {
             <div className="h-8 w-24 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse" />
           </div>
         </div>
-        
-        {/* Questions Skeleton */}
         <div className="space-y-4">
           {[1, 2, 3, 4, 5].map(i => (
             <div key={i} className="bg-white dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700 p-5">
@@ -581,8 +738,6 @@ const ExamSkeleton = ({ lang }: { lang: string }) => {
             </div>
           ))}
         </div>
-        
-        {/* Submit Button Skeleton */}
         <div className="mt-10 flex justify-center">
           <div className="h-14 w-48 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
         </div>
