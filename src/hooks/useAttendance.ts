@@ -2,20 +2,19 @@
 // hooks/useAttendance.ts
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
-import { toast  } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
 
 interface AttendanceRequest {
   lesson_id: number;
   student_id: number;
-  slug?: string; // ✅ إضافة slug
+  slug?: string;
 }
 
 interface AttendanceResponse {
-  result: string;
+  status: boolean;
   message: string;
-  status: number;
   data?: {
     attended: boolean;
     lesson_id?: number;
@@ -34,11 +33,10 @@ export const useAttendance = () => {
         throw new Error("No authentication token found. Please login again.");
       }
       
-      const { lesson_id, student_id, slug } = attendanceData;
+      const { lesson_id, student_id } = attendanceData;
       
-      console.log("📝 Attendance request:", { lesson_id, student_id, slug });
+      console.log("📝 Attendance request:", { lesson_id, student_id });
       
-      // ✅ استخدام الـ endpoint الصحيح
       const { data } = await api.post(`/lessons/${lesson_id}/attendance`, {
         student_id: student_id
       });
@@ -47,7 +45,7 @@ export const useAttendance = () => {
       return data;
     },
     onSuccess: (data, variables) => {
-      if (data.status === 200) {
+      if (data.status === true) {
         toast.success(data.message || "تم تسجيل حضورك بنجاح! ✅", {
           duration: 3000,
           position: "top-center",
@@ -68,7 +66,7 @@ export const useAttendance = () => {
         const slug = window.location.pathname.split('/')[1];
         setTimeout(() => navigate(`/${slug}/login`), 2000);
       } else {
-        toast.success(data.message || "فشل تسجيل الحضور", {
+        toast.error(data.message || "فشل تسجيل الحضور", {
           duration: 4000,
           position: "top-center",
         });
@@ -87,8 +85,8 @@ export const useAttendance = () => {
         const slug = window.location.pathname.split('/')[1];
         setTimeout(() => navigate(`/${slug}/login`), 2000);
       } else if (error.response?.status === 409) {
-        // 409 يعني الحضور مسجل مسبقاً
-        toast.info("تم تسجيل حضورك مسبقاً ✅", {
+        // ✅ 409 يعني الحضور مسجل مسبقاً - نعرض رسالة info مش error
+        toast.info("✅ تم تسجيل حضورك مسبقاً", {
           duration: 3000,
           position: "top-center",
         });

@@ -152,61 +152,72 @@ const ExamPage = () => {
     setAnswers(prev => ({ ...prev, [questionId]: answer }));
   };
   
-  const handleSubmit = () => {
-    if (answeredCount < totalQuestions) {
-      toast.warning(
-        lang === "ar" 
-          ? `⚠️ الرجاء الإجابة على جميع الأسئلة (${answeredCount}/${totalQuestions})`
-          : `⚠️ Please answer all questions (${answeredCount}/${totalQuestions})`
-      );
-      return;
+ // ✅ تعديل دالة handleSubmit - تجهيز الإجابات بالشكل الصحيح
+const handleSubmit = () => {
+  if (answeredCount < totalQuestions) {
+    toast.warning(
+      lang === "ar" 
+        ? `⚠️ الرجاء الإجابة على جميع الأسئلة (${answeredCount}/${totalQuestions})`
+        : `⚠️ Please answer all questions (${answeredCount}/${totalQuestions})`
+    );
+    return;
+  }
+  
+  // ✅ تجهيز الإجابات مع الصورة (مفتاح image)
+  const formattedAnswers = Object.entries(answers).map(([questionId, answer]) => {
+    // إذا كان السؤال مقالي (object مع text و images)
+    if (typeof answer === 'object' && answer !== null && 'text' in answer) {
+      const answerObj: any = {
+        question_id: parseInt(questionId),
+        answer: answer.text || '',
+      };
+      
+      // ✅ إضافة الصورة لو موجودة (مفتاح image مش images)
+      if (answer.images && answer.images.length > 0) {
+        // ناخد أول صورة فقط (لأن الـ API بيستقبل image واحدة)
+        answerObj.image = answer.images[0];
+      }
+      
+      return answerObj;
     }
     
-    // ✅ تجهيز الإجابات مع الصور
-    const formattedAnswers = Object.entries(answers).map(([questionId, answer]) => {
-      // إذا كان السؤال مقالي (object مع text و images)
-      if (typeof answer === 'object' && answer !== null && 'text' in answer) {
-        return {
-          question_id: parseInt(questionId),
-          answer: answer.text || '',
-          images: answer.images || [] // ✅ إضافة الصور
-        };
-      }
-      // الأسئلة العادية (صح/خطأ، اختيار من متعدد)
-      return {
-        question_id: parseInt(questionId),
-        answer: Array.isArray(answer) ? answer.join(',') : answer.toString(),
-      };
-    });
-    
-    submitExam({
-      examId: parseInt(examId || '0'),
-      answers: formattedAnswers,
-    }, {
-      onSuccess: () => {
-        setSubmitted(true);
-        setTimeout(() => {
-          refetchResult();
-        }, 500);
-        setTimeout(() => {
-          toast.success(
-            lang === "ar" 
-              ? "🎉 تم حفظ النتيجة بنجاح! جاري العودة للدرس..."
-              : "🎉 Result saved successfully! Returning to lesson..."
-          );
-          if (currentLessonId) {
-            navigate(`/${slug}/lesson/${currentLessonId}`);
-          } else {
-            navigate(`/${slug}/dashboard`);
-          }
-        }, 2000);
-      },
-      onError: (error) => {
-        console.error("Submit error:", error);
-        toast.error(lang === "ar" ? "حدث خطأ في تسليم الامتحان" : "Error submitting exam");
-      }
-    });
-  };
+    // الأسئلة العادية (صح/خطأ، اختيار من متعدد)
+    return {
+      question_id: parseInt(questionId),
+      answer: Array.isArray(answer) ? answer.join(',') : answer.toString(),
+    };
+  });
+  
+  console.log("📝 Formatted answers:", formattedAnswers);
+  
+  submitExam({
+    examId: parseInt(examId || '0'),
+    answers: formattedAnswers,
+  }, {
+    onSuccess: () => {
+      setSubmitted(true);
+      setTimeout(() => {
+        refetchResult();
+      }, 500);
+      setTimeout(() => {
+        toast.success(
+          lang === "ar" 
+            ? "🎉 تم حفظ النتيجة بنجاح! جاري العودة للدرس..."
+            : "🎉 Result saved successfully! Returning to lesson..."
+        );
+        if (currentLessonId) {
+          navigate(`/${slug}/lesson/${currentLessonId}`);
+        } else {
+          navigate(`/${slug}/dashboard`);
+        }
+      }, 2000);
+    },
+    onError: (error) => {
+      console.error("Submit error:", error);
+      toast.error(lang === "ar" ? "حدث خطأ في تسليم الامتحان" : "Error submitting exam");
+    }
+  });
+};
   
   const handleAutoSubmit = () => {
     if (!submitted && !hasResult && answeredCount > 0) {
@@ -632,33 +643,32 @@ const QuestionCard = ({
                     )}
                   </div>
                   
-                  {/* ✅ FileUploader للصور المقالية */}
-                  {showImageUpload && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="overflow-hidden"
-                    >
-                      <FileUploader
-                        label={lang === "ar" ? "📷 رفع صورة للإجابة" : "📷 Upload image for answer"}
-                        onUploadSuccess={(imageId: number) => {
-                          if (onEssayImageUpload) {
-                            onEssayImageUpload(imageId);
-                          }
-                          toast.success(lang === "ar" ? "تم رفع الصورة بنجاح" : "Image uploaded successfully");
-                          // تحديث الإجابة
-                          const newImages = [...answerImages, imageId];
-                          onChange({ text: answerText || '', images: newImages });
-                        }}
-                        multiple={true}
-                        accept="image/*"
-                        preview={true}
-                        uniqueId={`essay-upload-${question.id}`}
-                        maxFiles={5}
-                      />
-                    </motion.div>
-                  )}
+{showImageUpload && (
+  <motion.div
+    initial={{ opacity: 0, height: 0 }}
+    animate={{ opacity: 1, height: "auto" }}
+    exit={{ opacity: 0, height: 0 }}
+    className="overflow-hidden"
+  >
+    <FileUploader
+      label={lang === "ar" ? "📷 رفع صورة للإجابة" : "📷 Upload image for answer"}
+      onUploadSuccess={(imageId: number) => {
+        if (onEssayImageUpload) {
+          onEssayImageUpload(imageId);
+        }
+        toast.success(lang === "ar" ? "تم رفع الصورة بنجاح" : "Image uploaded successfully");
+        // ✅ تحديث الإجابة - نخزن الصورة كـ array عشان نتعامل معاها بسهولة
+        const newImages = [...answerImages, imageId];
+        onChange({ text: answerText || '', images: newImages });
+      }}
+      multiple={false} // ✅ خلينا false عشان نرفع صورة واحدة بس (لأن الـ API بياخد image واحدة)
+      accept="image/*"
+      preview={true}
+      uniqueId={`essay-upload-${question.id}`}
+      maxFiles={1}
+    />
+  </motion.div>
+)}
                   
                   {/* ✅ عرض الصور المرفوعة للإجابة */}
                   {answerImages.length > 0 && (
