@@ -9,7 +9,6 @@ import { useTeacher } from "@/context/TeacherContext";
 import { useMemo } from "react";
 
 // 🟢 Types
-// في useStudent.ts - تحديث واجهة StudentRegisterData
 export interface StudentRegisterData {
   name: string;
   phone: string;

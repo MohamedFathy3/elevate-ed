@@ -526,31 +526,19 @@ const CourseCardFull = ({ course, slug, pick, lang, dir, isNature, primaryGradie
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         
+        {/* ✅ خصم فقط من غير مؤقت */}
         {hasDiscount && (
-  <motion.div 
-    initial={{ x: -50, opacity: 0 }}
-    animate={{ x: 0, opacity: 1 }}
-    className="absolute top-3 left-3 flex flex-col gap-1 z-10"
-  >
-    <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r from-red-500 to-rose-500 text-white text-xs font-bold shadow-lg">
-      <Percent className="w-3 h-3" />
-      <span>{discountPercent}% OFF</span>
-    </div>
-    
-    {/* ⏱️ عرض المؤقت */}
-      {hasOfferDates && (
-        <OfferTimerDisplay 
-          startDate={offerStartDate} 
-          endDate={offerEndDate} 
-        lang={lang}
-        isDark={isDark}
-        isNature={isNature}
-        compact={true}
-        showIcon={true}
-      />
-    )}
-  </motion.div>
-)}
+          <motion.div 
+            initial={{ x: -50, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            className="absolute top-3 left-3 z-10"
+          >
+            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r from-red-500 to-rose-500 text-white text-xs font-bold shadow-lg">
+              <Percent className="w-3 h-3" />
+              <span>{discountPercent}% خصم</span>
+            </div>
+          </motion.div>
+        )}
         
         <div className="absolute top-3 right-3 px-2 py-1 rounded-lg bg-black/60 backdrop-blur-sm text-white text-xs font-medium z-10">
           {course?.type === "online" 
@@ -616,7 +604,7 @@ const CourseCardFull = ({ course, slug, pick, lang, dir, isNature, primaryGradie
         )}
         
         {/* Stats */}
-        <div className={`flex flex-wrap gap-3 mb-4 text-xs ${isNature ? (isDark ? 'text-amber-400/60' : 'text-amber-600/60') : (isDark ? 'text-gray-400' : 'text-foreground/50')}`}>
+        <div className={`flex flex-wrap gap-3 mb-3 text-xs ${isNature ? (isDark ? 'text-amber-400/60' : 'text-amber-600/60') : (isDark ? 'text-gray-400' : 'text-foreground/50')}`}>
           {lessonsCount > 0 && (
             <div className="flex items-center gap-1">
               <BookOpen className="w-3 h-3" />
@@ -629,6 +617,26 @@ const CourseCardFull = ({ course, slug, pick, lang, dir, isNature, primaryGradie
             <span>{lang === "ar" ? "مرن" : "Flexible"}</span>
           </div>
         </div>
+
+        {/* ✅ المؤقت جوة الكارد من تحت */}
+        {hasOfferDates && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="mb-3"
+          >
+            <OfferTimerDisplay 
+              startDate={offerStartDate} 
+              endDate={offerEndDate} 
+              lang={lang}
+              isDark={isDark}
+              isNature={isNature}
+              compact={true}
+              showIcon={true}
+            />
+          </motion.div>
+        )}
         
         {/* Buttons */}
         <div className="mt-auto pt-3 border-t border-border/50">
@@ -664,7 +672,6 @@ const CourseCardFull = ({ course, slug, pick, lang, dir, isNature, primaryGradie
     </motion.div>
   );
 };
-
 const EmptyState = ({ lang, isNature }: { lang: string; isNature: boolean }) => {
   return (
     <motion.div 

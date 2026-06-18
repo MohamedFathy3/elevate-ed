@@ -566,7 +566,7 @@ const DirectCourseCard = ({ course, index, slug, lang, pick, isNature }: any) =>
           {hasDiscount && (
             <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500 text-white text-xs font-bold">
               <Percent className="w-3 h-3" />
-              {discountPercent}% OFF
+              {discountPercent}% خصم
             </div>
           )}
         </div>
@@ -620,6 +620,7 @@ const DirectCourseCard = ({ course, index, slug, lang, pick, isNature }: any) =>
 };
 
 // Semester Card Component
+// Semester Card Component
 const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isNature }: any) => {
   const [isBuying, setIsBuying] = useState(false);
   const { buySemester } = useBuyCourse();
@@ -629,6 +630,11 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
   const finalPrice = originalPrice - (originalPrice * discountPercent / 100);
   const hasDiscount = discountPercent > 0;
   const coursesCount = semester.courses?.length || 0;
+  
+  // ✅ جلب تواريخ العرض
+  const offerStartDate = semester?.offer_start_date;
+  const offerEndDate = semester?.offer_end_date;
+  const hasOfferDates = offerStartDate && offerEndDate;
   
   const semesterImageUrl = semester.image?.fullUrl || semester.imageUrl;
   const defaultImage = isNature 
@@ -664,6 +670,7 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
           src={finalImageUrl} 
           alt={pick(semester.name, semester.name_ar)}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          onError={(e) => { (e.target as HTMLImageElement).src = defaultImage; }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
         
@@ -706,7 +713,7 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
         <div className="mt-3">
           {hasDiscount ? (
             <div className="flex items-baseline gap-2 flex-wrap">
-              <span className={`text-2xl font-black text-amber-800  `}>
+              <span className={`text-2xl font-black text-amber-800`}>
                 {finalPrice.toFixed(2)} EGP
               </span>
               <span className="text-sm text-amber-700 line-through">{originalPrice.toFixed(2)} EGP</span>
@@ -715,7 +722,7 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
               </span>
             </div>
           ) : (
-            <span className={`text-2xl font-black text-amber-800 }`}>
+            <span className={`text-2xl font-black text-amber-800`}>
               {originalPrice.toFixed(2)} EGP
             </span>
           )}
@@ -732,7 +739,27 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
           </div>
         </div>
 
-        <div className="mt-5 pt-4 border-t border-border">
+        {/* ✅ المؤقت جوة الكارد من تحت */}
+        {hasOfferDates && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="mt-3"
+          >
+            <OfferTimerDisplay 
+              startDate={offerStartDate} 
+              endDate={offerEndDate} 
+              lang={lang}
+              isDark={false}
+              isNature={isNature}
+              compact={true}
+              showIcon={true}
+            />
+          </motion.div>
+        )}
+
+        <div className="mt-4 pt-4 border-t border-border">
           <div className="flex gap-3">
             <button
               onClick={handleBuySemester}
@@ -746,17 +773,18 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
             
             <Link
               to={`/${slug}/courses?semester_id=${semester.id}&semester_name=${encodeURIComponent(pick(semester.name, semester.name_ar))}`}
-             className={`
-  inline-flex items-center gap-2 
-  px-4 py-2.5 
-  rounded-xl 
-  border border-gray-200 dark:border-gray-700 
-  text-gray-900 dark:text-white 
-  font-semibold text-sm 
-  transition-all duration-300
-  hover:border-blue-400 dark:hover:border-blue-500 
-  hover:bg-blue-50 dark:hover:bg-blue-950/30
-`}  >
+              className={`
+                inline-flex items-center gap-2 
+                px-4 py-2.5 
+                rounded-xl 
+                border border-gray-200 dark:border-gray-700 
+                text-gray-900 dark:text-white 
+                font-semibold text-sm 
+                transition-all duration-300
+                hover:border-blue-400 dark:hover:border-blue-500 
+                hover:bg-blue-50 dark:hover:bg-blue-950/30
+              `}
+            >
               {lang === "ar" ? "عرض الكورسات" : "View Courses"}
               <ChevronRight className="w-4 h-4" />
             </Link>

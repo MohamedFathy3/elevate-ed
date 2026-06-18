@@ -575,48 +575,138 @@ const ProfileTab = ({ studentInfo, lang, isNature, isDark, profileData, cardBg }
       )}
 
       {/* Info Cards Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {infoCards.map((card, idx) => (
-          <motion.div
-            key={idx}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.05 }}
-            className={`p-4 rounded-xl ${cardBg} ${card.highlight ? 'border-primary/30' : ''}`}
-          >
-            <div className="flex items-start gap-3">
-              <div className={`p-2 rounded-lg ${getIconBg()} flex-shrink-0`}>
-                <div className="text-[#000] dark:text-[#fff]">
-                  {card.icon}
+{/* Info Cards Grid - مُعاد تصميمه بالكامل ✅ */}
+<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5">
+  {infoCards.map((card, idx) => (
+    <motion.div
+      key={idx}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ 
+        delay: idx * 0.04,
+        duration: 0.4,
+        ease: "easeOut"
+      }}
+      className={`
+        group relative p-5 rounded-2xl 
+        transition-all duration-300 
+        hover:scale-[1.02] hover:shadow-xl
+        ${cardBg}
+        ${card.highlight ? 'ring-2 ring-primary/30 shadow-lg shadow-primary/5' : 'hover:shadow-md'}
+        ${isDark ? 'hover:bg-gray-800/90' : 'hover:bg-gray-50/80'}
+      `}
+    >
+      {/* Glow Effect للبطاقات المميزة */}
+      {card.highlight && (
+        <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-primary/20 via-transparent to-primary/20 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500" />
+      )}
+
+      <div className="relative flex items-start gap-4">
+        {/* أيقونة البطاقة */}
+        <div className={`
+          p-2.5 rounded-xl 
+          flex-shrink-0
+          transition-all duration-300
+          ${isDark ? 'bg-gray-800' : 'bg-gray-100'}
+          ${card.highlight ? `ring-1 ring-${isNature ? 'amber' : 'primary'}/30` : ''}
+          group-hover:scale-105
+        `}>
+          <div className={`
+            w-5 h-5 
+            ${isDark ? 'text-gray-300' : 'text-gray-700'}
+            ${card.highlight ? `text-${isNature ? 'amber' : 'primary'}` : ''}
+          `}>
+            {card.icon}
+          </div>
+        </div>
+
+        {/* المحتوى */}
+        <div className="flex-1 min-w-0">
+          {/* الـ Label */}
+          <p className={`
+            text-xs font-medium uppercase tracking-wider
+            ${isDark ? 'text-gray-400' : 'text-gray-500'}
+          `}>
+            {card.label}
+          </p>
+
+          {/* ✅ الباركود - تصميم محسّن */}
+          {card.isBarcode && card.value ? (
+            <div className="mt-3 overflow-hidden rounded-2xl border border-gray-200/50 dark:border-gray-700/50 bg-white/95 dark:bg-gray-900/95 shadow-xl backdrop-blur-sm">
+              {/* رأس الباركود */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200/50 dark:border-gray-700/50 bg-gray-50/80 dark:bg-gray-800/80">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 text-primary">
+                    <BarcodeIcon />
+                  </div>
+                  <span className="font-semibold text-sm text-gray-700 dark:text-gray-200">
+                    {isRtl ? "باركود الطالب" : "Student Barcode"}
+                  </span>
+                </div>
+                <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
+                  ID
+                </span>
+              </div>
+
+              {/* الباركود */}
+              <div className="p-4 sm:p-5">
+                <div className="bg-white rounded-xl p-8 sm:p-4 shadow-inner mt-3 overflow-hidden">
+                  <Barcode
+                    value={card.value.toString()}
+                    width={1.2}
+                    height={50}
+                    fontSize={12}
+                    margin={0}
+                    displayValue={false}
+                    format="CODE128"
+                    background="#ffffff"
+                    lineColor="#000000"
+                  />
+                </div>
+
+                {/* الرقم والنص السفلي */}
+                <div className="mt-3 text-center">
+                  <p className="font-mono font-bold text-base sm:text-lg tracking-[0.3em] text-gray-900 dark:text-white">
+                    {card.value}
+                  </p>
+                  <p className="mt-1 text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
+                    {isRtl 
+                      ? "استخدم هذا الباركود لتسجيل الحضور"
+                      : "Use this barcode for attendance"}
+                  </p>
                 </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className={`text-xs ${getMutedColor()}`}>{card.label}</p>
-                {card.isBarcode && card.value ? (
-                  <div className={`mt-2 p-2 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                    <Barcode
-                      value={card.value.toString()}
-                      width={1.5}
-                      height={40}
-                      fontSize={10}
-                      margin={0}
-                      displayValue={true}
-                      format="CODE128"
-                    />
-                    <p className={`text-xs text-center mt-1 font-mono ${getTextColor()}`}>
-                      {card.value}
-                    </p>
-                  </div>
-                ) : (
-                  <p className={`font-semibold break-all ${card.highlight ? (isNature ? 'text-amber-600 dark:text-amber-400' : 'text-primary') : getTextColor()}`}>
-                    {card.value || '-'}
-                  </p>
-                )}
-              </div>
             </div>
-          </motion.div>
-        ))}
+          ) : (
+            /* القيمة العادية - تصميم محسّن */
+            <div className="mt-1">
+              <p className={`
+                font-semibold text-base break-all
+                transition-colors duration-200
+                ${card.highlight 
+                  ? isNature 
+                    ? 'text-amber-600 dark:text-amber-400' 
+                    : 'text-primary'
+                  : isDark 
+                    ? 'text-white' 
+                    : 'text-gray-900'
+                }
+                ${!card.value ? 'opacity-50' : ''}
+              `}>
+                {card.value || "—"}
+              </p>
+              
+              {/* خط تزييني تحت القيمة المميزة */}
+              {card.highlight && card.value && (
+                <div className={`mt-1 w-8 h-0.5 rounded-full bg-${isNature ? 'amber' : 'primary'}/50`} />
+              )}
+            </div>
+          )}
+        </div>
       </div>
+    </motion.div>
+  ))}
+</div>
     </div>
   );
 };

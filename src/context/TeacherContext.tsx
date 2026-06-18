@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLang } from "@/i18n/LanguageContext";
 import api from "@/lib/api";
 import axios from "axios";
-
+import Loding from '@/themes/default/pages/Landing'
 // Types من الـ API
 export interface TeacherWebsiteData {
   id: number;
@@ -139,10 +139,7 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
   if (isLoading && shouldFetch) {
     return (
       <div className="min-h-screen grid place-items-center p-8">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-foreground/60">Loading...</p>
-        </div>
+        <Loding/>
       </div>
     );
   }
