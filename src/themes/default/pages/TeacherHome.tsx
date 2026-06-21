@@ -10,6 +10,7 @@ import { CenterHours } from "@/themes/default/components/site/CenterHours";
 import { OfferPopup } from "@/themes/default/components/site/OfferPopup";
 import { useLang } from "@/i18n/LanguageContext";
 import { useState } from "react";
+import { SocialCounters } from "@/themes/default/components/site/SocialCounters"; // ✅ إضافة
 
 const TeacherHome = () => {
   const { lang } = useLang();
@@ -28,6 +29,7 @@ const TeacherHome = () => {
       <Hero />
       <Stage />
       <Courses limit={4} />
+         <SocialCounters />
       <CenterHours />
       <Books />
       <About />
