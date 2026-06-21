@@ -7,6 +7,9 @@ import { useLang } from "@/i18n/LanguageContext";
 import api from "@/lib/api";
 import axios from "axios";
 import Loding from '@/themes/default/pages/Landing'
+import { SeoSettings } from "@/types/seo";
+
+
 // Types من الـ API
 export interface TeacherWebsiteData {
   id: number;
@@ -35,8 +38,9 @@ export interface TeacherWebsiteData {
     books: any[];
     footer: any;
     future?: any[];
-    featured_courses:any[]
+    featured_courses: any[]
     centerHours?: any[]; // ✅ إضافة centerHours
+    seo?: SeoSettings; // ✅ إضافة seo
   };
   createdAt: string;
 }
@@ -57,7 +61,7 @@ interface TeacherContextValue {
   future: any[];
   home: any;
   centerHours: any[]; // ✅ إضافة centerHours
-  featured_courses:any[]
+  featured_courses: any[]
 }
 
 const TeacherContext = createContext<TeacherContextValue | undefined>(undefined);
@@ -68,21 +72,21 @@ const STATIC_PAGES = ['forgot-password', 'reset-password'];
 // دالة جلب البيانات
 const fetchTeacherBySlug = async (slug: string): Promise<TeacherWebsiteData> => {
   console.log("🔵 fetchTeacherBySlug START for slug:", slug);
-  
+
   if (!slug) {
     throw new Error('Slug is required');
   }
-  
+
   const url = `/${slug}`;
   console.log("📌 API URL:", url);
-  
+
   const response = await api.get(url);
   const { data } = response;
-  
+
   if (data.status !== 200) {
     throw new Error(data.message || "Failed to fetch teacher");
   }
-  
+
   return data.data;
 };
 
@@ -90,23 +94,23 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
   const { slug } = useParams<{ slug: string }>();
   const { pathname } = useLocation();
   const { lang } = useLang();
-  
+
   const currentPath = pathname.split('/').pop() || '';
   const isStaticPage = STATIC_PAGES.includes(currentPath);
   const shouldFetch = !!slug && !isStaticPage;
-  
+
   console.log("=========================================");
   console.log("🏪 TeacherProvider");
   console.log("📌 slug:", slug);
   console.log("📌 pathname:", pathname);
   console.log("📌 shouldFetch:", shouldFetch);
   console.log("=========================================");
-  
-  const { 
-    data: teacher, 
-    isLoading, 
-    error, 
-    refetch 
+
+  const {
+    data: teacher,
+    isLoading,
+    error,
+    refetch
   } = useQuery({
     queryKey: ['teacher', slug],
     queryFn: () => fetchTeacherBySlug(slug!),
@@ -139,7 +143,7 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
   if (isLoading && shouldFetch) {
     return (
       <div className="min-h-screen grid place-items-center p-8">
-        <Loding/>
+        <Loding />
       </div>
     );
   }
@@ -166,12 +170,12 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <TeacherContext.Provider 
-      value={{ 
-        teacher: teacher || null, 
-        slug: slug || "", 
-        isLoading, 
-        error: error || null, 
+    <TeacherContext.Provider
+      value={{
+        teacher: teacher || null,
+        slug: slug || "",
+        isLoading,
+        error: error || null,
         refetch,
         pick,
         ...safeData
@@ -201,7 +205,7 @@ export const useSafeTeacher = () => {
       slug: "", // ✅ تأكد إن slug موجود هنا
       isLoading: false,
       error: null,
-      refetch: () => {},
+      refetch: () => { },
       pick: (en?: string, ar?: string) => en || ar || "",
       stages: [],
       courses: [],

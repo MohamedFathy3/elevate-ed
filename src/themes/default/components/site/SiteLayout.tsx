@@ -1,19 +1,19 @@
 // components/site/SiteLayout.tsx
 import { Outlet, useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import { TeacherProvider } from "@/context/TeacherContext";
+import { TeacherProvider, useTeacher } from "@/context/TeacherContext";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
 import { ScrollProgress } from "./ScrollProgress";
-
+import { useDynamicSeo } from "@/hooks/useDynamicSeo"; // ✅ ضيف الاستيراد ده
 const SiteLayoutContent = () => {
   const { pathname, hash } = useLocation();
-  
+  const { teacher } = useTeacher();
   console.log("🏠 SiteLayoutContent rendered with pathname:", pathname);
-
+  useDynamicSeo(teacher?.website?.seo);
   useEffect(() => {
     console.log("📍 Location changed:", { pathname, hash });
-    
+
     if (hash) {
       const el = document.querySelector(hash);
       if (el) {
@@ -39,7 +39,7 @@ const SiteLayoutContent = () => {
 
 export const SiteLayout = () => {
   console.log("🎯 SiteLayout rendered - wrapping with TeacherProvider");
-  
+
   return (
     <TeacherProvider>
       <SiteLayoutContent />
