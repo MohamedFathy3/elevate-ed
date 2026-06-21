@@ -115,7 +115,7 @@ export const useExamQuestions = (examId: number) => {
   });
 };
 
-// تقديم الامتحان
+
 export const useSubmitExam = () => {
   const queryClient = useQueryClient();
   const token = Cookies.get('student_token');
@@ -129,7 +129,8 @@ export const useSubmitExam = () => {
         student_id: student?.id,
         answers: answers.map(a => ({
           question_id: a.question_id,
-          answer: a.answer
+          answer: a.answer,
+          ...(a.image && { image: a.image }) // ✅ إضافة الصورة فقط لو موجودة
         }))
       };
       console.log("📝 Submit exam payload:", payload);
@@ -137,15 +138,25 @@ export const useSubmitExam = () => {
       return response.data;
     },
     onSuccess: (data, variables) => {
-      if (data.status === 200 || data.status === 201) {
-        toast.success("تم تقديم الامتحان بنجاح!");
+      console.log("✅ Submit response:", data);
+      
+      // ✅ التحقق من status (Boolean أو String أو Number)
+      const isSuccess = 
+        data?.status === true || 
+        data?.status === "success" || 
+        data?.status === 200 || 
+        data?.status === 201;
+      
+      if (isSuccess) {
+        toast.success(data?.message || "تم تقديم الامتحان بنجاح! 🎉");
         queryClient.invalidateQueries({ queryKey: ['exam-result', variables.examId] });
         queryClient.invalidateQueries({ queryKey: ['exam-questions', variables.examId] });
       } else {
-        toast.error(data.message || "فشل تقديم الامتحان");
+        toast.error(data?.message || "فشل تقديم الامتحان");
       }
     },
     onError: (error: any) => {
+      console.error("❌ Submit error:", error);
       toast.error(error.response?.data?.message || "حدث خطأ ما");
     },
   });

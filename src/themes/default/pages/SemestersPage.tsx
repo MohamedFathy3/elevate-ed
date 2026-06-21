@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast  } from "@/hooks/use-toast";
+import OfferTimerDisplay from "@/components/ui/OfferTimer";
 
 export const SemestersPage = () => {
   const { lang, dir } = useLang();
