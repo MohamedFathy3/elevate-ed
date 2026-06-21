@@ -8,9 +8,9 @@ import { useBuyCourse } from "@/hooks/useEnroll";
 import { useTheme } from "@/context/ThemeContext";
 import OfferTimerDisplay from "@/components/ui/OfferTimer";
 
-import { 
-  ArrowRight, ArrowLeft, BookOpen, Atom, Zap, Sparkles, 
-  Users, Calendar, Percent, GraduationCap, BookMarked, Award, 
+import {
+  ArrowRight, ArrowLeft, BookOpen, Atom, Zap, Sparkles,
+  Users, Calendar, Percent, GraduationCap, BookMarked, Award,
   ShoppingCart, Loader2, Leaf, Flower2, Trees, Clock,
   Star, Timer, AlertCircle
 } from "lucide-react";
@@ -31,7 +31,7 @@ const DEFAULT_ICONS = [Atom, Zap, BookOpen, Sparkles, Award, BookMarked];
 // ✅ ألوان ثابتة ومتناسقة للـ light mode
 const LIGHT_COLORS = [
   "from-blue-500 to-blue-600",
-  "from-emerald-500 to-emerald-600", 
+  "from-emerald-500 to-emerald-600",
   "from-purple-500 to-purple-600",
   "from-rose-500 to-rose-600",
   "from-amber-500 to-amber-600",
@@ -42,7 +42,7 @@ const LIGHT_COLORS = [
 const DARK_COLORS = [
   "from-blue-400 to-blue-500",
   "from-emerald-400 to-emerald-500",
-  "from-purple-400 to-purple-500", 
+  "from-purple-400 to-purple-500",
   "from-rose-400 to-rose-500",
   "from-amber-400 to-amber-500",
   "from-cyan-400 to-cyan-500",
@@ -55,24 +55,24 @@ const DARK_COLORS = [
 const DefaultCourseCard = ({ course, index, slug, pick, lang, Arrow, isDark }: any) => {
   const [isBuying, setIsBuying] = useState(false);
   const { buyCourse } = useBuyCourse();
-  
+
   if (!course) return null;
-  
+
   const Icon = DEFAULT_ICONS[(index || 0) % DEFAULT_ICONS.length];
   const lightColor = LIGHT_COLORS[(index || 0) % LIGHT_COLORS.length];
   const darkColor = DARK_COLORS[(index || 0) % DARK_COLORS.length];
   const gradientColor = isDark ? darkColor : lightColor;
-  
+
   const originalPrice = parseFloat(course?.price) || 0;
   const discountPercent = parseFloat(course?.discount) || 0;
   const finalPrice = originalPrice - (originalPrice * discountPercent / 100);
   const hasDiscount = discountPercent > 0;
-  
+
   // ✅ استخراج تواريخ العرض
   const offerStartDate = course?.offer_start_date;
   const offerEndDate = course?.offer_end_date;
   const hasOfferDates = offerStartDate && offerEndDate;
-  
+
   const courseImage = course?.image?.fullUrl || course?.imageUrl || null;
   const courseTitle = pick(course?.title, course?.title_ar) || "Course";
   const courseDescription = pick(course?.description, course?.description_ar) || "";
@@ -80,7 +80,7 @@ const DefaultCourseCard = ({ course, index, slug, pick, lang, Arrow, isDark }: a
   const subjectName = pick(course?.subject?.name, course?.subject?.name_ar) || "";
   const semesterName = pick(course?.semester?.name, course?.semester?.name_ar) || "";
   const type = course?.type === "online" ? (lang === "ar" ? "أونلاين" : "Online") : (lang === "ar" ? "سنتر" : "Center");
-  
+
   const handleBuy = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -92,7 +92,7 @@ const DefaultCourseCard = ({ course, index, slug, pick, lang, Arrow, isDark }: a
       setIsBuying(false);
     }
   };
-  
+
   return (
     <div className="flex flex-col h-full">
       <motion.article
@@ -119,7 +119,7 @@ const DefaultCourseCard = ({ course, index, slug, pick, lang, Arrow, isDark }: a
               <Icon className="w-16 h-16 text-white/20" strokeWidth={1} />
             </div>
           )}
-          
+
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
@@ -127,7 +127,7 @@ const DefaultCourseCard = ({ course, index, slug, pick, lang, Arrow, isDark }: a
           >
             <Icon className="w-32 h-32 text-white" strokeWidth={1} />
           </motion.div>
-          
+
           {/* ✅ Badge الخصم فقط */}
           {hasDiscount && (
             <div className="absolute top-3 left-3 z-10">
@@ -137,13 +137,13 @@ const DefaultCourseCard = ({ course, index, slug, pick, lang, Arrow, isDark }: a
               </div>
             </div>
           )}
-          
+
           {/* ✅ نوع الكورس (يمين) */}
           <div className="absolute top-3 right-3 z-10 px-2 py-1 rounded-lg bg-black/60 backdrop-blur-sm text-white text-xs font-medium">
             {type}
           </div>
         </div>
-        
+
         <div className="p-4 flex-1 flex flex-col">
           {/* Tags */}
           <div className="flex flex-wrap gap-1.5 mb-3">
@@ -166,21 +166,36 @@ const DefaultCourseCard = ({ course, index, slug, pick, lang, Arrow, isDark }: a
               </span>
             )}
           </div>
-          
+
           {/* Title */}
           <h3 className="font-bold text-base mb-2 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors min-h-[48px] text-gray-900 dark:text-white">
             {courseTitle}
           </h3>
-          
+
           {/* Description */}
           {courseDescription && (
             <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-3 min-h-[32px]">
               {courseDescription.replace(/<[^>]*>/g, '')}
             </p>
           )}
-          
-          {/* Price and Buttons */}
+          {/* ✅ Timer جوه الكارد فوق السعر والزرارير - مظبوط ومتناسق */}
+          {hasDiscount && hasOfferDates && (
+            <div className="mb-3 px-0.5">
+              <OfferTimerDisplay
+                startDate={offerStartDate}
+                endDate={offerEndDate}
+                lang={lang}
+                isDark={isDark}
+                compact={true}
+                variant="red"
+                className="w-full justify-center text-[11px] font-medium"
+              />
+            </div>
+          )}
+          {/* ✅ Price and Buttons مع Timer مظبوط */}
           <div className="mt-auto pt-3 border-t border-gray-100 dark:border-gray-700">
+
+
             <div className="flex items-center justify-between gap-2">
               <div>
                 {hasDiscount ? (
@@ -192,7 +207,7 @@ const DefaultCourseCard = ({ course, index, slug, pick, lang, Arrow, isDark }: a
                   <span className="text-xl font-black text-blue-600 dark:text-blue-400">{originalPrice.toFixed(2)} EGP</span>
                 )}
               </div>
-              
+
               <div className="flex gap-2">
                 <button
                   onClick={handleBuy}
@@ -206,7 +221,7 @@ const DefaultCourseCard = ({ course, index, slug, pick, lang, Arrow, isDark }: a
                   )}
                   <span>{lang === "ar" ? "شراء" : "Buy"}</span>
                 </button>
-                
+
                 <Link
                   to={`/${slug}/courses/${course?.id}`}
                   className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold text-xs hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
@@ -219,21 +234,6 @@ const DefaultCourseCard = ({ course, index, slug, pick, lang, Arrow, isDark }: a
           </div>
         </div>
       </motion.article>
-      
-      {/* ✅ Timer تحت الكارد بالكامل */}
-      {hasDiscount && hasOfferDates && (
-        <div className="mt-2 px-1">
-          <OfferTimerDisplay 
-            startDate={offerStartDate} 
-            endDate={offerEndDate} 
-            lang={lang}
-            isDark={isDark}
-            compact={true}
-            variant="red"
-            className="w-full justify-center text-[10px]"
-          />
-        </div>
-      )}
     </div>
   );
 };
@@ -245,147 +245,146 @@ const DefaultCourseCard = ({ course, index, slug, pick, lang, Arrow, isDark }: a
 const NatureCarouselCourses = ({ courses, pick, slug, lang, Arrow, dir, isDark }: any) => {
   const [index, setIndex] = useState(0);
   const ArrowIcon = ArrowLeft;
-  
+
   if (!courses?.length) return null;
-  
+
   const total = courses.length;
   const go = (dir: number) => setIndex((i) => (i + dir + total) % total);
   const c = courses[index];
-  
+
   const originalPrice = parseFloat(c?.price) || 0;
   const discount = parseFloat(c?.discount) || 0;
   const finalPrice = originalPrice - (originalPrice * discount / 100);
   const hasDiscount = discount > 0;
-  
+
   // ✅ استخراج تواريخ العرض
   const offerStartDate = c?.offer_start_date;
   const offerEndDate = c?.offer_end_date;
   const hasOfferDates = offerStartDate && offerEndDate;
-  
+
   const courseImage = c?.image?.fullUrl || c?.imageUrl || null;
   const courseTitle = pick(c?.title, c?.title_ar) || "Course";
   const courseDescription = pick(c?.description, c?.description_ar) || "";
   const type = c?.type === "online" ? (lang === "ar" ? "أونلاين" : "Online") : (lang === "ar" ? "سنتر" : "Center");
-  
-return (
-  <section className="py-20 overflow-hidden bg-gradient-to-b from-amber-50/50 to-white dark:from-gray-900 dark:to-gray-950">
-    <div className="container mx-auto px-4 grid lg:grid-cols-2 gap-12 items-center">
-      {/* Carousel */}
-      <div className="relative order-2 lg:order-1">
-        <div className="relative rounded-[2rem] p-1.5 bg-gradient-to-br from-amber-500 to-amber-600 shadow-xl">
-          <div className="relative bg-white dark:bg-gray-800 rounded-[1.7rem] overflow-hidden">
-            <div className="relative h-72 bg-gradient-to-br from-amber-100 to-amber-50 dark:from-gray-700 dark:to-gray-800 grid place-items-center overflow-hidden">
-              {courseImage ? (
-                <img 
-                  src={courseImage} 
-                  alt={courseTitle} 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <Leaf className="w-24 h-24 text-amber-300 dark:text-amber-600" />
-              )}
-              
-              {/* ✅ Badge الخصم فقط */}
-              {hasDiscount && (
-                <div className="absolute top-4 left-4 z-10">
-                  <span className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-red-500 to-rose-500 text-white text-xs font-black shadow-lg">
-                    {discount}% OFF
-                  </span>
-                </div>
-              )}
-              
-              <div className="absolute bottom-3 left-3 px-2 py-1 rounded-lg bg-black/60 backdrop-blur-sm text-white text-xs font-medium">
-                {type}
-              </div>
-              
-              <button
-                onClick={() => go(-1)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 size-11 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur grid place-items-center shadow-md hover:bg-white dark:hover:bg-gray-700 hover:scale-110 transition"
-              >
-                <ArrowRight className="size-5 text-amber-600 dark:text-amber-400" />
-              </button>
-              <button
-                onClick={() => go(1)}
-                className="absolute left-3 top-1/2 -translate-y-1/2 size-11 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur grid place-items-center shadow-md hover:bg-white dark:hover:bg-gray-700 hover:scale-110 transition"
-              >
-                <ArrowIcon className="size-5 text-amber-600 dark:text-amber-400" />
-              </button>
-            </div>
 
-            <div className="p-6 text-center">
-              <h3 className="font-extrabold text-xl text-amber-800 dark:text-amber-300">{courseTitle}</h3>
-              <p className="mt-1 text-sm text-amber-600/70 dark:text-amber-400/70">{courseDescription.replace(/<[^>]*>/g, '')}</p>
-
-              <div className="mt-4 flex items-center justify-center gap-3">
-                {hasDiscount ? (
-                  <>
-                    <span className="text-2xl font-black text-amber-700 dark:text-amber-400">{finalPrice.toFixed(2)} جنيه</span>
-                    <span className="text-sm text-amber-400 dark:text-amber-500 line-through font-bold">{originalPrice.toFixed(2)} جنيه</span>
-                  </>
+  return (
+    <section className="py-20 overflow-hidden bg-gradient-to-b from-amber-50/50 to-white dark:from-gray-900 dark:to-gray-950">
+      <div className="container mx-auto px-4 grid lg:grid-cols-2 gap-12 items-center">
+        {/* Carousel */}
+        <div className="relative order-2 lg:order-1">
+          <div className="relative rounded-[2rem] p-1.5 bg-gradient-to-br from-amber-500 to-amber-600 shadow-xl">
+            <div className="relative bg-white dark:bg-gray-800 rounded-[1.7rem] overflow-hidden">
+              <div className="relative h-72 bg-gradient-to-br from-amber-100 to-amber-50 dark:from-gray-700 dark:to-gray-800 grid place-items-center overflow-hidden">
+                {courseImage ? (
+                  <img
+                    src={courseImage}
+                    alt={courseTitle}
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
-                  <span className="text-2xl font-black text-amber-700 dark:text-amber-400">{originalPrice.toFixed(2)} جنيه</span>
+                  <Leaf className="w-24 h-24 text-amber-300 dark:text-amber-600" />
                 )}
+
+                {/* ✅ Badge الخصم فقط */}
+                {hasDiscount && (
+                  <div className="absolute top-4 left-4 z-10">
+                    <span className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-red-500 to-rose-500 text-white text-xs font-black shadow-lg">
+                      {discount}% OFF
+                    </span>
+                  </div>
+                )}
+
+                <div className="absolute bottom-3 left-3 px-2 py-1 rounded-lg bg-black/60 backdrop-blur-sm text-white text-xs font-medium">
+                  {type}
+                </div>
+
+                <button
+                  onClick={() => go(-1)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 size-11 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur grid place-items-center shadow-md hover:bg-white dark:hover:bg-gray-700 hover:scale-110 transition"
+                >
+                  <ArrowRight className="size-5 text-amber-600 dark:text-amber-400" />
+                </button>
+                <button
+                  onClick={() => go(1)}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 size-11 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur grid place-items-center shadow-md hover:bg-white dark:hover:bg-gray-700 hover:scale-110 transition"
+                >
+                  <ArrowIcon className="size-5 text-amber-600 dark:text-amber-400" />
+                </button>
               </div>
 
-              <div className="mt-5 grid grid-cols-2 gap-3">
-                <Link to={`/${slug}/courses/${c?.id}`} className="px-4 py-3 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 text-white text-sm font-bold shadow-md hover:shadow-lg transition-all hover:scale-105">
-                  {lang === "ar" ? "اشترك الآن" : "Enroll Now"}
-                </Link>
-                <Link to={`/${slug}/courses/${c?.id}`} className="px-4 py-3 rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-sm font-bold border border-amber-200 dark:border-amber-800 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-all">
-                  {lang === "ar" ? "تفاصيل الكورس" : "Details"}
-                </Link>
+              <div className="p-6 text-center">
+                <h3 className="font-extrabold text-xl text-amber-800 dark:text-amber-300">{courseTitle}</h3>
+                <p className="mt-1 text-sm text-amber-600/70 dark:text-amber-400/70">{courseDescription.replace(/<[^>]*>/g, '')}</p>
+
+                <div className="mt-4 flex items-center justify-center gap-3">
+                  {hasDiscount ? (
+                    <>
+                      <span className="text-2xl font-black text-amber-700 dark:text-amber-400">{finalPrice.toFixed(2)} جنيه</span>
+                      <span className="text-sm text-amber-400 dark:text-amber-500 line-through font-bold">{originalPrice.toFixed(2)} جنيه</span>
+                    </>
+                  ) : (
+                    <span className="text-2xl font-black text-amber-700 dark:text-amber-400">{originalPrice.toFixed(2)} جنيه</span>
+                  )}
+                </div>
+
+                <div className="mt-5 grid grid-cols-2 gap-3">
+                  <Link to={`/${slug}/courses/${c?.id}`} className="px-4 py-3 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 text-white text-sm font-bold shadow-md hover:shadow-lg transition-all hover:scale-105">
+                    {lang === "ar" ? "اشترك الآن" : "Enroll Now"}
+                  </Link>
+                  <Link to={`/${slug}/courses/${c?.id}`} className="px-4 py-3 rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-sm font-bold border border-amber-200 dark:border-amber-800 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-all">
+                    {lang === "ar" ? "تفاصيل الكورس" : "Details"}
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* ✅ Timer تحت الكاروسيل */}
-        {hasDiscount && hasOfferDates && (
-          <div className="mt-3 px-1">
-            <OfferTimerDisplay 
-              startDate={offerStartDate} 
-              endDate={offerEndDate} 
-              lang={lang}
-              isDark={isDark}
-              compact={true}
-              variant="gold"
-              className="w-full justify-center text-[10px]"
-            />
-          </div>
-        )}
+          {/* ✅ Timer تحت الكاروسيل */}
+          {hasDiscount && hasOfferDates && (
+            <div className="mt-3 px-1">
+              <OfferTimerDisplay
+                startDate={offerStartDate}
+                endDate={offerEndDate}
+                lang={lang}
+                isDark={isDark}
+                compact={true}
+                variant="gold"
+                className="w-full justify-center text-[10px]"
+              />
+            </div>
+          )}
 
-        <div className="mt-5 flex justify-center gap-2">
-          {courses.map((_: any, i: number) => (
-            <button
-              key={i}
-              onClick={() => setIndex(i)}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                i === index 
-                  ? "w-8 bg-amber-600 dark:bg-amber-500" 
+          <div className="mt-5 flex justify-center gap-2">
+            {courses.map((_: any, i: number) => (
+              <button
+                key={i}
+                onClick={() => setIndex(i)}
+                className={`h-2 rounded-full transition-all duration-300 ${i === index
+                  ? "w-8 bg-amber-600 dark:bg-amber-500"
                   : "w-2 bg-amber-300 dark:bg-amber-700"
-              }`}
-            />
-          ))}
+                  }`}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Heading */}
+        <div className="order-1 lg:order-2 text-center">
+          <h2 className="text-4xl md:text-5xl font-black leading-tight flex flex-col items-center gap-3">
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <Leaf className="size-9 text-amber-600 dark:text-amber-400 animate-spin-slow" />
+              <span className="text-amber-800 dark:text-amber-300">{lang === "ar" ? "الكورسات" : "Courses"}</span>
+              <span className="text-amber-600 dark:text-amber-400"> {lang === "ar" ? "المُرشّحة" : "Featured"}</span>
+              <Leaf className="size-9 text-amber-600 dark:text-amber-400 animate-spin-slow" />
+            </div>
+          </h2>
+          <p className="mt-4 text-lg text-amber-600/70 dark:text-amber-400/70 max-w-md mx-auto">
+            {lang === "ar" ? "دول أهم الكورسات اللي جمعناهالك هنا" : "Our featured courses for you"}
+          </p>
         </div>
       </div>
-
-      {/* Heading */}
-      <div className="order-1 lg:order-2 text-center">
-        <h2 className="text-4xl md:text-5xl font-black leading-tight flex flex-col items-center gap-3">
-          <div className="flex items-center justify-center gap-3 flex-wrap">
-            <Leaf className="size-9 text-amber-600 dark:text-amber-400 animate-spin-slow" />
-            <span className="text-amber-800 dark:text-amber-300">{lang === "ar" ? "الكورسات" : "Courses"}</span>
-            <span className="text-amber-600 dark:text-amber-400"> {lang === "ar" ? "المُرشّحة" : "Featured"}</span>
-            <Leaf className="size-9 text-amber-600 dark:text-amber-400 animate-spin-slow" />
-          </div>
-        </h2>
-        <p className="mt-4 text-lg text-amber-600/70 dark:text-amber-400/70 max-w-md mx-auto">
-          {lang === "ar" ? "دول أهم الكورسات اللي جمعناهالك هنا" : "Our featured courses for you"}
-        </p>
-      </div>
-    </div>
-  </section>
-);
+    </section>
+  );
 };
 
 // ============================================
@@ -397,41 +396,41 @@ export const Courses = ({ limit = 4 }: { limit?: number }) => {
   const { theme } = useTheme();
   const { featured_courses, slug, pick, isLoading } = useSafeTeacherData();
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
-  
+
   const isDark = document.documentElement.classList.contains('dark');
   const isNature = theme === 'nature';
   const allCourses = Array.isArray(featured_courses) ? featured_courses : [];
   const displayCourses = limit ? allCourses.slice(0, limit) : allCourses;
   const validCourses = displayCourses.filter((course: any) => course && typeof course === 'object');
-  
+
   if (isLoading) {
     return <CoursesSkeleton isNature={isNature} isDark={isDark} />;
   }
-  
+
   if (!validCourses.length) {
     return null;
   }
-  
+
   if (isNature) {
     return <NatureCarouselCourses courses={validCourses} pick={pick} slug={slug} lang={lang} Arrow={Arrow} dir={dir} isDark={isDark} />;
   }
-  
+
   return (
     <section id="courses" className="py-24 md:py-32 relative overflow-hidden bg-white dark:bg-gray-950">
       {/* ✅ خلفية متحركة قوية وواضحة */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        
+
         {/* كتب كبيرة متحركة - يمين */}
         <motion.div
-          animate={{ 
+          animate={{
             y: [0, -30, 0, 30, 0],
             rotate: [0, 10, -10, 5, 0],
             scale: [1, 1.1, 0.9, 1.05, 1],
           }}
-          transition={{ 
-            duration: 12, 
-            repeat: Infinity, 
-            ease: "easeInOut" 
+          transition={{
+            duration: 12,
+            repeat: Infinity,
+            ease: "easeInOut"
           }}
           className="absolute top-10 right-10 opacity-20 dark:opacity-10"
         >
@@ -446,17 +445,17 @@ export const Courses = ({ limit = 4 }: { limit?: number }) => {
             </motion.div>
           </div>
         </motion.div>
-        
+
         {/* كتاب كبير متحرك - يسار */}
         <motion.div
-          animate={{ 
+          animate={{
             y: [0, 40, 0, -40, 0],
             rotate: [0, -15, 10, -5, 0],
             scale: [1, 0.95, 1.05, 1],
           }}
-          transition={{ 
-            duration: 15, 
-            repeat: Infinity, 
+          transition={{
+            duration: 15,
+            repeat: Infinity,
             ease: "easeInOut",
             delay: 1
           }}
@@ -465,7 +464,7 @@ export const Courses = ({ limit = 4 }: { limit?: number }) => {
           <div className="relative">
             <BookOpen className="w-40 h-40 text-emerald-500 drop-shadow-2xl" strokeWidth={1} />
             <motion.div
-              animate={{ 
+              animate={{
                 rotate: [0, 360],
                 scale: [1, 1.3, 1],
               }}
@@ -476,17 +475,17 @@ export const Courses = ({ limit = 4 }: { limit?: number }) => {
             </motion.div>
           </div>
         </motion.div>
-        
+
         {/* كتاب متوسط - أعلى الوسط */}
         <motion.div
-          animate={{ 
+          animate={{
             y: [0, -25, 0, 25, 0],
             rotate: [0, 8, -12, 6, 0],
             scale: [1, 1.15, 0.95, 1.1, 1],
           }}
-          transition={{ 
-            duration: 10, 
-            repeat: Infinity, 
+          transition={{
+            duration: 10,
+            repeat: Infinity,
             ease: "easeInOut",
             delay: 2
           }}
@@ -494,17 +493,17 @@ export const Courses = ({ limit = 4 }: { limit?: number }) => {
         >
           <BookOpen className="w-24 h-24 text-purple-500 drop-shadow-2xl" strokeWidth={1} />
         </motion.div>
-        
+
         {/* كتاب صغير جداً - يتحرك بسرعة */}
         <motion.div
-          animate={{ 
+          animate={{
             x: [0, 60, -40, 30, 0],
             y: [0, -20, 30, -15, 0],
             rotate: [0, 20, -25, 15, 0],
           }}
-          transition={{ 
-            duration: 8, 
-            repeat: Infinity, 
+          transition={{
+            duration: 8,
+            repeat: Infinity,
             ease: "easeInOut",
             delay: 3
           }}
@@ -515,15 +514,15 @@ export const Courses = ({ limit = 4 }: { limit?: number }) => {
 
         {/* ⭐ نجوم كبيرة متلألئة */}
         <motion.div
-          animate={{ 
+          animate={{
             scale: [1, 1.8, 1.2, 2, 1],
             opacity: [0.2, 0.9, 0.5, 1, 0.2],
             rotate: [0, 180, 360],
           }}
-          transition={{ 
-            duration: 4, 
-            repeat: Infinity, 
-            ease: "easeInOut" 
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut"
           }}
           className="absolute top-1/5 right-1/3"
         >
@@ -531,15 +530,15 @@ export const Courses = ({ limit = 4 }: { limit?: number }) => {
             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
           </svg>
         </motion.div>
-        
+
         <motion.div
-          animate={{ 
+          animate={{
             scale: [1, 1.5, 0.8, 1.7, 1],
             opacity: [0.1, 0.8, 0.3, 1, 0.1],
           }}
-          transition={{ 
-            duration: 5, 
-            repeat: Infinity, 
+          transition={{
+            duration: 5,
+            repeat: Infinity,
             ease: "easeInOut",
             delay: 1.5
           }}
@@ -549,17 +548,17 @@ export const Courses = ({ limit = 4 }: { limit?: number }) => {
             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
           </svg>
         </motion.div>
-        
+
         <motion.div
-          animate={{ 
+          animate={{
             scale: [1, 2, 1.5, 2.2, 1],
             opacity: [0.15, 0.7, 0.4, 0.9, 0.15],
             x: [0, 20, -15, 10, 0],
             y: [0, -15, 10, -5, 0],
           }}
-          transition={{ 
-            duration: 6, 
-            repeat: Infinity, 
+          transition={{
+            duration: 6,
+            repeat: Infinity,
             ease: "easeInOut",
             delay: 2.5
           }}
@@ -572,43 +571,43 @@ export const Courses = ({ limit = 4 }: { limit?: number }) => {
 
         {/* كرات ملونة كبيرة متحركة بشكل واضح */}
         <motion.div
-          animate={{ 
+          animate={{
             x: [0, 80, -60, 100, -40, 0],
             y: [0, -50, 40, -70, 30, 0],
             scale: [1, 1.3, 0.8, 1.4, 0.9, 1],
           }}
-          transition={{ 
-            duration: 18, 
-            repeat: Infinity, 
-            ease: "linear" 
+          transition={{
+            duration: 18,
+            repeat: Infinity,
+            ease: "linear"
           }}
           className="absolute top-1/3 left-5 w-48 h-48 rounded-full bg-gradient-to-r from-blue-500/20 to-cyan-500/20 blur-3xl"
         />
-        
+
         <motion.div
-          animate={{ 
+          animate={{
             x: [0, -70, 50, -90, 40, 0],
             y: [0, 40, -60, 50, -30, 0],
             scale: [1, 1.2, 0.9, 1.3, 0.8, 1],
           }}
-          transition={{ 
-            duration: 22, 
-            repeat: Infinity, 
+          transition={{
+            duration: 22,
+            repeat: Infinity,
             ease: "linear",
             delay: 2
           }}
           className="absolute bottom-1/3 right-5 w-56 h-56 rounded-full bg-gradient-to-r from-emerald-500/20 to-teal-500/20 blur-3xl"
         />
-        
+
         <motion.div
-          animate={{ 
+          animate={{
             x: [0, 50, -80, 40, -60, 0],
             y: [0, -60, 30, -80, 50, 0],
             scale: [1, 1.4, 0.7, 1.5, 0.8, 1],
           }}
-          transition={{ 
-            duration: 20, 
-            repeat: Infinity, 
+          transition={{
+            duration: 20,
+            repeat: Infinity,
             ease: "linear",
             delay: 4
           }}
@@ -617,26 +616,26 @@ export const Courses = ({ limit = 4 }: { limit?: number }) => {
 
         {/* دوائر متحدة المركز */}
         <motion.div
-          animate={{ 
+          animate={{
             scale: [1, 1.5, 2, 1.5, 1],
             opacity: [0.3, 0.15, 0.05, 0.15, 0.3],
           }}
-          transition={{ 
-            duration: 6, 
-            repeat: Infinity, 
-            ease: "easeInOut" 
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: "easeInOut"
           }}
           className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full border-2 border-blue-400/20"
         />
-        
+
         <motion.div
-          animate={{ 
+          animate={{
             scale: [1, 1.3, 1.6, 1.3, 1],
             opacity: [0.2, 0.1, 0.05, 0.1, 0.2],
           }}
-          transition={{ 
-            duration: 8, 
-            repeat: Infinity, 
+          transition={{
+            duration: 8,
+            repeat: Infinity,
             ease: "easeInOut",
             delay: 1
           }}
@@ -691,37 +690,37 @@ export const Courses = ({ limit = 4 }: { limit?: number }) => {
           />
         ))}
       </div>
-      
+
       {/* بقع ضبابية متحركة */}
       <div className="absolute inset-0 pointer-events-none">
         <motion.div
-          animate={{ 
+          animate={{
             x: [0, 100, -50, 150, 0],
             y: [0, -80, 60, -100, 0],
           }}
-          transition={{ 
-            duration: 25, 
-            repeat: Infinity, 
-            ease: "linear" 
+          transition={{
+            duration: 25,
+            repeat: Infinity,
+            ease: "linear"
           }}
           className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-full blur-3xl"
         />
-        
+
         <motion.div
-          animate={{ 
+          animate={{
             x: [0, -80, 60, -120, 0],
             y: [0, 60, -80, 50, 0],
           }}
-          transition={{ 
-            duration: 30, 
-            repeat: Infinity, 
+          transition={{
+            duration: 30,
+            repeat: Infinity,
             ease: "linear",
             delay: 3
           }}
           className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-full blur-3xl"
         />
       </div>
-      
+
       <div className="container-tight relative z-10">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <motion.div
@@ -733,7 +732,7 @@ export const Courses = ({ limit = 4 }: { limit?: number }) => {
             <BookOpen className="w-4 h-4 animate-pulse" />
             {lang === "ar" ? "أحدث الكورسات" : "Latest Courses"}
           </motion.div>
-          
+
           <motion.h2
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -746,7 +745,7 @@ export const Courses = ({ limit = 4 }: { limit?: number }) => {
             </span>
           </motion.h2>
         </div>
-        
+
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
           {validCourses.map((course: any, i: number) => (
             <DefaultCourseCard
@@ -761,7 +760,7 @@ export const Courses = ({ limit = 4 }: { limit?: number }) => {
             />
           ))}
         </div>
-        
+
         {limit && allCourses.length > limit && (
           <div className="text-center mt-12">
             <motion.div
@@ -823,32 +822,32 @@ const CoursesSkeleton = ({ isNature, isDark }: { isNature: boolean; isDark: bool
       </section>
     );
   }
-  
+
   return (
     <section className="py-24 md:py-32 bg-white dark:bg-gray-950">
-    <div className="container-tight">
-      <div className="text-center mb-16">
-        <div className="h-8 w-48 bg-gray-200 dark:bg-gray-800 rounded-full mx-auto mb-5 animate-pulse" />
-        <div className="h-12 w-80 bg-gray-200 dark:bg-gray-800 rounded-lg mx-auto animate-pulse" />
-      </div>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden animate-pulse border border-gray-100 dark:border-gray-700">
-            <div className="h-36 bg-gray-200 dark:bg-gray-700" />
-            <div className="p-4">
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-2" />
-              <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-3" />
-              <div className="flex gap-2">
-                <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
-                <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+      <div className="container-tight">
+        <div className="text-center mb-16">
+          <div className="h-8 w-48 bg-gray-200 dark:bg-gray-800 rounded-full mx-auto mb-5 animate-pulse" />
+          <div className="h-12 w-80 bg-gray-200 dark:bg-gray-800 rounded-lg mx-auto animate-pulse" />
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden animate-pulse border border-gray-100 dark:border-gray-700">
+              <div className="h-36 bg-gray-200 dark:bg-gray-700" />
+              <div className="p-4">
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-2" />
+                <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-3" />
+                <div className="flex gap-2">
+                  <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+                  <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
   );
 };
 

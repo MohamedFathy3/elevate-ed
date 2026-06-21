@@ -31,34 +31,34 @@ const LessonPage = () => {
   const { slug, lessonId } = useParams();
   const navigate = useNavigate();
   const { student } = useCurrentStudent();
-  
+
   // ✅ Data
   const { data: lessonData, isLoading, refetch: refetchLesson } = useLessonDetails(parseInt(lessonId || '0'));
   const lesson = lessonData?.data;
-  
+
   // ✅ Hooks
   const { parts, currentPart, selectedPartIndex, selectPart, totalParts } = useLessonParts(lesson);
-  
+
   // ✅ Attendance - باستخدام hook الموجود
   const { mutate: markAttendance, isPending: attendancePending, isSuccess: attendanceSuccess } = useAttendance();
   const attendanceAttempted = useRef(false);
-  
+
   // ✅ State
   const [attended, setAttended] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [examPassed, setExamPassed] = useState(false);
-  
+
   // ✅ DevTools Protection
   // const { devToolsOpen } = useDetectDevTools(true);
-  
+
   // ✅ Watermark & Protection
-  const watermarkText = student 
+  const watermarkText = student
     ? `${student.name} | ID: ${student.id} | ${new Date().toLocaleDateString('ar-EG')}`
     : 'زائر | يرجى تسجيل الدخول';
-  
+
   usePreventScreenshot(true);
   useWatermark(watermarkText, true);
-  
+
   // ✅ دالة للحصول على مفتاح الكوكي الخاص بالحضور
   const getAttendanceCookieKey = () => {
     return `attendance_${slug}_${lessonId}`;
@@ -74,20 +74,20 @@ const LessonPage = () => {
   // ✅ دالة لحفظ كوكي الحضور
   const setAttendanceCookie = () => {
     const key = getAttendanceCookieKey();
-    Cookies.set(key, 'true', { 
+    Cookies.set(key, 'true', {
       expires: 365,
       path: '/',
       sameSite: 'Lax'
     });
     console.log(`✅ Attendance cookie saved: ${key}`);
   };
-  
+
   // ✅ Sync attendance from API
   useEffect(() => {
     if (lesson) {
       // ✅ التحقق من الكوكي أولاً
       const cookieAttended = hasAttendanceCookie();
-      
+
       if (cookieAttended) {
         console.log("✅ Attendance found in cookie, marking as attended");
         setAttended(true);
@@ -102,7 +102,7 @@ const LessonPage = () => {
     if (!student?.id || !lessonId || !lesson || attendanceAttempted.current) {
       return;
     }
-    
+
     // ✅ التحقق من الكوكي أولاً
     if (hasAttendanceCookie()) {
       console.log("✅ Attendance cookie found, skipping API call");
@@ -110,7 +110,7 @@ const LessonPage = () => {
       attendanceAttempted.current = true;
       return;
     }
-    
+
     // لو الحضور مسجل مسبقاً من الـ API
     if (attended) {
       console.log("✅ Attendance already recorded (from API)");
@@ -118,17 +118,17 @@ const LessonPage = () => {
       setAttendanceCookie();
       return;
     }
-    
+
     // ✅ تسجيل الحضور
     console.log("✅ Marking attendance for lesson:", lessonId);
     attendanceAttempted.current = true;
-    
+
     markAttendance({
       lesson_id: parseInt(lessonId),
       student_id: student.id,
       slug: slug,
     });
-    
+
   }, [student?.id, lessonId, lesson, attended, markAttendance, slug]);
 
   // ✅ Update attendance state on success
@@ -144,10 +144,10 @@ const LessonPage = () => {
   // ✅ Check exam result
   const requiredExam = lesson?.exams?.[0] || null;
   const { data: examResultData } = useExamResult(
-    requiredExam?.id || 0, 
+    requiredExam?.id || 0,
     student?.id || 0
   );
-  
+
   useEffect(() => {
     if (examResultData) {
       const passed = examResultData.status === true;
@@ -165,8 +165,8 @@ const LessonPage = () => {
     selectPart(index);
     setVideoError(false);
     toast.success(
-      lang === "ar" 
-        ? `تم التبديل إلى: ${parts[index]?.title_ar || parts[index]?.title}` 
+      lang === "ar"
+        ? `تم التبديل إلى: ${parts[index]?.title_ar || parts[index]?.title}`
         : `Switched to: ${parts[index]?.title}`
     );
   };
@@ -185,6 +185,32 @@ const LessonPage = () => {
   const needsExamToUnlock = lesson?.must_pass_to_unlock === true;
   const canWatch = !needsExamToUnlock || examPassed;
 
+  // ✅ دالة للحصول على رابط الفيديو من الـ part
+  const getVideoUrlFromPart = (part: any) => {
+    if (!part) return null;
+    // جرب جميع المصادر الممكنة
+    return part.videoUrl || part.video_url || part.link_video || part.content_link || null;
+  };
+
+  // ✅ دالة لمعالجة رابط الفيديو (YouTube, etc.)
+  const getVideoUrl = (url: string) => {
+    if (!url) return null;
+    if (url.includes('youtube.com/watch?v=')) {
+      const videoId = url.split('v=')[1]?.split('&')[0];
+      return `https://www.youtube.com/embed/${videoId}?enablejsapi=1`;
+    }
+    if (url.includes('youtu.be/')) {
+      const videoId = url.split('youtu.be/')[1]?.split('?')[0];
+      return `https://www.youtube.com/embed/${videoId}?enablejsapi=1`;
+    }
+    return url;
+  };
+
+  // ✅ استخراج رابط الفيديو
+  const partVideoUrl = getVideoUrlFromPart(currentPart);
+  const lessonVideoUrl = lesson?.content_link || lesson?.video_url;
+  const finalVideoUrl = partVideoUrl || lessonVideoUrl;
+
   // ✅ Loading
   if (isLoading) return <LessonSkeleton lang={lang} />;
 
@@ -196,10 +222,10 @@ const LessonPage = () => {
           <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/20 grid place-items-center">
             <AlertCircle className="w-12 h-12 text-red-500" />
           </div>
-          <h2 className="text-xl font-bold mb-2">
+          <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">
             {lang === "ar" ? "الدرس غير موجود" : "Lesson not found"}
           </h2>
-          <Link to={`/${slug}/dashboard`} className="text-primary hover:underline">
+          <Link to={`/${slug}/dashboard`} className="text-blue-600 dark:text-blue-400 hover:underline">
             {lang === "ar" ? "العودة للوحة التحكم" : "Back to Dashboard"}
           </Link>
         </div>
@@ -207,35 +233,8 @@ const LessonPage = () => {
     );
   }
 
-  // ✅ DevTools detected
-  // if (devToolsOpen) {
-  //   return (
-  //     <div className="min-h-screen flex items-center justify-center bg-red-50 dark:bg-red-950/20">
-  //       <div className="text-center p-8 max-w-md">
-  //         <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-  //           <AlertCircle className="w-10 h-10 text-red-500" />
-  //         </div>
-  //         <h2 className="text-2xl font-bold mb-3 text-red-600 dark:text-red-400">
-  //           ⚠️ {lang === "ar" ? "تم اكتشاف أدوات المطور" : "Developer Tools Detected"}
-  //         </h2>
-  //         <p className="text-gray-600 dark:text-gray-400 mb-6">
-  //           {lang === "ar" 
-  //             ? "يرجى إغلاق أدوات المطور (F12) لمتابعة المحتوى"
-  //             : "Please close Developer Tools (F12) to continue"}
-  //         </p>
-  //         <button
-  //           onClick={() => window.location.reload()}
-  //           className="px-6 py-3 rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold hover:shadow-lg transition-all"
-  //         >
-  //           {lang === "ar" ? "إعادة تحميل الصفحة" : "Reload Page"}
-  //         </button>
-  //       </div>
-  //     </div>
-  //   );
-  // }
-
   return (
-    <div className="min-h-screen pt-32 pb-20" dir={dir}>
+    <div className="min-h-screen pt-32 pb-20 bg-gray-50 dark:bg-gray-950" dir={dir}>
       <div className="container-tight max-w-7xl mx-auto px-4">
         {/* Breadcrumb */}
         <LessonBreadcrumb slug={slug || ''} title={lesson.title} />
@@ -249,9 +248,10 @@ const LessonPage = () => {
               className="relative bg-black rounded-2xl overflow-hidden shadow-card"
             >
               <VideoPlayer
-                videoUrl={currentPart?.videoUrl || lesson.content_link}
-                title={lesson.title}
-                poster={lesson.imageUrl}
+                key={selectedPartIndex} // ✅ مهم لتحديث الفيديو عند تغيير الـ part
+                videoUrl={finalVideoUrl ? getVideoUrl(finalVideoUrl) : null}
+                title={currentPart?.title || lesson.title}
+                poster={currentPart?.imageUrl || lesson.imageUrl}
                 isLocked={!canWatch}
                 requiredExam={requiredExam}
                 onStartExam={handleStartExam}
@@ -266,13 +266,13 @@ const LessonPage = () => {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-4 p-4 bg-primary/5 rounded-xl border border-primary/20"
+                className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/30 rounded-xl border border-blue-200 dark:border-blue-800"
               >
-                <div className="flex items-center gap-2 text-sm text-foreground/60 mb-1">
-                  <span className="text-primary font-semibold">#{selectedPartIndex + 1}</span>
+                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1">
+                  <span className="text-blue-600 dark:text-blue-400 font-semibold">#{selectedPartIndex + 1}</span>
                   <span>{lang === "ar" ? "الجزء الحالي" : "Current part"}</span>
                 </div>
-                <h3 className="font-bold text-lg">
+                <h3 className="font-bold text-lg text-gray-900 dark:text-white">
                   {lang === "ar" ? currentPart.title_ar : currentPart.title}
                 </h3>
               </motion.div>
@@ -288,7 +288,7 @@ const LessonPage = () => {
               <h1 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">
                 {lang === "ar" && lesson.title_ar ? lesson.title_ar : lesson.title}
               </h1>
-              <p className="text-gray-500 dark:text-gray-400 mb-4">
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
                 {lang === "ar" && lesson.description_ar ? lesson.description_ar : lesson.description}
               </p>
 
