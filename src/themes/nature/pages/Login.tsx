@@ -1,12 +1,29 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/pages/Login.tsx
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLang } from "@/i18n/LanguageContext";
 import { useParams, Link } from "react-router-dom";
 import { useTeacher } from "@/context/TeacherContext";
 import { useStudentLogin } from "@/hooks/useStudent";
-import { LogIn, Phone, Lock, Eye, EyeOff, ArrowLeft, ArrowRight, Loader2, Leaf } from "lucide-react";
+import { 
+  LogIn, Phone, Lock, Eye, EyeOff, 
+  ArrowLeft, ArrowRight, Loader2, ShieldCheck 
+} from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+// استيراد دوال الجهاز
+import { getDeviceData } from "@/utils/deviceFingerprint";
+
+// Interface للبيانات اللي هنبعتها للباك
+interface LoginPayload {
+  phone: string;
+  password: string;
+  type: 'student' | 'parent';
+  device_id: string;      // 🔥 من الفروند
+  fingerprint: string;    // 🔥 من الفروند
+  last_ip: string;        // 🔥 من الفروند
+  user_agent: string;     // 🔥 من الفروند
+}
 
 const Login = () => {
   const { lang, dir } = useLang();
@@ -15,6 +32,8 @@ const Login = () => {
   const { mutate: login, isPending } = useStudentLogin();
   
   const [showPassword, setShowPassword] = useState(false);
+  const [deviceReady, setDeviceReady] = useState(false);
+  const [deviceData, setDeviceData] = useState<Omit<LoginPayload, 'phone' | 'password' | 'type'> | null>(null);
   const [formData, setFormData] = useState({
     phone: "",
     password: "",
@@ -23,6 +42,24 @@ const Login = () => {
 
   const Arrow = dir === "rtl" ? ArrowRight : ArrowLeft;
   const teacherName = teacher?.name || (lang === "ar" ? "المعلم" : "Teacher");
+
+  // ✅ جلب بيانات الجهاز عند تحميل الصفحة
+  useEffect(() => {
+    const loadDeviceData = async () => {
+      try {
+        const data = await getDeviceData();
+        setDeviceData(data);
+        setDeviceReady(true);
+        
+        console.log('✅ بيانات الجهاز:', data);
+      } catch (error) {
+        console.error('❌ فشل في جلب بيانات الجهاز:', error);
+        setDeviceReady(true);
+      }
+    };
+
+    loadDeviceData();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -40,22 +77,36 @@ const Login = () => {
       return;
     }
     
-    login({
+    if (!deviceReady || !deviceData) {
+      toast.info(lang === "ar" ? "جاري تجهيز الجهاز..." : "Preparing device...");
+      return;
+    }
+
+    // ✅ تجهيز البيانات للإرسال (الحقول الأربعة المطلوبة)
+    const payload: LoginPayload = {
       phone: formData.phone,
       password: formData.password,
       type: formData.type as 'student' | 'parent',
-    });
+      device_id: deviceData.device_id,      // 🔥 من الفروند
+      fingerprint: deviceData.fingerprint,   // 🔥 من الفروند
+      last_ip: deviceData.last_ip,           // 🔥 من الفروند
+      user_agent: deviceData.user_agent,     // 🔥 من الفروند
+    };
+
+    console.log('📤 البيانات المرسلة للباك:', payload);
+    
+    // ✅ إرسال البيانات
+    login(payload);
   };
 
   return (
     <div className="min-h-screen py-16 md:py-24 bg-white dark:bg-gray-950">
-      {/* ✅ خلفية متحركة خفيفة */}
+      {/* خلفية متحركة */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-emerald-400/10 dark:bg-emerald-400/5 blur-3xl" />
         <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full bg-blue-400/10 dark:bg-blue-400/5 blur-3xl" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-emerald-300/5 dark:bg-emerald-300/5 blur-3xl" />
         
-        {/* نقط متحركة */}
         {[...Array(12)].map((_, i) => (
           <div
             key={i}
@@ -95,6 +146,16 @@ const Login = () => {
               </p>
             </div>
           </div>
+
+          {/* ✅ Device Security Badge */}
+          {deviceReady && deviceData && (
+            <div className="flex items-center gap-2 px-3 py-2 mb-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50">
+              <ShieldCheck className="size-4 text-emerald-600 dark:text-emerald-400" />
+              <span className="text-xs text-emerald-700 dark:text-emerald-400 font-medium truncate">
+                🔒 {lang === "ar" ? 'جهاز آمن' : 'Secure Device'} • ID: {deviceData.device_id.substring(0, 12)}...
+              </span>
+            </div>
+          )}
 
           {/* Type Selector */}
           <div className="grid grid-cols-2 gap-3 mb-6">
@@ -183,11 +244,16 @@ const Login = () => {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={isPending}
+              disabled={isPending || !deviceReady}
               className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-extrabold shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {isPending ? (
                 <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+              ) : !deviceReady ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {lang === "ar" ? "جاري تجهيز الجهاز..." : "Preparing device..."}
+                </span>
               ) : (
                 lang === "ar" ? "تسجيل الدخول" : "Login"
               )}
@@ -201,6 +267,16 @@ const Login = () => {
               {lang === "ar" ? "إنشاء حساب" : "Sign up"}
             </Link>
           </p>
+
+          {/* ✅ Device Info (for debugging) */}
+          {/* {process.env.NODE_ENV === 'development' && deviceData && (
+            <div className="mt-4 p-3 rounded-xl bg-gray-100 dark:bg-gray-800 text-[10px] text-gray-500 dark:text-gray-400 overflow-hidden space-y-1">
+              <p className="font-mono truncate">🆔 Device ID: {deviceData.device_id}</p>
+              <p className="font-mono truncate">🔑 Fingerprint: {deviceData.fingerprint}</p>
+              <p className="font-mono truncate">📡 IP: {deviceData.last_ip}</p>
+              <p className="font-mono truncate">🌐 User-Agent: {deviceData.user_agent.substring(0, 60)}...</p>
+            </div>
+          )} */}
         </div>
       </div>
 

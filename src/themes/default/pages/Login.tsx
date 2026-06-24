@@ -1,10 +1,22 @@
-// pages/Login.tsx
-import { useState } from "react";
+// src/pages/Login.tsx
+import { useState, useEffect } from "react";
 import { useLang } from "@/i18n/LanguageContext";
 import { useParams, Link } from "react-router-dom";
 import { useTeacher } from "@/context/TeacherContext";
 import { useStudentLogin } from "@/hooks/useStudent";
 import { LogIn, Phone, Lock, Eye, EyeOff, ArrowLeft, ArrowRight, Loader2, GraduationCap } from "lucide-react";
+import { getDeviceData } from "@/utils/deviceFingerprint";
+
+// Interface للبيانات اللي هتتبعت
+interface LoginPayload {
+  phone: string;
+  password: string;
+  type: "student" | "parent";
+  device_id: string;      // 🔥 من الفروند
+  fingerprint: string;    // 🔥 من الفروند
+  last_ip: string;        // 🔥 من الفروند
+  user_agent: string;     // 🔥 من الفروند
+}
 
 const Login = () => {
   const { lang, dir } = useLang();
@@ -13,6 +25,9 @@ const Login = () => {
   const { mutate: login, isPending } = useStudentLogin();
 
   const [showPassword, setShowPassword] = useState(false);
+  const [deviceReady, setDeviceReady] = useState(false);
+  const [deviceData, setDeviceData] = useState<Omit<LoginPayload, 'phone' | 'password' | 'type'> | null>(null);
+  
   const [formData, setFormData] = useState({
     phone: "",
     password: "",
@@ -29,17 +44,49 @@ const Login = () => {
   const home = teacher?.website?.home;
   const heroImage = home?.imageUrl || home?.image?.fullUrl;
 
+  // ✅ جلب بيانات الجهاز عند تحميل الصفحة
+  useEffect(() => {
+    const loadDeviceData = async () => {
+      try {
+        const data = await getDeviceData();
+        setDeviceData(data);
+        setDeviceReady(true);
+        
+        console.log('✅ بيانات الجهاز:', data);
+      } catch (error) {
+        console.error('❌ فشل في جلب بيانات الجهاز:', error);
+        setDeviceReady(true);
+      }
+    };
+
+    loadDeviceData();
+  }, []);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    login({
+    
+    if (!deviceReady || !deviceData) {
+      console.warn('⏳ انتظر حتى يتم جلب بيانات الجهاز');
+      return;
+    }
+
+    // ✅ إرسال كل البيانات (منها device_id, fingerprint, last_ip, user_agent)
+    const payload = {
       phone: formData.phone,
       password: formData.password,
       type: formData.type as "student" | "parent",
-    });
+      device_id: deviceData.device_id,      // 🔥 من الفروند
+      fingerprint: deviceData.fingerprint,   // 🔥 من الفروند
+      last_ip: deviceData.last_ip,           // 🔥 من الفروند
+      user_agent: deviceData.user_agent,     // 🔥 من الفروند
+    };
+
+    console.log('📤 البيانات المرسلة:', payload);
+    login(payload);
   };
 
   return (
@@ -111,6 +158,8 @@ const Login = () => {
                   ? `مرحباً بعودتك إلى منصة ${teacherName}`
                   : `Welcome back to ${teacherName}'s platform`}
               </p>
+              
+          
             </div>
 
             <div className="flex p-1 mb-6 rounded-xl bg-slate-100 dark:bg-slate-800/80">
@@ -184,11 +233,13 @@ const Login = () => {
 
               <button
                 type="submit"
-                disabled={isPending}
+                disabled={isPending || !deviceReady}
                 className="w-full py-3.5 rounded-xl bg-[#3b5bdb] hover:bg-[#364fc7] text-white font-semibold shadow-[0_4px_14px_rgba(59,91,219,0.35)] hover:shadow-[0_6px_20px_rgba(59,91,219,0.45)] transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
               >
                 {isPending ? (
                   <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+                ) : !deviceReady ? (
+                  lang === "ar" ? "جاري تجهيز الجهاز..." : "Preparing device..."
                 ) : lang === "ar" ? (
                   "تسجيل الدخول"
                 ) : (
