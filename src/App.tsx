@@ -1,7 +1,7 @@
 // src/App.tsx
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,7 +13,7 @@ import { StudentAuthProvider } from "@/context/StudentAuthContext";
 import { LoadingBook } from "@/components/LoadingBook";
 import { useLang } from "@/i18n/LanguageContext";
 import { TeacherProvider } from "@/context/TeacherContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,28 +37,32 @@ const LoadingSpinner = () => {
   );
 };
 
-// ✅ كوبوننت جديد للتعامل مع Subdomains
 const SubdomainRoutes = () => {
   const { pages, isLoading } = useTheme();
-  const [isSubdomain, setIsSubdomain] = useState(false);
-  const [subdomain, setSubdomain] = useState('');
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const host = window.location.hostname;
-      const parts = host.split('.');
-      
-      // لو فيه أكتر من جزئين (يعني subdomain)
-      if (parts.length > 2) {
-        setIsSubdomain(true);
-        setSubdomain(parts[0]);
-        console.log("🔹 Subdomain detected:", parts[0]);
-      } else {
-        setIsSubdomain(false);
-        console.log("🔹 Main domain detected");
-      }
+  const location = useLocation();
+  
+  const { isSubdomain, subdomain } = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return { isSubdomain: false, subdomain: '' };
     }
-  }, []);
+    
+    const host = window.location.hostname;
+    const parts = host.split('.');
+    
+    if (parts.length > 2) {
+      return { isSubdomain: true, subdomain: parts[0] };
+    }
+    
+    return { isSubdomain: false, subdomain: '' };
+  }, [location.pathname]);
+
+  // ✅ Log للـ debugging
+  useEffect(() => {
+    console.log("🔹 Host:", window.location.hostname);
+    console.log("🔹 Is Subdomain:", isSubdomain);
+    console.log("🔹 Subdomain:", subdomain);
+    console.log("🔹 Path:", location.pathname);
+  }, [isSubdomain, subdomain, location.pathname]);
 
   if (isLoading || !pages) {
     return <LoadingSpinner />;
@@ -109,7 +113,7 @@ const SubdomainRoutes = () => {
     );
   }
 
-  // ✅ لو الموقع الرئيسي اعرض الـ Landing
+  // ✅ الموقع الرئيسي (web-lec.com)
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
