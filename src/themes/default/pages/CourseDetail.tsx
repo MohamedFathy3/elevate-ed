@@ -73,7 +73,7 @@ const CourseDetail = () => {
               : "You must login first to view this course content"}
           </p>
           <Link
-            to={`/${slug}/login?redirect=${encodeURIComponent(redirectPath || window.location.pathname)}`}
+            to={`/login?redirect=${encodeURIComponent(redirectPath || window.location.pathname)}`}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold hover:shadow-lg transition-all"
           >
             <LogIn className="w-5 h-5" />
@@ -145,7 +145,7 @@ const CourseDetail = () => {
   }, [isAuthenticated]);
 
   const goToLessonPage = (lessonId: number) => {
-    navigate(`/${slug}/lesson/${lessonId}`);
+    navigate(`/lesson/${lessonId}`);
   };
 
   // ✅ شراء الكورس كاملاً
@@ -154,7 +154,7 @@ const CourseDetail = () => {
     const token = Cookies.get('student_token');
     if (!token) {
       toast.error(lang === "ar" ? "الرجاء تسجيل الدخول أولاً" : "Please login first");
-      setTimeout(() => navigate(`/${slug}/login?redirect=${encodeURIComponent(window.location.pathname)}`), 1500);
+      setTimeout(() => navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`), 1500);
       return;
     }
 
@@ -193,7 +193,7 @@ const CourseDetail = () => {
     const token = Cookies.get('student_token');
     if (!token) {
       toast.error(lang === "ar" ? "الرجاء تسجيل الدخول أولاً" : "Please login first");
-      setTimeout(() => navigate(`/${slug}/login?redirect=${encodeURIComponent(window.location.pathname)}`), 1500);
+      setTimeout(() => navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`), 1500);
       return;
     }
 
@@ -294,7 +294,7 @@ const CourseDetail = () => {
   }
 
   if (!courseFromApi && !isLoading) {
-    return <Navigate to={`/${slug}/courses`} replace />;
+    return <Navigate to={`/courses`} replace />;
   }
 
   return (
@@ -323,7 +323,7 @@ const CourseDetail = () => {
         {/* Back Link */}
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
           <Link
-            to={`/${slug}/courses`}
+            to={`/courses`}
             className={`inline-flex items-center gap-2 text-sm ${isNature ? 'text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300' : 'text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary-light'} mb-8 transition-colors`}
           >
             <Arrow className="w-4 h-4 rotate-180 rtl:rotate-0" />
@@ -670,7 +670,7 @@ const CourseDetail = () => {
                   </motion.button>
 
                   {!Cookies.get('student_token') && (
-                    <Link to={`/${slug}/login?redirect=${encodeURIComponent(window.location.pathname)}`}
+                    <Link to={`/login?redirect=${encodeURIComponent(window.location.pathname)}`}
                       className={`w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl text-sm font-semibold transition
                         ${isNature
                           ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300'
@@ -752,7 +752,7 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
       onSelectPart(lessonId, partIndex, part);
     } else {
       // fallback للتنقل للصفحة المنفصلة
-      navigate(`/${slug}/lesson/${lessonId}?part=${partIndex}`);
+      navigate(`/lesson/${lessonId}?part=${partIndex}`);
     }
   };
 

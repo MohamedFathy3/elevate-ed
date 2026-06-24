@@ -123,7 +123,7 @@ const Login = () => {
       <div className="container mx-auto px-4 max-w-md relative z-10">
         {/* Back to Home Link */}
         <Link 
-          to={`/${slug}`} 
+          to={``} 
           className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors mb-4"
         >
           <Arrow className="w-4 h-4" />
@@ -263,7 +263,7 @@ const Login = () => {
           {/* Register Link */}
           <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
             {lang === "ar" ? "ليس لديك حساب؟" : "Don't have an account?"}{" "}
-            <Link to={`/${slug}/register`} className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline">
+            <Link to={`/register`} className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline">
               {lang === "ar" ? "إنشاء حساب" : "Sign up"}
             </Link>
           </p>

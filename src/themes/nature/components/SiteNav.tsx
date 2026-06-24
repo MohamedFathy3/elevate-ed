@@ -15,7 +15,7 @@ export function SiteNav() {
   const [open, setOpen] = useState(false);
 
   const teacherName = teacher?.name || pick(teacher?.name, teacher?.name_ar) || "Home";
-  const isActive = (path: string) => location.pathname === `/${slug}${path}`;
+  const isActive = (path: string) => location.pathname === `${path}`;
 
   const navLinks = [
     { to: "", icon: Home, label: lang === "ar" ? "الرئيسية" : "Home" },
@@ -30,7 +30,7 @@ export function SiteNav() {
       <header className="sticky top-0 inset-x-0 z-30 backdrop-blur-md bg-background/80 border-b border-border/60">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
           {/* Logo */}
-          <Link to={`/${slug}`} className="flex items-center gap-2 group">
+          <Link to={``} className="flex items-center gap-2 group">
             <div className="size-10 rounded-full bg-brand grid place-items-center font-black text-brand-foreground shadow-soft group-hover:rotate-12 transition-transform duration-500">
               {teacherName.charAt(0).toUpperCase()}
             </div>
@@ -42,7 +42,7 @@ export function SiteNav() {
             {navLinks.map((link) => (
               <Link
                 key={link.to}
-                to={`/${slug}${link.to}`}
+                to={`${link.to}`}
                 className={`px-4 py-2 rounded-full text-sm font-bold transition ${
                   isActive(link.to)
                     ? "text-primary bg-primary/10"
@@ -74,11 +74,11 @@ export function SiteNav() {
             </button>
 
             {/* Auth Buttons */}
-            <Link to={`/${slug}/login`} className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full bg-card border shadow-soft text-sm font-bold hover-lift">
+            <Link to={`/login`} className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full bg-card border shadow-soft text-sm font-bold hover-lift">
               <LogIn className="size-4" />
               <span>{lang === "ar" ? "تسجيل الدخول" : "Login"}</span>
             </Link>
-            <Link to={`/${slug}/register`} className="hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-bold shadow-soft hover-lift">
+            <Link to={`/register`} className="hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-bold shadow-soft hover-lift">
               <UserPlus className="size-4" />
               <span>{lang === "ar" ? "إنشاء حساب" : "Sign Up"}</span>
             </Link>
@@ -97,7 +97,7 @@ export function SiteNav() {
               {navLinks.map((link) => (
                 <Link
                   key={link.to}
-                  to={`/${slug}${link.to}`}
+                  to={`${link.to}`}
                   onClick={() => setOpen(false)}
                   className={`px-4 py-3 rounded-xl text-sm font-bold transition ${
                     isActive(link.to) ? "bg-primary/10 text-primary" : "hover:bg-muted"
@@ -107,10 +107,10 @@ export function SiteNav() {
                 </Link>
               ))}
               <div className="grid grid-cols-2 gap-2 pt-2">
-                <Link to={`/${slug}/login`} onClick={() => setOpen(false)} className="px-4 py-3 rounded-xl bg-card border text-sm font-bold text-center">
+                <Link to={`/login`} onClick={() => setOpen(false)} className="px-4 py-3 rounded-xl bg-card border text-sm font-bold text-center">
                   {lang === "ar" ? "تسجيل الدخول" : "Login"}
                 </Link>
-                <Link to={`/${slug}/register`} onClick={() => setOpen(false)} className="px-4 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-bold text-center">
+                <Link to={`/register`} onClick={() => setOpen(false)} className="px-4 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-bold text-center">
                   {lang === "ar" ? "إنشاء حساب" : "Sign Up"}
                 </Link>
               </div>

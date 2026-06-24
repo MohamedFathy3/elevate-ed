@@ -82,7 +82,7 @@ const LessonPage = () => {
   const canWatch = !isContentLocked;
   
   const handleStartExam = (exam: any) => {
-    navigate(`/${slug}/exam/${exam.id}?redirect=${encodeURIComponent(window.location.pathname)}`);
+    navigate(`/exam/${exam.id}?redirect=${encodeURIComponent(window.location.pathname)}`);
   };
   
   const handleMarkAttendance = () => {
@@ -120,7 +120,7 @@ const LessonPage = () => {
           <h2 className="text-xl font-bold mb-2">
             {lang === "ar" ? "الدرس غير موجود" : "Lesson not found"}
           </h2>
-          <Link to={`/${slug}/dashboard`} className="text-primary hover:underline">
+          <Link to={`/dashboard`} className="text-primary hover:underline">
             {lang === "ar" ? "العودة للوحة التحكم" : "Back to Dashboard"}
           </Link>
         </div>
@@ -139,11 +139,11 @@ const LessonPage = () => {
         {/* Breadcrumb */}
         <div className="mb-6">
           <div className="flex items-center gap-2 text-sm text-foreground/60 flex-wrap">
-            <Link to={`/${slug}/dashboard`} className="hover:text-primary transition-colors">
+            <Link to={`/dashboard`} className="hover:text-primary transition-colors">
               {lang === "ar" ? "لوحة التحكم" : "Dashboard"}
             </Link>
             <ChevronRight className="w-4 h-4" />
-            <Link to={`/${slug}/dashboard`} className="hover:text-primary transition-colors">
+            <Link to={`/dashboard`} className="hover:text-primary transition-colors">
               {lang === "ar" ? "كورساتي" : "My Courses"}
             </Link>
             <ChevronRight className="w-4 h-4" />
@@ -401,7 +401,7 @@ const LessonPage = () => {
             {/* Navigation Buttons */}
             <div className="flex gap-3">
               <Link
-                to={`/${slug}/dashboard`}
+                to={`/dashboard`}
                 className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-card border border-border hover:border-primary/40 transition-all"
               >
                 <Arrow className="w-4 h-4" />

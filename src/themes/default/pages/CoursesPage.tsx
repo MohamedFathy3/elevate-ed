@@ -184,7 +184,7 @@ const CoursesPage = () => {
         {(semesterId || subjectId) && (
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="mb-6">
             <Link 
-              to={`/${slug}/courses`}
+              to={`/courses`}
               className="inline-flex items-center gap-2 text-sm text-foreground/60 hover:text-primary transition-colors group"
             >
               <Arrow className="w-4 h-4 transition-transform group-hover:-translate-x-1 rtl:group-hover:translate-x-1" />
@@ -201,11 +201,11 @@ const CoursesPage = () => {
             transition={{ delay: 0.1 }}
             className="flex items-center gap-2 text-sm text-foreground/60 mb-4 flex-wrap"
           >
-            <Link to={`/${slug}`} className="hover:text-primary transition-colors">
+            <Link to={``} className="hover:text-primary transition-colors">
               {lang === "ar" ? "الرئيسية" : "Home"}
             </Link>
             <ChevronRight className="w-4 h-4" />
-            <Link to={`/${slug}/courses`} className="hover:text-primary transition-colors">
+            <Link to={`/courses`} className="hover:text-primary transition-colors">
               {lang === "ar" ? "الكورسات" : "Courses"}
             </Link>
             <ChevronRight className="w-4 h-4" />
@@ -659,7 +659,7 @@ const CourseCardFull = ({ course, slug, pick, lang, dir, isNature, primaryGradie
             
             <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
               <Link
-                to={`/${slug}/courses/${course?.id}`}
+                to={`/courses/${course?.id}`}
                 className={`px-3 py-2 rounded-xl border font-semibold text-sm transition-all
                   ${detailButtonBg} ${isNature ? (isDark ? 'text-amber-200' : 'text-amber-700') : (isDark ? 'text-gray-200' : 'text-foreground')}`}
               >

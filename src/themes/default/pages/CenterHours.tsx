@@ -93,7 +93,7 @@ export const CenterHours = () => {
               : "Center hours will be added soon"}
           </p>
           <Link
-            to={`/${slug}`}
+            to={``}
             className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r ${primaryGradient} text-white font-semibold`}
           >
             <Arrow className="w-4 h-4" />
@@ -133,7 +133,7 @@ export const CenterHours = () => {
           className="mb-8"
         >
           <div className="flex items-center gap-2 text-sm text-foreground/60 mb-4 flex-wrap">
-            <Link to={`/${slug}`} className={`hover:${isNature ? 'text-amber-600' : 'text-primary'} transition-colors`}>
+            <Link to={``} className={`hover:${isNature ? 'text-amber-600' : 'text-primary'} transition-colors`}>
               {lang === "ar" ? "الرئيسية" : "Home"}
             </Link>
             <ChevronRightIcon className="w-4 h-4" />

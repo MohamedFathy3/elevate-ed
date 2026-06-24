@@ -207,14 +207,14 @@ export const SemestersPage = () => {
           className="mb-8"
         >
           <div className="flex items-center gap-2 text-sm text-foreground/60 mb-4 flex-wrap">
-            <Link to={`/${slug}`} className={`hover:${textPrimary} transition-colors`}>
+            <Link to={``} className={`hover:${textPrimary} transition-colors`}>
               {lang === "ar" ? "الرئيسية" : "Home"}
             </Link>
             <ChevronRight className="w-4 h-4" />
             
             {stageName ? (
               <>
-                <Link to={`/${slug}/stages`} className={`hover:${textPrimary} transition-colors`}>
+                <Link to={`/stages`} className={`hover:${textPrimary} transition-colors`}>
                   {lang === "ar" ? "المراحل" : "Stages"}
                 </Link>
                 <ChevronRight className="w-4 h-4" />
@@ -551,7 +551,7 @@ const DirectCourseCard = ({ course, index, slug, lang, pick, isNature }: any) =>
       whileHover={{ y: -5 }}
       className={`group rounded-2xl border transition-all overflow-hidden bg-white dark:bg-gray-900 ${isNature ? 'border-amber-200 dark:border-amber-800' : 'border-border'} hover:border-${primaryColor}/30`}
     >
-      <Link to={`/${slug}/courses/${course.id}`}>
+      <Link to={`/courses/${course.id}`}>
         <div className="relative h-40 overflow-hidden">
           <img 
             src={courseImage} 
@@ -773,7 +773,7 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
             </button>
             
             <Link
-              to={`/${slug}/courses?semester_id=${semester.id}&semester_name=${encodeURIComponent(pick(semester.name, semester.name_ar))}`}
+              to={`/courses?semester_id=${semester.id}&semester_name=${encodeURIComponent(pick(semester.name, semester.name_ar))}`}
               className={`
                 inline-flex items-center gap-2 
                 px-4 py-2.5 

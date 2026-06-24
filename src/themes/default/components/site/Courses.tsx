@@ -223,7 +223,7 @@ const DefaultCourseCard = ({ course, index, slug, pick, lang, Arrow, isDark }: a
                 </button>
 
                 <Link
-                  to={`/${slug}/courses/${course?.id}`}
+                  to={`/courses/${course?.id}`}
                   className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold text-xs hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
                 >
                   <span>{lang === "ar" ? "تفاصيل" : "Details"}</span>
@@ -328,10 +328,10 @@ const NatureCarouselCourses = ({ courses, pick, slug, lang, Arrow, dir, isDark }
                 </div>
 
                 <div className="mt-5 grid grid-cols-2 gap-3">
-                  <Link to={`/${slug}/courses/${c?.id}`} className="px-4 py-3 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 text-white text-sm font-bold shadow-md hover:shadow-lg transition-all hover:scale-105">
+                  <Link to={`/courses/${c?.id}`} className="px-4 py-3 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 text-white text-sm font-bold shadow-md hover:shadow-lg transition-all hover:scale-105">
                     {lang === "ar" ? "اشترك الآن" : "Enroll Now"}
                   </Link>
-                  <Link to={`/${slug}/courses/${c?.id}`} className="px-4 py-3 rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-sm font-bold border border-amber-200 dark:border-amber-800 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-all">
+                  <Link to={`/courses/${c?.id}`} className="px-4 py-3 rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-sm font-bold border border-amber-200 dark:border-amber-800 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-all">
                     {lang === "ar" ? "تفاصيل الكورس" : "Details"}
                   </Link>
                 </div>
@@ -772,7 +772,7 @@ export const Courses = ({ limit = 4 }: { limit?: number }) => {
               whileTap={{ scale: 0.95 }}
             >
               <Link
-                to={`/${slug}/courses`}
+                to={`/courses`}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-emerald-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all group"
               >
                 <Sparkles className="w-4 h-4 animate-spin-slow" />

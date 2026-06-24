@@ -57,8 +57,8 @@ const ExamPage = () => {
     if (hasResult && !submitted) {
       toast.info(lang === "ar" ? "📝 لقد قمت بحل هذا الامتحان مسبقاً" : "📝 You have already taken this exam");
       setTimeout(() => {
-        if (currentLessonId) navigate(`/${slug}/lesson/${currentLessonId}`);
-        else navigate(`/${slug}/dashboard`);
+        if (currentLessonId) navigate(`/lesson/${currentLessonId}`);
+        else navigate(`/dashboard`);
       }, 1500);
     }
   }, [hasResult, submitted]);
@@ -79,8 +79,8 @@ const ExamPage = () => {
         setSubmitted(true);
         toast.success(lang === "ar" ? "🎉 تم حفظ النتيجة بنجاح!" : "🎉 Result saved successfully!");
         setTimeout(() => {
-          if (currentLessonId) navigate(`/${slug}/lesson/${currentLessonId}`);
-          else navigate(`/${slug}/dashboard`);
+          if (currentLessonId) navigate(`/lesson/${currentLessonId}`);
+          else navigate(`/dashboard`);
         }, 2000);
       },
       (error) => {
@@ -97,8 +97,8 @@ const ExamPage = () => {
     } else if (!submitted && !hasResult && answeredCount === 0) {
       toast.error(lang === "ar" ? "❌ انتهى الوقت دون إجابة!" : "❌ Time's up with no answers!");
       setTimeout(() => {
-        if (currentLessonId) navigate(`/${slug}/lesson/${currentLessonId}`);
-        else navigate(`/${slug}/dashboard`);
+        if (currentLessonId) navigate(`/lesson/${currentLessonId}`);
+        else navigate(`/dashboard`);
       }, 2000);
     }
   };

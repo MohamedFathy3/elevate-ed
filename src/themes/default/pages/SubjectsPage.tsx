@@ -74,7 +74,7 @@ export const SubjectsPage = () => {
               : "You must login first to view subjects"}
           </p>
           <Link
-            to={`/${slug}/login?redirect=${encodeURIComponent(redirectPath || window.location.pathname)}`}
+            to={`/login?redirect=${encodeURIComponent(redirectPath || window.location.pathname)}`}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold hover:shadow-lg transition-all"
           >
             <LogIn className="w-5 h-5" />
@@ -197,11 +197,11 @@ export const SubjectsPage = () => {
           className="mb-8"
         >
           <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-4 flex-wrap">
-            <Link to={`/${slug}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+            <Link to={``} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
               {lang === "ar" ? "الرئيسية" : "Home"}
             </Link>
             <ChevronRight className="w-4 h-4" />
-            <Link to={`/${slug}/stages`} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+            <Link to={`/stages`} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
               {lang === "ar" ? "المراحل" : "Stages"}
             </Link>
             {selectedStageId && (
@@ -451,7 +451,7 @@ const SubjectCard = ({ subject, index, slug, lang, pick, primaryGradient, cardBg
       className={`group relative rounded-2xl border transition-all cursor-pointer
         ${cardBg} ${cardBorder} ${cardHoverBorder} shadow-sm hover:shadow-xl`}
     >
-      <Link to={`/${slug}/semesters?subject_id=${subject.id}&subject_name=${encodeURIComponent(subjectName)}`}>
+      <Link to={`/semesters?subject_id=${subject.id}&subject_name=${encodeURIComponent(subjectName)}`}>
         <div className="p-6">
           {/* Icon */}
           <motion.div 

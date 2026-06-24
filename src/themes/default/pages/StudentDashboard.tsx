@@ -211,7 +211,7 @@ const StudentDashboard = () => {
           <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">
             {lang === "ar" ? "الرجاء تسجيل الدخول" : "Please login"}
           </h2>
-          <Link to={`/${slug}/login`} className={`text-${primaryColor} hover:underline`}>
+          <Link to={`/login`} className={`text-${primaryColor} hover:underline`}>
             {lang === "ar" ? "تسجيل الدخول" : "Login"}
           </Link>
         </div>
@@ -829,7 +829,7 @@ const CoursesTab = ({ courses, slug, lang, isNature, isDark, cardBg }: any) => {
         icon={<BookOpen className="w-12 h-12" />}
         title={lang === "ar" ? "لا توجد كورسات" : "No Courses"}
         message={lang === "ar" ? "لم تشترك في أي كورسات بعد" : "You haven't enrolled in any courses yet"}
-        actionLink={`/${slug}/courses`}
+        actionLink={`/courses`}
         actionText={lang === "ar" ? "تصفح الكورسات" : "Browse Courses"}
         isNature={isNature}
         isDark={isDark}
@@ -856,7 +856,7 @@ const CoursesTab = ({ courses, slug, lang, isNature, isDark, cardBg }: any) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.05 }}
           >
-            <Link to={`/${slug}/courses/${course.id}`}>
+            <Link to={`/courses/${course.id}`}>
               <div className={`rounded-xl p-4 transition-all hover:-translate-y-1 cursor-pointer ${cardBg}`}>
                 <img
                   src={course.image?.fullUrl || course.imageUrl || "/default-course.jpg"}
@@ -932,7 +932,7 @@ const LessonsTab = ({ lessons, slug, lang, isNature, isDark, cardBg }: any) => {
                 </div>
               </div>
               <Link
-                to={`/${slug}/lesson/${lesson.id}`}
+                to={`/lesson/${lesson.id}`}
                 className={`px-4 py-2 rounded-lg text-white text-sm whitespace-nowrap
                   ${isNature 
                     ? 'bg-amber-600 hover:bg-amber-700' 
@@ -984,7 +984,7 @@ const SemestersTab = ({ semesters, slug, lang, isNature, isDark, cardBg }: any) 
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.05 }}
           >
-            <Link to={`/${slug}/semester/${semester.id}`}>
+            <Link to={`/semester/${semester.id}`}>
               <div className={`rounded-xl p-4 transition-all hover:-translate-y-1 cursor-pointer ${cardBg}`}>
                 <div className="flex items-center justify-between">
                   <div>
@@ -1017,7 +1017,7 @@ const BooksTab = ({ books, slug, lang, isNature, isDark, cardBg }: any) => {
         icon={<BookMarked className="w-12 h-12" />}
         title={lang === "ar" ? "لا توجد كتب" : "No Books"}
         message={lang === "ar" ? "لم تقم بشراء أي كتب بعد" : "You haven't purchased any books yet"}
-        actionLink={`/${slug}#books`}
+        actionLink={`#books`}
         actionText={lang === "ar" ? "تصفح الكتب" : "Browse Books"}
         isNature={isNature}
         isDark={isDark}
@@ -1065,7 +1065,7 @@ const BooksTab = ({ books, slug, lang, isNature, isDark, cardBg }: any) => {
                 </p>
               </div>
               <Link
-                to={`/${slug}/books/${book.id}`}
+                to={`/books/${book.id}`}
                 className={`px-3 py-1.5 rounded-lg text-white text-xs whitespace-nowrap
                   ${isNature 
                     ? 'bg-amber-600 hover:bg-amber-700' 
@@ -1226,7 +1226,7 @@ const ExamResultCard = ({ examItem, lang, slug, isNature, isDark, cardBg }: any)
         </div>
         
         <Link
-          to={`/${slug}/exam/${exam?.id}`}
+          to={`/exam/${exam?.id}`}
           className={`px-4 py-2 rounded-lg bg-gradient-to-r ${gradientClass} text-white text-sm font-semibold flex items-center gap-1 whitespace-nowrap`}
           onClick={(e) => e.stopPropagation()}
         >
@@ -1305,7 +1305,7 @@ const AssignmentResultCard = ({ assignmentItem, lang, slug, isNature, isDark, ca
         </div>
         
         <Link
-          to={`/${slug}/exam/${assignment?.id}`}
+          to={`/exam/${assignment?.id}`}
           className={`px-4 py-2 rounded-lg bg-gradient-to-r ${gradientClass} text-white text-sm font-semibold flex items-center gap-1`}
           onClick={(e) => e.stopPropagation()}
         >

@@ -134,7 +134,7 @@ const CoursesPage = () => {
         {(semesterId || subjectId) && (
           <div className="mb-6">
             <Link 
-              to={`/${slug}/courses`}
+              to={`/courses`}
               className="inline-flex items-center gap-2 text-sm text-foreground/60 hover:text-primary transition-colors"
             >
               <Arrow className="w-4 h-4" />
@@ -146,11 +146,11 @@ const CoursesPage = () => {
         {/* Breadcrumb (if filtered) */}
         {(semesterId || subjectId) && (
           <div className="flex items-center gap-2 text-sm text-foreground/60 mb-4 flex-wrap">
-            <Link to={`/${slug}`} className="hover:text-primary transition-colors">
+            <Link to={``} className="hover:text-primary transition-colors">
               {lang === "ar" ? "الرئيسية" : "Home"}
             </Link>
             <ChevronRight className="w-4 h-4" />
-            <Link to={`/${slug}/courses`} className="hover:text-primary transition-colors">
+            <Link to={`/courses`} className="hover:text-primary transition-colors">
               {lang === "ar" ? "الكورسات" : "Courses"}
             </Link>
             <ChevronRight className="w-4 h-4" />
@@ -448,7 +448,7 @@ const CourseCardFull = ({ course, slug, pick, lang, dir }: any) => {
             </button>
             
             <Link
-              to={`/${slug}/courses/${course?.id}`}
+              to={`/courses/${course?.id}`}
               className="px-3 py-2 rounded-xl bg-card border border-border text-foreground font-semibold text-sm hover:border-primary/40 hover:bg-primary/5 transition-all"
             >
               {lang === "ar" ? "تفاصيل" : "Details"}

@@ -34,14 +34,13 @@ export const Navbar = () => {
     setProfileOpen(false);
   }, [pathname]);
 
-  const onHome = pathname === `/${slug}` || pathname === `/${slug}/`;
-  const sectionLink = (hash: string) => (onHome ? `#${hash}` : `/${slug}#${hash}`);
+
 
   const links = [
-    { href: sectionLink("stages"), label: lang === "ar" ? "المراحل" : "Stages" },
-    { href: `/${slug}/courses`, label: lang === "ar" ? "الكورسات" : "Courses" },
-    { href: sectionLink("books"), label: lang === "ar" ? "الكتب" : "Books" },
-    { href: sectionLink("about"), label: lang === "ar" ? "عن المنصة" : "About" },
+    { href: ("stages"), label: lang === "ar" ? "المراحل" : "Stages" },
+    { href: `/courses`, label: lang === "ar" ? "الكورسات" : "Courses" },
+    { href: ("books"), label: lang === "ar" ? "الكتب" : "Books" },
+    { href: ("about"), label: lang === "ar" ? "عن المنصة" : "About" },
   ];
 
   const teacherName = pick(teacher?.name, teacher?.name_ar) || (lang === "ar" ? "المعلم" : "Teacher");
@@ -59,7 +58,7 @@ export const Navbar = () => {
         className="fixed top-3 md:top-5 inset-x-0 z-50 px-3 md:px-6"
       >
   <nav className={`max-w-7xl mx-auto rounded-full pl-3 pr-2 md:pl-5 md:pr-2 py-2 flex items-center justify-between gap-3 transition-all duration-300 glass shadow-card`}>        {/* Logo */}
-        <Link to={`/${slug}`} className="flex items-center gap-2 shrink-0">
+        <Link to={``} className="flex items-center gap-2 shrink-0">
           <div className="w-10 h-10 rounded-xl gradient-primary grid place-items-center shadow-soft">
             {logoImage ? (
               <img src={logoImage} alt={teacherName} className="w-full h-full object-cover rounded-xl" />
@@ -149,7 +148,7 @@ export const Navbar = () => {
               {profileOpen && (
                 <div className="absolute top-full left-0 rtl:left-auto rtl:right-0 mt-2 w-48 bg-black border border-border rounded-xl shadow-lg overflow-hidden z-50">
                   <Link
-                    to={`/${slug}/dashboard`}
+                    to={`/dashboard`}
                     className="flex items-center gap-3 px-4 py-3 hover:bg-primary/10 transition-colors"
                     onClick={() => setProfileOpen(false)}
                   >
@@ -172,14 +171,14 @@ export const Navbar = () => {
           ) : (
             <>
               <Link
-                to={`/${slug}/register`}
+                to={`/register`}
                 className="inline-flex items-center gap-2 px-4 md:px-5 py-2.5 rounded-full gradient-primary text-white text-sm font-semibold shadow-soft hover:shadow-glow transition-all hover:scale-[1.03] active:scale-95"
               >
                 <Zap className="w-4 h-4" fill="white" />
                 <span className="hidden sm:inline">{lang === "ar" ? " اعمل اكونت" : "Sign up"}</span>
               </Link>
               <Link
-                to={`/${slug}/login`}
+                to={`/login`}
                 className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-[#000] dark:text-[#fff]  "
               >
                 {lang === "ar" ? "خش ذاكر " : "Login"}
@@ -215,7 +214,7 @@ export const Navbar = () => {
             {isAuthenticated ? (
               <>
                 <li>
-                  <Link to={`/${slug}/dashboard`} className="block px-4 py-3 rounded-2xl hover:bg-primary/5 text-sm font-medium">
+                  <Link to={`/dashboard`} className="block px-4 py-3 rounded-2xl hover:bg-primary/5 text-sm font-medium">
                     {lang === "ar" ? "لوحة التحكم" : "Dashboard"}
                   </Link>
                 </li>
@@ -228,12 +227,12 @@ export const Navbar = () => {
             ) : (
               <>
                 <li>
-                  <Link to={`/${slug}/login`} className="block px-4 py-3 rounded-2xl hover:bg-primary/5 text-sm font-medium">
+                  <Link to={`/login`} className="block px-4 py-3 rounded-2xl hover:bg-primary/5 text-sm font-medium">
                     {lang === "ar" ? "تسجيل دخول" : "Login"}
                   </Link>
                 </li>
                 <li>
-                  <Link to={`/${slug}/register`} className="block px-4 py-3 rounded-2xl gradient-primary text-white">
+                  <Link to={`/register`} className="block px-4 py-3 rounded-2xl gradient-primary text-white">
                     {lang === "ar" ? "إنشاء حساب" : "Sign up"}
                   </Link>
                 </li>

@@ -122,7 +122,7 @@ export const useStudentRegister = () => {
         const slug = window.location.pathname.split('/')[1];
         // ✅ التوجيه للـ Dashboard مباشرة بعد التسجيل
         setTimeout(() => {
-          navigate(`/${slug}/dashboard`);
+          navigate(`/dashboard`);
         }, 1500);
       } else {
         toast.error(data.message || "فشل تسجيل الطالب");
@@ -183,7 +183,7 @@ export const useStudentLogin = () => {
         } else {
           // روح للـ Dashboard
           setTimeout(() => {
-            navigate(`/${slug}/dashboard`);
+            navigate(`/dashboard`);
           }, 1500);
         }
       } else {

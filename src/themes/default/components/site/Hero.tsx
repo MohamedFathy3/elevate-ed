@@ -125,7 +125,7 @@ export const Hero = () => {
             className="mt-8 flex flex-wrap gap-3"
           >
             <Link
-              to={`/${slug}/register`}
+              to={`/register`}
               className="group inline-flex items-center gap-3 px-6 md:px-8 py-4 md:py-5 rounded-2xl gradient-accent text-white font-bold text-base md:text-lg shadow-elegant hover:shadow-glow transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               <Zap className="w-5 h-5" fill="white" />
@@ -133,7 +133,7 @@ export const Hero = () => {
               <Arrow className="w-5 h-5 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
             </Link>
             <Link
-              to={`/${slug}/courses`}
+              to={`/courses`}
               className="group inline-flex items-center gap-3 px-6 shadow-glow  md:px-8 py-4 md:py-5 rounded-2xl  text-white font-bold text-base md:text-lg shadow-elegant hover:shadow-glow transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               <span className="shadow-glow ">              {lang === "ar" ? "تصفح الكورسات" : "Browse Courses"}

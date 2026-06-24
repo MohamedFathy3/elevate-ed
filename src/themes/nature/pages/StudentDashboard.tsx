@@ -91,7 +91,7 @@ const StudentDashboard = () => {
           <h2 className="text-xl font-bold mb-2">
             {lang === "ar" ? "الرجاء تسجيل الدخول" : "Please login"}
           </h2>
-          <Link to={`/${slug}/login`} className="text-primary hover:underline">
+          <Link to={`/login`} className="text-primary hover:underline">
             {lang === "ar" ? "تسجيل الدخول" : "Login"}
           </Link>
         </div>
@@ -357,7 +357,7 @@ const StudentDashboard = () => {
               {lang === "ar" ? "قم بشراء كورسات للبدء في رحلة التعلم" : "Purchase courses to start your learning journey"}
             </p>
             <Link
-              to={`/${slug}/courses`}
+              to={`/courses`}
               className="inline-flex items-center gap-2 mt-2 px-6 py-3 rounded-xl gradient-primary text-white font-semibold"
             >
               {lang === "ar" ? "استعرض الكورسات" : "Browse Courses"}
@@ -439,7 +439,7 @@ const ExamResultCard = ({ examItem, lang, slug }: any) => {
             {expanded ? (lang === "ar" ? "إخفاء" : "Hide") : (lang === "ar" ? "تفاصيل" : "Details")}
           </button>
           <Link
-            to={`/${slug}/exam/${exam?.id}`}
+            to={`/exam/${exam?.id}`}
             className="px-4 py-2 rounded-lg gradient-primary text-white text-sm font-semibold flex items-center gap-1"
           >
             <Eye className="w-4 h-4" />
@@ -546,7 +546,7 @@ const AssignmentResultCard = ({ assignmentItem, lang, slug }: any) => {
             {expanded ? (lang === "ar" ? "إخفاء" : "Hide") : (lang === "ar" ? "تفاصيل" : "Details")}
           </button>
           <Link
-            to={`/${slug}/exam/${assignment?.id}`}
+            to={`/exam/${assignment?.id}`}
             className="px-4 py-2 rounded-lg bg-gradient-to-r from-accent to-pink-500 text-white text-sm font-semibold flex items-center gap-1"
           >
             <Eye className="w-4 h-4" />
@@ -591,7 +591,7 @@ const StatCard = ({ icon, label, value, color }: any) => (
 
 // 🟢 Semester Card Component
 const SemesterCard = ({ semester, slug, lang }: any) => (
-  <Link to={`/${slug}/semester/${semester.id}`}>
+  <Link to={`/semester/${semester.id}`}>
     <motion.div
       whileHover={{ y: -5 }}
       className="bg-card rounded-xl border border-border p-4 hover:border-primary/40 transition-all cursor-pointer"
@@ -613,7 +613,7 @@ const SemesterCard = ({ semester, slug, lang }: any) => (
 
 // 🟢 Course Card Component
 const CourseCard = ({ course, slug, lang }: any) => (
-  <Link to={`/${slug}/courses/${course.id}`}>
+  <Link to={`/courses/${course.id}`}>
     <motion.div
       whileHover={{ y: -5 }}
       className="bg-card rounded-xl border border-border p-4 hover:border-primary/40 transition-all cursor-pointer"
@@ -656,7 +656,7 @@ const LessonCard = ({ lesson, slug, lang }: any) => (
         </div>
       </div>
       <Link
-        to={`/${slug}/lesson/${lesson.id}`}
+        to={`/lesson/${lesson.id}`}
         className="px-4 py-2 rounded-lg gradient-primary text-white text-sm ml-3"
       >
         {lang === "ar" ? "مشاهدة" : "Watch"}

@@ -58,7 +58,7 @@ const CourseDetail = () => {
   const course = teacher?.website?.courses?.find((c: any) => String(c.id) === courseId);
   
   if (!course && !detailsLoading) {
-    return <Navigate to={`/${slug}/courses`} replace />;
+    return <Navigate to={`/courses`} replace />;
   }
 
   const lessons = courseData?.data || [];
@@ -77,7 +77,7 @@ const CourseDetail = () => {
     const token = Cookies.get('student_token');
     if (!token) {
       toast.error(lang === "ar" ? "الرجاء تسجيل الدخول أولاً" : "Please login first");
-      setTimeout(() => navigate(`/${slug}/login?redirect=${encodeURIComponent(window.location.pathname)}`), 1500);
+      setTimeout(() => navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`), 1500);
       return;
     }
     
@@ -91,7 +91,7 @@ const CourseDetail = () => {
       console.error("Purchase error:", error);
       if (error.message?.includes("authenticated") || error.response?.status === 401) {
         toast.error(lang === "ar" ? "انتهت صلاحية الجلسة، الرجاء تسجيل الدخول مرة أخرى" : "Session expired, please login again");
-        setTimeout(() => navigate(`/${slug}/login?redirect=${encodeURIComponent(window.location.pathname)}`), 2000);
+        setTimeout(() => navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`), 2000);
       }
     } finally {
       setBuyingFullCourse(false);
@@ -103,7 +103,7 @@ const CourseDetail = () => {
     const token = Cookies.get('student_token');
     if (!token) {
       toast.error(lang === "ar" ? "الرجاء تسجيل الدخول أولاً" : "Please login first");
-      setTimeout(() => navigate(`/${slug}/login?redirect=${encodeURIComponent(window.location.pathname)}`), 1500);
+      setTimeout(() => navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`), 1500);
       return;
     }
     
@@ -121,7 +121,7 @@ const CourseDetail = () => {
 
   // ✅ التوجيه لصفحة الدرس
   const goToLesson = (lessonId: number) => {
-    navigate(`/${slug}/lesson/${lessonId}`);
+    navigate(`/lesson/${lessonId}`);
   };
 
   if (detailsLoading) {
@@ -146,7 +146,7 @@ const CourseDetail = () => {
 
         {/* Back Link */}
         <Link
-          to={`/${slug}/courses`}
+          to={`/courses`}
           className="inline-flex items-center gap-2 text-sm text-foreground/65 hover:text-primary mb-8"
         >
           <Arrow className="w-4 h-4 rotate-180 rtl:rotate-0" />
@@ -307,7 +307,7 @@ const CourseDetail = () => {
                   </button>
                   
                   {!Cookies.get('student_token') && (
-                    <Link to={`/${slug}/login?redirect=${encodeURIComponent(window.location.pathname)}`} className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-secondary text-sm font-semibold hover:bg-primary/10 transition">
+                    <Link to={`/login?redirect=${encodeURIComponent(window.location.pathname)}`} className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-secondary text-sm font-semibold hover:bg-primary/10 transition">
                       {lang === "ar" ? "لديك حساب؟ سجل دخول" : "Already have an account? Login"}
                     </Link>
                   )}
@@ -329,7 +329,7 @@ const CourseDetail = () => {
                     ? "يمكنك الآن مشاهدة جميع الدروس والامتحانات"
                     : "You can now watch all lessons and exams"}
                 </p>
-                <Link to={`/${slug}/dashboard`} className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500 text-white text-sm font-semibold">
+                <Link to={`/dashboard`} className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500 text-white text-sm font-semibold">
                   {lang === "ar" ? "الذهاب للوحة التحكم" : "Go to Dashboard"}
                   <ArrowRight className="w-4 h-4" />
                 </Link>

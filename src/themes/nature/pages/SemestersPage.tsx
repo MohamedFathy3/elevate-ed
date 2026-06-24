@@ -147,11 +147,11 @@ export const SemestersPage = () => {
       {/* Breadcrumb */}
       <div className="mb-8">
         <div className="flex items-center gap-2 text-sm text-foreground/60 mb-4 flex-wrap">
-          <Link to={`/${slug}`} className="hover:text-primary transition-colors">
+          <Link to={``} className="hover:text-primary transition-colors">
             {lang === "ar" ? "الرئيسية" : "Home"}
           </Link>
           <ChevronRight className="w-4 h-4" />
-          <Link to={`/${slug}/subjects`} className="hover:text-primary transition-colors">
+          <Link to={`/subjects`} className="hover:text-primary transition-colors">
             {lang === "ar" ? "المواد" : "Subjects"}
           </Link>
           <ChevronRight className="w-4 h-4" />
@@ -440,7 +440,7 @@ const DirectCourseCard = ({ course, index, slug, lang, pick }: any) => {
       whileHover={{ y: -5 }}
       className="group bg-card rounded-2xl border border-border hover:border-primary/30 transition-all overflow-hidden"
     >
-      <Link to={`/${slug}/courses/${course.id}`}>
+      <Link to={`/courses/${course.id}`}>
         <div className="relative h-40 overflow-hidden">
           <img 
             src={courseImage} 
@@ -609,7 +609,7 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters }: a
             </button>
             
             <Link
-              to={`/${slug}/courses?semester_id=${semester.id}&semester_name=${encodeURIComponent(pick(semester.name, semester.name_ar))}`}
+              to={`/courses?semester_id=${semester.id}&semester_name=${encodeURIComponent(pick(semester.name, semester.name_ar))}`}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card border border-border text-foreground font-semibold text-sm hover:border-primary/40 hover:bg-primary/5 transition-all"
             >
               {lang === "ar" ? "عرض الكورسات" : "View Courses"}
@@ -636,7 +636,7 @@ const EmptyState = ({ slug, lang, Arrow }: any) => {
         {lang === "ar" ? "لا توجد ترمات أو كورسات متاحة لهذه المادة حالياً" : "No semesters or courses available for this subject yet"}
       </p>
       <Link
-        to={`/${slug}/subjects`}
+        to={`/subjects`}
         className="inline-flex items-center gap-2 mt-6 px-6 py-3 rounded-xl gradient-primary text-white font-semibold"
       >
         <Arrow className="w-4 h-4" />

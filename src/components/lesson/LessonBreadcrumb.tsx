@@ -13,11 +13,11 @@ export const LessonBreadcrumb = ({ slug, title }: LessonBreadcrumbProps) => {
 
   return (
     <div className="flex items-center gap-2 text-sm text-[#000] flex-wrap">
-      <Link to={`/${slug}/dashboard`} className="hover:text-primary transition-colors">
+      <Link to={`/dashboard`} className="hover:text-primary transition-colors">
         {lang === "ar" ? "لوحة التحكم" : "Dashboard"}
       </Link>
       <ChevronRight className="w-4 h-4" />
-      <Link to={`/${slug}/courses`} className="hover:text-primary transition-colors">
+      <Link to={`/courses`} className="hover:text-primary transition-colors">
         {lang === "ar" ? "كورساتي" : "My Courses"}
       </Link>
       <ChevronRight className="w-4 h-4" />

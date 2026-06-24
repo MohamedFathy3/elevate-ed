@@ -173,12 +173,12 @@ const LessonPage = () => {
 
   const handleStartExam = () => {
     if (requiredExam) {
-      navigate(`/${slug}/exam/${requiredExam.id}?redirect=${encodeURIComponent(window.location.pathname)}`);
+      navigate(`/exam/${requiredExam.id}?redirect=${encodeURIComponent(window.location.pathname)}`);
     }
   };
 
   const handleStartAssignment = (assignment: any) => {
-    navigate(`/${slug}/exam/${assignment.id}?redirect=${encodeURIComponent(window.location.pathname)}`);
+    navigate(`/exam/${assignment.id}?redirect=${encodeURIComponent(window.location.pathname)}`);
   };
 
   // ✅ Check if lesson needs exam to unlock
@@ -225,7 +225,7 @@ const LessonPage = () => {
           <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">
             {lang === "ar" ? "الدرس غير موجود" : "Lesson not found"}
           </h2>
-          <Link to={`/${slug}/dashboard`} className="text-blue-600 dark:text-blue-400 hover:underline">
+          <Link to={`/dashboard`} className="text-blue-600 dark:text-blue-400 hover:underline">
             {lang === "ar" ? "العودة للوحة التحكم" : "Back to Dashboard"}
           </Link>
         </div>
@@ -359,7 +359,7 @@ const LessonPage = () => {
             {/* Back Button */}
             <div className="flex gap-3">
               <Link
-                to={`/${slug}/courses/${lesson.course_id}`}
+                to={`/courses/${lesson.course_id}`}
                 className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all text-gray-700 dark:text-gray-300"
               >
                 <ArrowRight className="w-4 h-4 rtl:rotate-180" />

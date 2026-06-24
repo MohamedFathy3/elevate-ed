@@ -59,7 +59,7 @@ export const StagesPage = () => {
               : "You must login first to view educational stages"}
           </p>
           <Link
-            to={`/${slug}/login?redirect=${encodeURIComponent(redirectPath || window.location.pathname)}`}
+            to={`/login?redirect=${encodeURIComponent(redirectPath || window.location.pathname)}`}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold hover:shadow-lg transition-all"
           >
             <LogIn className="w-5 h-5" />
@@ -391,7 +391,7 @@ export const StagesPage = () => {
                   whileHover={!isDisabled ? { y: -8 } : {}}
                   onClick={() => {
                     if (!isDisabled) {
-                    navigate(`/${slug}/subjects?stage_id=${stage.id}&stage_name=${encodeURIComponent(stageName)}`);
+                    navigate(`/subjects?stage_id=${stage.id}&stage_name=${encodeURIComponent(stageName)}`);
                     }
                   }}
                   className={`group relative ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'} ${isDisabled ? 'opacity-60' : ''}`}
@@ -515,7 +515,7 @@ export const StagesPage = () => {
                     : "Sign up now and start your learning journey with the best teachers")}
             </p>
             <Link
-              to={isAuthenticated ? `/${slug}/courses` : `/${slug}/register`}
+              to={isAuthenticated ? `/courses` : `/register`}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-blue-600 font-semibold hover:shadow-lg transition-all hover:scale-105"
             >
               {isAuthenticated 
@@ -603,7 +603,7 @@ const EmptyStagesPage = ({ slug, lang }: { slug: string; lang: string }) => {
             : "No educational stages have been added yet"}
         </p>
         <Link
-          to={`/${slug}`}
+          to={``}
           className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold"
         >
           <ArrowLeft className="w-4 h-4" />

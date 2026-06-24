@@ -87,7 +87,7 @@ export const Stage = () => {
   }, [isAuthenticated, student]);
 
   const handleCardClick = (stageId: number, stageName: string) => {
-    navigate(`/${slug}/semesters?stage_id=${stageId}&stage_name=${encodeURIComponent(stageName)}`);
+    navigate(`/semesters?stage_id=${stageId}&stage_name=${encodeURIComponent(stageName)}`);
   };
 
   if (isLoading) {
@@ -183,7 +183,7 @@ return (
               whileHover={{ y: isDisabled ? 0 : -8 }}
               onClick={() => {
                 if (!isDisabled)
-navigate(`/${slug}/subjects?stage_id=${stage.id}&stage_name=${encodeURIComponent(stageName)}`);
+navigate(`/subjects?stage_id=${stage.id}&stage_name=${encodeURIComponent(stageName)}`);
               }}
               className={`group relative ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
             >
@@ -538,7 +538,7 @@ navigate(`/${slug}/subjects?stage_id=${stage.id}&stage_name=${encodeURIComponent
           )}
 
           <Link
-            to={`/${slug}/stages`}
+            to={`/stages`}
             className="group flex items-center gap-3 rounded-2xl border border-border bg-card/60 px-8 py-4 font-bold backdrop-blur-xl transition-all hover:border-primary/30 hover:bg-primary/5"
           >
             <PlayCircleIcon className="h-5 w-5 text-primary" />

@@ -47,7 +47,7 @@ api.interceptors.response.use(
       
       const slug = window.location.pathname.split('/')[1];
       if (slug && !window.location.pathname.includes('/login')) {
-        window.location.href = `/${slug}/login`;
+        window.location.href = `/login`;
       }
     }
     return Promise.reject(error);

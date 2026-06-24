@@ -108,11 +108,11 @@ export const SubjectsPage = () => {
         {/* Breadcrumb */}
         <div className="mb-8">
           <div className="flex items-center gap-2 text-sm text-foreground/60 mb-4 flex-wrap">
-            <Link to={`/${slug}`} className="hover:text-primary transition-colors">
+            <Link to={``} className="hover:text-primary transition-colors">
               {lang === "ar" ? "الرئيسية" : "Home"}
             </Link>
             <ChevronRight className="w-4 h-4" />
-            <Link to={`/${slug}/stages`} className="hover:text-primary transition-colors">
+            <Link to={`/stages`} className="hover:text-primary transition-colors">
               {lang === "ar" ? "المراحل" : "Stages"}
             </Link>
             <ChevronRight className="w-4 h-4" />
@@ -295,7 +295,7 @@ const SubjectCard = ({ subject, index, slug, lang }: any) => {
       whileHover={{ y: -8 }}
       className="group relative bg-card rounded-2xl border border-border hover:border-primary/30 transition-all cursor-pointer"
     >
-      <Link to={`/${slug}/semesters?subject_id=${subject.id}&subject_name=${encodeURIComponent(subjectName)}`}>
+      <Link to={`/semesters?subject_id=${subject.id}&subject_name=${encodeURIComponent(subjectName)}`}>
         <div className="p-6">
           {/* Icon */}
           <div className="w-12 h-12 rounded-xl gradient-primary grid place-items-center mb-4 shadow-lg group-hover:scale-110 transition-transform">

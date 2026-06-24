@@ -85,13 +85,13 @@ export const Footer = () => {
       icon: BookOpen,
       label: lang === "ar" ? "المراحل الدراسية" : "Stages",
       value: lang === "ar" ? "المراحل الدراسية" : "Stages",
-      link: `/${slug}#stages`,
+      link: `#stages`,
     },
     {
       icon: Library,
       label: lang === "ar" ? "الكتب" : "Books",
       value: lang === "ar" ? "الكتب" : "Books",
-      link: `/${slug}#books`,
+      link: `#books`,
     },
     {
       icon: Star,

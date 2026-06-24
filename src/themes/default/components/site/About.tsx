@@ -459,14 +459,14 @@ export const About = () => {
               className="mt-10 flex flex-wrap gap-4"
             >
               <Link
-                to={`/${slug}/register`}
+                to={`/register`}
                 className="group rounded-2xl px-8 py-4 font-bold text-white shadow-[0_10px_40px_rgba(16,185,129,0.25)] transition-all hover:scale-105 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800"
               >
                 {lang === "ar" ? "ابدأ الآن" : "Get Started"}
               </Link>
 
               <Link
-                to={`/${slug}/register`}
+                to={`/register`}
                 className="group flex items-center gap-3 rounded-2xl border border-emerald-200/50 dark:border-emerald-800/50 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl px-8 py-4 font-semibold transition-all hover:bg-emerald-50/80 dark:hover:bg-emerald-950/30"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/50">

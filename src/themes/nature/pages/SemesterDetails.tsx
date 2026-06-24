@@ -41,11 +41,11 @@ const SemesterDetails = () => {
         {/* Breadcrumb */}
         <div className="mb-6">
           <div className="flex items-center gap-2 text-sm text-foreground/60 flex-wrap">
-            <Link to={`/${slug}`} className="hover:text-primary transition-colors">
+            <Link to={``} className="hover:text-primary transition-colors">
               {lang === "ar" ? "الرئيسية" : "Home"}
             </Link>
             <ChevronRight className="w-4 h-4" />
-            <Link to={`/${slug}/semesters`} className="hover:text-primary transition-colors">
+            <Link to={`/semesters`} className="hover:text-primary transition-colors">
               {lang === "ar" ? "الترمات" : "Semesters"}
             </Link>
             <ChevronRight className="w-4 h-4" />
@@ -132,7 +132,7 @@ const CourseSection = ({ course, index, slug, lang, pick, isAuthenticated, stude
     e.stopPropagation();
     if (!isAuthenticated) {
       toast.error(lang === "ar" ? "الرجاء تسجيل الدخول أولاً" : "Please login first");
-      setTimeout(() => navigate(`/${slug}/login?redirect=${encodeURIComponent(window.location.pathname)}`), 1500);
+      setTimeout(() => navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`), 1500);
       return;
     }
     
@@ -149,7 +149,7 @@ const CourseSection = ({ course, index, slug, lang, pick, isAuthenticated, stude
   
   // التوجيه لصفحة تفاصيل الكورس
   const goToCourseDetails = () => {
-    navigate(`/${slug}/courses/${course.id}`);
+    navigate(`/courses/${course.id}`);
   };
   
   return (
@@ -289,7 +289,7 @@ const LessonItem = ({ lesson, index, slug, lang, isAuthenticated }: any) => {
   const canWatch = isPurchased || isFree;
   
   const handleWatch = () => {
-    navigate(`/${slug}/lesson/${lesson.id}`);
+    navigate(`/lesson/${lesson.id}`);
   };
   
   return (

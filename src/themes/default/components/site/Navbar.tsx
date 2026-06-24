@@ -34,12 +34,12 @@ export const Navbar = () => {
     setProfileOpen(false);
   }, [pathname]);
 
-  const onHome = pathname === `/${slug}` || pathname === `/${slug}/`;
-  const sectionLink = (hash: string) => (onHome ? `#${hash}` : `/${slug}#${hash}`);
+  const onHome = pathname === `` || pathname === `/`;
+  const sectionLink = (hash: string) => (onHome ? `#${hash}` : `#${hash}`);
 
   const links = [
     { href: sectionLink("stages"), label: lang === "ar" ? "المراحل" : "Stages" },
-    { href: `/${slug}/courses`, label: lang === "ar" ? "الكورسات" : "Courses" },
+    { href: `/courses`, label: lang === "ar" ? "الكورسات" : "Courses" },
     { href: sectionLink("books"), label: lang === "ar" ? "الكتب" : "Books" },
     { href: sectionLink("about"), label: lang === "ar" ? "عن المنصة" : "About" },
   ];
@@ -65,7 +65,7 @@ export const Navbar = () => {
           : 'glass'}`}
       >
         {/* Logo */}
-        <Link to={`/${slug}`} className="flex items-center gap-2 shrink-0">
+        <Link to={``} className="flex items-center gap-2 shrink-0">
           <div className={`w-10 h-10 rounded-xl grid place-items-center shadow-soft
             ${isNature 
               ? 'bg-gradient-to-br from-amber-600 to-orange-600' 
@@ -154,7 +154,7 @@ export const Navbar = () => {
                     ? 'bg-white border border-amber-200' 
                     : 'bg-card border border-border'}`}>
                   <Link
-                    to={`/${slug}/dashboard`}
+                    to={`/dashboard`}
                     className={`flex items-center gap-3 px-4 py-3 transition-colors
                       ${isNature 
                         ? 'hover:bg-amber-100 text-amber-800' 
@@ -180,7 +180,7 @@ export const Navbar = () => {
           ) : (
             <>
               <Link
-                to={`/${slug}/register`}
+                to={`/register`}
                 className={`inline-flex items-center gap-2 px-4 md:px-5 py-2.5 rounded-full text-white text-sm font-semibold shadow-soft hover:shadow-glow transition-all hover:scale-[1.03] active:scale-95
                   ${isNature 
                     ? 'bg-amber-600 hover:bg-amber-700' 
@@ -190,7 +190,7 @@ export const Navbar = () => {
                 <span className="hidden sm:inline">{lang === "ar" ? "إنشاء حساب" : "Sign up"}</span>
               </Link>
               <Link
-                to={`/${slug}/login`}
+                to={`/login`}
                 className={`hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors
                   ${isNature 
                     ? 'text-amber-700 hover:text-amber-900' 
@@ -238,7 +238,7 @@ export const Navbar = () => {
             {isAuthenticated ? (
               <>
                 <li>
-                  <Link to={`/${slug}/dashboard`} className={`block px-4 py-3 rounded-2xl text-sm font-medium
+                  <Link to={`/dashboard`} className={`block px-4 py-3 rounded-2xl text-sm font-medium
                     ${isNature 
                       ? 'hover:bg-amber-100 text-amber-800' 
                       : 'hover:bg-primary/5'}`}>
@@ -254,7 +254,7 @@ export const Navbar = () => {
             ) : (
               <>
                 <li>
-                  <Link to={`/${slug}/login`} className={`block px-4 py-3 rounded-2xl text-sm font-medium
+                  <Link to={`/login`} className={`block px-4 py-3 rounded-2xl text-sm font-medium
                     ${isNature 
                       ? 'hover:bg-amber-100 text-amber-800' 
                       : 'hover:bg-primary/5'}`}>
@@ -262,7 +262,7 @@ export const Navbar = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link to={`/${slug}/register`} className={`block px-4 py-3 rounded-2xl text-white text-sm font-medium
+                  <Link to={`/register`} className={`block px-4 py-3 rounded-2xl text-white text-sm font-medium
                     ${isNature 
                       ? 'bg-amber-600' 
                       : 'gradient-primary'}`}>

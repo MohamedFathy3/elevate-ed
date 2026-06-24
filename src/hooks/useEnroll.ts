@@ -108,7 +108,7 @@ export const useEnroll = () => {
         Cookies.remove('student_token');
         Cookies.remove('student_data');
         const slug = window.location.pathname.split('/')[1];
-        setTimeout(() => navigate(`/${slug}/login`), 2000);
+        setTimeout(() => navigate(`/login`), 2000);
       } else {
         const message = error.response?.data?.message || "حدث خطأ ما، يرجى المحاولة مرة أخرى";
         toast.error(message, {
@@ -133,7 +133,7 @@ export const useBuyCourse = () => {
         duration: 3000,
         position: "top-center",
       });
-      setTimeout(() => navigate(`/${slug}/login`), 1500);
+      setTimeout(() => navigate(`/login`), 1500);
       return Promise.reject(new Error("Not authenticated"));
     }
     
@@ -150,7 +150,7 @@ export const useBuyCourse = () => {
         duration: 3000,
         position: "top-center",
       });
-      setTimeout(() => navigate(`/${slug}/login`), 1500);
+      setTimeout(() => navigate(`/login`), 1500);
       return Promise.reject(new Error("Not authenticated"));
     }
     
@@ -167,7 +167,7 @@ export const useBuyCourse = () => {
         duration: 3000,
         position: "top-center",
       });
-      setTimeout(() => navigate(`/${slug}/login`), 1500);
+      setTimeout(() => navigate(`/login`), 1500);
       return Promise.reject(new Error("Not authenticated"));
     }
     
@@ -184,7 +184,7 @@ export const useBuyCourse = () => {
         duration: 3000,
         position: "top-center",
       });
-      setTimeout(() => navigate(`/${slug}/login`), 1500);
+      setTimeout(() => navigate(`/login`), 1500);
       return Promise.reject(new Error("Not authenticated"));
     }
     
@@ -243,7 +243,7 @@ export const useRedeemCode = () => {
         Cookies.remove('student_token');
         Cookies.remove('student_data');
         const slug = window.location.pathname.split('/')[1];
-        setTimeout(() => navigate(`/${slug}/login`), 2000);
+        setTimeout(() => navigate(`/login`), 2000);
       } else {
         toast.error(data.message || "فشل تفعيل الكود", {
           duration: 4000,
@@ -262,7 +262,7 @@ export const useRedeemCode = () => {
         Cookies.remove('student_token');
         Cookies.remove('student_data');
         const slug = window.location.pathname.split('/')[1];
-        setTimeout(() => navigate(`/${slug}/login`), 2000);
+        setTimeout(() => navigate(`/login`), 2000);
       } else if (error.response?.status === 404) {
         toast.error("الكود غير صالح أو منتهي الصلاحية", {
           duration: 4000,

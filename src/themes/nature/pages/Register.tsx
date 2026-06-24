@@ -421,7 +421,7 @@ const Register = () => {
       <div className="container mx-auto px-4 max-w-3xl relative z-10">
         {/* Back to Home Link */}
         <Link 
-          to={`/${slug}`} 
+          to={``} 
           className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors mb-4"
         >
           <Arrow className="w-4 h-4" />
@@ -858,7 +858,7 @@ const Register = () => {
           {/* Login Link */}
           <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
             {lang === "ar" ? "لديك حساب بالفعل؟" : "Already have an account?"}{" "}
-            <Link to={`/${slug}/login`} className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline">
+            <Link to={`/login`} className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline">
               {lang === "ar" ? "تسجيل الدخول" : "Login"}
             </Link>
           </p>

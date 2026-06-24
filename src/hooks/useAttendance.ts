@@ -64,7 +64,7 @@ export const useAttendance = () => {
         Cookies.remove('student_token');
         Cookies.remove('student_data');
         const slug = window.location.pathname.split('/')[1];
-        setTimeout(() => navigate(`/${slug}/login`), 2000);
+        setTimeout(() => navigate(`/login`), 2000);
       } else {
         toast.error(data.message || "فشل تسجيل الحضور", {
           duration: 4000,
@@ -83,7 +83,7 @@ export const useAttendance = () => {
         Cookies.remove('student_token');
         Cookies.remove('student_data');
         const slug = window.location.pathname.split('/')[1];
-        setTimeout(() => navigate(`/${slug}/login`), 2000);
+        setTimeout(() => navigate(`/login`), 2000);
       } else if (error.response?.status === 409) {
         // ✅ 409 يعني الحضور مسجل مسبقاً - نعرض رسالة info مش error
         toast.info("✅ تم تسجيل حضورك مسبقاً", {

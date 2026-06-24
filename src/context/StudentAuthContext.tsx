@@ -80,7 +80,7 @@ export const StudentAuthProvider = ({ children }: { children: ReactNode }) => {
     
     // التوجيه لصفحة الرئيسية
     if (slug) {
-      navigate(`/${slug}`);
+      navigate(``);
     } else {
       navigate('/');
     }

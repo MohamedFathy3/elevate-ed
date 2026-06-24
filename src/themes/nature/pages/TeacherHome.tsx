@@ -50,12 +50,12 @@ import { OfferPopup } from "@/themes/default/components/site/OfferPopup";
 //             </p>
 //           )}
 //           <div className="mt-8 flex flex-col items-center lg:items-start gap-3 animate-fade-up delay-300">
-//             <Link to={`/${slug}/register`} className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-brand text-brand-foreground font-extrabold text-lg shadow-soft hover-lift">
+//             <Link to={`/register`} className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-brand text-brand-foreground font-extrabold text-lg shadow-soft hover-lift">
 //               <UserPlus className="size-5" />
 //               {lang === "ar" ? "انضم لينا الآن" : "Join Now"}
 //             </Link>
 //             <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
-//               <a href={`/${slug}/center-hours`} className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-card border shadow-card font-bold text-sm hover-lift">
+//               <a href={`/center-hours`} className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-card border shadow-card font-bold text-sm hover-lift">
 //   <MapPin className="size-4 text-primary" /> 
 //   {lang === "ar" ? "مواعيد السناتر" : "Center Hours"}
 // </a>

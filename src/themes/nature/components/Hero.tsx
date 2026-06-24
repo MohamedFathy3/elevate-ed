@@ -380,7 +380,7 @@ const Hero = () => {
           >
             {/* الزر الرئيسي */}
             <Link 
-              to={`/${slug}/register`} 
+              to={`/register`} 
               className="group inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-extrabold text-lg shadow-soft hover:shadow-xl transition-all duration-300 hover:scale-105"
             >
               <UserPlus className="size-5" />
@@ -391,7 +391,7 @@ const Hero = () => {
             {/* الأزرار الثانوية */}
             <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
               <a 
-                href={`/${slug}/center-hours`} 
+                href={`/center-hours`} 
                 className={`inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm transition-all duration-300 hover:shadow-md ${
                   colorMode === 'dark'
                     ? 'bg-slate-800 border border-emerald-800 hover:border-emerald-600'
