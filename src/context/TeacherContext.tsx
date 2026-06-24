@@ -77,7 +77,7 @@ const fetchTeacherByHost = async (host: string): Promise<TeacherWebsiteData> => 
   }
 
   // ✅ نبعت الـ host كامل في الـ query parameter
-  const url = `/api/teacher-by-host?host=${encodeURIComponent(host)}`;
+  const url = `${encodeURIComponent(host)}`;
   console.log("📌 API URL:", url);
 
   const response = await api.get(url);
