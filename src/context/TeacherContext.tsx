@@ -1,14 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // context/TeacherContext.tsx
-import { createContext, useContext, ReactNode } from "react";
+
+import { createContext, useContext, ReactNode, useState, useEffect } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useLang } from "@/i18n/LanguageContext";
 import api from "@/lib/api";
-import axios from "axios";
 import Loding from '@/themes/default/pages/Landing'
 import { SeoSettings } from "@/types/seo";
-
 
 // Types من الـ API
 export interface TeacherWebsiteData {
@@ -39,8 +38,8 @@ export interface TeacherWebsiteData {
     footer: any;
     future?: any[];
     featured_courses: any[]
-    centerHours?: any[]; // ✅ إضافة centerHours
-    seo?: SeoSettings; // ✅ إضافة seo
+    centerHours?: any[];
+    seo?: SeoSettings;
   };
   createdAt: string;
 }
@@ -48,6 +47,7 @@ export interface TeacherWebsiteData {
 interface TeacherContextValue {
   teacher: TeacherWebsiteData | null;
   slug: string;
+  host: string; // ✅ إضافة الـ host
   isLoading: boolean;
   error: Error | null;
   refetch: () => void;
@@ -60,24 +60,24 @@ interface TeacherContextValue {
   footer: any;
   future: any[];
   home: any;
-  centerHours: any[]; // ✅ إضافة centerHours
+  centerHours: any[];
   featured_courses: any[]
 }
 
 const TeacherContext = createContext<TeacherContextValue | undefined>(undefined);
 
-// ✅ إزالة register و login من القائمة عشان نجيب البيانات
 const STATIC_PAGES = ['forgot-password', 'reset-password'];
 
-// دالة جلب البيانات
-const fetchTeacherBySlug = async (slug: string): Promise<TeacherWebsiteData> => {
-  console.log("🔵 fetchTeacherBySlug START for slug:", slug);
-
-  if (!slug) {
-    throw new Error('Slug is required');
+// ✅ دالة جلب البيانات بالـ host كامل
+const fetchTeacherByHost = async (host: string): Promise<TeacherWebsiteData> => {
+  console.log("🔵 Fetching teacher by host:", host);
+  
+  if (!host) {
+    throw new Error('Host is required');
   }
 
-  const url = `/${slug}`;
+  // ✅ نبعت الـ host كامل في الـ query parameter
+  const url = `/api/teacher-by-host?host=${encodeURIComponent(host)}`;
   console.log("📌 API URL:", url);
 
   const response = await api.get(url);
@@ -94,14 +94,29 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
   const { slug } = useParams<{ slug: string }>();
   const { pathname } = useLocation();
   const { lang } = useLang();
+  
+  // ✅ State للـ host
+  const [host, setHost] = useState<string>('');
+
+  // ✅ جيب الـ host من المتصفح
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const fullHost = window.location.hostname;
+      setHost(fullHost);
+      console.log("🌐 Full Host from browser:", fullHost);
+    }
+  }, []);
 
   const currentPath = pathname.split('/').pop() || '';
   const isStaticPage = STATIC_PAGES.includes(currentPath);
-  const shouldFetch = !!slug && !isStaticPage;
+  
+  // ✅ نبعت الـ host بدل الـ slug
+  const shouldFetch = !!host && !isStaticPage;
 
   console.log("=========================================");
   console.log("🏪 TeacherProvider");
-  console.log("📌 slug:", slug);
+  console.log("📌 Host:", host);
+  console.log("📌 Slug from URL:", slug);
   console.log("📌 pathname:", pathname);
   console.log("📌 shouldFetch:", shouldFetch);
   console.log("=========================================");
@@ -112,8 +127,8 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
     error,
     refetch
   } = useQuery({
-    queryKey: ['teacher', slug],
-    queryFn: () => fetchTeacherBySlug(slug!),
+    queryKey: ['teacher', host], // ✅ الـ key بالـ host
+    queryFn: () => fetchTeacherByHost(host!), // ✅ نبعت الـ host
     enabled: shouldFetch,
     retry: 1,
     staleTime: 5 * 60 * 1000,
@@ -125,7 +140,6 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
     return en || ar || "";
   };
 
-  // ✅ بيانات آمنة مع centerHours
   const safeData = {
     stages: teacher?.website?.stages || [],
     courses: teacher?.website?.courses || [],
@@ -135,11 +149,10 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
     footer: teacher?.website?.footer || null,
     future: teacher?.website?.future || [],
     home: teacher?.website?.home || null,
-    centerHours: teacher?.website?.centerHours || [], // ✅ إضافة centerHours
-    featured_courses: teacher?.website?.featured_courses || [], // ✅ إضافة centerHours
+    centerHours: teacher?.website?.centerHours || [],
+    featured_courses: teacher?.website?.featured_courses || [],
   };
 
-  // Show loading state
   if (isLoading && shouldFetch) {
     return (
       <div className="min-h-screen grid place-items-center p-8">
@@ -148,7 +161,6 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
     );
   }
 
-  // Show error state
   if (error && shouldFetch) {
     console.error("❌ TeacherProvider Error:", error);
     return (
@@ -174,6 +186,7 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
       value={{
         teacher: teacher || null,
         slug: slug || "",
+        host: host || "", // ✅ نمرر الـ host
         isLoading,
         error: error || null,
         refetch,
@@ -194,7 +207,6 @@ export const useTeacher = () => {
   return context;
 };
 
-
 export const useSafeTeacher = () => {
   try {
     return useTeacher();
@@ -202,7 +214,8 @@ export const useSafeTeacher = () => {
     console.warn("⚠️ useSafeTeacher: Context not available");
     return {
       teacher: null,
-      slug: "", // ✅ تأكد إن slug موجود هنا
+      slug: "",
+      host: "", // ✅ إضافة host
       isLoading: false,
       error: null,
       refetch: () => { },
@@ -216,6 +229,7 @@ export const useSafeTeacher = () => {
       future: [],
       home: null,
       centerHours: [],
+      featured_courses: [],
     };
   }
 };

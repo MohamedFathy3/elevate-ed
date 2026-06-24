@@ -798,7 +798,16 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
                 <Clock className="w-3 h-3" />
                 {lesson.lession_time}
               </span>
+              <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+
+  {lang === "ar"
+    ? `عدد المشاهدات المتبقية: ${lesson.remainingWatchCount}`
+    : `Remaining watch count: ${lesson.remainingWatchCount}`}
+</span>
             </div>
+
+
           </div>
         </div>
 

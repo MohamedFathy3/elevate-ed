@@ -291,7 +291,11 @@ const LessonPage = () => {
               <p className="text-gray-600 dark:text-gray-400 mb-4">
                 {lang === "ar" && lesson.description_ar ? lesson.description_ar : lesson.description}
               </p>
-
+<p className="text-gray-600 dark:text-gray-400 mb-4">
+  {lang === "ar"
+    ? `عدد المشاهدات المتبقية: ${lesson.remainingWatchCount}`
+    : `Remaining watch count: ${lesson.remainingWatchCount}`}
+</p>
               <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400">
                 <div className="flex items-center gap-1">
                   <span>{new Date(lesson.lession_date).toLocaleDateString()}</span>
