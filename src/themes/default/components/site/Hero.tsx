@@ -182,9 +182,7 @@ export const Hero = () => {
                 src={heroImage}
                 alt={teacherName}
                 className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/default-hero.jpg";
-                }}
+              
               />
             ) : (
               <div className="w-full h-full gradient-primary grid place-items-center">
