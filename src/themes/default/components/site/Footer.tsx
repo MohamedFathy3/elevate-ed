@@ -1,4 +1,4 @@
-// Footer.tsx - تصميم زي الصورة مع الصور
+// Footer.tsx - مع إضافة صورة المعلم
 
 import { motion } from "framer-motion";
 import { Facebook, Instagram, Youtube, MessageCircle, MapPin, BookOpen, Library, Star, Users } from "lucide-react";
@@ -18,6 +18,9 @@ export const Footer = () => {
   const isDark = colorMode === 'dark';
   const footer = teacher?.website?.footer || {};
   const currentYear = new Date().getFullYear();
+
+  // ✅ صورة المعلم (Logo)
+  const teacherLogo = teacher?.imageUrl || teacher?.website?.home?.imageUrl || teacher?.website?.home?.image?.fullUrl;
 
   // ✅ الألوان
   const getBgColor = () => {
@@ -71,8 +74,6 @@ export const Footer = () => {
     { icon: Youtube, href: footer.youtube_link },
     { icon: MessageCircle, href: footer.whatsapp_link },
   ].filter((x) => x.href);
-
- 
 
   // ✅ بيانات القائمة (Info items)
   const infoItems = [
@@ -154,30 +155,32 @@ export const Footer = () => {
         <div className={`h-px ${getDividerColor()} my-8`} />
 
         {/* منتصف - Info Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-6 py-6">
-          {infoItems.map((item, i) => {
-            const Icon = item.icon;
-            return (
-              <div key={i} className="text-center">
-                <div className={`inline-flex items-center justify-center w-12 h-12 rounded-full mb-3 ${isNature ? 'bg-amber-100 dark:bg-amber-900/50' : 'bg-gray-100 dark:bg-gray-800'}`}>
-                  <Icon size={22} className={isNature ? 'text-amber-600 dark:text-amber-400' : 'text-primary'} />
-                </div>
-                <p className="text-sm uppercase tracking-wider opacity-60 mb-1">{item.label}</p>
-                {item.link ? (
-                  <Link to={item.link} className="font-semibold hover:underline">
-                    {item.value}
-                  </Link>
-                ) : (
-                  <p className="font-semibold text-lg">{item.value}</p>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        {/* ✅ الصور - هنا هنضيف الصور */}
+  
+        {/* ✅ الصور - مع إضافة صورة المعلم */}
         <div className="flex flex-col items-center justify-center gap-4 py-4">
           {/* الصور جنب بعض */}
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center gap-4 flex-wrap">
+            {/* ✅ صورة المعلم (Logo) */}
+            {teacherLogo && (
+              <motion.div
+                whileHover={{ scale: 1.1, rotate: 3 }}
+                className="relative"
+              >
+                <img
+                  src={teacherLogo}
+                  alt={teacher?.name || "Teacher Logo"}
+                  className="h-12 w-12 rounded-full object-cover border-2 border-primary/30 shadow-lg hover:shadow-primary/20 transition-all duration-300"
+                />
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-2 border-white dark:border-gray-900" />
+              </motion.div>
+            )}
+
+            {/* ✧ فاصل */}
+            {teacherLogo && (
+              <span className={`text-xl font-bold ${getMutedColor()}`}>✧</span>
+            )}
+
+            {/* صورة TeacherPlanet */}
             <motion.img
               whileHover={{ scale: 1.05, rotate: 5 }}
               src={logoImage}
@@ -187,6 +190,7 @@ export const Footer = () => {
             
             <span className={`text-xl font-bold ${getMutedColor()}`}>✧</span>
             
+            {/* صورة Banana Agency */}
             <motion.img
               whileHover={{ scale: 1.05, rotate: -5 }}
               src={bananaImage}
@@ -206,6 +210,14 @@ export const Footer = () => {
             <span className={`font-bold ${isNature ? 'text-amber-600' : 'text-primary'}`}>TeacherPlanet</span>
             <span> {lang === "ar" ? "و" : "&"} </span>
             <span className={`font-bold ${isNature ? 'text-amber-600' : 'text-primary'}`}>Banana Agency</span>
+            {teacher?.name && (
+              <>
+                <span> {lang === "ar" ? "لـ" : "for"} </span>
+                <span className={`font-bold ${isNature ? 'text-amber-600' : 'text-primary'}`}>
+                  {pick(teacher.name, teacher.name_ar)}
+                </span>
+              </>
+            )}
           </motion.div>
         </div>
 
