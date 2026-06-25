@@ -1,4 +1,4 @@
-// Footer.tsx - مع إضافة صورة المعلم
+// Footer.tsx - مع صورة المعلم في الأعلى كـ Logo
 
 import { motion } from "framer-motion";
 import { Facebook, Instagram, Youtube, MessageCircle, MapPin, BookOpen, Library, Star, Users } from "lucide-react";
@@ -21,6 +21,7 @@ export const Footer = () => {
 
   // ✅ صورة المعلم (Logo)
   const teacherLogo = teacher?.imageUrl || teacher?.website?.home?.imageUrl || teacher?.website?.home?.image?.fullUrl;
+  const teacherName = pick(teacher?.name, teacher?.name_ar) || (lang === "ar" ? "المعلم" : "Teacher");
 
   // ✅ الألوان
   const getBgColor = () => {
@@ -75,41 +76,63 @@ export const Footer = () => {
     { icon: MessageCircle, href: footer.whatsapp_link },
   ].filter((x) => x.href);
 
-  // ✅ بيانات القائمة (Info items)
-  const infoItems = [
-    {
-      icon: MapPin,
-      label: lang === "ar" ? "الفرع" : "Branch",
-      value: footer.branch_name || (lang === "ar" ? "العربية" : "Arabic"),
-    },
-    {
-      icon: BookOpen,
-      label: lang === "ar" ? "المراحل الدراسية" : "Stages",
-      value: lang === "ar" ? "المراحل الدراسية" : "Stages",
-      link: `#stages`,
-    },
-    {
-      icon: Library,
-      label: lang === "ar" ? "الكتب" : "Books",
-      value: lang === "ar" ? "الكتب" : "Books",
-      link: `#books`,
-    },
-    {
-      icon: Star,
-      label: lang === "ar" ? "التقييمات" : "Ratings",
-      value: lang === "ar" ? "التقييمات" : "Ratings",
-    },
-    {
-      icon: Users,
-      label: lang === "ar" ? "العدد" : "Count",
-      value: teacher?.website?.students_count || "٦",
-    },
-  ];
-
   return (
     <footer className={`${getBgColor()} ${getTextColor()} border-t ${getBorderColor()}`}>
       <div className="container-tight py-12 md:py-16">
         
+        {/* ✅ Logo في الأعلى - صورة المعلم */}
+        <div className="flex flex-col items-center justify-center mb-10">
+          {teacherLogo ? (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="relative group"
+            >
+              <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden border-4 border-primary/30 shadow-2xl shadow-primary/10 group-hover:shadow-primary/30 transition-all duration-300">
+                <img
+                  src={teacherLogo}
+                  alt={teacherName}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+              </div>
+              {/* ✅ Badge "المعلم" أو "Teacher" */}
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg whitespace-nowrap">
+                {lang === "ar" ? "المعلم" : "Teacher"}
+              </div>
+            </motion.div>
+          ) : (
+            // ✅ Fallback لو مفيش صورة
+            <div className="w-24 h-24 md:w-28 md:h-28 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-2xl shadow-primary/20">
+              <span className="text-4xl font-bold text-white">
+                {teacherName.charAt(0).toUpperCase()}
+              </span>
+            </div>
+          )}
+          
+          {/* ✅ اسم المعلم تحت الصورة */}
+          <motion.h2
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="mt-4 text-2xl md:text-3xl font-bold text-center"
+          >
+            {teacherName}
+          </motion.h2>
+          
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className={`text-sm ${getMutedColor()} text-center`}
+          >
+            {lang === "ar" ? "منصة تعليمية متكاملة" : "Integrated Educational Platform"}
+          </motion.p>
+        </div>
+
+        {/* فاصل بعد الـ Logo */}
+        <div className={`h-px ${getDividerColor()} my-8`} />
+
         {/* الصف العلوي: سوشيال ميديا (يمين) + وصف (شمال) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
           {/* يمين - تابعنا */}
@@ -154,32 +177,10 @@ export const Footer = () => {
         {/* فاصل */}
         <div className={`h-px ${getDividerColor()} my-8`} />
 
-        {/* منتصف - Info Cards */}
-  
-        {/* ✅ الصور - مع إضافة صورة المعلم */}
+        {/* ✅ الصور السفلية - TeacherPlanet & Banana Agency */}
         <div className="flex flex-col items-center justify-center gap-4 py-4">
           {/* الصور جنب بعض */}
           <div className="flex items-center justify-center gap-4 flex-wrap">
-            {/* ✅ صورة المعلم (Logo) */}
-            {teacherLogo && (
-              <motion.div
-                whileHover={{ scale: 1.1, rotate: 3 }}
-                className="relative"
-              >
-                <img
-                  src={teacherLogo}
-                  alt={teacher?.name || "Teacher Logo"}
-                  className="h-12 w-12 rounded-full object-cover border-2 border-primary/30 shadow-lg hover:shadow-primary/20 transition-all duration-300"
-                />
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-2 border-white dark:border-gray-900" />
-              </motion.div>
-            )}
-
-            {/* ✧ فاصل */}
-            {teacherLogo && (
-              <span className={`text-xl font-bold ${getMutedColor()}`}>✧</span>
-            )}
-
             {/* صورة TeacherPlanet */}
             <motion.img
               whileHover={{ scale: 1.05, rotate: 5 }}
@@ -210,14 +211,6 @@ export const Footer = () => {
             <span className={`font-bold ${isNature ? 'text-amber-600' : 'text-primary'}`}>TeacherPlanet</span>
             <span> {lang === "ar" ? "و" : "&"} </span>
             <span className={`font-bold ${isNature ? 'text-amber-600' : 'text-primary'}`}>Banana Agency</span>
-            {teacher?.name && (
-              <>
-                <span> {lang === "ar" ? "لـ" : "for"} </span>
-                <span className={`font-bold ${isNature ? 'text-amber-600' : 'text-primary'}`}>
-                  {pick(teacher.name, teacher.name_ar)}
-                </span>
-              </>
-            )}
           </motion.div>
         </div>
 
