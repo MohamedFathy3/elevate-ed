@@ -38,21 +38,16 @@ export const Navbar = () => {
 
   // ✅ دالة للتعامل مع الـ hash links
   const handleHashLink = (href: string, e: React.MouseEvent) => {
-    // لو الـ link يبدأ بـ # (hash link)
     if (href.startsWith('#')) {
       e.preventDefault();
-      
-      const targetId = href.substring(1); // نشيل الـ #
+      const targetId = href.substring(1);
       const targetElement = document.getElementById(targetId);
       
       if (targetElement) {
-        // لو احنا في الصفحة الرئيسية
         if (pathname === '/') {
           targetElement.scrollIntoView({ behavior: 'smooth' });
         } else {
-          // لو احنا في صفحة تانية، نروح للصفحة الرئيسية وبعدين نلف للـ section
           navigate('/');
-          // نضيف timeout عشان الصفحة تتحمل وبعدين نلف
           setTimeout(() => {
             const element = document.getElementById(targetId);
             if (element) {
@@ -64,7 +59,6 @@ export const Navbar = () => {
     }
   };
 
-  // ✅ الـ links معالجة
   const links = [
     { href: "#stages", label: lang === "ar" ? "المراحل" : "Stages" },
     { href: "/courses", label: lang === "ar" ? "الكورسات" : "Courses" },
@@ -73,7 +67,10 @@ export const Navbar = () => {
   ];
 
   const teacherName = pick(teacher?.name, teacher?.name_ar) || (lang === "ar" ? "المعلم" : "Teacher");
-  const logoImage = teacher?.website?.home?.imageUrl || teacher?.website?.home?.image?.fullUrl;
+  
+  // ✅ استخدام imageUrl من الـ teacher مباشرة
+  const logoImage = teacher?.imageUrl || teacher?.website?.home?.imageUrl || teacher?.website?.home?.image?.fullUrl;
+  
   const studentName = student?.name || (lang === "ar" ? "الطالب" : "Student");
 
   if (isLoading) {
@@ -90,12 +87,30 @@ export const Navbar = () => {
       <nav className={`max-w-7xl mx-auto rounded-full pl-3 pr-2 md:pl-5 md:pr-2 py-2 flex items-center justify-between gap-3 transition-all duration-300 glass shadow-card`}>
         {/* Logo */}
         <Link to={`/`} className="flex items-center gap-2 shrink-0">
-          <div className="w-10 h-10 rounded-xl gradient-primary grid place-items-center shadow-soft">
+          <div className="w-10 h-10 rounded-xl gradient-primary grid place-items-center shadow-soft overflow-hidden">
             {logoImage ? (
-              <img src={logoImage} alt={teacherName} className="w-full h-full object-cover rounded-xl" />
-            ) : (
+              <img 
+                src={logoImage} 
+                alt={teacherName} 
+                className="w-full h-full object-cover rounded-xl"
+                onError={(e) => {
+                  // لو الصورة مش موجودة، نعرض الـ fallback
+                  e.currentTarget.style.display = 'none';
+                  const parent = e.currentTarget.parentElement;
+                  if (parent) {
+                    const fallback = parent.querySelector('.logo-fallback');
+                    if (fallback) {
+                      (fallback as HTMLElement).style.display = 'flex';
+                    }
+                  }
+                }}
+              />
+            ) : null}
+            {/* ✅ Fallback أيقونة لو مفيش صورة */}
+            <div className="logo-fallback w-full h-full rounded-xl flex items-center justify-center" 
+                 style={{ display: logoImage ? 'none' : 'flex' }}>
               <Zap className="w-5 h-5 text-white" fill="white" />
-            )}
+            </div>
           </div>
           <span className="font-bold text-sm md:text-base hidden sm:block text-black dark:text-white">{teacherName}</span>
         </Link>
@@ -106,7 +121,6 @@ export const Navbar = () => {
             {links.map((l) => (
               <li key={l.href}>
                 {l.href.startsWith('#') ? (
-                  // ✅ للـ hash links
                   <a
                     href={l.href}
                     onClick={(e) => handleHashLink(l.href, e)}
@@ -116,7 +130,6 @@ export const Navbar = () => {
                     {l.label}
                   </a>
                 ) : (
-                  // ✅ للـ normal links (زي /courses)
                   <Link
                     to={l.href}
                     className="px-4 py-2 rounded-full text-[#000] dark:text-[#fff] hover:text-primary hover:bg-primary/5 transition-colors flex items-center gap-2"
