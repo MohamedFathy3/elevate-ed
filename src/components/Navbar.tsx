@@ -35,13 +35,12 @@ export const Navbar = () => {
   }, [pathname]);
 
 
-
-  const links = [
-    { href: ("stages"), label: lang === "ar" ? "المراحل" : "Stages" },
-    { href: `/courses`, label: lang === "ar" ? "الكورسات" : "Courses" },
-    { href: ("books"), label: lang === "ar" ? "الكتب" : "Books" },
-    { href: ("about"), label: lang === "ar" ? "عن المنصة" : "About" },
-  ];
+const links = (lang: string) => [
+  { href: "#stages", label: lang === "ar" ? "المراحل" : "Stages" },
+  { href: "/courses", label: lang === "ar" ? "الكورسات" : "Courses" },
+  { href: "#books", label: lang === "ar" ? "الكتب" : "Books" },
+  { href: "#about", label: lang === "ar" ? "عن المنصة" : "About" },
+];
 
   const teacherName = pick(teacher?.name, teacher?.name_ar) || (lang === "ar" ? "المعلم" : "Teacher");
   const logoImage = teacher?.website?.home?.imageUrl || teacher?.website?.home?.image?.fullUrl;
