@@ -1,7 +1,8 @@
 // components/site/Navbar.tsx
+
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLang } from "@/i18n/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
 import { useSafeTeacher } from "@/context/TeacherContext";
@@ -18,6 +19,7 @@ export const Navbar = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const isNature = theme === 'nature';
   const isDefault = theme === 'default';
   const isDark = colorMode === 'dark';
@@ -34,13 +36,40 @@ export const Navbar = () => {
     setProfileOpen(false);
   }, [pathname]);
 
+  // ✅ دالة للتعامل مع الـ hash links
+  const handleHashLink = (href: string, e: React.MouseEvent) => {
+    // لو الـ link يبدأ بـ # (hash link)
+    if (href.startsWith('#')) {
+      e.preventDefault();
+      
+      const targetId = href.substring(1); // نشيل الـ #
+      const targetElement = document.getElementById(targetId);
+      
+      if (targetElement) {
+        // لو احنا في الصفحة الرئيسية
+        if (pathname === '/') {
+          targetElement.scrollIntoView({ behavior: 'smooth' });
+        } else {
+          // لو احنا في صفحة تانية، نروح للصفحة الرئيسية وبعدين نلف للـ section
+          navigate('/');
+          // نضيف timeout عشان الصفحة تتحمل وبعدين نلف
+          setTimeout(() => {
+            const element = document.getElementById(targetId);
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth' });
+            }
+          }, 100);
+        }
+      }
+    }
+  };
 
-
+  // ✅ الـ links معالجة
   const links = [
-    { href: ("stages"), label: lang === "ar" ? "المراحل" : "Stages" },
-    { href: `/courses`, label: lang === "ar" ? "الكورسات" : "Courses" },
-    { href: ("books"), label: lang === "ar" ? "الكتب" : "Books" },
-    { href: ("about"), label: lang === "ar" ? "عن المنصة" : "About" },
+    { href: "#stages", label: lang === "ar" ? "المراحل" : "Stages" },
+    { href: "/courses", label: lang === "ar" ? "الكورسات" : "Courses" },
+    { href: "#books", label: lang === "ar" ? "الكتب" : "Books" },
+    { href: "#about", label: lang === "ar" ? "عن المنصة" : "About" },
   ];
 
   const teacherName = pick(teacher?.name, teacher?.name_ar) || (lang === "ar" ? "المعلم" : "Teacher");
@@ -50,15 +79,17 @@ export const Navbar = () => {
   if (isLoading) {
     return <NavbarSkeleton />;
   }
+
   return (
- <motion.header
-        initial={{ y: -40, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
-        className="fixed top-3 md:top-5 inset-x-0 z-50 px-3 md:px-6"
-      >
-  <nav className={`max-w-7xl mx-auto rounded-full pl-3 pr-2 md:pl-5 md:pr-2 py-2 flex items-center justify-between gap-3 transition-all duration-300 glass shadow-card`}>        {/* Logo */}
-        <Link to={``} className="flex items-center gap-2 shrink-0">
+    <motion.header
+      initial={{ y: -40, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
+      className="fixed top-3 md:top-5 inset-x-0 z-50 px-3 md:px-6"
+    >
+      <nav className={`max-w-7xl mx-auto rounded-full pl-3 pr-2 md:pl-5 md:pr-2 py-2 flex items-center justify-between gap-3 transition-all duration-300 glass shadow-card`}>
+        {/* Logo */}
+        <Link to={`/`} className="flex items-center gap-2 shrink-0">
           <div className="w-10 h-10 rounded-xl gradient-primary grid place-items-center shadow-soft">
             {logoImage ? (
               <img src={logoImage} alt={teacherName} className="w-full h-full object-cover rounded-xl" />
@@ -74,10 +105,26 @@ export const Navbar = () => {
           <ul className="hidden lg:flex items-center gap-1 text-sm">
             {links.map((l) => (
               <li key={l.href}>
-                <Link to={l.href} className="px-4 py-2 rounded-full text-[#000] dark:text-[#fff] hover:text-primary hover:bg-primary/5 transition-colors flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary/60" />
-                  {l.label}
-                </Link>
+                {l.href.startsWith('#') ? (
+                  // ✅ للـ hash links
+                  <a
+                    href={l.href}
+                    onClick={(e) => handleHashLink(l.href, e)}
+                    className="px-4 py-2 rounded-full text-[#000] dark:text-[#fff] hover:text-primary hover:bg-primary/5 transition-colors flex items-center gap-2 cursor-pointer"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary/60" />
+                    {l.label}
+                  </a>
+                ) : (
+                  // ✅ للـ normal links (زي /courses)
+                  <Link
+                    to={l.href}
+                    className="px-4 py-2 rounded-full text-[#000] dark:text-[#fff] hover:text-primary hover:bg-primary/5 transition-colors flex items-center gap-2"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary/60" />
+                    {l.label}
+                  </Link>
+                )}
               </li>
             ))}
           </ul>
@@ -88,18 +135,18 @@ export const Navbar = () => {
           {/* Language Toggle */}
           <button
             onClick={() => setLang(lang === "ar" ? "en" : "ar")}
-            className="hidden sm:flex w-10 h-10 rounded-full border  items-center justify-center text-xs font-bold hover:border-primary/40 transition-colors "
+            className="hidden sm:flex w-10 h-10 rounded-full border items-center justify-center text-xs font-bold hover:border-primary/40 transition-colors"
           >
             {lang === "ar" ? "EN" : "AR"}
           </button>
 
           {/* Theme Toggle */}
-         <button
+          <button
             onClick={toggleColorMode}
             className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors
               ${isNature 
-                ? 'bg-white   hover:border-amber-400' 
-                : 'border  hover:border-primary/40'}`}
+                ? 'bg-white hover:border-amber-400' 
+                : 'border hover:border-primary/40'}`}
           >
             {isDark ? (
               <Sun className="w-4 h-4 text-amber-500" />
@@ -115,33 +162,32 @@ export const Navbar = () => {
                 onClick={() => setProfileOpen(!profileOpen)}
                 className="flex items-center gap-2 px-3 py-2 rounded-full bg-gradient-to-r from-primary/10 to-accent/10 hover:from-primary/20 hover:to-accent/20 transition-all"
               >
-       <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-primary to-accent flex-shrink-0">
-  {student?.imageUrl ? (
-    <img 
-      src={student.imageUrl} 
-      alt={student?.name || 'Student'} 
-      className="w-full h-full object-cover"
-      onError={(e) => {
-        e.currentTarget.style.display = 'none';
-        // إظهار الـ Avatar البديل
-        const parent = e.currentTarget.parentElement;
-        if (parent) {
-          const avatar = parent.querySelector('.avatar-fallback');
-          if (avatar) {
-            (avatar as HTMLElement).style.display = 'flex';
-          }
-        }
-      }}
-    />
-  ) : null}
-  
-  {/* Avatar بديل */}
-  <div className="avatar-fallback w-full h-full rounded-full flex items-center justify-center text-white font-bold text-sm bg-gradient-to-br from-primary to-accent" 
-       style={{ display: student?.imageUrl ? 'none' : 'flex' }}>
-    {student?.name ? student.name.charAt(0).toUpperCase() : '?'}
-  </div>
-</div>
-                <span className="text-sm font-medium hidden md:block text-black dark:text-white ">{studentName}</span>
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-primary to-accent flex-shrink-0">
+                  {student?.imageUrl ? (
+                    <img 
+                      src={student.imageUrl} 
+                      alt={student?.name || 'Student'} 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        const parent = e.currentTarget.parentElement;
+                        if (parent) {
+                          const avatar = parent.querySelector('.avatar-fallback');
+                          if (avatar) {
+                            (avatar as HTMLElement).style.display = 'flex';
+                          }
+                        }
+                      }}
+                    />
+                  ) : null}
+                  
+                  {/* Avatar بديل */}
+                  <div className="avatar-fallback w-full h-full rounded-full flex items-center justify-center text-white font-bold text-sm bg-gradient-to-br from-primary to-accent" 
+                       style={{ display: student?.imageUrl ? 'none' : 'flex' }}>
+                    {student?.name ? student.name.charAt(0).toUpperCase() : '?'}
+                  </div>
+                </div>
+                <span className="text-sm font-medium hidden md:block text-black dark:text-white">{studentName}</span>
               </button>
 
               {/* Profile Dropdown */}
@@ -175,13 +221,13 @@ export const Navbar = () => {
                 className="inline-flex items-center gap-2 px-4 md:px-5 py-2.5 rounded-full gradient-primary text-white text-sm font-semibold shadow-soft hover:shadow-glow transition-all hover:scale-[1.03] active:scale-95"
               >
                 <Zap className="w-4 h-4" fill="white" />
-                <span className="hidden sm:inline">{lang === "ar" ? " اعمل اكونت" : "Sign up"}</span>
+                <span className="hidden sm:inline">{lang === "ar" ? "اعمل اكونت" : "Sign up"}</span>
               </Link>
               <Link
                 to={`/login`}
-                className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-[#000] dark:text-[#fff]  "
+                className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-[#000] dark:text-[#fff]"
               >
-                {lang === "ar" ? "خش ذاكر " : "Login"}
+                {lang === "ar" ? "خش ذاكر" : "Login"}
               </Link>
             </>
           )}
@@ -206,9 +252,26 @@ export const Navbar = () => {
           <ul className="flex flex-col gap-1">
             {!isAuthenticated && links.map((l) => (
               <li key={l.href}>
-                <Link to={l.href} className="block px-4 py-3 rounded-2xl hover:bg-primary/5 text-sm font-medium">
-                  {l.label}
-                </Link>
+                {l.href.startsWith('#') ? (
+                  <a
+                    href={l.href}
+                    onClick={(e) => {
+                      handleHashLink(l.href, e);
+                      setOpen(false);
+                    }}
+                    className="block px-4 py-3 rounded-2xl hover:bg-primary/5 text-sm font-medium"
+                  >
+                    {l.label}
+                  </a>
+                ) : (
+                  <Link
+                    to={l.href}
+                    className="block px-4 py-3 rounded-2xl hover:bg-primary/5 text-sm font-medium"
+                    onClick={() => setOpen(false)}
+                  >
+                    {l.label}
+                  </Link>
+                )}
               </li>
             ))}
             {isAuthenticated ? (
