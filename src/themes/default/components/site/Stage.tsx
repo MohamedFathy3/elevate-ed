@@ -106,199 +106,220 @@ export const Stage = () => {
   const totalCourses = stages.reduce((acc: number, stage: any) => acc + (stage.courses_count || 0), 0);
   const totalStudents = stages.reduce((acc: number, stage: any) => acc + (stage.students_count || 0), 0);
 
-if (isNature) {
-  const stageColors = [
-    { gradient: "from-emerald-500 to-teal-600", icon: <GraduationCap className="w-8 h-8 text-white" />, image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400&h=250&fit=crop" },
-    { gradient: "from-teal-500 to-cyan-600", icon: <BookOpen className="w-8 h-8 text-white" />, image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&h=250&fit=crop" },
-    { gradient: "from-cyan-500 to-blue-600", icon: <Award className="w-8 h-8 text-white" />, image: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=400&h=250&fit=crop" }
-  ];
+  if (isNature) {
+    const stageColors = [
+      { gradient: "from-emerald-500 to-teal-600", icon: <GraduationCap className="w-8 h-8 text-white" />, image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400&h=250&fit=crop" },
+      { gradient: "from-teal-500 to-cyan-600", icon: <BookOpen className="w-8 h-8 text-white" />, image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&h=250&fit=crop" },
+      { gradient: "from-cyan-500 to-blue-600", icon: <Award className="w-8 h-8 text-white" />, image: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=400&h=250&fit=crop" }
+    ];
 
-return (
-  <section className="relative overflow-hidden py-24 md:py-32 bg-gradient-to-br from-emerald-50 via-white to-teal-50 dark:from-gray-950 dark:via-emerald-950/10 dark:to-gray-950">
-    {/* Background decorations (أوراق ودوائر متحركة) */}
-    <div className="absolute inset-0 pointer-events-none">
-      <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-emerald-200/30 dark:bg-emerald-900/20 blur-3xl animate-pulse" />
-      <div className="absolute bottom-20 right-10 w-80 h-80 rounded-full bg-teal-200/20 dark:bg-teal-900/20 blur-3xl animate-pulse" />
-      {[...Array(6)].map((_, i) => (
-        <motion.div
-          key={i}
-          animate={{ y: [0, -30, 0], x: [0, (Math.random() - 0.5) * 50, 0], rotate: [0, 360] }}
-          transition={{ duration: 10 + i * 2, repeat: Infinity, ease: "easeInOut", delay: i * 2 }}
-          className="absolute opacity-10 dark:opacity-5"
-          style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%` }}
-        >
-          <Leaf className="w-6 h-6 text-emerald-600" />
-        </motion.div>
-      ))}
-    </div>
-
-    <div className="container-tight relative z-10">
-      {/* Hero Section */}
-      <div className="text-center max-w-3xl mx-auto mb-16">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-sm font-medium mb-5"
-        >
-          <Leaf className="w-4 h-4" />
-          {lang === "ar" ? "السنوات الدراسية" : "Academic Years"}
-        </motion.div>
-
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="text-4xl md:text-5xl lg:text-6xl font-bold text-emerald-900 dark:text-emerald-100 mb-4"
-        >
-          {lang === "ar" ? "السنوات الدراسية" : "Academic Years"}
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="text-emerald-700/70 dark:text-emerald-300/70 text-lg"
-        >
-          {lang === "ar"
-            ? "على موبايالك، التابلت أو اللابتوب الخاص بيك. المنصة متاحة على:"
-            : "On your mobile, tablet or laptop. The platform is available on:"}
-        </motion.p>
-      </div>
-
-      {/* Stages Cards - مع طبقة واضحة للمراحل غير المتاحة */}
-      <div className="grid md:grid-cols-3 gap-8 mb-16">
-        {visibleStages.map((stage: any, idx: number) => {
-          const stageName = pick(stage.name, stage.name_ar);
-          const isStudentStage = isAuthenticated && stage.id === studentStageId;
-          const isDisabled = isAuthenticated && !isStudentStage;
-          const color = stageColors[idx % stageColors.length];
-
-          return (
+    return (
+      <section className="relative overflow-hidden py-24 md:py-32 bg-gradient-to-br from-emerald-50 via-white to-teal-50 dark:from-gray-950 dark:via-emerald-950/10 dark:to-gray-950">
+        {/* Background decorations */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-emerald-200/30 dark:bg-emerald-900/20 blur-3xl animate-pulse" />
+          <div className="absolute bottom-20 right-10 w-80 h-80 rounded-full bg-teal-200/20 dark:bg-teal-900/20 blur-3xl animate-pulse" />
+          {[...Array(6)].map((_, i) => (
             <motion.div
-              key={stage.id}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1 }}
-              whileHover={{ y: isDisabled ? 0 : -8 }}
-              onClick={() => {
-                if (!isDisabled)
-navigate(`/subjects?stage_id=${stage.id}&stage_name=${encodeURIComponent(stageName)}`);
-              }}
-              className={`group relative ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+              key={i}
+              animate={{ y: [0, -30, 0], x: [0, (Math.random() - 0.5) * 50, 0], rotate: [0, 360] }}
+              transition={{ duration: 10 + i * 2, repeat: Infinity, ease: "easeInOut", delay: i * 2 }}
+              className="absolute opacity-10 dark:opacity-5"
+              style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%` }}
             >
-              <div
-                className={`relative rounded-2xl overflow-hidden bg-white dark:bg-gray-900 shadow-lg transition-all duration-300 h-full flex flex-col
-                  ${isDisabled ? 'opacity-80 grayscale-[0.1]' : 'hover:shadow-2xl'}`}
-              >
-                {/* صورة المرحلة */}
-                <div className="relative h-48 overflow-hidden">
-                  <img
-                    src={stage.image?.fullUrl || stage.image?.previewUrl || color.image}
-                    alt={stageName}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+              <Leaf className="w-6 h-6 text-emerald-600" />
+            </motion.div>
+          ))}
+        </div>
 
-                  {/* شارة "مرحلتي" للمرحلة التابعة للطالب */}
-                  {isStudentStage && (
-                    <div className="absolute top-4 right-4">
-                      <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-500 text-white text-xs font-bold shadow-lg">
-                        <CheckCircle className="w-3 h-3" />
-                        <span>{lang === "ar" ? "مرحلتي" : "My Stage"}</span>
+        <div className="container-tight relative z-10">
+          {/* Hero Section */}
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-sm font-medium mb-5"
+            >
+              <Leaf className="w-4 h-4" />
+              {lang === "ar" ? "السنوات الدراسية" : "Academic Years"}
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-4xl md:text-5xl lg:text-6xl font-bold text-emerald-900 dark:text-emerald-100 mb-4"
+            >
+              {lang === "ar" ? "السنوات الدراسية" : "Academic Years"}
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-emerald-700/70 dark:text-emerald-300/70 text-lg"
+            >
+              {lang === "ar"
+                ? "على موبايالك، التابلت أو اللابتوب الخاص بيك. المنصة متاحة على:"
+                : "On your mobile, tablet or laptop. The platform is available on:"}
+            </motion.p>
+          </div>
+
+          {/* Stages Cards - Nature Theme */}
+          <div className="grid md:grid-cols-3 gap-8 mb-16">
+            {visibleStages.map((stage: any, idx: number) => {
+              const stageName = pick(stage.name, stage.name_ar);
+              const isStudentStage = isAuthenticated && stage.id === studentStageId;
+              const isDisabled = isAuthenticated && !isStudentStage;
+              const color = stageColors[idx % stageColors.length];
+
+              return (
+                <motion.div
+                  key={stage.id}
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.1 }}
+                  whileHover={{ y: isDisabled ? 0 : -8 }}
+                  onClick={() => {
+                    if (!isDisabled)
+                      navigate(`/subjects?stage_id=${stage.id}&stage_name=${encodeURIComponent(stageName)}`);
+                  }}
+                  className={`group relative ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                >
+                  <div
+                    className={`relative rounded-2xl overflow-hidden bg-white dark:bg-gray-900 shadow-lg transition-all duration-300 h-full flex flex-col
+                      ${isDisabled ? 'opacity-80 grayscale-[0.1]' : 'hover:shadow-2xl'}`}
+                  >
+                    {/* صورة المرحلة */}
+                    <div className="relative h-48 overflow-hidden">
+                      <img
+                        src={stage.image?.fullUrl || stage.image?.previewUrl || color.image}
+                        alt={stageName}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+
+                      {/* شارة "مرحلتي" */}
+                      {isStudentStage && (
+                        <div className="absolute top-4 right-4">
+                          <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-500 text-white text-xs font-bold shadow-lg">
+                            <CheckCircle className="w-3 h-3" />
+                            <span>{lang === "ar" ? "مرحلتي" : "My Stage"}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* أيقونة متحركة */}
+                      <div
+                        className={`absolute bottom-4 left-4 w-12 h-12 rounded-xl bg-gradient-to-r ${color.gradient} flex items-center justify-center shadow-lg`}
+                      >
+                        {color.icon}
                       </div>
                     </div>
-                  )}
 
-                  {/* أيقونة متحركة */}
-                  <div
-                    className={`absolute bottom-4 left-4 w-12 h-12 rounded-xl bg-gradient-to-r ${color.gradient} flex items-center justify-center shadow-lg`}
-                  >
-                    {color.icon}
-                  </div>
-                </div>
+                    {/* محتوى الكارد */}
+                    <div className="p-6 text-center flex-1 flex flex-col">
+                      <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+                        {stageName}
+                      </h3>
+                      
+                      {/* ✅ عرض المواد في الثيم الطبيعي */}
+                      {stage.subjects && stage.subjects.length > 0 && (
+                        <div className="flex flex-wrap justify-center gap-1.5 mb-4">
+                          {stage.subjects.slice(0, 3).map((subject: any) => (
+                            <span 
+                              key={subject.id}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"
+                            >
+                              <span className="w-1 h-1 rounded-full bg-emerald-500" />
+                              {pick(subject.name, subject.name_ar) || subject.name}
+                            </span>
+                          ))}
+                          {stage.subjects.length > 3 && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 dark:text-emerald-400">
+                              +{stage.subjects.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      )}
 
-                {/* محتوى الكارد */}
-                <div className="p-6 text-center flex-1 flex flex-col">
-                  <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-                    {stageName}
-                  </h3>
-                  <p className="text-emerald-600 dark:text-emerald-400 text-sm font-medium mb-4">
-                    {lang === "ar" ? "الدخول لجميع الكورسات" : "Access all courses"}
-                  </p>
+                      <p className="text-emerald-600 dark:text-emerald-400 text-sm font-medium mb-4">
+                        {lang === "ar" ? "الدخول لجميع الكورسات" : "Access all courses"}
+                      </p>
 
-                  {/* زر مختلف للمراحل غير المتاحة */}
-                  {isDisabled ? (
-                    <div className="w-full py-2.5 rounded-xl bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-center font-semibold cursor-not-allowed">
-                      {lang === "ar" ? "غير متاحة لك" : "Not available"}
+                      {/* زر مختلف للمراحل غير المتاحة */}
+                      {isDisabled ? (
+                        <div className="w-full py-2.5 rounded-xl bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-center font-semibold cursor-not-allowed">
+                          {lang === "ar" ? "غير متاحة لك" : "Not available"}
+                        </div>
+                      ) : (
+                        <button
+                          className={`w-full py-2.5 rounded-xl font-semibold transition-all duration-300 bg-gradient-to-r ${color.gradient} text-white hover:shadow-lg hover:scale-105`}
+                        >
+                          {lang === "ar" ? "اكتشف المحتوى" : "Explore"}
+                          <ArrowRight className="inline-block w-4 h-4 ml-1" />
+                        </button>
+                      )}
                     </div>
-                  ) : (
-                    <button
-                      className={`w-full py-2.5 rounded-xl font-semibold transition-all duration-300 bg-gradient-to-r ${color.gradient} text-white hover:shadow-lg hover:scale-105`}
-                    >
-                      {lang === "ar" ? "اكتشف المحتوى" : "Explore"}
-                      <ArrowRight className="inline-block w-4 h-4 ml-1" />
-                    </button>
-                  )}
-                </div>
 
-                {/* ✅ الطبقة العلوية الواضحة للمراحل غير المتاحة (ليست مرحلتي) */}
-                {isDisabled && (
-                  <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl z-20">
-                    <Lock className="w-14 h-14 text-red-400 mb-3 drop-shadow-lg animate-pulse" />
-                    <p className="text-white font-extrabold text-lg tracking-wide">
-                      {lang === "ar" ? "❌ ليست مرحلتي" : "❌ Not my stage"}
-                    </p>
-                    <p className="text-white/80 text-xs mt-2 text-center px-4">
-                      {lang === "ar"
-                        ? "غير مسموح لك بالدخول إلى هذه المرحلة"
-                        : "You don't have access to this stage"}
-                    </p>
-                    <div className="mt-3 w-12 h-0.5 bg-red-400/50 rounded-full" />
+                    {/* الطبقة العلوية للمراحل غير المتاحة */}
+                    {isDisabled && (
+                      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl z-20">
+                        <Lock className="w-14 h-14 text-red-400 mb-3 drop-shadow-lg animate-pulse" />
+                        <p className="text-white font-extrabold text-lg tracking-wide">
+                          {lang === "ar" ? "❌ ليست مرحلتي" : "❌ Not my stage"}
+                        </p>
+                        <p className="text-white/80 text-xs mt-2 text-center px-4">
+                          {lang === "ar"
+                            ? "غير مسموح لك بالدخول إلى هذه المرحلة"
+                            : "You don't have access to this stage"}
+                        </p>
+                        <div className="mt-3 w-12 h-0.5 rounded-full bg-red-400/50" />
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
-
-      {/* CTA + Device Icons */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="text-center"
-      >
-        <div className="inline-flex flex-col items-center gap-5">
-          <div className="flex flex-wrap justify-center gap-6 text-emerald-600 dark:text-emerald-400">
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
-                <Smartphone className="w-6 h-6" />
-              </div>
-              <span className="text-xs">Mobile</span>
-            </div>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
-                <Tablet className="w-6 h-6" />
-              </div>
-              <span className="text-xs">Tablet</span>
-            </div>
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
-                <Laptop className="w-6 h-6" />
-              </div>
-              <span className="text-xs">Laptop</span>
-            </div>
+                </motion.div>
+              );
+            })}
           </div>
-        </div>
-      </motion.div>
-    </div>
-  </section>
-);
-}
 
-  // ✅ الثيم العادي (default) - يبقى زي ما هو
+          {/* CTA + Device Icons */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center"
+          >
+            <div className="inline-flex flex-col items-center gap-5">
+              <div className="flex flex-wrap justify-center gap-6 text-emerald-600 dark:text-emerald-400">
+                <div className="flex flex-col items-center gap-1">
+                  <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+                    <Smartphone className="w-6 h-6" />
+                  </div>
+                  <span className="text-xs">Mobile</span>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                  <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+                    <Tablet className="w-6 h-6" />
+                  </div>
+                  <span className="text-xs">Tablet</span>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                  <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+                    <Laptop className="w-6 h-6" />
+                  </div>
+                  <span className="text-xs">Laptop</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+    );
+  }
+
+  // ✅ الثيم العادي (default) - مع عرض المواد
   return (
     <section id="stages" className="relative overflow-hidden py-28 md:py-36">
       <div className="container-tight relative z-10">
@@ -308,7 +329,7 @@ navigate(`/subjects?stage_id=${stage.id}&stage_name=${encodeURIComponent(stageNa
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="inline-flex items-center gap-2 rounded-full border   px-5 py-2 text-sm font-bold text-primary backdrop-blur-xl"
+            className="inline-flex items-center gap-2 rounded-full border px-5 py-2 text-sm font-bold text-primary backdrop-blur-xl"
           >
             <Sparkles className="h-4 w-4" />
             {lang === "ar" ? "المراحل التعليمية" : "Educational Stages"}
@@ -357,7 +378,7 @@ navigate(`/subjects?stage_id=${stage.id}&stage_name=${encodeURIComponent(stageNa
               <motion.div
                 key={i}
                 whileHover={{ y: -8 }}
-                className="group rounded-[32px] border  p-7 backdrop-blur-2xl"
+                className="group rounded-[32px] border p-7 backdrop-blur-2xl"
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -377,13 +398,13 @@ navigate(`/subjects?stage_id=${stage.id}&stage_name=${encodeURIComponent(stageNa
         <div className="mt-20 relative">
           <button
             onClick={() => swiperRef.current?.slidePrev()}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border text-primary  shadow-lg flex items-center justify-center transition-all -ml-6 hover:bg-primary hover:text-primary hidden lg:flex"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border text-primary shadow-lg flex items-center justify-center transition-all -ml-6 hover:bg-primary hover:text-primary hidden lg:flex"
           >
             <PrevIcon className="w-5 h-5" />
           </button>
           <button
             onClick={() => swiperRef.current?.slideNext()}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border text-primary  shadow-lg flex items-center justify-center transition-all -mr-6 hover:bg-primary hover:text-primary hidden lg:flex"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border text-primary shadow-lg flex items-center justify-center transition-all -mr-6 hover:bg-primary hover:text-primary hidden lg:flex"
           >
             <NextIcon className="w-5 h-5" />
           </button>
@@ -427,7 +448,7 @@ navigate(`/subjects?stage_id=${stage.id}&stage_name=${encodeURIComponent(stageNa
                       }
                     }}
                   >
-                    <div className={`relative overflow-hidden rounded-[36px] border  backdrop-blur-2xl transition-all duration-500 ${!isDisabled ? 'hover:border-primary/30 hover:shadow-2xl' : ''}`}>
+                    <div className={`relative overflow-hidden rounded-[36px] border backdrop-blur-2xl transition-all duration-500 ${!isDisabled ? 'hover:border-primary/30 hover:shadow-2xl' : ''}`}>
                       {/* Disabled Overlay */}
                       {isDisabled && (
                         <div className="absolute inset-0 z-20 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center rounded-[36px] pointer-events-none">
@@ -490,16 +511,35 @@ navigate(`/subjects?stage_id=${stage.id}&stage_name=${encodeURIComponent(stageNa
                         </motion.div>
                       </div>
 
-                      {/* CONTENT */}
+                      {/* ✅ CONTENT مع عرض المواد */}
                       <div className="p-7">
                         <div className="flex items-start justify-between gap-4">
-                          <div>
+                          <div className="flex-1 min-w-0">
                             <h3 className={`text-3xl text-[#2266bf] dark:text-white transition-colors ${!isDisabled ? 'group-hover:text-primary' : ''}`}>
                               {stageName}
                             </h3>
-                        
+                            
+                            {/* ✅ عرض المواد (Subjects) */}
+                            {s.subjects && s.subjects.length > 0 && (
+                              <div className="mt-3 flex flex-wrap gap-1.5">
+                                {s.subjects.slice(0, 4).map((subject: any) => (
+                                  <span 
+                                    key={subject.id}
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary dark:bg-primary/20"
+                                  >
+                                    <span className="w-1.5 h-1.5 rounded-full bg-primary/60" />
+                                    {pick(subject.name, subject.name_ar) || subject.name}
+                                  </span>
+                                ))}
+                                {s.subjects.length > 4 && (
+                                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                                    +{s.subjects.length - 4}
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
-                          <div className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-all group-hover:scale-110 group-hover:bg-primary group-hover:text-white`}>
+                          <div className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-all group-hover:scale-110 group-hover:bg-primary group-hover:text-white flex-shrink-0`}>
                             <GraduationCap className="h-6 w-6" />
                           </div>
                         </div>
