@@ -1,7 +1,7 @@
 // Footer.tsx - مع صورة المعلم في الأعلى كـ Logo
 
 import { motion } from "framer-motion";
-import { Facebook, Instagram, Youtube, MessageCircle, MapPin, BookOpen, Library, Star, Users } from "lucide-react";
+import { Facebook, Instagram, Youtube, MessageCircle, MapPin, BookOpen, Library, Star, Users, TikTok } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLang } from "@/i18n/LanguageContext";
 import { useSafeTeacher } from "@/context/TeacherContext";
@@ -68,13 +68,37 @@ export const Footer = () => {
       ? "تم صنع هذه المنصة بهدف تهيئة الطالب لـ كامل جوانب اللغة العربية" 
       : "This platform is designed to prepare students in all aspects of the Arabic language");
 
-  // ✅ السوشيال ميديا
+  // ✅ السوشيال ميديا - مع إضافة TikTok والتحقق من الروابط
   const socials = [
-    { icon: Facebook, href: footer.facebook_link },
-    { icon: Instagram, href: footer.instagram_link },
-    { icon: Youtube, href: footer.youtube_link },
-    { icon: MessageCircle, href: footer.whatsapp_link },
-  ].filter((x) => x.href);
+    { 
+      icon: Facebook, 
+      href: footer.facebook_link,
+      label: "Facebook"
+    },
+    { 
+      icon: Instagram, 
+      href: footer.instagram_link,
+      label: "Instagram"
+    },
+    { 
+      icon: Youtube, 
+      href: footer.youtube_link,
+      label: "YouTube"
+    },
+    { 
+      icon: TikTok, 
+      href: footer.tiktok_link,
+      label: "TikTok"
+    },
+    { 
+      icon: MessageCircle, 
+      href: footer.whatsapp_link,
+      label: "WhatsApp"
+    },
+  ].filter((x) => x.href && x.href.trim() !== "");
+
+  // ✅ التحقق من وجود أي روابط سوشيال ميديا
+  const hasSocialLinks = socials.length > 0;
 
   return (
     <footer className={`${getBgColor()} ${getTextColor()} border-t ${getBorderColor()}`}>
@@ -140,28 +164,34 @@ export const Footer = () => {
             <h2 className="text-2xl md:text-3xl font-bold mb-4">
               {lang === "ar" ? "تابعنا على السوشيال ميديا" : "Follow us on social media"}
             </h2>
-            <div className="flex gap-4 justify-center md:justify-end">
-              {socials.length > 0 ? (
+            <div className="flex gap-4 justify-center md:justify-end flex-wrap">
+              {hasSocialLinks ? (
                 socials.map((social, i) => {
                   const Icon = social.icon;
                   return (
-                    <a
+                    <motion.a
                       key={i}
                       href={social.href}
                       target="_blank"
                       rel="noreferrer"
-                      className={`p-3 rounded-full border ${getBorderColor()} transition-all hover:scale-110 hover:${isNature ? 'bg-amber-500' : 'bg-primary'} hover:text-white`}
+                      whileHover={{ scale: 1.1, y: -2 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`p-3 rounded-full border ${getBorderColor()} transition-all hover:bg-primary hover:text-white hover:border-primary group relative`}
+                      title={social.label}
                     >
                       <Icon size={22} />
-                    </a>
+                      {/* Tooltip صغير */}
+                      <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-black/80 text-white px-2 py-1 rounded">
+                        {social.label}
+                      </span>
+                    </motion.a>
                   );
                 })
               ) : (
-                <>
-                  <a className={`p-3 rounded-full border ${getBorderColor()} opacity-50`}><Facebook size={22} /></a>
-                  <a className={`p-3 rounded-full border ${getBorderColor()} opacity-50`}><Instagram size={22} /></a>
-                  <a className={`p-3 rounded-full border ${getBorderColor()} opacity-50`}><Youtube size={22} /></a>
-                </>
+                // ✅ رسالة توضيحية إذا لم توجد روابط
+                <p className={`text-sm ${getMutedColor()}`}>
+                  {lang === "ar" ? "لا توجد روابط حالياً" : "No social links available"}
+                </p>
               )}
             </div>
           </div>
