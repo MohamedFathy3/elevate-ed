@@ -501,171 +501,178 @@ const CourseCardFull = ({ course, slug, pick, lang, dir, isNature, primaryGradie
     }
   };
   
-  return (
+   return (
     <motion.div
-      className={`group relative rounded-xl border transition-all duration-300 overflow-hidden flex flex-col h-full shadow-md hover:shadow-xl
+      className={`group relative rounded-xl border transition-all duration-300 overflow-hidden flex flex-col h-full shadow-md hover:shadow-xl cursor-pointer
         ${cardBg} ${cardBorder} ${cardHoverBorder}`}
       animate={isHovered ? { scale: 1.02, y: -5 } : { scale: 1, y: 0 }}
       transition={{ duration: 0.2 }}
+      // ✅ إضافة onClick للكارد كامل
+      onClick={() => window.location.href = `/courses/${course?.id}`}
     >
-      {/* Animated shine effect on hover */}
-      <motion.div
-        className={`absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 z-20 pointer-events-none
-          bg-gradient-to-r from-transparent via-${isNature ? 'white' : 'white'}/10 to-transparent`}
-      />
-      
-      {/* Image Section */}
-      <div className={`relative h-44 overflow-hidden ${isNature ? '' : 'bg-gradient-to-br from-primary/20 to-accent/20'}`}>
-        <motion.img
-          src={courseImage}
-          alt={courseTitle}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-          onError={(e) => { (e.target as HTMLImageElement).src = '/default-course.jpg'; }}
-          whileHover={{ scale: 1.1 }}
-          transition={{ duration: 0.4 }}
+      {/* ✅ منع انتشار الضغط من الأزرار */}
+      <div onClick={(e) => e.stopPropagation()}>
+        {/* Animated shine effect on hover */}
+        <motion.div
+          className={`absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 z-20 pointer-events-none
+            bg-gradient-to-r from-transparent via-${isNature ? 'white' : 'white'}/10 to-transparent`}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         
-        {/* ✅ خصم فقط من غير مؤقت */}
-        {hasDiscount && (
-          <motion.div 
-            initial={{ x: -50, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            className="absolute top-3 left-3 z-10"
-          >
-            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r from-red-500 to-rose-500 text-white text-xs font-bold shadow-lg">
-              <Percent className="w-3 h-3" />
-              <span>{discountPercent}% خصم</span>
-            </div>
-          </motion.div>
-        )}
-        
-        <div className="absolute top-3 right-3 px-2 py-1 rounded-lg bg-black/60 backdrop-blur-sm text-white text-xs font-medium z-10">
-          {course?.type === "online" 
-            ? (lang === "ar" ? "💻 أونلاين" : "💻 Online")
-            : (lang === "ar" ? "🏢 مركز" : "🏢 Center")}
-        </div>
-        
-        <div className="absolute bottom-3 left-3 right-3 z-10">
-          {hasDiscount ? (
-            <div className="flex items-baseline gap-2">
-              <span className={`text-xl font-black ${priceColor} drop-shadow-md`}>{finalPrice.toFixed(2)} EGP</span>
-              <span className="text-xs text-white/50 line-through">{originalPrice.toFixed(2)} EGP</span>
-            </div>
-          ) : (
-            <span className={`text-xl font-black ${priceColor} drop-shadow-md text-white`}>{originalPrice.toFixed(2)} EGP</span>
-          )}
-        </div>
-      </div>
-      
-      {/* Content Section */}
-      <div className="p-4 flex-1 flex flex-col">
-        {/* Tags */}
-        <div className="flex flex-wrap gap-1 mb-3">
-          {stageName && (
-            <motion.span 
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${tagBg}`}
-            >
-              <GraduationCap className="w-3 h-3" />
-              <span className="line-clamp-1 max-w-[80px]">{stageName}</span>
-            </motion.span>
-          )}
-          {subjectName && (
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${tagBg}`}>
-              <BookMarked className="w-3 h-3" />
-              <span className="line-clamp-1 max-w-[80px]">{subjectName}</span>
-            </span>
-          )}
-          {semesterName && (
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium
-              ${isNature 
-                ? (isDark ? 'bg-amber-800/40 text-amber-300' : 'bg-amber-50 text-amber-600')
-                : (isDark ? 'bg-gray-700 text-gray-300' : 'bg-secondary text-foreground/70')}`}
-            >
-              <Calendar className="w-3 h-3" />
-              <span className="line-clamp-1 max-w-[80px]">{semesterName}</span>
-            </span>
-          )}
-        </div>
-        
-        {/* Title */}
-        <h3 className={`font-bold text-base mb-2 line-clamp-2 min-h-[48px] transition-colors ${titleColor} ${titleHoverColor}`}>
-          {courseTitle}
-        </h3>
-        
-        {/* Description */}
-        {courseDescription && (
-          <div 
-            className={`text-xs line-clamp-2 mb-3 ${isNature ? (isDark ? 'text-amber-300/70' : 'text-amber-700/60') : (isDark ? 'text-gray-400' : 'text-foreground/60')}`}
-            dangerouslySetInnerHTML={sanitizeHTML(courseDescription)}
+        {/* Image Section */}
+        <div className={`relative h-44 overflow-hidden ${isNature ? '' : 'bg-gradient-to-br from-primary/20 to-accent/20'}`}>
+          <motion.img
+            src={courseImage}
+            alt={courseTitle}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            onError={(e) => { (e.target as HTMLImageElement).src = '/default-course.jpg'; }}
+            whileHover={{ scale: 1.1 }}
+            transition={{ duration: 0.4 }}
           />
-        )}
-        
-        {/* Stats */}
-        <div className={`flex flex-wrap gap-3 mb-3 text-xs ${isNature ? (isDark ? 'text-amber-400/60' : 'text-amber-600/60') : (isDark ? 'text-gray-400' : 'text-foreground/50')}`}>
-          {lessonsCount > 0 && (
-            <div className="flex items-center gap-1">
-              <BookOpen className="w-3 h-3" />
-              <span>{lessonsCount} {lang === "ar" ? "دروس" : "lessons"}</span>
-            </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+          
+          {/* ✅ خصم */}
+          {hasDiscount && (
+            <motion.div 
+              initial={{ x: -50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              className="absolute top-3 left-3 z-10"
+            >
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r from-red-500 to-rose-500 text-white text-xs font-bold shadow-lg">
+                <Percent className="w-3 h-3" />
+                <span>{discountPercent}% خصم</span>
+              </div>
+            </motion.div>
           )}
-   
-          <div className="flex items-center gap-1">
-            <Clock className="w-3 h-3" />
-            <span>{lang === "ar" ? "مرن" : "Flexible"}</span>
+          
+          <div className="absolute top-3 right-3 px-2 py-1 rounded-lg bg-black/60 backdrop-blur-sm text-white text-xs font-medium z-10">
+            {course?.type === "online" 
+              ? (lang === "ar" ? "💻 أونلاين" : "💻 Online")
+              : (lang === "ar" ? "🏢 مركز" : "🏢 Center")}
+          </div>
+          
+          <div className="absolute bottom-3 left-3 right-3 z-10">
+            {hasDiscount ? (
+              <div className="flex items-baseline gap-2">
+                <span className={`text-xl font-black ${priceColor} drop-shadow-md`}>{finalPrice.toFixed(2)} EGP</span>
+                <span className="text-xs text-white/50 line-through">{originalPrice.toFixed(2)} EGP</span>
+              </div>
+            ) : (
+              <span className={`text-xl font-black ${priceColor} drop-shadow-md text-white`}>{originalPrice.toFixed(2)} EGP</span>
+            )}
           </div>
         </div>
-
-        {/* ✅ المؤقت جوة الكارد من تحت */}
-        {hasOfferDates && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="mb-3"
-          >
-            <OfferTimerDisplay 
-              startDate={offerStartDate} 
-              endDate={offerEndDate} 
-              lang={lang}
-              isDark={isDark}
-              isNature={isNature}
-              compact={true}
-              showIcon={true}
-            />
-          </motion.div>
-        )}
         
-        {/* Buttons */}
-        <div className="mt-auto pt-3 border-t border-border/50">
-          <div className="flex items-center gap-2">
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={handleBuy}
-              disabled={isBuying}
-              className={`flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl font-semibold text-sm shadow-md transition-all disabled:opacity-50
-                ${buttonBg} text-white`}
-            >
-              {isBuying ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <ShoppingCart className="w-4 h-4" />
-              )}
-              <span>{lang === "ar" ? "شراء" : "Buy"}</span>
-            </motion.button>
-            
-            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-              <Link
-                to={`/courses/${course?.id}`}
-                className={`px-3 py-2 rounded-xl border font-semibold text-sm transition-all
-                  ${detailButtonBg} ${isNature ? (isDark ? 'text-amber-200' : 'text-amber-700') : (isDark ? 'text-gray-200' : 'text-foreground')}`}
+        {/* Content Section */}
+        <div className="p-4 flex-1 flex flex-col">
+          {/* Tags */}
+          <div className="flex flex-wrap gap-1 mb-3">
+            {stageName && (
+              <motion.span 
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${tagBg}`}
               >
-                {lang === "ar" ? "تفاصيل" : "Details"}
-              </Link>
+                <GraduationCap className="w-3 h-3" />
+                <span className="line-clamp-1 max-w-[80px]">{stageName}</span>
+              </motion.span>
+            )}
+            {subjectName && (
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${tagBg}`}>
+                <BookMarked className="w-3 h-3" />
+                <span className="line-clamp-1 max-w-[80px]">{subjectName}</span>
+              </span>
+            )}
+            {semesterName && (
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium
+                ${isNature 
+                  ? (isDark ? 'bg-amber-800/40 text-amber-300' : 'bg-amber-50 text-amber-600')
+                  : (isDark ? 'bg-gray-700 text-gray-300' : 'bg-secondary text-foreground/70')}`}
+              >
+                <Calendar className="w-3 h-3" />
+                <span className="line-clamp-1 max-w-[80px]">{semesterName}</span>
+              </span>
+            )}
+          </div>
+          
+          {/* Title */}
+          <h3 className={`font-bold text-base mb-2 line-clamp-2 min-h-[48px] transition-colors ${titleColor} ${titleHoverColor}`}>
+            {courseTitle}
+          </h3>
+          
+          {/* Description */}
+          {courseDescription && (
+            <div 
+              className={`text-xs line-clamp-2 mb-3 ${isNature ? (isDark ? 'text-amber-300/70' : 'text-amber-700/60') : (isDark ? 'text-gray-400' : 'text-foreground/60')}`}
+              dangerouslySetInnerHTML={sanitizeHTML(courseDescription)}
+            />
+          )}
+          
+          {/* Stats */}
+          <div className={`flex flex-wrap gap-3 mb-3 text-xs ${isNature ? (isDark ? 'text-amber-400/60' : 'text-amber-600/60') : (isDark ? 'text-gray-400' : 'text-foreground/50')}`}>
+            {lessonsCount > 0 && (
+              <div className="flex items-center gap-1">
+                <BookOpen className="w-3 h-3" />
+                <span>{lessonsCount} {lang === "ar" ? "دروس" : "lessons"}</span>
+              </div>
+            )}
+     
+            <div className="flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              <span>{lang === "ar" ? "مرن" : "Flexible"}</span>
+            </div>
+          </div>
+
+          {/* ✅ المؤقت */}
+          {hasOfferDates && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="mb-3"
+            >
+              <OfferTimerDisplay 
+                startDate={offerStartDate} 
+                endDate={offerEndDate} 
+                lang={lang}
+                isDark={isDark}
+                isNature={isNature}
+                compact={true}
+                showIcon={true}
+              />
             </motion.div>
+          )}
+          
+          {/* Buttons */}
+          <div className="mt-auto pt-3 border-t border-border/50">
+            <div className="flex items-center gap-2">
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={handleBuy}
+                disabled={isBuying}
+                className={`flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl font-semibold text-sm shadow-md transition-all disabled:opacity-50
+                  ${buttonBg} text-white`}
+              >
+                {isBuying ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <ShoppingCart className="w-4 h-4" />
+                )}
+                <span>{lang === "ar" ? "شراء" : "Buy"}</span>
+              </motion.button>
+              
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                <Link
+                  to={`/courses/${course?.id}`}
+                  className={`px-3 py-2 rounded-xl border font-semibold text-sm transition-all
+                    ${detailButtonBg} ${isNature ? (isDark ? 'text-amber-200' : 'text-amber-700') : (isDark ? 'text-gray-200' : 'text-foreground')}`}
+                  // ✅ منع انتشار الضغط
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {lang === "ar" ? "تفاصيل" : "Details"}
+                </Link>
+              </motion.div>
+            </div>
           </div>
         </div>
       </div>
