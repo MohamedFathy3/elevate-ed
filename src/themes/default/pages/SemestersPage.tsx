@@ -662,29 +662,38 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
   };
   
   return (
-    <motion.div
+      <motion.div
       whileHover={{ y: -5 }}
       className={`group relative rounded-2xl border transition-all overflow-hidden bg-white dark:bg-gray-900 ${isNature ? 'border-amber-200 dark:border-amber-800' : 'border-border'} hover:border-${primaryColor}/30`}
     >
-      <div className="relative h-36 overflow-hidden">
+      {/* ✅ قسم الصورة المُحسَّن */}
+      <div className="relative h-48 md:h-52 lg:h-56 overflow-hidden bg-gradient-to-br from-amber-100/50 to-orange-100/50 dark:from-amber-900/30 dark:to-orange-900/30">
         <img 
           src={finalImageUrl} 
           alt={pick(semester.name, semester.name_ar)}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-          onError={(e) => { (e.target as HTMLImageElement).src = defaultImage; }}
+          className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700 ease-out"
+          loading="lazy"
+          onError={(e) => { 
+            (e.target as HTMLImageElement).src = defaultImage;
+          }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
         
-        {coursesCount > 0 && (
-          <div className="absolute top-3 left-3 flex items-center gap-1 text-xs px-2 py-1 rounded-full backdrop-blur-md bg-black/50 text-white">
-            <BookOpen className="w-3 h-3" />
-            <span>{coursesCount} {lang === "ar" ? "كورسات" : "courses"}</span>
-          </div>
-        )}
+        {/* ✅ Overlay جميل للتحسين */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-300" />
         
+        {/* ✅ إطار علوي شفاف */}
+        <div className="absolute inset-0 border-b-2 border-white/10" />
+        
+        {/* ✅ أيقونة في الأعلى */}
+        <div className="absolute top-3 left-3 flex items-center gap-1 text-xs px-3 py-1.5 rounded-full backdrop-blur-md bg-black/40 text-white border border-white/10">
+          <BookOpen className="w-3.5 h-3.5" />
+          <span>{coursesCount} {lang === "ar" ? "كورسات" : "courses"}</span>
+        </div>
+        
+        {/* ✅ خصم */}
         {hasDiscount && (
-          <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-            <Percent className="w-3 h-3" />
+          <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg shadow-red-500/30">
+            <Percent className="w-3.5 h-3.5" />
             {discountPercent}% OFF
           </div>
         )}
