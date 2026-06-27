@@ -666,7 +666,6 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
       whileHover={{ y: -5 }}
       className={`group relative rounded-2xl border transition-all overflow-hidden bg-white dark:bg-gray-900 ${isNature ? 'border-amber-200 dark:border-amber-800' : 'border-border'} hover:border-${primaryColor}/30`}
     >
-   // ✅ قسم الصورة المُحسَّن - ارتفاع أكبر
 <div className="relative h-56 md:h-60 lg:h-64 overflow-hidden bg-gradient-to-br from-amber-100/50 to-orange-100/50 dark:from-amber-900/30 dark:to-orange-900/30">
   <img 
     src={finalImageUrl} 
