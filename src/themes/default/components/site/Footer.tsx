@@ -33,16 +33,16 @@ export const Footer = () => {
   const footer = teacher?.website?.footer || {};
   const currentYear = new Date().getFullYear();
 
-  // ✅ صورة المعلم (Logo)
-  const teacherLogo = teacher?.imageUrl || teacher?.website?.home?.imageUrl || teacher?.website?.home?.image?.fullUrl;
+  // ✅ صورة المعلم (Logo) - تحسين جلب الصورة
+  const teacherLogo = teacher?.image?.fullUrl || teacher?.imageUrl || teacher?.website?.home?.image?.fullUrl || teacher?.website?.home?.imageUrl || null;
   const teacherName = pick(teacher?.name, teacher?.name_ar) || (lang === "ar" ? "المعلم" : "Teacher");
 
   // ✅ الألوان
   const getBgColor = () => {
     if (isNature) {
-      return isDark ? 'bg-amber-950' : 'bg-cream';
+      return isDark ? 'bg-amber-950' : 'bg-amber-50';
     }
-    return isDark ? 'bg-slate-900' : 'bg-[#ffffff87]';
+    return isDark ? 'bg-slate-900' : 'bg-white';
   };
 
   const getTextColor = () => {
@@ -73,13 +73,28 @@ export const Footer = () => {
     return isDark ? 'bg-slate-700' : 'bg-slate-200';
   };
 
+  // ✅ ألوان الـ primary
+  const getPrimaryColor = () => {
+    if (isNature) {
+      return isDark ? 'bg-amber-600' : 'bg-amber-600';
+    }
+    return 'bg-blue-600';
+  };
+
+  const getPrimaryHoverColor = () => {
+    if (isNature) {
+      return isDark ? 'hover:bg-amber-500' : 'hover:bg-amber-700';
+    }
+    return 'hover:bg-blue-700';
+  };
+
   // ✅ البيانات من API
   const description = pick(footer.description, footer.description_ar) ||
     (lang === "ar" 
       ? "تم صنع هذه المنصة بهدف تهيئة الطالب لـ كامل جوانب اللغة العربية" 
       : "This platform is designed to prepare students in all aspects of the Arabic language");
 
-  // ✅ السوشيال ميديا - مع إضافة TikTok والتحقق من الروابط
+  // ✅ السوشيال ميديا
   const socials = [
     { 
       icon: Facebook, 
@@ -108,12 +123,11 @@ export const Footer = () => {
     },
   ].filter((x) => x.href && x.href.trim() !== "");
 
-  // ✅ التحقق من وجود أي روابط سوشيال ميديا
   const hasSocialLinks = socials.length > 0;
 
   return (
     <footer className={`${getBgColor()} ${getTextColor()} border-t ${getBorderColor()}`}>
-      <div className="container-tight py-12 md:py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         
         {/* ✅ Logo في الأعلى - صورة المعلم */}
         <div className="flex flex-col items-center justify-center mb-10">
@@ -124,21 +138,24 @@ export const Footer = () => {
               transition={{ duration: 0.5 }}
               className="relative group"
             >
-              <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden border-4 border-primary/30 shadow-2xl shadow-primary/10 group-hover:shadow-primary/30 transition-all duration-300">
+              <div className={`w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden border-4 ${getPrimaryColor()} shadow-2xl shadow-${isNature ? 'amber' : 'blue'}-500/20 group-hover:shadow-${isNature ? 'amber' : 'blue'}-500/40 transition-all duration-300`}>
                 <img
                   src={teacherLogo}
                   alt={teacherName}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
                 />
               </div>
               {/* ✅ Badge "المعلم" أو "Teacher" */}
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg whitespace-nowrap">
+              <div className={`absolute -bottom-2 left-1/2 -translate-x-1/2 ${getPrimaryColor()} text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg whitespace-nowrap ${getPrimaryHoverColor()}`}>
                 {lang === "ar" ? "المعلم" : "Teacher"}
               </div>
             </motion.div>
           ) : (
             // ✅ Fallback لو مفيش صورة
-            <div className="w-24 h-24 md:w-28 md:h-28 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-2xl shadow-primary/20">
+            <div className={`w-24 h-24 md:w-28 md:h-28 rounded-full bg-gradient-to-br ${isNature ? 'from-amber-500 to-amber-600' : 'from-blue-500 to-blue-600'} flex items-center justify-center shadow-2xl shadow-${isNature ? 'amber' : 'blue'}-500/20`}>
               <span className="text-4xl font-bold text-white">
                 {teacherName.charAt(0).toUpperCase()}
               </span>
@@ -187,7 +204,7 @@ export const Footer = () => {
                       rel="noreferrer"
                       whileHover={{ scale: 1.1, y: -2 }}
                       whileTap={{ scale: 0.95 }}
-                      className={`p-3 rounded-full border ${getBorderColor()} transition-all hover:bg-primary hover:text-white hover:border-primary group relative`}
+                      className={`p-3 rounded-full border ${getBorderColor()} transition-all hover:${getPrimaryColor()} hover:text-white hover:border-transparent group relative`}
                       title={social.label}
                     >
                       <Icon size={22} />
@@ -199,7 +216,6 @@ export const Footer = () => {
                   );
                 })
               ) : (
-                // ✅ رسالة توضيحية إذا لم توجد روابط
                 <p className={`text-sm ${getMutedColor()}`}>
                   {lang === "ar" ? "لا توجد روابط حالياً" : "No social links available"}
                 </p>
@@ -220,9 +236,7 @@ export const Footer = () => {
 
         {/* ✅ الصور السفلية - TeacherPlanet & Banana Agency */}
         <div className="flex flex-col items-center justify-center gap-4 py-4">
-          {/* الصور جنب بعض */}
           <div className="flex items-center justify-center gap-4 flex-wrap">
-            {/* صورة TeacherPlanet */}
             <motion.img
               whileHover={{ scale: 1.05, rotate: 5 }}
               src={logoImage}
@@ -232,7 +246,6 @@ export const Footer = () => {
             
             <span className={`text-xl font-bold ${getMutedColor()}`}>✧</span>
             
-            {/* صورة Banana Agency */}
             <motion.img
               whileHover={{ scale: 1.05, rotate: -5 }}
               src={bananaImage}
@@ -241,7 +254,6 @@ export const Footer = () => {
             />
           </div>
           
-          {/* النص تحت الصور */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -249,16 +261,14 @@ export const Footer = () => {
             className={`text-center text-sm ${getMutedColor()}`}
           >
             <span>{lang === "ar" ? "تم التطوير بواسطة" : "Developed by"}{" "}</span>
-            <span className={`font-bold ${isNature ? 'text-amber-600' : 'text-primary'}`}>TeacherPlanet</span>
+            <span className={`font-bold ${isNature ? 'text-amber-600' : 'text-blue-600'}`}>TeacherPlanet</span>
             <span> {lang === "ar" ? "و" : "&"} </span>
-            <span className={`font-bold ${isNature ? 'text-amber-600' : 'text-primary'}`}>Banana Agency</span>
+            <span className={`font-bold ${isNature ? 'text-amber-600' : 'text-blue-600'}`}>Banana Agency</span>
           </motion.div>
         </div>
 
-        {/* فاصل خفيف قبل حقوق الملكية */}
         <div className={`h-px ${getDividerColor()} my-6`} />
 
-        {/* حقوق الملكية */}
         <div className="text-center pt-2">
           <p className={`text-sm ${getMutedColor()}`}>
             {lang === "ar" ? "جميع الحقوق محفوظة" : "All Copy Rights Reserved"} © {currentYear}
