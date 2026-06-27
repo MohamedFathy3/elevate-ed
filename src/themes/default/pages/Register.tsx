@@ -724,25 +724,46 @@ const Register = () => {
               </div>
 
               {/* ✅ Steps */}
-              <div className="flex items-center justify-center gap-2 mb-7">
-                {[
-                  { n: 1, ar: "أساسي", en: "Basic" },
-                  { n: 2, ar: "دراسي", en: "Study" },
-                  { n: 3, ar: "الصورة", en: "Photo" },
-                ].map(({ n, ar, en }, idx) => (
-                  <div key={n} className="flex items-center gap-2">
-                    {idx > 0 && <div className="w-6 sm:w-8 h-px bg-slate-200 dark:bg-slate-700" />}
-                    <div className={`flex items-center gap-1.5 ${stepLabel(n)}`}>
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${stepDot(n)}`}>
-                        {n}
-                      </div>
-                      <span className="text-xs sm:text-sm hidden sm:inline font-medium">
-                        {lang === "ar" ? ar : en}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+          {/* ✅ Steps - مع إمكانية التنقل بالضغط */}
+<div className="flex items-center justify-center gap-2 mb-7">
+  {[
+    { n: 1, ar: "أساسي", en: "Basic" },
+    { n: 2, ar: "دراسي", en: "Study" },
+    { n: 3, ar: "الصورة", en: "Photo" },
+  ].map(({ n, ar, en }, idx) => (
+    <div key={n} className="flex items-center gap-2">
+      {idx > 0 && <div className="w-6 sm:w-8 h-px bg-slate-200 dark:bg-slate-700" />}
+      <button
+        type="button"
+        onClick={() => goToStep(n)}
+        className={`
+          flex items-center gap-1.5 
+          transition-all duration-300 
+          ${step !== n ? 'hover:scale-105' : ''}
+          ${step === n ? 'cursor-default' : 'cursor-pointer'}
+          ${step === n ? stepLabel(n) : step > n ? 'text-slate-500' : 'text-slate-400'}
+        `}
+        title={lang === "ar" ? `الذهاب إلى ${ar}` : `Go to ${en}`}
+      >
+        <div
+          className={`
+            w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold 
+            transition-all duration-300
+            ${step === n ? 'bg-[#3b5bdb] text-white shadow-lg shadow-[#3b5bdb]/30 ring-2 ring-[#3b5bdb]/20' : ''}
+            ${step > n ? 'bg-[#edf2ff] dark:bg-[#3b5bdb]/20 text-[#3b5bdb] dark:text-sky-400' : ''}
+            ${step < n ? 'bg-slate-100 dark:bg-slate-800 text-slate-400' : ''}
+            ${step !== n ? 'hover:bg-slate-200 dark:hover:bg-slate-700 hover:scale-110' : ''}
+          `}
+        >
+          {n}
+        </div>
+        <span className="text-xs sm:text-sm hidden sm:inline font-medium">
+          {lang === "ar" ? ar : en}
+        </span>
+      </button>
+    </div>
+  ))}
+</div>
 
               <form
                 onSubmit={(e) => {
