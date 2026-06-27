@@ -458,63 +458,208 @@ const Register = () => {
   return (
     <>
       {/* ✅ Popup التعليمات - نفس الكود الموجود */}
-      <AnimatePresence>
-        {showInstructions && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
-            onClick={handleCloseInstructions}
-          >
-            {/* ... نفس محتوى الـ popup ... */}
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              transition={{ type: "spring", damping: 25 }}
-              className="max-w-2xl w-full max-h-[85vh] overflow-y-auto rounded-3xl bg-white dark:bg-[#161b22] shadow-2xl ring-1 ring-slate-200/80 dark:ring-slate-700/50"
-              onClick={(e) => e.stopPropagation()}
+     {/* ✅ Popup التعليمات - المحتوى الكامل */}
+<AnimatePresence>
+  {showInstructions && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      onClick={handleCloseInstructions}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        transition={{ type: "spring", damping: 25 }}
+        className="max-w-2xl w-full max-h-[85vh] overflow-y-auto rounded-3xl bg-white dark:bg-[#161b22] shadow-2xl ring-1 ring-slate-200/80 dark:ring-slate-700/50"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* ✅ Header */}
+        <div className="sticky top-0 z-10 bg-[#3b5bdb] text-white p-5 rounded-t-3xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                <AlertCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold">
+                  {lang === "ar" ? "📋 تعليمات هامة للتسجيل" : "📋 Important Registration Instructions"}
+                </h2>
+                <p className="text-white/80 text-sm">
+                  {lang === "ar" ? "برجاء قراءة التعليمات بعناية قبل البدء" : "Please read carefully before starting"}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleCloseInstructions}
+              className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 transition-colors flex items-center justify-center"
             >
-              <div className="sticky top-0 z-10 bg-[#3b5bdb] text-white p-5 rounded-t-3xl">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                      <AlertCircle className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold">
-                        {lang === "ar" ? "تعليمات هامة" : "Important Instructions"}
-                      </h2>
-                      <p className="text-white/80 text-sm">
-                        {lang === "ar" ? "برجاء قراءة التعليمات بعناية" : "Please read carefully"}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleCloseInstructions}
-                    className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 transition-colors flex items-center justify-center"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-              {/* ... باقي محتوى التعليمات ... */}
-              <div className="p-6 space-y-4">
-                {/* التعليمات */}
-              </div>
-              <div className="sticky bottom-0 bg-slate-50 dark:bg-slate-800/80 p-4 rounded-b-3xl border-t border-slate-200 dark:border-slate-700">
-                <button
-                  onClick={handleCloseInstructions}
-                  className="w-full px-6 py-2.5 rounded-xl bg-[#3b5bdb] hover:bg-[#364fc7] text-white font-semibold text-sm transition-all"
-                >
-                  {lang === "ar" ? "فهمت ✓" : "I Understand ✓"}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* ✅ المحتوى */}
+        <div className="p-6 space-y-4">
+          {/* 1. الاسم الرباعي */}
+          <div className="flex items-start gap-3 p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+              <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <h3 className="font-bold text-blue-800 dark:text-blue-300">
+                {lang === "ar" ? "✏️ الاسم الرباعي" : "✏️ Full Name (4 words)"}
+              </h3>
+              <p className="text-sm text-blue-700 dark:text-blue-400">
+                {lang === "ar"
+                  ? "يجب إدخال الاسم الرباعي كاملاً (4 كلمات على الأقل) كما هو موجود في شهادة الميلاد"
+                  : "Must enter full 4-word name as appears in birth certificate"}
+              </p>
+            </div>
+          </div>
+
+          {/* 2. رقم الهاتف */}
+          <div className="flex items-start gap-3 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+              <Phone className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div>
+              <h3 className="font-bold text-emerald-800 dark:text-emerald-300">
+                {lang === "ar" ? "📱 رقم الهاتف المصري" : "📱 Egyptian Phone Number"}
+              </h3>
+              <p className="text-sm text-emerald-700 dark:text-emerald-400">
+                {lang === "ar"
+                  ? "رقم هاتف مصري صحيح مكون من 11 رقم يبدأ بـ (010 - 011 - 012 - 015)"
+                  : "Valid Egyptian phone number (11 digits) starting with (010 - 011 - 012 - 015)"}
+              </p>
+            </div>
+          </div>
+
+          {/* 3. كلمة المرور */}
+          <div className="flex items-start gap-3 p-4 rounded-2xl bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+              <Lock className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            </div>
+            <div>
+              <h3 className="font-bold text-purple-800 dark:text-purple-300">
+                {lang === "ar" ? "🔐 كلمة المرور" : "🔐 Password"}
+              </h3>
+              <p className="text-sm text-purple-700 dark:text-purple-400">
+                {lang === "ar"
+                  ? "كلمة مرور قوية مكونة من 6 أحرف على الأقل (حروف وأرقام)"
+                  : "Strong password at least 6 characters (letters and numbers)"}
+              </p>
+            </div>
+          </div>
+
+          {/* 4. نوع الحضور */}
+          <div className="flex items-start gap-3 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+              <Users className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <h3 className="font-bold text-amber-800 dark:text-amber-300">
+                {lang === "ar" ? "🏫 نوع الحضور" : "🏫 Attendance Type"}
+              </h3>
+              <p className="text-sm text-amber-700 dark:text-amber-400">
+                {lang === "ar"
+                  ? "طالب السنتر يختار 'سنتر' وطالب الأونلاين يختار 'أونلاين' - لا يمكن التبديل بعد التسجيل"
+                  : "Center students choose 'Center', Online students choose 'Online' - cannot be changed after registration"}
+              </p>
+            </div>
+          </div>
+
+          {/* 5. البيانات الدراسية */}
+          <div className="flex items-start gap-3 p-4 rounded-2xl bg-cyan-50 dark:bg-cyan-950/20 border border-cyan-200 dark:border-cyan-800">
+            <div className="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
+              <GraduationCap className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
+            </div>
+            <div>
+              <h3 className="font-bold text-cyan-800 dark:text-cyan-300">
+                {lang === "ar" ? "📚 البيانات الدراسية" : "📚 Study Data"}
+              </h3>
+              <p className="text-sm text-cyan-700 dark:text-cyan-400">
+                {lang === "ar"
+                  ? "تأكد من اختيار المرحلة الدراسية والمحافظة واسم المدرسة بدقة"
+                  : "Make sure to select the correct educational stage, governorate, and school name"}
+              </p>
+            </div>
+          </div>
+
+          {/* 6. الصورة الشخصية */}
+          <div className="flex items-start gap-3 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800">
+            <div className="w-10 h-10 rounded-xl bg-rose-500/20 flex items-center justify-center flex-shrink-0">
+              <Image className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+            </div>
+            <div>
+              <h3 className="font-bold text-rose-800 dark:text-rose-300">
+                {lang === "ar" ? "🖼️ الصورة الشخصية" : "🖼️ Profile Picture"}
+              </h3>
+              <p className="text-sm text-rose-700 dark:text-rose-400">
+                {lang === "ar"
+                  ? "صورة شخصية واضحة بخلفية بيضاء - مطلوبة لإكمال التسجيل"
+                  : "Clear profile picture with white background - required to complete registration"}
+              </p>
+            </div>
+          </div>
+
+          {/* 7. تنبيه مهم */}
+          <div className="flex items-start gap-3 p-4 rounded-2xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
+            <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center flex-shrink-0">
+              <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+            </div>
+            <div>
+              <h3 className="font-bold text-red-800 dark:text-red-300">
+                {lang === "ar" ? "⚠️ تنبيه هام" : "⚠️ Important Notice"}
+              </h3>
+              <p className="text-sm text-red-700 dark:text-red-400">
+                {lang === "ar"
+                  ? "لا يمكن تعديل البيانات بعد التسجيل إلا من خلال التواصل مع الدعم الفني"
+                  : "Data cannot be modified after registration except through technical support"}
+              </p>
+            </div>
+          </div>
+
+          {/* 8. نصائح إضافية */}
+          <div className="flex items-start gap-3 p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800">
+            <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
+              <Info className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <div>
+              <h3 className="font-bold text-indigo-800 dark:text-indigo-300">
+                {lang === "ar" ? "💡 نصائح إضافية" : "💡 Additional Tips"}
+              </h3>
+              <ul className="text-sm text-indigo-700 dark:text-indigo-400 space-y-1 list-disc list-inside">
+                <li>{lang === "ar" ? "استخدم اتصال إنترنت مستقر" : "Use a stable internet connection"}</li>
+                <li>{lang === "ar" ? "احتفظ بكلمة المرور في مكان آمن" : "Keep your password in a safe place"}</li>
+                <li>{lang === "ar" ? "تأكد من صحة البيانات قبل الضغط على 'إنشاء حساب'" : "Verify data before clicking 'Create Account'"}</li>
+                <li>{lang === "ar" ? "في حالة وجود مشكلة، تواصل مع الدعم الفني" : "If you face any issue, contact technical support"}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* ✅ Footer مع زر التأكيد */}
+        <div className="sticky bottom-0 bg-slate-50 dark:bg-slate-800/80 p-4 rounded-b-3xl border-t border-slate-200 dark:border-slate-700">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <CheckCircle className="w-3 h-3 text-emerald-500" />
+              <span>{lang === "ar" ? "برجاء الالتزام بهذه التعليمات" : "Please follow these instructions"}</span>
+            </div>
+            <button
+              onClick={handleCloseInstructions}
+              className="px-6 py-2.5 rounded-xl bg-[#3b5bdb] hover:bg-[#364fc7] text-white font-semibold text-sm transition-all shadow-[0_4px_14px_rgba(59,91,219,0.35)] hover:shadow-[0_6px_20px_rgba(59,91,219,0.45)]"
+            >
+              {lang === "ar" ? "فهمت ✓" : "I Understand ✓"}
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
 
       <section className="min-h-screen bg-[#eef1f6] dark:bg-[#0f1419] flex items-start lg:items-center px-4 py-28 sm:px-6 sm:py-32 lg:px-10 lg:py-24">
         <div className="w-full max-w-6xl mx-auto">
