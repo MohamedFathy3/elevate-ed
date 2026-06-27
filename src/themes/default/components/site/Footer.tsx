@@ -1,13 +1,27 @@
 // Footer.tsx - مع صورة المعلم في الأعلى كـ Logo
 
 import { motion } from "framer-motion";
-import { Facebook, Instagram, Youtube, MessageCircle, MapPin, BookOpen, Library, Star, Users, TikTok } from "lucide-react";
+import { Facebook, Instagram, Youtube, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLang } from "@/i18n/LanguageContext";
 import { useSafeTeacher } from "@/context/TeacherContext";
 import { useTheme } from "@/context/ThemeContext";
 import logoImage from "@/assets/logo.png";
 import bananaImage from "@/assets/designed by @banana.png";
+
+// ✅ أيقونة TikTok المخصصة
+const TikTokIcon = ({ size = 22, className = "" }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="currentColor" 
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M16.6 5.82s.51.5 0 0A4.278 4.278 0 0 1 15.54 3h-3.09v12.4c0 .86-.68 2.03-1.52 2.18-.84.15-1.84-.29-2.24-1.01-.4-.72-.27-1.91.29-2.43.56-.52 1.36-.63 1.95-.33V8.84c-2.62-.09-4.87 1.97-4.87 4.58 0 2.24 1.46 4.14 3.5 4.79 2.04.65 4.36-.1 5.46-1.77.91-1.38 1.02-3.18.8-4.75h-2.79V10.6c.94.42 1.99.6 3.04.6v-3.1c-.23 0-.45-.02-.68-.08v.01z"/>
+  </svg>
+);
 
 export const Footer = () => {
   const { lang } = useLang();
@@ -60,9 +74,6 @@ export const Footer = () => {
   };
 
   // ✅ البيانات من API
-  const footerName = pick(footer.name, footer.name_ar) || 
-    (lang === "ar" ? "منصة تعليمية" : "Learning Platform");
-
   const description = pick(footer.description, footer.description_ar) ||
     (lang === "ar" 
       ? "تم صنع هذه المنصة بهدف تهيئة الطالب لـ كامل جوانب اللغة العربية" 
@@ -86,7 +97,7 @@ export const Footer = () => {
       label: "YouTube"
     },
     { 
-      icon: TikTok, 
+      icon: TikTokIcon, 
       href: footer.tiktok_link,
       label: "TikTok"
     },
