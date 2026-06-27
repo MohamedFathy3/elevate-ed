@@ -433,9 +433,39 @@ const Register = () => {
     }
   };
 
-  const prevStep = () => {
-    setStep(step - 1);
-  };
+// ✅ أضف الدالة دي تحت prevStep
+const prevStep = () => {
+  setStep(step - 1);
+};
+
+// ✅ دالة التنقل بين الخطوات بالضغط على الأرقام
+const goToStep = (targetStep: number) => {
+  // ✅ إذا كانت الخطوة المستهدفة هي نفس الخطوة الحالية، لا نفعل شيئاً
+  if (targetStep === step) return;
+  
+  // ✅ الانتقال للخلف مسموح به بدون تحقق
+  if (targetStep < step) {
+    setStep(targetStep);
+    return;
+  }
+  
+  // ✅ الانتقال للأمام مع التحقق
+  if (targetStep > step) {
+    if (step === 1) {
+      if (validateStep(1)) {
+        setStep(targetStep);
+      } else {
+        toast.error(lang === "ar" ? "الرجاء تصحيح الأخطاء في البيانات الأساسية" : "Please fix errors in basic data");
+      }
+    } else if (step === 2) {
+      if (validateStep(2)) {
+        setStep(targetStep);
+      } else {
+        toast.error(lang === "ar" ? "الرجاء تصحيح الأخطاء في البيانات الدراسية" : "Please fix errors in study data");
+      }
+    }
+  }
+};
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
