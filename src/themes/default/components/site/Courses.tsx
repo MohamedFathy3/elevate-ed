@@ -730,7 +730,7 @@ export const Courses = ({ limit = 4 }: { limit?: number }) => {
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-blue-500/10 to-emerald-500/10 text-blue-600 dark:text-blue-400 font-semibold text-sm mb-5 backdrop-blur-sm"
           >
             <BookOpen className="w-4 h-4 animate-pulse" />
-            {lang === "ar" ? "أحدث الكورسات" : "Latest Courses"}
+            {lang === "ar" ? "الكورسات المرشحة" : "Latest Courses"}
           </motion.div>
 
           <motion.h2

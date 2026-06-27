@@ -6,7 +6,7 @@ import { useParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useLang } from "@/i18n/LanguageContext";
 import api from "@/lib/api";
-import Loding from '@/themes/default/pages/Landing'
+import Loading from '@/themes/default/pages/Landing'; // ✅ تصحيح الاستيراد
 import { SeoSettings } from "@/types/seo";
 
 // Types من الـ API
@@ -47,7 +47,7 @@ export interface TeacherWebsiteData {
 interface TeacherContextValue {
   teacher: TeacherWebsiteData | null;
   slug: string;
-  host: string; // ✅ إضافة الـ host
+  host: string;
   isLoading: boolean;
   error: Error | null;
   refetch: () => void;
@@ -95,6 +95,9 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
   const { pathname } = useLocation();
   const { lang } = useLang();
   
+  // ✅ تصحيح استخدام useState
+  const [isPageLoading, setIsPageLoading] = useState(true);
+  
   // ✅ State للـ host
   const [host, setHost] = useState<string>('');
 
@@ -123,12 +126,12 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
 
   const {
     data: teacher,
-    isLoading,
+    isLoading: isQueryLoading,
     error,
     refetch
   } = useQuery({
-    queryKey: ['teacher', host], // ✅ الـ key بالـ host
-    queryFn: () => fetchTeacherByHost(host!), // ✅ نبعت الـ host
+    queryKey: ['teacher', host],
+    queryFn: () => fetchTeacherByHost(host!),
     enabled: shouldFetch,
     retry: 1,
     staleTime: 5 * 60 * 1000,
@@ -153,28 +156,59 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
     featured_courses: teacher?.website?.featured_courses || [],
   };
 
-  if (isLoading && shouldFetch) {
+  // ✅ تحسين عملية التحميل
+  useEffect(() => {
+    // إذا كان التحميل انتهى، ننتظر قليلاً ثم نخفي الـ Loading
+    if (!isQueryLoading && shouldFetch) {
+      const timer = setTimeout(() => {
+        setIsPageLoading(false);
+      }, 500); // نصف ثانية فقط للأنيميشن
+
+      return () => clearTimeout(timer);
+    }
+  }, [isQueryLoading, shouldFetch]);
+
+  // ✅ إذا كان في صفحة ثابتة، نضبط التحميل على false فوراً
+  useEffect(() => {
+    if (isStaticPage) {
+      setIsPageLoading(false);
+    }
+  }, [isStaticPage]);
+
+  // ✅ حالة التحميل
+  const isLoading = isPageLoading && shouldFetch && isQueryLoading;
+
+  // ✅ عرض الـ Loading بشكل أنيق
+  if (isLoading) {
     return (
-      <div className="min-h-screen grid place-items-center p-8">
-        <Loding />
-      </div>
+      <Loading 
+        lang={lang}
+        message={{
+          ar: 'جاري تحميل المنصة...',
+          en: 'Loading platform...'
+        }}
+        minDisplayTime={600}
+      />
     );
   }
 
+  // ✅ عرض الخطأ
   if (error && shouldFetch) {
     console.error("❌ TeacherProvider Error:", error);
     return (
       <div className="min-h-screen grid place-items-center p-8 text-center">
         <div className="max-w-md">
-          <h1 className="text-3xl font-black mb-3 text-red-500">Error</h1>
+          <h1 className="text-3xl font-black mb-3 text-red-500">
+            {lang === 'ar' ? 'حدث خطأ' : 'Error'}
+          </h1>
           <p className="text-foreground/60 mb-4">
-            {error?.message || "Something went wrong"}
+            {error?.message || (lang === 'ar' ? 'حدث خطأ ما' : 'Something went wrong')}
           </p>
           <button
             onClick={() => refetch()}
-            className="px-6 py-3 rounded-xl gradient-primary text-white font-semibold"
+            className="px-6 py-3 rounded-xl gradient-primary text-white font-semibold hover:scale-105 transition-transform"
           >
-            Try Again
+            {lang === 'ar' ? 'إعادة المحاولة' : 'Try Again'}
           </button>
         </div>
       </div>
@@ -186,8 +220,8 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
       value={{
         teacher: teacher || null,
         slug: slug || "",
-        host: host || "", // ✅ نمرر الـ host
-        isLoading,
+        host: host || "",
+        isLoading: isLoading,
         error: error || null,
         refetch,
         pick,
@@ -215,7 +249,7 @@ export const useSafeTeacher = () => {
     return {
       teacher: null,
       slug: "",
-      host: "", // ✅ إضافة host
+      host: "",
       isLoading: false,
       error: null,
       refetch: () => { },
