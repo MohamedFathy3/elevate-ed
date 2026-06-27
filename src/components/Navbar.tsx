@@ -68,10 +68,25 @@ export const Navbar = () => {
 
   const teacherName = pick(teacher?.name, teacher?.name_ar) || (lang === "ar" ? "المعلم" : "Teacher");
   
-  // ✅ استخدام imageUrl من الـ teacher مباشرة
-  const logoImage = teacher?.imageUrl || teacher?.website?.home?.imageUrl || teacher?.website?.home?.image?.fullUrl;
+  // ✅ تحسين جلب الصورة - جرب أكثر من مصدر
+  const logoImage = teacher?.image?.fullUrl || teacher?.imageUrl || teacher?.logoUrl || teacher?.website?.home?.image?.fullUrl || teacher?.website?.home?.imageUrl || null;
   
   const studentName = student?.name || (lang === "ar" ? "الطالب" : "Student");
+
+  // ✅ ألوان حسب الثيم
+  const getPrimaryGradient = () => {
+    if (isNature) {
+      return 'from-amber-500 to-orange-500';
+    }
+    return 'from-blue-500 to-blue-600';
+  };
+
+  const getPrimaryColor = () => {
+    if (isNature) {
+      return 'bg-amber-500 hover:bg-amber-600';
+    }
+    return 'bg-blue-500 hover:bg-blue-600';
+  };
 
   if (isLoading) {
     return <NavbarSkeleton />;
@@ -84,10 +99,15 @@ export const Navbar = () => {
       transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
       className="fixed top-3 md:top-5 inset-x-0 z-50 px-3 md:px-6"
     >
-      <nav className={`max-w-7xl mx-auto rounded-full pl-3 pr-2 md:pl-5 md:pr-2 py-2 flex items-center justify-between gap-3 transition-all duration-300 glass shadow-card`}>
+      <nav className={`max-w-7xl mx-auto rounded-full pl-3 pr-2 md:pl-5 md:pr-2 py-2 flex items-center justify-between gap-3 transition-all duration-300 
+        ${isDark 
+          ? 'bg-gray-900/90 backdrop-blur-xl border border-gray-800' 
+          : 'bg-white/90 backdrop-blur-xl border border-gray-200'} 
+        shadow-lg`}>
+        
         {/* Logo */}
         <Link to={`/`} className="flex items-center gap-2 shrink-0">
-          <div className="w-10 h-10 rounded-xl gradient-primary grid place-items-center shadow-soft overflow-hidden">
+          <div className={`w-10 h-10 rounded-xl bg-gradient-to-r ${getPrimaryGradient()} grid place-items-center shadow-md overflow-hidden flex-shrink-0`}>
             {logoImage ? (
               <img 
                 src={logoImage} 
@@ -124,17 +144,17 @@ export const Navbar = () => {
                   <a
                     href={l.href}
                     onClick={(e) => handleHashLink(l.href, e)}
-                    className="px-4 py-2 rounded-full text-[#000] dark:text-[#fff] hover:text-primary hover:bg-primary/5 transition-colors flex items-center gap-2 cursor-pointer"
+                    className="px-4 py-2 rounded-full text-black dark:text-white hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors flex items-center gap-2 cursor-pointer"
                   >
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary/60" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 dark:bg-blue-400" />
                     {l.label}
                   </a>
                 ) : (
                   <Link
                     to={l.href}
-                    className="px-4 py-2 rounded-full text-[#000] dark:text-[#fff] hover:text-primary hover:bg-primary/5 transition-colors flex items-center gap-2"
+                    className="px-4 py-2 rounded-full text-black dark:text-white hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors flex items-center gap-2"
                   >
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary/60" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 dark:bg-blue-400" />
                     {l.label}
                   </Link>
                 )}
@@ -148,7 +168,7 @@ export const Navbar = () => {
           {/* Language Toggle */}
           <button
             onClick={() => setLang(lang === "ar" ? "en" : "ar")}
-            className="hidden sm:flex w-10 h-10 rounded-full border items-center justify-center text-xs font-bold hover:border-primary/40 transition-colors"
+            className="hidden sm:flex w-10 h-10 rounded-full border border-gray-200 dark:border-gray-700 items-center justify-center text-xs font-bold hover:border-blue-400 dark:hover:border-blue-500 transition-colors text-black dark:text-white"
           >
             {lang === "ar" ? "EN" : "AR"}
           </button>
@@ -156,15 +176,12 @@ export const Navbar = () => {
           {/* Theme Toggle */}
           <button
             onClick={toggleColorMode}
-            className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors
-              ${isNature 
-                ? 'bg-white hover:border-amber-400' 
-                : 'border hover:border-primary/40'}`}
+            className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500`}
           >
             {isDark ? (
               <Sun className="w-4 h-4 text-amber-500" />
             ) : (
-              <Moon className="w-4 h-4 text-primary" />
+              <Moon className="w-4 h-4 text-blue-500" />
             )}
           </button>
 
@@ -173,9 +190,9 @@ export const Navbar = () => {
             <div className="relative">
               <button
                 onClick={() => setProfileOpen(!profileOpen)}
-                className="flex items-center gap-2 px-3 py-2 rounded-full bg-gradient-to-r from-primary/10 to-accent/10 hover:from-primary/20 hover:to-accent/20 transition-all"
+                className="flex items-center gap-2 px-3 py-2 rounded-full bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-all"
               >
-                <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-primary to-accent flex-shrink-0">
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex-shrink-0">
                   {student?.imageUrl ? (
                     <img 
                       src={student.imageUrl} 
@@ -195,7 +212,7 @@ export const Navbar = () => {
                   ) : null}
                   
                   {/* Avatar بديل */}
-                  <div className="avatar-fallback w-full h-full rounded-full flex items-center justify-center text-white font-bold text-sm bg-gradient-to-br from-primary to-accent" 
+                  <div className="avatar-fallback w-full h-full rounded-full flex items-center justify-center text-white font-bold text-sm bg-gradient-to-br from-blue-500 to-blue-600" 
                        style={{ display: student?.imageUrl ? 'none' : 'flex' }}>
                     {student?.name ? student.name.charAt(0).toUpperCase() : '?'}
                   </div>
@@ -205,10 +222,10 @@ export const Navbar = () => {
 
               {/* Profile Dropdown */}
               {profileOpen && (
-                <div className="absolute top-full left-0 rtl:left-auto rtl:right-0 mt-2 w-48 bg-black border border-border rounded-xl shadow-lg overflow-hidden z-50">
+                <div className="absolute top-full left-0 rtl:left-auto rtl:right-0 mt-2 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden z-50">
                   <Link
                     to={`/dashboard`}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-primary/10 transition-colors"
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors text-black dark:text-white"
                     onClick={() => setProfileOpen(false)}
                   >
                     <LayoutDashboard className="w-4 h-4" />
@@ -219,7 +236,7 @@ export const Navbar = () => {
                       logout();
                       setProfileOpen(false);
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-500/10 text-red-500 transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 dark:hover:bg-red-950/30 text-red-500 transition-colors"
                   >
                     <LogOut className="w-4 h-4" />
                     <span className="text-sm">{lang === "ar" ? "تسجيل الخروج" : "Logout"}</span>
@@ -231,14 +248,14 @@ export const Navbar = () => {
             <>
               <Link
                 to={`/register`}
-                className="inline-flex items-center gap-2 px-4 md:px-5 py-2.5 rounded-full gradient-primary text-white text-sm font-semibold shadow-soft hover:shadow-glow transition-all hover:scale-[1.03] active:scale-95"
+                className={`inline-flex items-center gap-2 px-4 md:px-5 py-2.5 rounded-full bg-gradient-to-r ${getPrimaryGradient()} text-white text-sm font-semibold shadow-md hover:shadow-lg transition-all hover:scale-[1.03] active:scale-95`}
               >
                 <Zap className="w-4 h-4" fill="white" />
                 <span className="hidden sm:inline">{lang === "ar" ? "اعمل اكونت" : "Sign up"}</span>
               </Link>
               <Link
                 to={`/login`}
-                className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-[#000] dark:text-[#fff]"
+                className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-black dark:text-white hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
               >
                 {lang === "ar" ? "خش ذاكر" : "Login"}
               </Link>
@@ -248,7 +265,7 @@ export const Navbar = () => {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setOpen(!open)}
-            className="lg:hidden w-10 h-10 grid place-items-center rounded-full bg-card border border-border"
+            className="lg:hidden w-10 h-10 grid place-items-center rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-black dark:text-white"
           >
             {open ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </button>
@@ -260,7 +277,10 @@ export const Navbar = () => {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="lg:hidden max-w-7xl mx-auto mt-2 glass rounded-3xl p-4 shadow-card"
+          className={`lg:hidden max-w-7xl mx-auto mt-2 rounded-3xl p-4 shadow-lg 
+            ${isDark 
+              ? 'bg-gray-900/95 backdrop-blur-xl border border-gray-800' 
+              : 'bg-white/95 backdrop-blur-xl border border-gray-200'}`}
         >
           <ul className="flex flex-col gap-1">
             {!isAuthenticated && links.map((l) => (
@@ -272,14 +292,14 @@ export const Navbar = () => {
                       handleHashLink(l.href, e);
                       setOpen(false);
                     }}
-                    className="block px-4 py-3 rounded-2xl hover:bg-primary/5 text-sm font-medium"
+                    className="block px-4 py-3 rounded-2xl hover:bg-blue-50 dark:hover:bg-blue-950/30 text-sm font-medium text-black dark:text-white"
                   >
                     {l.label}
                   </a>
                 ) : (
                   <Link
                     to={l.href}
-                    className="block px-4 py-3 rounded-2xl hover:bg-primary/5 text-sm font-medium"
+                    className="block px-4 py-3 rounded-2xl hover:bg-blue-50 dark:hover:bg-blue-950/30 text-sm font-medium text-black dark:text-white"
                     onClick={() => setOpen(false)}
                   >
                     {l.label}
@@ -290,12 +310,12 @@ export const Navbar = () => {
             {isAuthenticated ? (
               <>
                 <li>
-                  <Link to={`/dashboard`} className="block px-4 py-3 rounded-2xl hover:bg-primary/5 text-sm font-medium">
+                  <Link to={`/dashboard`} className="block px-4 py-3 rounded-2xl hover:bg-blue-50 dark:hover:bg-blue-950/30 text-sm font-medium text-black dark:text-white">
                     {lang === "ar" ? "لوحة التحكم" : "Dashboard"}
                   </Link>
                 </li>
                 <li>
-                  <button onClick={logout} className="w-full text-left px-4 py-3 rounded-2xl hover:bg-red-500/10 text-red-500 text-sm font-medium">
+                  <button onClick={logout} className="w-full text-left px-4 py-3 rounded-2xl hover:bg-red-50 dark:hover:bg-red-950/30 text-red-500 text-sm font-medium">
                     {lang === "ar" ? "تسجيل الخروج" : "Logout"}
                   </button>
                 </li>
@@ -303,12 +323,12 @@ export const Navbar = () => {
             ) : (
               <>
                 <li>
-                  <Link to={`/login`} className="block px-4 py-3 rounded-2xl hover:bg-primary/5 text-sm font-medium">
+                  <Link to={`/login`} className="block px-4 py-3 rounded-2xl hover:bg-blue-50 dark:hover:bg-blue-950/30 text-sm font-medium text-black dark:text-white">
                     {lang === "ar" ? "تسجيل دخول" : "Login"}
                   </Link>
                 </li>
                 <li>
-                  <Link to={`/register`} className="block px-4 py-3 rounded-2xl gradient-primary text-white">
+                  <Link to={`/register`} className={`block px-4 py-3 rounded-2xl bg-gradient-to-r ${getPrimaryGradient()} text-white text-center`}>
                     {lang === "ar" ? "إنشاء حساب" : "Sign up"}
                   </Link>
                 </li>
@@ -323,10 +343,16 @@ export const Navbar = () => {
 
 const NavbarSkeleton = () => (
   <div className="fixed top-3 md:top-5 inset-x-0 z-50 px-3 md:px-6">
-    <div className="max-w-7xl mx-auto rounded-full px-4 py-2 flex items-center justify-between glass">
-      <div className="w-10 h-10 rounded-xl bg-gray-200 dark:bg-gray-700 animate-pulse" />
-      <div className="w-24 h-8 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
-      <div className="w-32 h-10 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
+    <div className="max-w-7xl mx-auto rounded-full px-4 py-2 flex items-center justify-between bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-gray-200 dark:border-gray-800 shadow-lg">
+      <div className="flex items-center gap-2">
+        <div className="w-10 h-10 rounded-xl bg-gray-200 dark:bg-gray-700 animate-pulse" />
+        <div className="w-24 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
+        <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
+        <div className="w-24 h-10 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
+      </div>
     </div>
   </div>
 );
