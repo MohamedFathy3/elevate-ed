@@ -10,7 +10,6 @@ export interface WalletData {
   rechargeCode?: string;
 }
 
-
 export const useCreateRechargeCode = () => {
   const queryClient = useQueryClient();
   const token = Cookies.get('student_token');
@@ -22,7 +21,8 @@ export const useCreateRechargeCode = () => {
       return response.data;
     },
     onSuccess: (data) => {
-      if (data.status === 200) {
+      // ✅ التحقق من الحالة بشكل صحيح (status === true أو status === 200)
+      if (data.status === 200 || data.status === true) {
         toast.success(data.message || "تم إنشاء كود الشحن بنجاح!");
         queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
       } else {
@@ -42,11 +42,14 @@ export const useRechargeWallet = () => {
   return useMutation({
     mutationFn: async (code: string) => {
       const response = await api.post('/wallet/redeem', { code });
-      console.log("💰 Wallet recharge:", response.data);
+      console.log("💰 Wallet recharge response:", response.data);
       return response.data;
     },
     onSuccess: (data) => {
-      if (data.status === 200) {
+      // ✅ التحقق من الحالة بشكل صحيح (status === true أو status === 200)
+      console.log("✅ Recharge success data:", data);
+      
+      if (data.status === true || data.status === 200) {
         toast.success(data.message || "تم شحن المحفظة بنجاح!");
         queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
       } else {
@@ -54,7 +57,52 @@ export const useRechargeWallet = () => {
       }
     },
     onError: (error: any) => {
+      console.error("❌ Recharge error:", error);
       toast.error(error.response?.data?.message || "كود الشحن غير صالح أو حدث خطأ");
     },
   });
+};
+
+// ✅ إضافة Hook جديد لجلب رصيد المحفظة
+export const useWalletBalance = () => {
+  const token = Cookies.get('student_token');
+  
+  return useQuery({
+    queryKey: ['wallet-balance'],
+    queryFn: async () => {
+      const response = await api.get('/student/wallet/balance');
+      console.log("💰 Wallet balance:", response.data);
+      return response.data;
+    },
+    enabled: !!token,
+    staleTime: 30 * 1000, // 30 seconds
+    retry: 1,
+  });
+};
+
+// ✅ إضافة Hook لعرض الكود
+export const useRechargeCode = () => {
+  const token = Cookies.get('student_token');
+  
+  return useQuery({
+    queryKey: ['recharge-code'],
+    queryFn: async () => {
+      const response = await api.get('/student/wallet/recharge-code');
+      console.log("🔑 Recharge code:", response.data);
+      return response.data;
+    },
+    enabled: !!token,
+    staleTime: 60 * 1000, // 1 minute
+    retry: 1,
+  });
+};
+
+// ✅ دالة مساعدة للتحقق من نجاح العملية
+export const isSuccessResponse = (data: any): boolean => {
+  return data?.status === true || data?.status === 200 || data?.success === true;
+};
+
+// ✅ دالة مساعدة للحصول على رسالة الخطأ
+export const getErrorMessage = (error: any): string => {
+  return error?.response?.data?.message || error?.message || "حدث خطأ ما";
 };
