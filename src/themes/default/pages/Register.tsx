@@ -908,25 +908,39 @@ const Register = () => {
                       <label className={labelCls}>
                         {lang === "ar" ? "المحافظة" : "Governorate"} <span className="text-red-500">*</span>
                       </label>
-                      <div className={`${fieldCls} ${errors.governorate && touched.governorate ? fieldErrorCls : ''}`}>
-                        <span className="px-3.5 text-slate-400"><MapPin className="size-4" /></span>
-                        <select 
-                          name="governorate" 
-                          value={formData.governorate} 
-                          onChange={handleChange} 
-                          onBlur={handleBlur}
-                          className={`${inputInnerCls} appearance-none pr-8`} 
-                          required
-                        >
-                          <option value="">{lang === "ar" ? "اختر المحافظة" : "Select governorate"}</option>
-                          {governorates.map((gov) => (
-                            <option key={gov.value} value={gov.value}>
-                              {lang === "ar" ? gov.label : gov.label_en}
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronDown className={`absolute ${chevronPos} text-slate-400 pointer-events-none size-4`} />
-                      </div>
+                    <div className={`${fieldCls} ${errors.governorate && touched.governorate ? fieldErrorCls : ''}`}>
+  <span className="px-3.5 text-slate-400"><MapPin className="size-4" /></span>
+  <select 
+    name="governorate" 
+    value={formData.governorate} 
+    onChange={handleChange} 
+    onBlur={handleBlur}
+    className={`
+      ${inputInnerCls} 
+      appearance-none 
+      pr-8 
+      [&>option]:text-slate-900 
+      [&>option]:dark:text-white 
+      [&>option]:bg-white 
+      [&>option]:dark:bg-slate-800
+      [&>option]:hover:bg-slate-100 
+      [&>option]:dark:hover:bg-slate-700
+      [&>option]:py-1.5
+    `}
+    required
+  >
+    <option value="" className="text-slate-400 dark:text-slate-400">
+      {lang === "ar" ? "اختر المحافظة" : "Select governorate"}
+    </option>
+    {governorates.map((gov) => (
+      <option key={gov.value} value={gov.value}>
+        {lang === "ar" ? gov.label : gov.label_en}
+      </option>
+    ))}
+  </select>
+  <ChevronDown className={`absolute ${chevronPos} text-slate-400 pointer-events-none size-4`} />
+</div>
+
                       {errors.governorate && touched.governorate && (
                         <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1">
                           <AlertCircle className="w-3 h-3" />
@@ -972,23 +986,38 @@ const Register = () => {
                           </p>
                         </div>
                       ) : (
-                        <div className={`${fieldCls} ${errors.stage_id && touched.stage_id ? fieldErrorCls : ''}`}>
-                          <span className="px-3.5 text-slate-400"><GraduationCap className="size-4" /></span>
-                          <select 
-                            name="stage_id" 
-                            value={formData.stage_id} 
-                            onChange={handleChange} 
-                            onBlur={handleBlur}
-                            className={`${inputInnerCls} appearance-none pr-8`} 
-                            required
-                          >
-                            <option value="">{lang === "ar" ? "اختر المرحلة" : "Select grade"}</option>
-                            {stagesList.map((stage: any) => (
-                              <option key={stage.id} value={stage.id}>{getStageName(stage)}</option>
-                            ))}
-                          </select>
-                          <ChevronDown className={`absolute ${chevronPos} text-slate-400 pointer-events-none size-4`} />
-                        </div>
+                     <div className={`${fieldCls} ${errors.stage_id && touched.stage_id ? fieldErrorCls : ''}`}>
+  <span className="px-3.5 text-slate-400"><GraduationCap className="size-4" /></span>
+  <select 
+    name="stage_id" 
+    value={formData.stage_id} 
+    onChange={handleChange} 
+    onBlur={handleBlur}
+    className={`
+      ${inputInnerCls} 
+      appearance-none 
+      pr-8 
+      [&>option]:text-slate-900 
+      [&>option]:dark:text-white 
+      [&>option]:bg-white 
+      [&>option]:dark:bg-slate-800
+      [&>option]:hover:bg-slate-100 
+      [&>option]:dark:hover:bg-slate-700
+      [&>option]:py-1.5
+    `}
+    required
+  >
+    <option value="" className="text-slate-400 dark:text-slate-400">
+      {lang === "ar" ? "اختر المرحلة" : "Select grade"}
+    </option>
+    {stagesList.map((stage: any) => (
+      <option key={stage.id} value={stage.id}>
+        {getStageName(stage)}
+      </option>
+    ))}
+  </select>
+  <ChevronDown className={`absolute ${chevronPos} text-slate-400 pointer-events-none size-4`} />
+</div>
                       )}
                       {errors.stage_id && touched.stage_id && (
                         <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1">
@@ -1058,19 +1087,43 @@ const Register = () => {
                             </p>
                           </div>
                         ) : (
-                          <select
-                            name="center_hour_id"
-                            value={formData.center_hour_id}
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            className={`w-full bg-white dark:bg-slate-800/60 border ${errors.center_hour_id && touched.center_hour_id ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded-xl px-4 py-2.5 outline-none text-sm focus:border-[#3b5bdb] focus:ring-2 focus:ring-[#3b5bdb]/15`}
-                            required
-                          >
-                            <option value="">{lang === "ar" ? "اختر الميعاد" : "Select time"}</option>
-                            {hoursList.map((hour: any) => (
-                              <option key={hour.id} value={hour.id}>{getHourLabel(hour)}</option>
-                            ))}
-                          </select>
+                        <select
+  name="center_hour_id"
+  value={formData.center_hour_id}
+  onChange={handleChange}
+  onBlur={handleBlur}
+  className={`
+    w-full 
+    bg-white dark:bg-slate-800/60 
+    border ${errors.center_hour_id && touched.center_hour_id ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} 
+    rounded-xl 
+    px-4 py-2.5 
+    outline-none 
+    text-sm 
+    text-slate-900 dark:text-white
+    focus:border-[#3b5bdb] 
+    focus:ring-2 
+    focus:ring-[#3b5bdb]/15
+    appearance-none
+    [&>option]:text-slate-900 
+    [&>option]:dark:text-white 
+    [&>option]:bg-white 
+    [&>option]:dark:bg-slate-800
+    [&>option]:hover:bg-slate-100 
+    [&>option]:dark:hover:bg-slate-700
+    [&>option]:py-1.5
+  `}
+  required
+>
+  <option value="" className="text-slate-400 dark:text-slate-400">
+    {lang === "ar" ? "اختر الميعاد" : "Select time"}
+  </option>
+  {hoursList.map((hour: any) => (
+    <option key={hour.id} value={hour.id}>
+      {getHourLabel(hour)}
+    </option>
+  ))}
+</select>
                         )}
                         {errors.center_hour_id && touched.center_hour_id && (
                           <p className="text-xs text-red-500 flex items-center gap-1">
