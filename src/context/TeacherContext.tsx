@@ -70,7 +70,6 @@ const STATIC_PAGES = ['forgot-password', 'reset-password'];
 
 // ✅ دالة جلب البيانات بالـ host كامل
 const fetchTeacherByHost = async (host: string): Promise<TeacherWebsiteData> => {
-  console.log("🔵 Fetching teacher by host:", host);
   
   if (!host) {
     throw new Error('Host is required');
@@ -78,7 +77,6 @@ const fetchTeacherByHost = async (host: string): Promise<TeacherWebsiteData> => 
 
   // ✅ نبعت الـ host كامل في الـ query parameter
   const url = `${encodeURIComponent(host)}`;
-  console.log("📌 API URL:", url);
 
   const response = await api.get(url);
   const { data } = response;
@@ -106,7 +104,6 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
     if (typeof window !== 'undefined') {
       const fullHost = window.location.hostname;
       setHost(fullHost);
-      console.log("🌐 Full Host from browser:", fullHost);
     }
   }, []);
 
@@ -116,13 +113,6 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
   // ✅ نبعت الـ host بدل الـ slug
   const shouldFetch = !!host && !isStaticPage;
 
-  console.log("=========================================");
-  console.log("🏪 TeacherProvider");
-  console.log("📌 Host:", host);
-  console.log("📌 Slug from URL:", slug);
-  console.log("📌 pathname:", pathname);
-  console.log("📌 shouldFetch:", shouldFetch);
-  console.log("=========================================");
 
   const {
     data: teacher,

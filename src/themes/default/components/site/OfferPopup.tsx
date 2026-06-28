@@ -53,7 +53,6 @@ export const OfferPopup: React.FC<OfferPopupProps> = ({ lang, onClose }) => {
           paginate: false,
         });
         
-        console.log('🎁 Offers for popup:', response.data?.data);
         setOffers(response.data?.data || []);
       } catch (error) {
         console.error('Error fetching offers for popup:', error);

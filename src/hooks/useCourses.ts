@@ -112,7 +112,6 @@ export const useSubjectCourses = (subjectId?: number, teacherId?: number) => {
       if (subjectId) filters.subject_id = subjectId;
       if (teacherId) filters.teacher_id = teacherId;
       
-      console.log("📚 Fetching subject courses with filters:", filters);
       
       const { data } = await api.post<CoursesResponse>('/course/index', {
         filters,
@@ -123,7 +122,6 @@ export const useSubjectCourses = (subjectId?: number, teacherId?: number) => {
         delete: false
       });
       
-      console.log("📚 Subject courses response:", data);
       return data.data;
     },
     enabled: !!subjectId,
@@ -147,7 +145,6 @@ export const useSemesterCourses = (semesterId: number) => {
         paginate: false,
         delete: false
       });
-      console.log("📚 Semester courses:", response.data);
       return response.data;
     },
     enabled: !!semesterId,
@@ -163,7 +160,6 @@ export const useCourseDetailsById = (courseId: number) => {
     queryKey: ['course-details', courseId],
     queryFn: async () => {
       const response = await api.get(`/course/${courseId}`);
-      console.log("📚 Course details:", response.data);
       return response.data;
     },
     enabled: !!courseId,

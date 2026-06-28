@@ -36,11 +36,6 @@ export const WhatsAppButton = ({
     : message;
 
   // ✅ للتأكد من البيانات
-  console.log("📱 WhatsApp Button - Teacher Phone:", teacher?.phone);
-  console.log("📱 Clean Phone Number:", cleanPhoneNumber);
-  console.log("📱 Teacher Name:", teacher?.name);
-  console.log("📱 Slug:", slug);
-  console.log("📱 Teacher Loading:", teacherLoading);
 
   // ✅ تأثير التمرير
   useEffect(() => {
@@ -69,7 +64,6 @@ export const WhatsAppButton = ({
   const handleClick = () => {
     const encodedMessage = encodeURIComponent(customMessage);
     const whatsappUrl = `https://wa.me/${cleanPhoneNumber}?text=${encodedMessage}`;
-    console.log("📱 Opening WhatsApp:", whatsappUrl);
     window.open(whatsappUrl, "_blank");
   };
 

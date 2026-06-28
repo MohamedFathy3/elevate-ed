@@ -116,7 +116,6 @@ const CourseDetail = () => {
     if (studentCourses && studentCourses.length > 0 && courseIdNum) {
       const isEnrolled = studentCourses.some((course: any) => course.id === courseIdNum);
       setHasPurchasedFullCourse(isEnrolled);
-      console.log("🎓 Course enrollment check:", { courseId: courseIdNum, isEnrolled });
     }
 
     // ✅ أو التحقق من الدروس إذا كان أي درس attended = true
@@ -161,7 +160,6 @@ const CourseDetail = () => {
     setBuyingFullCourse(true);
     try {
       const result = await buyCourse(courseIdNum, finalPrice);
-      console.log("📦 Full course purchase result:", result);
 
       // ✅ التحقق من وجود رسالة تحذيرية
       if (result?.message && (
@@ -200,7 +198,6 @@ const CourseDetail = () => {
     setBuyingLessonId(lessonId);
     try {
       const result = await buyLesson(lessonId, price);
-      console.log("📦 Lesson purchase result:", result);
 
       // ✅ التحقق من وجود رسالة تحذيرية
       if (result?.message && (

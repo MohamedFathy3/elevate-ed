@@ -39,10 +39,8 @@ export const useEnroll = () => {
         throw new Error("No authentication token found. Please login again.");
       }
       
-      console.log("📦 Enroll request:", enrollData);
       
       const { data } = await api.post('/enroll/request', enrollData);
-      console.log("✅ Enroll response:", data);
       return data;
     },
     onSuccess: (data) => {
@@ -219,10 +217,8 @@ export const useRedeemCode = () => {
         throw new Error("No authentication token found. Please login again.");
       }
       
-      console.log("🎫 Redeem code request:", code);
       
       const { data } = await api.post('/enroll/redeem-code', { code });
-      console.log("✅ Redeem response:", data);
       return data;
     },
     onSuccess: (data) => {

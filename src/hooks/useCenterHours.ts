@@ -29,7 +29,6 @@ export const useCenterHours = (teacherId?: number) => {
         delete: false
       });
       
-      console.log("📅 Center hours response:", data);
       return data.data;
     },
     enabled: !!teacherId,

@@ -35,13 +35,11 @@ export const useAttendance = () => {
       
       const { lesson_id, student_id } = attendanceData;
       
-      console.log("📝 Attendance request:", { lesson_id, student_id });
       
       const { data } = await api.post(`/lessons/${lesson_id}/attendance`, {
         student_id: student_id
       });
       
-      console.log("✅ Attendance response:", data);
       return data;
     },
     onSuccess: (data, variables) => {

@@ -142,9 +142,7 @@ export const useStudentCourses = () => {
   return useQuery({
     queryKey: ['student-courses'],
     queryFn: async () => {
-      console.log("📚 Fetching student enrolled courses...");
       const response = await api.get('/my-student/learn');
-      console.log("✅ Student courses response:", response.data);
       
       // إرجاع مصفوفة الكورسات من البيانات
       const courses = response.data?.data?.courses || [];
@@ -194,7 +192,6 @@ export const useCourseDetails = (courseId: number) => {
       if (!courseId || courseId === 0) return null;
       
       const { data } = await api.get<CourseDetailsResponse>(`/course/${courseId}`);
-      console.log("📚 Full course details response:", data);
       return data;
     },
     enabled: !!courseId && courseId !== 0,
@@ -358,7 +355,6 @@ export const useLessonDetails = (lessonId: number | undefined) => {
     queryFn: async () => {
       if (!lessonId) return null;
       const { data } = await api.get(`/course-details/${lessonId}`);
-      console.log("📚 Lesson details response:", data);
       return data;
     },
     enabled: !!lessonId && !!token,

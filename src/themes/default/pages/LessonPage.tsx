@@ -79,7 +79,6 @@ const LessonPage = () => {
       path: '/',
       sameSite: 'Lax'
     });
-    console.log(`✅ Attendance cookie saved: ${key}`);
   };
 
   // ✅ Sync attendance from API
@@ -89,7 +88,6 @@ const LessonPage = () => {
       const cookieAttended = hasAttendanceCookie();
 
       if (cookieAttended) {
-        console.log("✅ Attendance found in cookie, marking as attended");
         setAttended(true);
       } else {
         setAttended(lesson.attended || false);
@@ -105,7 +103,6 @@ const LessonPage = () => {
 
     // ✅ التحقق من الكوكي أولاً
     if (hasAttendanceCookie()) {
-      console.log("✅ Attendance cookie found, skipping API call");
       setAttended(true);
       attendanceAttempted.current = true;
       return;
@@ -113,14 +110,12 @@ const LessonPage = () => {
 
     // لو الحضور مسجل مسبقاً من الـ API
     if (attended) {
-      console.log("✅ Attendance already recorded (from API)");
       attendanceAttempted.current = true;
       setAttendanceCookie();
       return;
     }
 
     // ✅ تسجيل الحضور
-    console.log("✅ Marking attendance for lesson:", lessonId);
     attendanceAttempted.current = true;
 
     markAttendance({
@@ -134,7 +129,6 @@ const LessonPage = () => {
   // ✅ Update attendance state on success
   useEffect(() => {
     if (attendanceSuccess) {
-      console.log("✅ Attendance success! Updating state and saving cookie...");
       setAttended(true);
       setAttendanceCookie();
       refetchLesson();

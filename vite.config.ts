@@ -13,6 +13,7 @@ const logOnlyDev = (mode: string, ...args: any[]) => {
   }
 };
 
+
 // Get environment variables with defaults
 const getEnvVar = (key: string, defaultValue: string) => {
   return process.env[key] || defaultValue;
@@ -45,6 +46,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     server: {
+      
       host: devServerHost,
       port: devServerPort,
       proxy: {

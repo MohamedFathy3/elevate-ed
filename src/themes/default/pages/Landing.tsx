@@ -9,14 +9,14 @@ interface LoadingBookProps {
     en: string;
   };
   lang?: 'ar' | 'en';
-  minDisplayTime?: number; // أقل مدة للظهور
-  onLoad?: () => void; // دالة عند الانتهاء من التحميل
+  minDisplayTime?: number;
+  onLoad?: () => void;
 }
 
 export const Loading: React.FC<LoadingBookProps> = ({ 
   message = { ar: 'جاري التحميل...', en: 'Loading...' },
   lang = 'ar',
-  minDisplayTime = 800, // 0.8 ثانية كحد أدنى
+  minDisplayTime = 800,
   onLoad
 }) => {
   const isRTL = lang === 'ar';
@@ -24,9 +24,7 @@ export const Loading: React.FC<LoadingBookProps> = ({
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    // ✅ محاكاة تحميل الموارد
     const loadResources = async () => {
-      // ننتظر حتى يتم تحميل الصفحة بالكامل
       await new Promise((resolve) => {
         if (document.readyState === 'complete') {
           resolve(true);
@@ -35,22 +33,19 @@ export const Loading: React.FC<LoadingBookProps> = ({
         }
       });
 
-      // ✅ ننتظر أقل مدة للعرض
       await new Promise((resolve) => setTimeout(resolve, minDisplayTime));
       
       setIsLoaded(true);
       
-      // ✅ إخفاء الـ Loading بعد تحميل كل شيء
       setTimeout(() => {
         setIsVisible(false);
         if (onLoad) onLoad();
-      }, 300); // 0.3 ثانية للأنيميشن
-    };
+      }, 300);
+    };  
 
     loadResources();
   }, [minDisplayTime, onLoad]);
 
-  // ✅ إذا اختفى المكون، نرجع null
   if (!isVisible) return null;
 
   return (
@@ -66,104 +61,115 @@ export const Loading: React.FC<LoadingBookProps> = ({
           className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950"
         >
           <div className="relative">
-            {/* ✅ ظل الكتاب */}
+            {/* ✅ ظل القلم الدائري */}
             <motion.div
               animate={{
                 scale: [1, 1.1, 1],
-                opacity: [0.3, 0.5, 0.3],
+                opacity: [0.2, 0.4, 0.2],
               }}
               transition={{
-                duration: 1.5,
+                duration: 2,
                 repeat: Infinity,
                 ease: "easeInOut",
               }}
-              className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 w-32 h-4 bg-black/10 dark:bg-white/10 rounded-full blur-md"
+              className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-20 h-2 bg-black/10 dark:bg-white/10 rounded-full blur-md"
             />
 
-            {/* ✅ الكتاب اللي بيقلب */}
-            <div className="relative w-40 h-52 perspective-1000">
-              {/* الغلاف الخلفي */}
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-700 to-amber-800 rounded-lg shadow-xl" />
+            {/* ✅ قلم بيلف في دائرة */}
+            <div className="relative w-32 h-32">
+              {/* المسار الدائري الخلفي */}
+              <div className="absolute inset-0 rounded-full border-4 border-amber-200/30 dark:border-amber-700/30" />
               
-              {/* الصفحات الداخلية */}
+              {/* المسار الدائري المتقدم */}
               <motion.div
+                className="absolute inset-0 rounded-full border-4 border-transparent"
+                style={{
+                  borderTopColor: '#d97706',
+                  borderRightColor: '#d97706',
+                }}
                 animate={{
-                  rotateY: [0, -180, -360],
+                  rotate: [0, 360],
                 }}
                 transition={{
-                  duration: 2,
+                  duration: 1.2,
                   repeat: Infinity,
-                  ease: "easeInOut",
+                  ease: "linear",
                 }}
-                style={{ transformStyle: 'preserve-3d' }}
-                className="absolute inset-0 origin-left"
+              />
+
+              {/* القلم في المنتصف */}
+              <motion.div
+                animate={{
+                  rotate: [0, 360],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
+                className="absolute inset-0 flex items-center justify-center"
               >
-                {/* الصفحة الأمامية */}
-                <div 
-                  className="absolute inset-0 bg-gradient-to-br from-amber-100 to-amber-50 rounded-lg shadow-lg flex flex-col items-center justify-center p-3"
-                  style={{ backfaceVisibility: 'hidden' }}
-                >
-                  <div className="w-8 h-8 border-2 border-amber-600 rounded-full flex items-center justify-center mb-2">
-                    <div className="w-4 h-4 bg-amber-600 rounded-full animate-pulse" />
+                <div className="relative">
+                  {/* جسم القلم */}
+                  <div className="w-2.5 h-20 bg-gradient-to-b from-amber-700 via-amber-600 to-amber-800 rounded-full shadow-lg transform -rotate-45 origin-bottom">
+                    {/* طرف القلم المعدني */}
+                    <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2.5 bg-gradient-to-b from-gray-300 to-gray-500 rounded-t-full">
+                      <div className="absolute -top-0.5 left-1/2 transform -translate-x-1/2 w-0.5 h-1.5 bg-gray-700 rounded-t-full" />
+                    </div>
+                    {/* غطاء القلم */}
+                    <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-3 h-4 bg-amber-800 rounded-b-full">
+                      <div className="absolute top-0.5 left-1/2 transform -translate-x-1/2 w-0.5 h-1 bg-amber-600 rounded-full" />
+                    </div>
+                    {/* شريط زخرفي */}
+                    <div className="absolute top-5 left-1/2 transform -translate-x-1/2 w-2 h-0.5 bg-amber-400/50 rounded-full" />
+                    <div className="absolute top-6.5 left-1/2 transform -translate-x-1/2 w-2 h-0.5 bg-amber-400/50 rounded-full" />
                   </div>
-                  <div className="space-y-1 w-full">
-                    <div className="h-1.5 bg-amber-300 rounded-full w-3/4 mx-auto" />
-                    <div className="h-1.5 bg-amber-300 rounded-full w-1/2 mx-auto" />
-                    <div className="h-1.5 bg-amber-300 rounded-full w-2/3 mx-auto" />
-                  </div>
-                </div>
-                
-                {/* الصفحة الخلفية */}
-                <div 
-                  className="absolute inset-0 bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg shadow-lg flex flex-col items-center justify-center p-3"
-                  style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
-                >
-                  <svg className="w-8 h-8 text-amber-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                  </svg>
-                  <div className="space-y-1 w-full">
-                    <div className="h-1.5 bg-amber-300 rounded-full w-3/4 mx-auto" />
-                    <div className="h-1.5 bg-amber-300 rounded-full w-1/2 mx-auto" />
-                  </div>
+                  
+                  {/* ✅ وهج القلم */}
+                  <motion.div
+                    animate={{
+                      opacity: [0.3, 0.8, 0.3],
+                      scale: [1, 1.3, 1],
+                    }}
+                    transition={{
+                      duration: 1.5,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                    className="absolute -top-1 -right-1 w-6 h-6 bg-amber-400/20 rounded-full blur-xl"
+                  />
                 </div>
               </motion.div>
 
-              {/* الغلاف الأمامي */}
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-600 to-amber-700 rounded-lg shadow-xl flex items-center justify-center border border-amber-500/30">
-                <svg className="w-12 h-12 text-amber-200/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-              </div>
+              {/* جزيئات متطايرة */}
+              {[...Array(8)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  initial={{
+                    x: 0,
+                    y: 0,
+                    opacity: 0,
+                    scale: 0,
+                  }}
+                  animate={{
+                    x: [0, Math.cos(i * (Math.PI * 2) / 8) * 50],
+                    y: [0, Math.sin(i * (Math.PI * 2) / 8) * 50],
+                    opacity: [0, 1, 0],
+                    scale: [0, 1, 0],
+                  }}
+                  transition={{
+                    duration: 2 + Math.random() * 1,
+                    repeat: Infinity,
+                    delay: i * 0.3,
+                    ease: "easeOut",
+                  }}
+                  className="absolute top-1/2 left-1/2 w-1 h-1 bg-amber-400 rounded-full"
+                  style={{
+                    transform: `translate(-50%, -50%)`,
+                  }}
+                />
+              ))}
             </div>
-
-            {/* ✅ جزيئات متطايرة - أقل عدداً وأكثر أناقة */}
-            {[...Array(8)].map((_, i) => (
-              <motion.div
-                key={i}
-                initial={{
-                  x: 0,
-                  y: 0,
-                  opacity: 0,
-                  scale: 0,
-                }}
-                animate={{
-                  x: [0, (Math.random() - 0.5) * 80],
-                  y: [0, (Math.random() - 0.5) * 80 - 40],
-                  opacity: [0, 1, 0],
-                  scale: [0, 1, 0],
-                }}
-                transition={{
-                  duration: 2 + Math.random() * 1,
-                  repeat: Infinity,
-                  delay: Math.random() * 1.5,
-                  ease: "easeOut",
-                }}
-                className="absolute top-1/2 left-1/2 w-1 h-1 bg-amber-400 rounded-full"
-                style={{
-                  transform: `translate(-50%, -50%)`,
-                }}
-              />
-            ))}
           </div>
 
           {/* ✅ النص */}
@@ -171,14 +177,20 @@ export const Loading: React.FC<LoadingBookProps> = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
-            className="mt-12 text-center"
+            className="mt-10 text-center"
           >
             <p className={`text-lg font-medium text-gray-600 dark:text-gray-300 ${isRTL ? 'font-arabic' : ''}`}>
               {message[lang]}
             </p>
             <motion.div
-              animate={{ width: [0, 60, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+              animate={{ 
+                width: [0, 60, 0],
+              }}
+              transition={{ 
+                duration: 1.5, 
+                repeat: Infinity, 
+                ease: "easeInOut" 
+              }}
               className="h-0.5 bg-gradient-to-r from-amber-400 to-amber-600 rounded-full mx-auto mt-3"
               style={{ width: 60 }}
             />

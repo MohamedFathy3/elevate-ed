@@ -356,7 +356,7 @@ export const Stage = () => {
             className="mx-auto mt-8 max-w-2xl text-lg leading-9 text-foreground/60"
           >
             {lang === "ar"
-              ? "استكشف جميع المراحل الدراسية والكورسات التعليمية المصممة بأفضل تجربة حديثة للطلاب."
+              ? "استكشف جميع المراحل الدراسية والكورسات التعليمية المصممة بأفضل تجربة منصة تعلمية في مصر حديثة للطلاب."
               : "Explore all educational stages and courses with a modern premium learning experience."}
           </motion.p>
         </div>

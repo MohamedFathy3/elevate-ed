@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // components/site/Courses.tsx
+
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useLang } from "@/i18n/LanguageContext";
@@ -7,6 +8,8 @@ import { useSafeTeacherData } from "@/hooks/useSafeTeacherData";
 import { useBuyCourse } from "@/hooks/useEnroll";
 import { useTheme } from "@/context/ThemeContext";
 import OfferTimerDisplay from "@/components/ui/OfferTimer";
+import { useNavigate } from "react-router-dom"; // ✅ إضافة useNavigate
+import { RedeemModal } from "@/components/RedeemModal"; // ✅ إضافة الـ Modal
 
 import {
   ArrowRight, ArrowLeft, BookOpen, Atom, Zap, Sparkles,
@@ -15,15 +18,11 @@ import {
   Star, Timer, AlertCircle
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 
 // ============================================
 // ⏱️ Hook للمؤقت التنازلي
 // ============================================
-
-
-
-
-
 
 const NATURE_ICONS = [Leaf, Flower2, Trees, Sparkles, Award, BookMarked];
 const DEFAULT_ICONS = [Atom, Zap, BookOpen, Sparkles, Award, BookMarked];
@@ -52,10 +51,12 @@ const DARK_COLORS = [
 // Course Card Component مع المؤقت
 // ============================================
 
-// ✅ تعديل DefaultCourseCard - إضافة onClick للكارد كامل
+// ✅ تعديل DefaultCourseCard - استخدام navigate
 const DefaultCourseCard = ({ course, index, slug, pick, lang, Arrow, isDark }: any) => {
   const [isBuying, setIsBuying] = useState(false);
   const { buyCourse } = useBuyCourse();
+  const navigate = useNavigate(); // ✅ استخدام useNavigate
+  const [showRedeemModal, setShowRedeemModal] = useState(false); // ✅ ستيت المودال
 
   if (!course) return null;
 
@@ -82,16 +83,32 @@ const DefaultCourseCard = ({ course, index, slug, pick, lang, Arrow, isDark }: a
   const semesterName = pick(course?.semester?.name, course?.semester?.name_ar) || "";
   const type = course?.type === "online" ? (lang === "ar" ? "أونلاين" : "Online") : (lang === "ar" ? "سنتر" : "Center");
 
-  const handleBuy = async (e: React.MouseEvent) => {
+  // ✅ دالة للتنقل لصفحة التفاصيل
+  const handleCardClick = () => {
+    navigate(`/courses/${course?.id}`);
+  };
+
+   const handleBuyClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (isBuying) return;
-    setIsBuying(true);
-    try {
-      await buyCourse(course.id, finalPrice);
-    } finally {
-      setIsBuying(false);
-    }
+    setShowRedeemModal(true); // ✅ فتح المودال
+  };
+ const handlePaymentSuccess = (data: any) => {
+    console.log('✅ Payment success:', data);
+    toast.success('تم الدفع بنجاح!');
+    // تحديث البيانات لو محتاج
+  };
+
+  // ✅ دالة فشل الدفع
+  const handlePaymentError = (error: any) => {
+  console.error('❌ Payment error:', error);
+  toast.error('فشل الدفع، حاول مرة أخرى');
+};
+  // ✅ دالة للتنقل من زر التفاصيل مع منع انتشار الحدث
+  const handleDetailsClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation(); // ✅ منع وصول الحدث للكارد
+    navigate(`/courses/${course?.id}`);
   };
 
   return (
@@ -102,12 +119,12 @@ const DefaultCourseCard = ({ course, index, slug, pick, lang, Arrow, isDark }: a
         viewport={{ once: true, margin: "-60px" }}
         transition={{ duration: 0.6, delay: (index || 0) * 0.08, ease: [0.4, 0, 0.2, 1] }}
         whileHover={{ y: -8 }}
-        // ✅ إضافة onClick للكارد كامل
-        onClick={() => window.location.href = `/courses/${course?.id}`}
+        // ✅ onClick على الكارد كامل
+        onClick={handleCardClick}
         className="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 overflow-hidden flex flex-col h-full border border-gray-100 dark:border-gray-700 cursor-pointer"
       >
-        {/* ✅ منع انتشار الضغط من الأزرار والمحتوى الداخلي */}
-        <div onClick={(e) => e.stopPropagation()}>
+        {/* ✅ منع انتشار الضغط من المحتوى الداخلي */}
+        <div onClick={handleDetailsClick}>
           {/* Header Section */}
           <div className="relative h-36 overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800">
             {courseImage ? (
@@ -213,9 +230,9 @@ const DefaultCourseCard = ({ course, index, slug, pick, lang, Arrow, isDark }: a
                   )}
                 </div>
 
-                <div className="flex gap-2">
+             <div className="flex gap-2">
                   <button
-                    onClick={handleBuy}
+                    onClick={handleBuyClick} // ✅ فتح المودال بدل الشراء المباشر
                     disabled={isBuying}
                     className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-500 dark:to-blue-600 text-white font-semibold text-xs shadow-md hover:shadow-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
                   >
@@ -227,21 +244,29 @@ const DefaultCourseCard = ({ course, index, slug, pick, lang, Arrow, isDark }: a
                     <span>{lang === "ar" ? "شراء" : "Buy"}</span>
                   </button>
 
-                  <Link
-                    to={`/courses/${course?.id}`}
+                  <button
+                    onClick={handleDetailsClick}
                     className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold text-xs hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
-                    // ✅ منع انتشار الضغط
-                    onClick={(e) => e.stopPropagation()}
                   >
                     <span>{lang === "ar" ? "تفاصيل" : "Details"}</span>
                     <Arrow className="w-3 h-3" />
-                  </Link>
+                  </button>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </motion.article>
+
+       <RedeemModal
+        isOpen={showRedeemModal}
+        onClose={() => setShowRedeemModal(false)}
+        itemId={course?.id}
+        itemType="course"
+        price={finalPrice}
+        onSuccess={handlePaymentSuccess}
+        onError={handlePaymentError}
+      />
     </div>
   );
 };
@@ -252,6 +277,7 @@ const DefaultCourseCard = ({ course, index, slug, pick, lang, Arrow, isDark }: a
 
 const NatureCarouselCourses = ({ courses, pick, slug, lang, Arrow, dir, isDark }: any) => {
   const [index, setIndex] = useState(0);
+  const navigate = useNavigate(); // ✅ إضافة useNavigate
   const ArrowIcon = ArrowLeft;
 
   if (!courses?.length) return null;
@@ -275,12 +301,20 @@ const NatureCarouselCourses = ({ courses, pick, slug, lang, Arrow, dir, isDark }
   const courseDescription = pick(c?.description, c?.description_ar) || "";
   const type = c?.type === "online" ? (lang === "ar" ? "أونلاين" : "Online") : (lang === "ar" ? "سنتر" : "Center");
 
+  // ✅ دالة للتنقل لصفحة التفاصيل
+  const handleCardClick = () => {
+    navigate(`/courses/${c?.id}`);
+  };
+
   return (
     <section className="py-20 overflow-hidden bg-gradient-to-b from-amber-50/50 to-white dark:from-gray-900 dark:to-gray-950">
       <div className="container mx-auto px-4 grid lg:grid-cols-2 gap-12 items-center">
         {/* Carousel */}
         <div className="relative order-2 lg:order-1">
-          <div className="relative rounded-[2rem] p-1.5 bg-gradient-to-br from-amber-500 to-amber-600 shadow-xl">
+          <div 
+            className="relative rounded-[2rem] p-1.5 bg-gradient-to-br from-amber-500 to-amber-600 shadow-xl cursor-pointer"
+            onClick={handleCardClick} // ✅ إضافة onClick للكارد كامل
+          >
             <div className="relative bg-white dark:bg-gray-800 rounded-[1.7rem] overflow-hidden">
               <div className="relative h-72 bg-gradient-to-br from-amber-100 to-amber-50 dark:from-gray-700 dark:to-gray-800 grid place-items-center overflow-hidden">
                 {courseImage ? (
@@ -306,14 +340,21 @@ const NatureCarouselCourses = ({ courses, pick, slug, lang, Arrow, dir, isDark }
                   {type}
                 </div>
 
+                {/* ✅ أزرار التنقل مع منع انتشار الحدث */}
                 <button
-                  onClick={() => go(-1)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    go(-1);
+                  }}
                   className="absolute right-3 top-1/2 -translate-y-1/2 size-11 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur grid place-items-center shadow-md hover:bg-white dark:hover:bg-gray-700 hover:scale-110 transition"
                 >
                   <ArrowRight className="size-5 text-amber-600 dark:text-amber-400" />
                 </button>
                 <button
-                  onClick={() => go(1)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    go(1);
+                  }}
                   className="absolute left-3 top-1/2 -translate-y-1/2 size-11 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur grid place-items-center shadow-md hover:bg-white dark:hover:bg-gray-700 hover:scale-110 transition"
                 >
                   <ArrowIcon className="size-5 text-amber-600 dark:text-amber-400" />
@@ -336,12 +377,25 @@ const NatureCarouselCourses = ({ courses, pick, slug, lang, Arrow, dir, isDark }
                 </div>
 
                 <div className="mt-5 grid grid-cols-2 gap-3">
-                  <Link to={`/courses/${c?.id}`} className="px-4 py-3 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 text-white text-sm font-bold shadow-md hover:shadow-lg transition-all hover:scale-105">
+                  {/* ✅ أزرار مع منع انتشار الحدث */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/courses/${c?.id}`);
+                    }}
+                    className="px-4 py-3 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 text-white text-sm font-bold shadow-md hover:shadow-lg transition-all hover:scale-105"
+                  >
                     {lang === "ar" ? "اشترك الآن" : "Enroll Now"}
-                  </Link>
-                  <Link to={`/courses/${c?.id}`} className="px-4 py-3 rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-sm font-bold border border-amber-200 dark:border-amber-800 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-all">
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/courses/${c?.id}`);
+                    }}
+                    className="px-4 py-3 rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-sm font-bold border border-amber-200 dark:border-amber-800 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-all"
+                  >
                     {lang === "ar" ? "تفاصيل الكورس" : "Details"}
-                  </Link>
+                  </button>
                 </div>
               </div>
             </div>
@@ -366,7 +420,10 @@ const NatureCarouselCourses = ({ courses, pick, slug, lang, Arrow, dir, isDark }
             {courses.map((_: any, i: number) => (
               <button
                 key={i}
-                onClick={() => setIndex(i)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIndex(i);
+                }}
                 className={`h-2 rounded-full transition-all duration-300 ${i === index
                   ? "w-8 bg-amber-600 dark:bg-amber-500"
                   : "w-2 bg-amber-300 dark:bg-amber-700"
@@ -396,7 +453,7 @@ const NatureCarouselCourses = ({ courses, pick, slug, lang, Arrow, dir, isDark }
 };
 
 // ============================================
-// Main Courses Component
+// Main Courses Component (نفسه بدون تغيير)
 // ============================================
 
 export const Courses = ({ limit = 4 }: { limit?: number }) => {
@@ -427,7 +484,6 @@ export const Courses = ({ limit = 4 }: { limit?: number }) => {
     <section id="courses" className="py-24 md:py-32 relative overflow-hidden bg-white dark:bg-gray-950">
       {/* ✅ خلفية متحركة قوية وواضحة */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-
         {/* كتب كبيرة متحركة - يمين */}
         <motion.div
           animate={{

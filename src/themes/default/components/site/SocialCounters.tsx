@@ -3,10 +3,10 @@
 import { motion } from "framer-motion";
 import { useLang } from "@/i18n/LanguageContext";
 import { useTeacher } from "@/context/TeacherContext";
+import { useCounter } from "@/hooks/useCounter"; // ✅ إضافة الـ Hook
 import { 
   Facebook, 
   Youtube, 
-  Music2, 
   Users,
   TrendingUp,
   Globe2,
@@ -17,6 +17,38 @@ import {
 import { FaTiktok } from "react-icons/fa";
 
 // ============================================
+// ✅ Component للعداد المتحرك
+// ============================================
+
+const AnimatedCounter = ({ 
+  target, 
+  suffix = "+",
+  className = "",
+  duration = 2000,
+}: { 
+  target: number; 
+  suffix?: string;
+  className?: string;
+  duration?: number;
+}) => {
+  const { count, elementRef } = useCounter(target, duration, true);
+
+  // تنسيق الأرقام (K, M)
+  const formatNumber = (num: number): string => {
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    return num.toString();
+  };
+
+  return (
+    <span ref={elementRef} className={className}>
+      {formatNumber(count)}
+      {suffix}
+    </span>
+  );
+};
+
+// ============================================
 // Main Component
 // ============================================
 
@@ -24,20 +56,14 @@ export const SocialCounters = () => {
   const { lang } = useLang();
   const { about } = useTeacher();
 
-  // استخراج البيانات
-  const facebookCount = about?.facebook_count || "0";
-  const googleCount = about?.google_count || "0";
-  const tiktokCount = about?.tiktok_count || "0";
-  const youtubeCount = about?.you_tube_count || "0";
+  // استخراج البيانات (تحويل إلى أرقام)
+  const facebookCount = parseInt(about?.facebook_count) || 0;
+  const googleCount = parseInt(about?.google_count) || 0;
+  const tiktokCount = parseInt(about?.tiktok_count) || 0;
+  const youtubeCount = parseInt(about?.you_tube_count) || 0;
 
-  // تنسيق الأرقام
-  const formatNumber = (num: string | number): string => {
-    const n = typeof num === 'string' ? parseInt(num.replace(/,/g, '')) : num;
-    if (isNaN(n)) return '0';
-    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-    if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
-    return n.toString();
-  };
+  // حساب الإجمالي
+  const total = facebookCount + googleCount + tiktokCount + youtubeCount;
 
   // بيانات السوشيال ميديا
   const socialData = [
@@ -107,13 +133,14 @@ export const SocialCounters = () => {
     },
   ];
 
-  // حساب الإجمالي
-  const total = [facebookCount, googleCount, tiktokCount, youtubeCount].reduce(
-    (acc, val) => acc + (parseInt(val) || 0),
-    0
-  );
-
   if (total === 0) return null;
+
+  // تنسيق الرقم الكبير
+  const formatTotal = (num: number): string => {
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    return num.toString();
+  };
 
   return (
     <section className="relative py-20 md:py-28 overflow-hidden bg-gradient-to-b from-slate-50 via-white to-blue-50/30 dark:from-gray-950 dark:via-gray-900 dark:to-blue-950/20">
@@ -123,7 +150,6 @@ export const SocialCounters = () => {
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-400/10 rounded-full blur-3xl animate-pulse" />
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-400/10 rounded-full blur-3xl animate-pulse delay-700" />
         
-        {/* نجوم صغيرة */}
         {[...Array(20)].map((_, i) => (
           <motion.div
             key={i}
@@ -171,7 +197,10 @@ export const SocialCounters = () => {
             <span className="flex items-center gap-2">
               <Users className="w-4 h-4 text-blue-500" />
               <span className="font-semibold text-gray-700 dark:text-gray-300">
-                {formatNumber(total)} {lang === "ar" ? "متابع" : "Followers"}
+                <AnimatedCounter target={total} suffix="+" duration={2500} />
+                <span className="text-gray-500 dark:text-gray-400 ml-1">
+                  {lang === "ar" ? "متابع" : "Followers"}
+                </span>
               </span>
             </span>
             <span className="w-px h-5 bg-gray-300 dark:bg-gray-700" />
@@ -182,12 +211,10 @@ export const SocialCounters = () => {
           </div>
         </motion.div>
 
-        {/* ✅ الكروت - من غير Progress Bar */}
+        {/* ✅ الكروت - مع العداد المتحرك */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-5 md:gap-6">
           {socialData.map((item, index) => {
             const Icon = item.icon;
-            const formattedCount = formatNumber(item.count);
-            const countValue = parseInt(item.count);
 
             return (
               <motion.a
@@ -213,7 +240,6 @@ export const SocialCounters = () => {
               >
                 <div className={`relative p-6 md:p-8 rounded-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border ${item.border} shadow-lg ${item.shadow} transition-all duration-300 hover:shadow-2xl`}>
                   
-                  {/* ✅ Glow على hover */}
                   <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${item.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
 
                   <div className="relative">
@@ -222,11 +248,14 @@ export const SocialCounters = () => {
                       <Icon className={`w-8 h-8 ${item.textColor}`} />
                     </div>
 
-                    {/* ✅ العدد */}
+                    {/* ✅ العدد المتحرك */}
                     <div className="mt-5">
                       <p className={`text-3xl md:text-4xl font-black ${item.textColor} tracking-tight`}>
-                        {formattedCount}
-                        <span className="text-lg font-normal text-gray-400 dark:text-gray-500">+</span>
+                        <AnimatedCounter 
+                          target={item.count} 
+                          suffix="+"
+                          duration={2000 + index * 300} // كل كارد بسرعة مختلفة
+                        />
                       </p>
                     </div>
 
@@ -244,7 +273,7 @@ export const SocialCounters = () => {
           })}
         </div>
 
-        {/* ✅ Total Card */}
+        {/* ✅ Total Card - مع عداد متحرك كبير */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -258,7 +287,7 @@ export const SocialCounters = () => {
               <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-950/20 dark:to-purple-950/20" />
 
               <div className="relative flex flex-col md:flex-row items-center justify-between gap-6">
-                {/* ✅ الإجمالي */}
+                {/* ✅ الإجمالي مع عداد متحرك */}
                 <div className="flex items-center gap-6">
                   <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
                     <Users className="w-7 h-7 text-white" />
@@ -268,7 +297,11 @@ export const SocialCounters = () => {
                       {lang === "ar" ? "إجمالي المتابعين" : "Total Followers"}
                     </p>
                     <p className="text-3xl font-black text-gray-900 dark:text-white">
-                      {formatNumber(total)}
+                      <AnimatedCounter 
+                        target={total} 
+                        suffix=""
+                        duration={3000}
+                      />
                     </p>
                   </div>
                 </div>
@@ -276,26 +309,33 @@ export const SocialCounters = () => {
                 {/* ✅ إحصائيات */}
                 <div className="flex items-center gap-8">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                    <motion.p 
+                      initial={{ scale: 0 }}
+                      whileInView={{ scale: 1 }}
+                      transition={{ delay: 0.8, type: "spring" }}
+                      className="text-2xl font-bold text-green-600 dark:text-green-400"
+                    >
                       +{Math.round((total / 100) * 8)}%
-                    </p>
+                    </motion.p>
                     <p className="text-xs text-gray-400 dark:text-gray-500">
                       {lang === "ar" ? "نمو شهري" : "Monthly Growth"}
                     </p>
                   </div>
                   <div className="w-px h-12 bg-gray-200 dark:bg-gray-700" />
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                      {socialData.filter(d => parseInt(d.count) > 0).length}/4
-                    </p>
+                    <motion.p 
+                      initial={{ scale: 0 }}
+                      whileInView={{ scale: 1 }}
+                      transition={{ delay: 1, type: "spring" }}
+                      className="text-2xl font-bold text-blue-600 dark:text-blue-400"
+                    >
+                      {socialData.filter(d => d.count > 0).length}/4
+                    </motion.p>
                     <p className="text-xs text-gray-400 dark:text-gray-500">
                       {lang === "ar" ? "منصات نشطة" : "Active Platforms"}
                     </p>
                   </div>
                 </div>
-
-                {/* ✅ زر */}
-               
               </div>
             </div>
           </div>

@@ -28,7 +28,6 @@ export const useAutoSubmitOnLeave = ({
   const safeSubmit = useCallback(() => {
     if (hasSubmitted.current || isSubmitting.current || !shouldSubmit) return;
     
-    console.log('🔥 Auto-submit triggered!');
     isSubmitting.current = true;
     onBeforeSubmit?.();
     onSubmit();
@@ -65,7 +64,6 @@ export const useAutoSubmitOnLeave = ({
     if (!shouldSubmit || hasSubmitted.current || isSubmitting.current) return;
     
     if (lastPathname.current !== location.pathname) {
-      console.log(`🚫 Path changed from ${lastPathname.current} to ${location.pathname}`);
       safeSubmit();
     }
     lastPathname.current = location.pathname;
@@ -75,7 +73,6 @@ export const useAutoSubmitOnLeave = ({
   useEffect(() => {
     const handlePopState = () => {
       if (shouldSubmit && !hasSubmitted.current && !isSubmitting.current) {
-        console.log('🚫 Popstate detected (back/forward)');
         safeSubmit();
       }
     };

@@ -23,18 +23,13 @@ const SiteLayoutContent = () => {
   const [showPopup, setShowPopup] = useState(false);
   useDynamicSeo(teacher?.website?.seo); // ✅ تحديث الـ meta tags ديناميكيًا 
 
-  console.log("🏠 SiteLayoutContent rendered with pathname:", pathname);
-  console.log("🎁 Teacher data:", teacher?.id);
-  console.log("🎁 Is loading:", isLoading);
 
   // Scroll to top on route change
   useEffect(() => {
-    console.log("📍 Location changed:", { pathname, hash });
 
     if (hash) {
       const el = document.querySelector(hash);
       if (el) {
-        console.log("📍 Scrolling to element:", hash);
         setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
       }
     } else {
@@ -52,12 +47,10 @@ const SiteLayoutContent = () => {
 
       const shouldShow = !lastShown || (now - parseInt(lastShown) >= POPUP_DURATION);
 
-      console.log("🎁 Should show popup?", { shouldShow, lastShown, teacherId: teacher.id });
 
       if (shouldShow) {
         // Delay popup to let page load first
         const timer = setTimeout(() => {
-          console.log("🎁 Showing popup!");
           setShowPopup(true);
         }, 1500);
         return () => clearTimeout(timer);
@@ -84,7 +77,6 @@ const SiteLayoutContent = () => {
 };
 
 export const SiteLayout = () => {
-  console.log("🎯 SiteLayout rendered - wrapping with TeacherProvider");
 
   return (
     <TeacherProvider>
