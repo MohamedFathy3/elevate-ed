@@ -109,6 +109,7 @@ const applyApiColors = (bgColor: string, textColor: string) => {
     }
   `;
   
+  console.log('🎨 تم تطبيق ألوان API بلطف:', { bgColor, textColor });
 };
 
 // 🎨 دوال مساعدة لمعالجة الألوان
@@ -185,7 +186,9 @@ const themeImports = {
 // ✅ دالة جلب إعدادات الثيم والألوان من API
 const fetchThemeSettings = async (teacherId: number): Promise<{ theme: ThemeName; bgColor: string; textColor: string }> => {
   try {
+    console.log("🎨 جلب إعدادات الثيم للمعلم:", teacherId);
     const response = await api.post('/teachers/theme', { teacher_id: teacherId });
+    console.log("✅ الرد من API:", response.data);
     
     if (response.data?.status === true) {
       const activeTheme = response.data.active_theme;
@@ -227,6 +230,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           const response = await api.get(`/${currentSlug}`);
           if (response.data?.status === 200 && response.data?.data?.id) {
             setTeacherId(response.data.data.id);
+            console.log("✅ تم العثور على ID المعلم:", response.data.data.id);
           }
         } catch (error) {
           console.error("❌ خطأ في جلب بيانات المعلم:", error);
@@ -320,6 +324,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       }
       
       setPages(themePages);
+      console.log(`✅ تم تحميل ثيم ${newTheme}`);
     } catch (error) {
       console.error(`❌ خطأ في تحميل ثيم ${newTheme}:`, error);
       setPages(defaultPages);
@@ -360,6 +365,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         initialTheme = result.theme;
         bgColor = result.bgColor;
         textColor = result.textColor;
+        console.log("🎨 الثيم من API:", initialTheme, "الألوان:", { bgColor, textColor });
       } else {
         const savedTheme = localStorage.getItem('app-theme') as ThemeName;
         if (savedTheme && (savedTheme === 'default' || savedTheme === 'nature')) {
