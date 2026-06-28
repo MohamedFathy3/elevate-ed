@@ -219,42 +219,53 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [teacherId, setTeacherId] = useState<number | null>(null);
   const [apiColors, setApiColors] = useState<{ background: string; text: string } | null>(null);
 
-  // جلب teacherId (نفس الكود القديم، لم يتغير)
+  // ✅ جلب teacherId من localStorage أولاً (لأن TeacherProvider بيحفظها)
   useEffect(() => {
     const getTeacherId = async () => {
+      console.log("🔍 ThemeProvider: بدء جلب teacherId");
+      
+      // 1️⃣ حاول من localStorage (الـ TeacherProvider بيحفظها)
+      const saved = localStorage.getItem('teacher-data');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed?.id) {
+            console.log("✅ ThemeProvider: تم العثور على teacherId من localStorage:", parsed.id);
+            setTeacherId(parsed.id);
+            return;
+          }
+        } catch(e) {
+          console.error("❌ ThemeProvider: خطأ في قراءة localStorage", e);
+        }
+      }
+
+      // 2️⃣ لو مش موجود، جيب من API باستخدام الـ slug
       const pathname = window.location.pathname;
       const currentSlug = pathname.split('/')[1];
       
       if (currentSlug && currentSlug !== 'login' && currentSlug !== 'register') {
         try {
+          console.log("🔍 ThemeProvider: جلب teacherId من API باستخدام slug:", currentSlug);
           const response = await api.get(`/${currentSlug}`);
           if (response.data?.status === 200 && response.data?.data?.id) {
-            setTeacherId(response.data.data.id);
-            console.log("✅ تم العثور على ID المعلم:", response.data.data.id);
+            const id = response.data.data.id;
+            console.log("✅ ThemeProvider: تم العثور على teacherId من API:", id);
+            setTeacherId(id);
+            
+            // حفظ في localStorage للاستخدام المستقبلي
+            localStorage.setItem('teacher-data', JSON.stringify({ id: id }));
+            return;
           }
         } catch (error) {
-          console.error("❌ خطأ في جلب بيانات المعلم:", error);
-          const saved = localStorage.getItem('teacher-data');
-          if (saved) {
-            try {
-              const parsed = JSON.parse(saved);
-              if (parsed?.id) setTeacherId(parsed.id);
-            } catch(e) {}
-          }
-        }
-      } else {
-        const saved = localStorage.getItem('teacher-data');
-        if (saved) {
-          try {
-            const parsed = JSON.parse(saved);
-            if (parsed?.id) setTeacherId(parsed.id);
-          } catch(e) {}
+          console.error("❌ ThemeProvider: خطأ في جلب بيانات المعلم:", error);
         }
       }
+      
+      console.log("⚠️ ThemeProvider: لم يتم العثور على teacherId");
     };
     
     getTeacherId();
-  }, []);
+  }, []); // ✅ يتم التشغيل مرة واحدة عند التحميل
 
   // تحميل الـ color mode
   useEffect(() => {
@@ -276,7 +287,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, [colorMode]);
 
   const loadTheme = async (newTheme: ThemeName, bgColor?: string, textColor?: string) => {
-    setIsLoading(false);
+    setIsLoading(true);
     
     // تحميل CSS الخاص بالثيم (هذا يحتوي على الألوان الثابتة: emerald, teal, إلخ)
     loadThemeCSS(newTheme);
@@ -339,6 +350,11 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       fetchThemeSettings(teacherId).then(({ theme, bgColor, textColor }) => {
         loadTheme(theme, bgColor, textColor);
       });
+    } else {
+      // لو مفيش teacherId، استخدم المحفوظ
+      const savedBg = localStorage.getItem('api-bg-color');
+      const savedText = localStorage.getItem('api-text-color');
+      loadTheme(newTheme, savedBg || '#FFFFFF', savedText || '#111827');
     }
   };
 
@@ -351,22 +367,41 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setColorMode(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
-  // التحميل الأولي
+  // ✅ التحميل الأولي - مع تحسين الـ Debugging
   useEffect(() => {
     const initTheme = async () => {
-      setIsLoading(false);
+      console.log("🚀 ThemeProvider: بدء التحميل الأولي, teacherId:", teacherId);
+      setIsLoading(true);
       
       let initialTheme: ThemeName = 'default';
       let bgColor = '#FFFFFF';
       let textColor = '#111827';
       
       if (teacherId) {
-        const result = await fetchThemeSettings(teacherId);
-        initialTheme = result.theme;
-        bgColor = result.bgColor;
-        textColor = result.textColor;
-        console.log("🎨 الثيم من API:", initialTheme, "الألوان:", { bgColor, textColor });
+        console.log("🎯 ThemeProvider: جلب الثيم للمعلم:", teacherId);
+        try {
+          const result = await fetchThemeSettings(teacherId);
+          initialTheme = result.theme;
+          bgColor = result.bgColor;
+          textColor = result.textColor;
+          console.log("🎨 ThemeProvider: الثيم من API:", initialTheme, "الألوان:", { bgColor, textColor });
+        } catch (error) {
+          console.error("❌ ThemeProvider: خطأ في جلب الثيم:", error);
+          // استخدم المحفوظ في localStorage
+          const savedTheme = localStorage.getItem('app-theme') as ThemeName;
+          if (savedTheme && (savedTheme === 'default' || savedTheme === 'nature')) {
+            initialTheme = savedTheme;
+          }
+          const savedBg = localStorage.getItem('api-bg-color');
+          const savedText = localStorage.getItem('api-text-color');
+          if (savedBg && savedText) {
+            bgColor = savedBg;
+            textColor = savedText;
+          }
+        }
       } else {
+        // لو مفيش teacherId، استخدم المحفوظ
+        console.log("ℹ️ ThemeProvider: مفيش teacherId، استخدم المحفوظ من localStorage");
         const savedTheme = localStorage.getItem('app-theme') as ThemeName;
         if (savedTheme && (savedTheme === 'default' || savedTheme === 'nature')) {
           initialTheme = savedTheme;
@@ -381,25 +416,14 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       setThemeState(initialTheme);
       await loadTheme(initialTheme, bgColor, textColor);
+      console.log("✅ ThemeProvider: تم التحميل بنجاح");
     };
     
-    if (teacherId !== null) {
+    // ✅ تأكد إن teacherId اتغير أو موجود
+    if (teacherId !== null || teacherId === null) {
       initTheme();
-    } else {
-      const timeout = setTimeout(() => {
-        if (teacherId === null) {
-          const savedTheme = localStorage.getItem('app-theme') as ThemeName;
-          const initialTheme = (savedTheme === 'default' || savedTheme === 'nature') ? savedTheme : 'default';
-          const savedBg = localStorage.getItem('api-bg-color') || '#FFFFFF';
-          const savedText = localStorage.getItem('api-text-color') || '#111827';
-          setThemeState(initialTheme);
-          loadTheme(initialTheme, savedBg, savedText);
-        }
-      }, 1000);
-      
-      return () => clearTimeout(timeout);
     }
-  }, [teacherId]);
+  }, [teacherId]); // ✅ إعادة التشغيل عند تغيير teacherId
 
   return (
     <ThemeContext.Provider value={{ 
