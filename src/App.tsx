@@ -90,6 +90,7 @@ const SubdomainRoutes = () => {
   if (isSubdomain) {
     return (
       <TeacherProvider>
+          <ThemeProvider>
         <Routes>
           <Route path="/" element={<SiteLayout />}>
             <Route index element={<TeacherHome />} />
@@ -109,6 +110,7 @@ const SubdomainRoutes = () => {
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
+        </ThemeProvider>
       </TeacherProvider>
     );
   }
