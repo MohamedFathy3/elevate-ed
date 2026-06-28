@@ -55,13 +55,14 @@ const applyApiColors = (bgColor: string, textColor: string) => {
   root.style.setProperty('--api-text', textColor);
   
   // 2. تطبيق فقط على العناصر الرئيسية مع احترام تصميم الثيم
+  //    نستخدم background-color بدل background عشان ما نمسحش الـ gradients
   document.body.style.backgroundColor = bgColor;
   document.body.style.color = textColor;
   
   // 3. إضافة class للـ body للتحكم الإضافي في CSS
   document.body.setAttribute('data-api-colors', 'true');
   
-  // 4. إنشاء style element خفيف يطبق الألوان بشكل لطيف
+  // 4. إنشاء style element خفيف يطبق الألوان بشكل لطيف بدون تدمير التصميم
   let apiStyle = document.getElementById('api-color-styles');
   if (!apiStyle) {
     apiStyle = document.createElement('style');
@@ -69,6 +70,7 @@ const applyApiColors = (bgColor: string, textColor: string) => {
     document.head.appendChild(apiStyle);
   }
   
+  // ✅ ألوان API تطبق بلطف، بدون إجبار على كل العناصر
   apiStyle.textContent = `
     /* 🎨 ألوان من API - تطبق فقط على العناصر الرئيسية */
     [data-api-colors="true"] {
@@ -76,26 +78,31 @@ const applyApiColors = (bgColor: string, textColor: string) => {
       color: ${textColor};
     }
     
+    /* العناصر التي تستخدم ألوان الخلفية الأساسية */
     .bg-background, 
     [class*="bg-background"] {
       background-color: ${bgColor} !important;
     }
     
+    /* النصوص الأساسية - تستخدم لون API مع إمكانية تجاوز من الثيم */
     .text-foreground,
     [class*="text-foreground"] {
       color: ${textColor} !important;
     }
     
+    /* خلفية البطاقات - تمزج بين لون API ولون الثيم */
     .bg-card,
     [class*="bg-card"] {
       background-color: ${mixColors(bgColor, '#ffffff', 0.9)};
     }
     
+    /* النصوص الثانوية - نسخة أفتح من لون API */
     .text-muted-foreground,
     [class*="text-muted"] {
       color: ${lightenColor(textColor, 0.7)};
     }
     
+    /* الحدود - لون متناسق مع API */
     .border-border,
     [class*="border-border"] {
       border-color: ${darkenColor(bgColor, 0.85)};
@@ -107,6 +114,7 @@ const applyApiColors = (bgColor: string, textColor: string) => {
 
 // 🎨 دوال مساعدة لمعالجة الألوان
 function mixColors(color1: string, color2: string, ratio: number): string {
+  // تحويل hex إلى rgb
   const hexToRgb = (hex: string) => {
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
@@ -207,89 +215,45 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [theme, setThemeState] = useState<ThemeName>('default');
   const [colorMode, setColorMode] = useState<ColorMode>('light');
   const [pages, setPages] = useState<ThemePages | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // ✅ true في البداية
+  const [isLoading, setIsLoading] = useState(false);
   const [teacherId, setTeacherId] = useState<number | null>(null);
   const [apiColors, setApiColors] = useState<{ background: string; text: string } | null>(null);
 
-  // ✅ جلب teacherId من localStorage (الـ TeacherProvider بيحفظها)
+  // جلب teacherId (نفس الكود القديم، لم يتغير)
   useEffect(() => {
-    const getTeacherId = () => {
-      console.log("🔍 ThemeProvider: بدء جلب teacherId");
-      
-      // 1️⃣ حاول من localStorage (الـ TeacherProvider بيحفظها)
-      const saved = localStorage.getItem('teacher-data');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (parsed?.id) {
-            console.log("✅ ThemeProvider: تم العثور على teacherId من localStorage:", parsed.id);
-            setTeacherId(parsed.id);
-            return;
-          }
-        } catch(e) {
-          console.error("❌ ThemeProvider: خطأ في قراءة localStorage", e);
-        }
-      }
-
-      // 2️⃣ جرب من sessionStorage
-      const sessionSaved = sessionStorage.getItem('teacher-data');
-      if (sessionSaved) {
-        try {
-          const parsed = JSON.parse(sessionSaved);
-          if (parsed?.id) {
-            console.log("✅ ThemeProvider: تم العثور على teacherId من sessionStorage:", parsed.id);
-            setTeacherId(parsed.id);
-            return;
-          }
-        } catch(e) {
-          console.error("❌ ThemeProvider: خطأ في قراءة sessionStorage", e);
-        }
-      }
-
-      // 3️⃣ حاول تجيب من الـ URL
+    const getTeacherId = async () => {
       const pathname = window.location.pathname;
       const currentSlug = pathname.split('/')[1];
       
-      if (currentSlug && currentSlug !== 'login' && currentSlug !== 'register' && currentSlug !== '') {
-        console.log("🔍 ThemeProvider: سنحاول جلب teacherId من API باستخدام slug:", currentSlug);
-        // هنحاول بعد شوية لأن TeacherProvider ممكن يكون لسه محمل
-        const timer = setTimeout(async () => {
-          try {
-            const response = await api.get(`/${currentSlug}`);
-            if (response.data?.status === 200 && response.data?.data?.id) {
-              const id = response.data.data.id;
-              console.log("✅ ThemeProvider: تم العثور على teacherId من API:", id);
-              setTeacherId(id);
-              localStorage.setItem('teacher-data', JSON.stringify({ id: id }));
-            }
-          } catch (error) {
-            console.error("❌ ThemeProvider: خطأ في جلب بيانات المعلم:", error);
+      if (currentSlug && currentSlug !== 'login' && currentSlug !== 'register') {
+        try {
+          const response = await api.get(`/${currentSlug}`);
+          if (response.data?.status === 200 && response.data?.data?.id) {
+            setTeacherId(response.data.data.id);
+            console.log("✅ تم العثور على ID المعلم:", response.data.data.id);
           }
-        }, 2000);
-        
-        return () => clearTimeout(timer);
+        } catch (error) {
+          console.error("❌ خطأ في جلب بيانات المعلم:", error);
+          const saved = localStorage.getItem('teacher-data');
+          if (saved) {
+            try {
+              const parsed = JSON.parse(saved);
+              if (parsed?.id) setTeacherId(parsed.id);
+            } catch(e) {}
+          }
+        }
+      } else {
+        const saved = localStorage.getItem('teacher-data');
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (parsed?.id) setTeacherId(parsed.id);
+          } catch(e) {}
+        }
       }
-      
-      console.log("⚠️ ThemeProvider: لم يتم العثور على teacherId");
     };
     
     getTeacherId();
-    
-    // ✅ الاستماع للتغيرات في localStorage
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'teacher-data' && e.newValue) {
-        try {
-          const parsed = JSON.parse(e.newValue);
-          if (parsed?.id) {
-            console.log("🔄 ThemeProvider: تم تحديث teacherId من localStorage:", parsed.id);
-            setTeacherId(parsed.id);
-          }
-        } catch(e) {}
-      }
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   // تحميل الـ color mode
@@ -312,12 +276,12 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, [colorMode]);
 
   const loadTheme = async (newTheme: ThemeName, bgColor?: string, textColor?: string) => {
-    setIsLoading(true);
+    setIsLoading(false);
     
-    // تحميل CSS الخاص بالثيم
+    // تحميل CSS الخاص بالثيم (هذا يحتوي على الألوان الثابتة: emerald, teal, إلخ)
     loadThemeCSS(newTheme);
     
-    // ✅ تطبيق ألوان API
+    // ✅ تطبيق ألوان API (بلطف، بدون تدمير الثيم)
     if (bgColor && textColor) {
       applyApiColors(bgColor, textColor);
       setApiColors({ background: bgColor, text: textColor });
@@ -375,10 +339,6 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       fetchThemeSettings(teacherId).then(({ theme, bgColor, textColor }) => {
         loadTheme(theme, bgColor, textColor);
       });
-    } else {
-      const savedBg = localStorage.getItem('api-bg-color');
-      const savedText = localStorage.getItem('api-text-color');
-      loadTheme(newTheme, savedBg || '#FFFFFF', savedText || '#111827');
     }
   };
 
@@ -391,38 +351,22 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setColorMode(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
-  // ✅ التحميل الأولي
+  // التحميل الأولي
   useEffect(() => {
     const initTheme = async () => {
-      console.log("🚀 ThemeProvider: بدء التحميل الأولي, teacherId:", teacherId);
+      setIsLoading(false);
       
       let initialTheme: ThemeName = 'default';
       let bgColor = '#FFFFFF';
       let textColor = '#111827';
       
       if (teacherId) {
-        console.log("🎯 ThemeProvider: جلب الثيم للمعلم:", teacherId);
-        try {
-          const result = await fetchThemeSettings(teacherId);
-          initialTheme = result.theme;
-          bgColor = result.bgColor;
-          textColor = result.textColor;
-          console.log("🎨 ThemeProvider: الثيم من API:", initialTheme, "الألوان:", { bgColor, textColor });
-        } catch (error) {
-          console.error("❌ ThemeProvider: خطأ في جلب الثيم:", error);
-          const savedTheme = localStorage.getItem('app-theme') as ThemeName;
-          if (savedTheme && (savedTheme === 'default' || savedTheme === 'nature')) {
-            initialTheme = savedTheme;
-          }
-          const savedBg = localStorage.getItem('api-bg-color');
-          const savedText = localStorage.getItem('api-text-color');
-          if (savedBg && savedText) {
-            bgColor = savedBg;
-            textColor = savedText;
-          }
-        }
+        const result = await fetchThemeSettings(teacherId);
+        initialTheme = result.theme;
+        bgColor = result.bgColor;
+        textColor = result.textColor;
+        console.log("🎨 الثيم من API:", initialTheme, "الألوان:", { bgColor, textColor });
       } else {
-        console.log("ℹ️ ThemeProvider: مفيش teacherId، استخدم المحفوظ من localStorage");
         const savedTheme = localStorage.getItem('app-theme') as ThemeName;
         if (savedTheme && (savedTheme === 'default' || savedTheme === 'nature')) {
           initialTheme = savedTheme;
@@ -437,10 +381,24 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       setThemeState(initialTheme);
       await loadTheme(initialTheme, bgColor, textColor);
-      console.log("✅ ThemeProvider: تم التحميل بنجاح");
     };
     
-    initTheme();
+    if (teacherId !== null) {
+      initTheme();
+    } else {
+      const timeout = setTimeout(() => {
+        if (teacherId === null) {
+          const savedTheme = localStorage.getItem('app-theme') as ThemeName;
+          const initialTheme = (savedTheme === 'default' || savedTheme === 'nature') ? savedTheme : 'default';
+          const savedBg = localStorage.getItem('api-bg-color') || '#FFFFFF';
+          const savedText = localStorage.getItem('api-text-color') || '#111827';
+          setThemeState(initialTheme);
+          loadTheme(initialTheme, savedBg, savedText);
+        }
+      }, 1000);
+      
+      return () => clearTimeout(timeout);
+    }
   }, [teacherId]);
 
   return (

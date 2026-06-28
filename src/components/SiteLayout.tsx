@@ -11,7 +11,8 @@ import { OfferPopup } from "@/themes/default/components/site/OfferPopup";
 import { FloatingOfferButton } from "@/themes/default/components/site/FloatingOfferButton";
 import { useLang } from "@/i18n/LanguageContext";
 import { useDynamicSeo } from "@/hooks/useDynamicSeo";
-import { useTheme } from "@/context/ThemeContext"; // ✅ استيراد useTheme
+
+
 
 // المكون الداخلي اللي فيه البوب اب
 const SiteLayoutContent = () => {
@@ -20,57 +21,20 @@ const SiteLayoutContent = () => {
 
   const { teacher, isLoading } = useSafeTeacher();
   const [showPopup, setShowPopup] = useState(false);
-  useDynamicSeo(teacher?.website?.seo); // ✅ تحديث الـ meta tags ديناميكيًا
-  
-  // ✅ استخدام useTheme عشان نجيب الثيم
-  const { theme, colorMode, toggleTheme, toggleColorMode, apiColors } = useTheme();
+  useDynamicSeo(teacher?.website?.seo); // ✅ تحديث الـ meta tags ديناميكيًا 
 
-  // ✅ جلب الثيم من API عند تحميل بيانات المعلم
-  useEffect(() => {
-    const fetchAndApplyTheme = async () => {
-      if (!isLoading && teacher?.id) {
-        console.log("🎨 SiteLayout: جلب الثيم للمعلم:", teacher.id);
-        
-        try {
-          // ✅ استخدام الـ API مباشرة
-          const response = await api.post('/teachers/theme', { teacher_id: teacher.id });
-          console.log("✅ SiteLayout: الرد من API:", response.data);
-          
-          if (response.data?.status === true) {
-            const activeTheme = response.data.active_theme;
-            const bgColor = response.data.active_backgroud_color || '#FFFFFF';
-            const textColor = response.data.active_font_color || '#111827';
-            
-            // ✅ تطبيق الثيم
-            let themeName: 'default' | 'nature' = 'default';
-            if (activeTheme === "theme2") {
-              themeName = 'nature';
-            }
-            
-            // ✅ تغيير الثيم
-            if (themeName !== theme) {
-              toggleTheme();
-            }
-            
-            // ✅ تطبيق الألوان
-            applyApiColors(bgColor, textColor);
-            
-            console.log("🎨 SiteLayout: تم تطبيق الثيم:", themeName, "الألوان:", { bgColor, textColor });
-          }
-        } catch (error) {
-          console.error("❌ SiteLayout: خطأ في جلب الثيم:", error);
-        }
-      }
-    };
-    
-    fetchAndApplyTheme();
-  }, [teacher, isLoading]);
+  console.log("🏠 SiteLayoutContent rendered with pathname:", pathname);
+  console.log("🎁 Teacher data:", teacher?.id);
+  console.log("🎁 Is loading:", isLoading);
 
   // Scroll to top on route change
   useEffect(() => {
+    console.log("📍 Location changed:", { pathname, hash });
+
     if (hash) {
       const el = document.querySelector(hash);
       if (el) {
+        console.log("📍 Scrolling to element:", hash);
         setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
       }
     } else {
@@ -88,9 +52,12 @@ const SiteLayoutContent = () => {
 
       const shouldShow = !lastShown || (now - parseInt(lastShown) >= POPUP_DURATION);
 
+      console.log("🎁 Should show popup?", { shouldShow, lastShown, teacherId: teacher.id });
+
       if (shouldShow) {
         // Delay popup to let page load first
         const timer = setTimeout(() => {
+          console.log("🎁 Showing popup!");
           setShowPopup(true);
         }, 1500);
         return () => clearTimeout(timer);
@@ -110,11 +77,15 @@ const SiteLayoutContent = () => {
 
       {/* ✅ Floating button for offers */}
       <FloatingOfferButton />
+
+
     </>
   );
 };
 
 export const SiteLayout = () => {
+  console.log("🎯 SiteLayout rendered - wrapping with TeacherProvider");
+
   return (
     <TeacherProvider>
       <SiteLayoutContent />
