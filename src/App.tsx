@@ -89,29 +89,25 @@ const SubdomainRoutes = () => {
   // ✅ لو Subdomain اعرض الـ Teacher Routes
   if (isSubdomain) {
     return (
-      <TeacherProvider>
-          <ThemeProvider>
-        <Routes>
-          <Route path="/" element={<SiteLayout />}>
-            <Route index element={<TeacherHome />} />
-            <Route path="subjects" element={<SubjectsPage />} />
-            <Route path="stages" element={<StagesPage />} />
-            <Route path="semesters" element={<SemestersPage />} />
-            <Route path="courses" element={<CoursesPage />} />
-            <Route path="courses/:courseId" element={<CourseDetail />} />
-            <Route path="dashboard" element={<StudentDashboard />} />
-            <Route path="exam/:examId" element={<ExamPage />} />
-            <Route path="exam/:examId/lesson/:lessonId" element={<ExamPage />} />
-            <Route path="lesson/:lessonId" element={<LessonPage />} />
-            <Route path="semester/:semesterId" element={<SemesterDetails />} />
-            <Route path="login" element={<Login />} />
-            <Route path="register" element={<Register />} />
-            <Route path="center-hours" element={<CenterHours />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
-        </ThemeProvider>
-      </TeacherProvider>
+      <Routes>
+        <Route path="/" element={<SiteLayout />}>
+          <Route index element={<TeacherHome />} />
+          <Route path="subjects" element={<SubjectsPage />} />
+          <Route path="stages" element={<StagesPage />} />
+          <Route path="semesters" element={<SemestersPage />} />
+          <Route path="courses" element={<CoursesPage />} />
+          <Route path="courses/:courseId" element={<CourseDetail />} />
+          <Route path="dashboard" element={<StudentDashboard />} />
+          <Route path="exam/:examId" element={<ExamPage />} />
+          <Route path="exam/:examId/lesson/:lessonId" element={<ExamPage />} />
+          <Route path="lesson/:lessonId" element={<LessonPage />} />
+          <Route path="semester/:semesterId" element={<SemesterDetails />} />
+          <Route path="login" element={<Login />} />
+          <Route path="register" element={<Register />} />
+          <Route path="center-hours" element={<CenterHours />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
     );
   }
 
@@ -130,16 +126,17 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <ThemeProvider>
-          <BrowserRouter>
-            <LanguageProvider>
-              <StudentAuthProvider>
-                <BackgroundSelector />
+        <BrowserRouter>
+          <LanguageProvider>
+            <StudentAuthProvider>
+              <BackgroundSelector />
+              {/* ✅ ThemeProvider هنا عشان يغطي كل التطبيق */}
+              <ThemeProvider>
                 <SubdomainRoutes />
-              </StudentAuthProvider>
-            </LanguageProvider>
-          </BrowserRouter>
-        </ThemeProvider>
+              </ThemeProvider>
+            </StudentAuthProvider>
+          </LanguageProvider>
+        </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
   );
