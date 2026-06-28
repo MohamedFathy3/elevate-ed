@@ -37,32 +37,25 @@ const LoadingSpinner = () => {
   );
 };
 
-const SubdomainRoutes = () => {
+const AppContent = () => {
   const { pages, isLoading } = useTheme();
   const location = useLocation();
   
-  const { isSubdomain, subdomain } = useMemo(() => {
+  const { isSubdomain } = useMemo(() => {
     if (typeof window === 'undefined') {
-      return { isSubdomain: false, subdomain: '' };
+      return { isSubdomain: false };
     }
     
     const host = window.location.hostname;
     const parts = host.split('.');
     
+    // ✅ إذا كان subdomain (مثل: teacher.web-lec.com)
     if (parts.length > 2) {
-      return { isSubdomain: true, subdomain: parts[0] };
+      return { isSubdomain: true };
     }
     
-    return { isSubdomain: false, subdomain: '' };
+    return { isSubdomain: false };
   }, [location.pathname]);
-
-  // ✅ Log للـ debugging
-  useEffect(() => {
-    console.log("🔹 Host:", window.location.hostname);
-    console.log("🔹 Is Subdomain:", isSubdomain);
-    console.log("🔹 Subdomain:", subdomain);
-    console.log("🔹 Path:", location.pathname);
-  }, [isSubdomain, subdomain, location.pathname]);
 
   if (isLoading || !pages) {
     return <LoadingSpinner />;
@@ -86,7 +79,6 @@ const SubdomainRoutes = () => {
     CenterHours,
   } = pages;
 
-  // ✅ لو Subdomain اعرض الـ Teacher Routes
   if (isSubdomain) {
     return (
       <Routes>
@@ -111,7 +103,6 @@ const SubdomainRoutes = () => {
     );
   }
 
-  // ✅ الموقع الرئيسي (web-lec.com)
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
@@ -130,9 +121,9 @@ const App = () => {
           <LanguageProvider>
             <StudentAuthProvider>
               <BackgroundSelector />
-              {/* ✅ ThemeProvider هنا عشان يغطي كل التطبيق */}
+              {/* ✅ ThemeProvider في أعلى مستوى */}
               <ThemeProvider>
-                <SubdomainRoutes />
+                <AppContent />
               </ThemeProvider>
             </StudentAuthProvider>
           </LanguageProvider>
