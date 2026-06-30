@@ -17,6 +17,7 @@ import { useState, useEffect, useRef } from "react";
 import { toast } from "@/hooks/use-toast";
 import { enableFullProtection } from "@/utils/protection";
 import Cookies from "js-cookie";
+import { RedeemModal } from "@/components/RedeemModal"; // ✅ إضافة الـ Modal
 
 const CourseDetail = () => {
   const { lang, dir } = useLang();
@@ -44,6 +45,12 @@ const CourseDetail = () => {
   const [hasPurchasedFullCourse, setHasPurchasedFullCourse] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [redirectPath, setRedirectPath] = useState<string>("");
+
+  // ✅ State for RedeemModal
+  const [showRedeemModal, setShowRedeemModal] = useState(false);
+  const [redeemItemId, setRedeemItemId] = useState<number | null>(null);
+  const [redeemItemType, setRedeemItemType] = useState<'lesson' | 'course'>('lesson');
+  const [redeemPrice, setRedeemPrice] = useState<number>(0);
 
   // أضف مع الـ states الأخرى
   const [selectedPart, setSelectedPart] = useState<any>(null);
@@ -111,7 +118,7 @@ const CourseDetail = () => {
     ? (isDark ? 'border-amber-700/50' : 'border-amber-200')
     : (isDark ? 'border-gray-700' : 'border-border');
 
-  // ✅ التحقق من شراء الكورس من بيانات الطالب
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (studentCourses && studentCourses.length > 0 && courseIdNum) {
       const isEnrolled = studentCourses.some((course: any) => course.id === courseIdNum);
@@ -126,15 +133,13 @@ const CourseDetail = () => {
       }
     }
   }, [studentCourses, courseIdNum, lessons]);
-
-  // ✅ تعيين أول درس كافتراضي إذا كان الكورس مشترى
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (hasPurchasedFullCourse && lessons.length > 0 && !selectedLesson) {
       setSelectedLesson(lessons[0]);
     }
   }, [hasPurchasedFullCourse, lessons]);
-
-  // تفعيل الحماية عند تحميل الصفحة (للمستخدمين المسجلين فقط)
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (isAuthenticated) {
       enableFullProtection();
@@ -147,7 +152,66 @@ const CourseDetail = () => {
     navigate(`/lesson/${lessonId}`);
   };
 
-  // ✅ شراء الكورس كاملاً
+  // ✅ دالة نجاح الدفع للكورس
+  const handleCoursePaymentSuccess = (data: any) => {
+    console.log('✅ Course payment success:', data);
+    toast.success(lang === "ar" ? "تم شراء الكورس بنجاح!" : "Course purchased successfully!");
+    setHasPurchasedFullCourse(true);
+    setTimeout(() => refetchDetails(), 1000);
+  };
+
+  // ✅ دالة فشل الدفع للكورس
+  const handleCoursePaymentError = (error: any) => {
+    console.error('❌ Course payment error:', error);
+    toast.error(error?.message || (lang === "ar" ? "فشل الدفع، حاول مرة أخرى" : "Payment failed, please try again"));
+  };
+
+  // ✅ دالة نجاح الدفع للدرس
+  const handleLessonPaymentSuccess = (data: any) => {
+    console.log('✅ Lesson payment success:', data);
+    toast.success(lang === "ar" ? "تم شراء الدرس بنجاح!" : "Lesson purchased successfully!");
+    setTimeout(() => refetchDetails(), 1000);
+    // تحديث حالة الدرس
+    if (selectedLesson) {
+      const updatedLesson = { ...selectedLesson, attended: true };
+      setSelectedLesson(updatedLesson);
+    }
+  };
+
+  // ✅ دالة فشل الدفع للدرس
+  const handleLessonPaymentError = (error: any) => {
+    console.error('❌ Lesson payment error:', error);
+    toast.error(error?.message || (lang === "ar" ? "فشل الدفع، حاول مرة أخرى" : "Payment failed, please try again"));
+  };
+
+  // ✅ دالة فتح مودال شراء الكورس
+  const handleOpenBuyCourseModal = () => {
+    const token = Cookies.get('student_token');
+    if (!token) {
+      toast.error(lang === "ar" ? "الرجاء تسجيل الدخول أولاً" : "Please login first");
+      setTimeout(() => navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`), 1500);
+      return;
+    }
+    setRedeemItemId(courseIdNum);
+    setRedeemItemType('course');
+    setRedeemPrice(finalPrice);
+    setShowRedeemModal(true);
+  };
+
+  // ✅ دالة فتح مودال شراء الدرس
+  const handleOpenBuyLessonModal = (lessonId: number, price: number) => {
+    const token = Cookies.get('student_token');
+    if (!token) {
+      toast.error(lang === "ar" ? "الرجاء تسجيل الدخول أولاً" : "Please login first");
+      setTimeout(() => navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`), 1500);
+      return;
+    }
+    setRedeemItemId(lessonId);
+    setRedeemItemType('lesson');
+    setRedeemPrice(price);
+    setShowRedeemModal(true);
+  };
+
   // ✅ شراء الكورس كاملاً - المعدل
   const handleBuyFullCourse = async () => {
     const token = Cookies.get('student_token');
@@ -167,7 +231,6 @@ const CourseDetail = () => {
         result.message.includes("insufficient balance") ||
         result.message.includes("تم إرسال طلب للمدرس")
       )) {
-
         setTimeout(() => refetchDetails(), 2000);
       } else if (result?.status === true) {
         // ✅ شراء ناجح
@@ -183,57 +246,6 @@ const CourseDetail = () => {
       toast.error(error?.message || (lang === "ar" ? "حدث خطأ أثناء الشراء" : "Purchase failed"));
     } finally {
       setBuyingFullCourse(false);
-    }
-  };
-
-  // ✅ شراء درس فردي - المعدل
-  const handleBuyLesson = async (lessonId: number, price: number) => {
-    const token = Cookies.get('student_token');
-    if (!token) {
-      toast.error(lang === "ar" ? "الرجاء تسجيل الدخول أولاً" : "Please login first");
-      setTimeout(() => navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`), 1500);
-      return;
-    }
-
-    setBuyingLessonId(lessonId);
-    try {
-      const result = await buyLesson(lessonId, price);
-
-      // ✅ التحقق من وجود رسالة تحذيرية
-      if (result?.message && (
-        result.message.includes("رصيد المحفظة غير كاف") ||
-        result.message.includes("insufficient balance") ||
-        result.message.includes("تم إرسال طلب للمدرس")
-      )) {
-        // ⚠️ تم إرسال طلب للمدرس - لا نفتح الدرس
-        toast.warning(
-          lang === "ar"
-            ? "تم إرسال طلب شراء الدرس للمدرس للموافقة عليه"
-            : "Lesson purchase request sent to teacher for approval",
-          {
-            duration: 5000,
-            position: "top-center",
-            icon: "⏳"
-          }
-        );
-        // ❌ لا نغير حالة الدرس
-        setTimeout(() => refetchDetails(), 2000);
-      } else if (result?.status === true) {
-        // ✅ شراء ناجح
-        toast.success(lang === "ar" ? "تم شراء الدرس بنجاح!" : "Lesson purchased successfully!");
-        setTimeout(() => refetchDetails(), 1000);
-        // تحديث حالة الدرس
-        const updatedLesson = { ...selectedLesson, attended: true };
-        setSelectedLesson(updatedLesson);
-      } else {
-        // ❌ فشل
-        toast.error(result?.message || (lang === "ar" ? "حدث خطأ أثناء الشراء" : "Purchase failed"));
-      }
-    } catch (error: any) {
-      console.error("Purchase error:", error);
-      toast.error(error?.message || (lang === "ar" ? "حدث خطأ أثناء الشراء" : "Purchase failed"));
-    } finally {
-      setBuyingLessonId(null);
     }
   };
 
@@ -271,6 +283,7 @@ const CourseDetail = () => {
     }
     return url;
   };
+
   // أضف هذه الدالة مع الدوال الأخرى
   const handleSelectPart = (lessonId: number, partIndex: number, part: any) => {
     const lesson = lessons.find((l: any) => l.id === lessonId);
@@ -284,6 +297,7 @@ const CourseDetail = () => {
       setVideoError(false);
     }
   };
+
   const isLoading = detailsLoading || coursesLoading || authLoading;
 
   if (isLoading) {
@@ -562,11 +576,10 @@ const CourseDetail = () => {
               </h2>
               <div className="space-y-3">
                 {lessons.map((lesson: any, index: number) => {
-                  const isPurchased = hasPurchasedFullCourse || lesson.attended;
+                  const isPurchased = hasPurchasedFullCourse || lesson.attached;
                   const isFree = parseFloat(lesson.price) === 0;
 
                   return (
-                    // في CourseDetail، عند تمرير props لـ LessonCard
                     <LessonCard
                       key={lesson.id}
                       lesson={lesson}
@@ -576,9 +589,9 @@ const CourseDetail = () => {
                       isFree={isFree}
                       hasPurchasedFullCourse={hasPurchasedFullCourse}
                       isAuthenticated={!!Cookies.get('student_token')}
-                      onBuy={() => handleBuyLesson(lesson.id, parseFloat(lesson.price))}
+                      onBuy={() => handleOpenBuyLessonModal(lesson.id, parseFloat(lesson.price))} // ✅ فتح المودال
                       onWatch={() => goToLessonPage(lesson.id)}
-                      onSelectPart={handleSelectPart} // ✅ أضف هذا
+                      onSelectPart={handleSelectPart}
                       isBuying={buyingLessonId === lesson.id}
                       isSelected={selectedLesson?.id === lesson.id}
                       isNature={isNature}
@@ -655,7 +668,7 @@ const CourseDetail = () => {
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={handleBuyFullCourse}
+                    onClick={handleOpenBuyCourseModal} // ✅ فتح المودال
                     disabled={buyingFullCourse}
                     className={`w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl text-white font-bold shadow-soft hover:shadow-glow transition-all disabled:opacity-50
                       ${isNature
@@ -712,6 +725,17 @@ const CourseDetail = () => {
         </div>
       </div>
 
+      {/* ✅ RedeemModal */}
+      <RedeemModal
+        isOpen={showRedeemModal}
+        onClose={() => setShowRedeemModal(false)}
+        itemId={redeemItemId || 0}
+        itemType={redeemItemType}
+        price={redeemPrice}
+        onSuccess={redeemItemType === 'course' ? handleCoursePaymentSuccess : handleLessonPaymentSuccess}
+        onError={redeemItemType === 'course' ? handleCoursePaymentError : handleLessonPaymentError}
+      />
+
       <style>{`
         .recording-detected { filter: blur(40px) !important; opacity: 0.2 !important; transition: all 0.3s ease; }
         video::-webkit-media-controls-download-button { display: none !important; }
@@ -742,13 +766,10 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
   const hasSubParts = subParts.length > 0;
   const lessonImage = lesson.imageUrl;
 
-
   const goToLessonWithPart = (lessonId: number, partIndex: number, part: any) => {
     if (onSelectPart) {
-      // ✅ استخدم onSelectPart بدلاً من navigate
       onSelectPart(lessonId, partIndex, part);
     } else {
-      // fallback للتنقل للصفحة المنفصلة
       navigate(`/lesson/${lessonId}?part=${partIndex}`);
     }
   };
@@ -796,15 +817,12 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
                 {lesson.lession_time}
               </span>
               <span className="flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-
-  {lang === "ar"
-    ? `عدد المشاهدات المتبقية: ${lesson.remainingWatchCount}`
-    : `Remaining watch count: ${lesson.remainingWatchCount}`}
-</span>
+                <Clock className="w-3 h-3" />
+                {lang === "ar"
+                  ? `عدد المشاهدات المتبقية: ${lesson.remainingWatchCount}`
+                  : `Remaining watch count: ${lesson.remainingWatchCount}`}
+              </span>
             </div>
-
-
           </div>
         </div>
 
@@ -831,7 +849,7 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={(e) => { e.stopPropagation(); onBuy(); }}
+              onClick={(e) => { e.stopPropagation(); onBuy(); }} // ✅ فتح المودال
               disabled={isBuying}
               className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-50 flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/25"
             >
@@ -926,7 +944,7 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
                     {lang === "ar" ? "اشتر الدرس لمشاهدة الأجزاء" : "Buy the lesson to watch parts"}
                   </p>
                   <button
-                    onClick={onBuy}
+                    onClick={onBuy} // ✅ فتح المودال
                     className="mt-3 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-500/25"
                   >
                     {lang === "ar" ? "شراء الدرس" : "Buy Lesson"}

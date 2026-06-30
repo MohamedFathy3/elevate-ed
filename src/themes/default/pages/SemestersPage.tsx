@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // pages/SemestersPage.tsx
+
 import { useSearchParams, useParams, Link } from "react-router-dom";
 import { useLang } from "@/i18n/LanguageContext";
 import { useSemesters } from "@/hooks/useSemesters";
@@ -15,8 +16,9 @@ import {
   ChevronDown, ChevronUp, Tag, Flame, Leaf, GraduationCap, Layers
 } from "lucide-react";
 import { useState, useMemo } from "react";
-import { toast  } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 import OfferTimerDisplay from "@/components/ui/OfferTimer";
+import { RedeemModal } from "@/components/RedeemModal"; // ✅ إضافة الـ Modal
 
 export const SemestersPage = () => {
   const { lang, dir } = useLang();
@@ -515,10 +517,9 @@ export const SemestersPage = () => {
   );
 };
 
-// Direct Course Card Component
+// Direct Course Card Component with Modal
 const DirectCourseCard = ({ course, index, slug, lang, pick, isNature }: any) => {
-  const [isBuying, setIsBuying] = useState(false);
-  const { buyCourse } = useBuyCourse();
+  const [showRedeemModal, setShowRedeemModal] = useState(false); // ✅ ستيت المودال
   
   const originalPrice = parseFloat(course.price) || 0;
   const discountPercent = parseFloat(course.discount) || 0;
@@ -532,99 +533,115 @@ const DirectCourseCard = ({ course, index, slug, lang, pick, isNature }: any) =>
   const primaryColor = isNature ? 'amber' : 'primary';
   const textPrimary = isNature ? 'text-amber-600 dark:text-amber-400' : 'text-primary';
   
-  const handleBuyCourse = async (e: React.MouseEvent) => {
+  // ✅ دالة نجاح الدفع
+  const handlePaymentSuccess = (data: any) => {
+    console.log('✅ Payment success:', data);
+    toast.success(lang === "ar" ? 'تم الدفع بنجاح!' : 'Payment successful!');
+  };
+
+  // ✅ دالة فشل الدفع
+  const handlePaymentError = (error: any) => {
+    console.error('❌ Payment error:', error);
+    toast.error(lang === "ar" ? 'فشل الدفع، حاول مرة أخرى' : 'Payment failed, please try again');
+  };
+
+  // ✅ دالة فتح المودال
+  const handleBuyClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (isBuying) return;
-    setIsBuying(true);
-    try {
-      await buyCourse(course.id, finalPrice);
-    } catch (error) {
-      console.error("Purchase failed:", error);
-    } finally {
-      setIsBuying(false);
-    }
+    setShowRedeemModal(true);
   };
   
   return (
-    <motion.div
-      whileHover={{ y: -5 }}
-      className={`group rounded-2xl border transition-all overflow-hidden bg-white dark:bg-gray-900 ${isNature ? 'border-amber-200 dark:border-amber-800' : 'border-border'} hover:border-${primaryColor}/30`}
-    >
-      <Link to={`/courses/${course.id}`}>
-        <div className="relative h-40 overflow-hidden">
-          <img 
-            src={courseImage} 
-            alt={courseTitle}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-          
-          <div className="absolute top-3 left-3 px-2 py-1 rounded-lg bg-white/20 backdrop-blur-sm text-white text-xs">
-            {course.type === "online" ? (lang === "ar" ? "أونلاين" : "Online") : (lang === "ar" ? "سنتر" : "Center")}
-          </div>
-          
-          {hasDiscount && (
-            <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500 text-white text-xs font-bold">
-              <Percent className="w-3 h-3" />
-              {discountPercent}% خصم
-            </div>
-          )}
-        </div>
-        
-        <div className="p-5">
-          <h3 className={`font-bold text-lg line-clamp-1 mb-2 transition-colors ${isNature ? 'text-amber-800 dark:text-amber-200 group-hover:text-amber-600' : 'group-hover:text-primary'}`}>
-            {courseTitle}
-          </h3>
-          
-          <p className="text-sm text-foreground/60 line-clamp-2 mb-3">
-            {pick(course.description, course.description_ar)?.replace(/<[^>]*>/g, '')}
-          </p>
-          
-          <div className="flex items-center gap-4 text-xs text-foreground/50 mb-4">
-            <span className="flex items-center gap-1">
-              <BookOpen className="w-3 h-3" />
-              {lessonsCount} {lang === "ar" ? "دروس" : "lessons"}
-            </span>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div>
-              {hasDiscount ? (
-                <div className="flex items-baseline gap-2">
-                  <span className={`text-xl font-bold ${textPrimary}`}>
-                    {finalPrice.toFixed(2)} EGP
-                  </span>
-                  <span className="text-xs text-foreground/40 line-through">{originalPrice.toFixed(2)} EGP</span>
-                </div>
-              ) : (
-                <span className={`text-xl font-bold ${textPrimary}`}>
-                  {originalPrice.toFixed(2)} EGP
-                </span>
-              )}
+    <>
+      <motion.div
+        whileHover={{ y: -5 }}
+        className={`group rounded-2xl border transition-all overflow-hidden bg-white dark:bg-gray-900 ${isNature ? 'border-amber-200 dark:border-amber-800' : 'border-border'} hover:border-${primaryColor}/30`}
+      >
+        <Link to={`/courses/${course.id}`}>
+          <div className="relative h-40 overflow-hidden">
+            <img 
+              src={courseImage} 
+              alt={courseTitle}
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+            
+            <div className="absolute top-3 left-3 px-2 py-1 rounded-lg bg-white/20 backdrop-blur-sm text-white text-xs">
+              {course.type === "online" ? (lang === "ar" ? "أونلاين" : "Online") : (lang === "ar" ? "سنتر" : "Center")}
             </div>
             
-            <button
-              onClick={handleBuyCourse}
-              disabled={isBuying}
-              className={`px-4 py-2 rounded-xl text-white text-sm font-semibold flex items-center gap-1 disabled:opacity-50
-                ${isNature ? 'bg-amber-600 hover:bg-amber-700' : 'bg-gradient-to-r from-emerald-500 to-teal-600'}`}
-            >
-              {isBuying ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
-              {lang === "ar" ? "شراء" : "Buy"}
-            </button>
+            {hasDiscount && (
+              <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500 text-white text-xs font-bold">
+                <Percent className="w-3 h-3" />
+                {discountPercent}% خصم
+              </div>
+            )}
           </div>
-        </div>
-      </Link>
-    </motion.div>
+          
+          <div className="p-5">
+            <h3 className={`font-bold text-lg line-clamp-1 mb-2 transition-colors ${isNature ? 'text-amber-800 dark:text-amber-200 group-hover:text-amber-600' : 'group-hover:text-primary'}`}>
+              {courseTitle}
+            </h3>
+            
+            <p className="text-sm text-foreground/60 line-clamp-2 mb-3">
+              {pick(course.description, course.description_ar)?.replace(/<[^>]*>/g, '')}
+            </p>
+            
+            <div className="flex items-center gap-4 text-xs text-foreground/50 mb-4">
+              <span className="flex items-center gap-1">
+                <BookOpen className="w-3 h-3" />
+                {lessonsCount} {lang === "ar" ? "دروس" : "lessons"}
+              </span>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                {hasDiscount ? (
+                  <div className="flex items-baseline gap-2">
+                    <span className={`text-xl font-bold ${textPrimary}`}>
+                      {finalPrice.toFixed(2)} EGP
+                    </span>
+                    <span className="text-xs text-foreground/40 line-through">{originalPrice.toFixed(2)} EGP</span>
+                  </div>
+                ) : (
+                  <span className={`text-xl font-bold ${textPrimary}`}>
+                    {originalPrice.toFixed(2)} EGP
+                  </span>
+                )}
+              </div>
+              
+              {/* ✅ زر الشراء يفتح المودال */}
+              <button
+                onClick={handleBuyClick}
+                className={`px-4 py-2 rounded-xl text-white text-sm font-semibold flex items-center gap-1
+                  ${isNature ? 'bg-amber-600 hover:bg-amber-700' : 'bg-gradient-to-r from-emerald-500 to-teal-600'}`}
+              >
+                <ShoppingCart className="w-4 h-4" />
+                {lang === "ar" ? "شراء" : "Buy"}
+              </button>
+            </div>
+          </div>
+        </Link>
+      </motion.div>
+
+      {/* ✅ مودال الدفع */}
+      <RedeemModal
+        isOpen={showRedeemModal}
+        onClose={() => setShowRedeemModal(false)}
+        itemId={course.id}
+        itemType="course"
+        price={finalPrice}
+        onSuccess={handlePaymentSuccess}
+        onError={handlePaymentError}
+      />
+    </>
   );
 };
 
-// Semester Card Component
-// Semester Card Component
+// Semester Card Component with Modal
 const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isNature }: any) => {
-  const [isBuying, setIsBuying] = useState(false);
-  const { buySemester } = useBuyCourse();
+  const [showRedeemModal, setShowRedeemModal] = useState(false); // ✅ ستيت المودال
   
   const originalPrice = parseFloat(semester.price) || 0;
   const discountPercent = parseFloat(semester.discount) || 0;
@@ -646,158 +663,172 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
   const primaryColor = isNature ? 'amber' : 'primary';
   const textPrimary = isNature ? 'text-amber-600 dark:text-amber-400' : 'text-primary';
   
-  const handleBuySemester = async (e: React.MouseEvent) => {
+  // ✅ دالة نجاح الدفع
+  const handlePaymentSuccess = (data: any) => {
+    console.log('✅ Payment success:', data);
+    toast.success(lang === "ar" ? 'تم شراء الترم بنجاح!' : 'Semester purchased successfully!');
+    setTimeout(() => refetchSemesters(), 2000);
+  };
+
+  // ✅ دالة فشل الدفع
+  const handlePaymentError = (error: any) => {
+    console.error('❌ Payment error:', error);
+    toast.error(lang === "ar" ? 'فشل الدفع، حاول مرة أخرى' : 'Payment failed, please try again');
+  };
+
+  // ✅ دالة فتح المودال
+  const handleBuyClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (isBuying) return;
-    setIsBuying(true);
-    try {
-      await buySemester(semester.id, finalPrice);
-      setTimeout(() => refetchSemesters(), 2000);
-    } catch (error) {
-      console.error("Purchase failed:", error);
-    } finally {
-      setIsBuying(false);
-    }
+    setShowRedeemModal(true);
   };
   
   return (
+    <>
       <motion.div
-      whileHover={{ y: -5 }}
-      className={`group relative rounded-2xl border transition-all overflow-hidden bg-white dark:bg-gray-900 ${isNature ? 'border-amber-200 dark:border-amber-800' : 'border-border'} hover:border-${primaryColor}/30`}
-    >
-<div className="relative h-56 md:h-60 lg:h-64 overflow-hidden bg-gradient-to-br from-amber-100/50 to-orange-100/50 dark:from-amber-900/30 dark:to-orange-900/30">
-  <img 
-    src={finalImageUrl} 
-    alt={pick(semester.name, semester.name_ar)}
-    className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700 ease-out"
-    loading="lazy"
-    onError={(e) => { 
-      (e.target as HTMLImageElement).src = defaultImage;
-    }}
-  />
-  
-  {/* ✅ Overlay جميل للتحسين */}
-  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-300" />
-  
-  {/* ✅ أيقونة في الأعلى */}
-  <div className="absolute top-3 left-3 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full backdrop-blur-md bg-black/50 text-white border border-white/20 shadow-lg">
-    <BookOpen className="w-3.5 h-3.5" />
-    <span>{coursesCount} {lang === "ar" ? "كورسات" : "courses"}</span>
-  </div>
-  
-  {/* ✅ خصم */}
-  {hasDiscount && (
-    <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg shadow-red-500/30">
-      <Percent className="w-3.5 h-3.5" />
-      {discountPercent}% OFF
-    </div>
-  )}
-</div>
-
-      <div className="p-5">
-        <div className="flex items-start justify-between mb-3">
-          <div className={`w-8 h-8 rounded-lg ${isNature ? 'bg-amber-100 dark:bg-amber-900/40' : 'bg-secondary'} grid place-items-center`}>
-            {isNature ? (
-              <Leaf className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-            ) : (
-              <Crown className="w-4 h-4 text-primary" />
-            )}
+        whileHover={{ y: -5 }}
+        className={`group relative rounded-2xl border transition-all overflow-hidden bg-white dark:bg-gray-900 ${isNature ? 'border-amber-200 dark:border-amber-800' : 'border-border'} hover:border-${primaryColor}/30`}
+      >
+        <div className="relative h-56 md:h-60 lg:h-64 overflow-hidden bg-gradient-to-br from-amber-100/50 to-orange-100/50 dark:from-amber-900/30 dark:to-orange-900/30">
+          <img 
+            src={finalImageUrl} 
+            alt={pick(semester.name, semester.name_ar)}
+            className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700 ease-out"
+            loading="lazy"
+            onError={(e) => { 
+              (e.target as HTMLImageElement).src = defaultImage;
+            }}
+          />
+          
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-300" />
+          
+          <div className="absolute top-3 left-3 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full backdrop-blur-md bg-black/50 text-white border border-white/20 shadow-lg">
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>{coursesCount} {lang === "ar" ? "كورسات" : "courses"}</span>
           </div>
-        </div>
-
-        <h3 className={`text-xl font-bold mb-2 transition-colors line-clamp-1 ${isNature ? 'text-amber-800 dark:text-amber-200 group-hover:text-amber-600' : 'group-hover:text-primary'}`}>
-          {pick(semester.name, semester.name_ar)}
-        </h3>
-        
-        {semester.description && (
-          <p className="text-sm text-foreground/60 mb-3 line-clamp-2">
-            {pick(semester.description, semester.description_ar)}
-          </p>
-        )}
-
-        <div className="mt-3">
-          {hasDiscount ? (
-            <div className="flex items-baseline gap-2 flex-wrap">
-              <span className={`text-2xl font-black text-amber-800`}>
-                {finalPrice.toFixed(2)} EGP
-              </span>
-              <span className="text-sm text-amber-700 line-through">{originalPrice.toFixed(2)} EGP</span>
-              <span className={`text-xs px-2 py-0.5 rounded-full ${isNature ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'}`}>
-                وفر {((originalPrice - finalPrice)).toFixed(2)} EGP
-              </span>
+          
+          {hasDiscount && (
+            <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg shadow-red-500/30">
+              <Percent className="w-3.5 h-3.5" />
+              {discountPercent}% OFF
             </div>
-          ) : (
-            <span className={`text-2xl font-black text-amber-800`}>
-              {originalPrice.toFixed(2)} EGP
-            </span>
           )}
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-4 text-xs text-foreground/60">
-          <div className="flex items-center gap-1">
-            <Clock className="w-3 h-3" />
-            <span>{lang === "ar" ? "تعلّم بوتيرتك" : "Self-paced"}</span>
+        <div className="p-5">
+          <div className="flex items-start justify-between mb-3">
+            <div className={`w-8 h-8 rounded-lg ${isNature ? 'bg-amber-100 dark:bg-amber-900/40' : 'bg-secondary'} grid place-items-center`}>
+              {isNature ? (
+                <Leaf className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              ) : (
+                <Crown className="w-4 h-4 text-primary" />
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-1">
-            <Award className="w-3 h-3" />
-            <span>{lang === "ar" ? "شهادة معتمدة" : "Certificate"}</span>
+
+          <h3 className={`text-xl font-bold mb-2 transition-colors line-clamp-1 ${isNature ? 'text-amber-800 dark:text-amber-200 group-hover:text-amber-600' : 'group-hover:text-primary'}`}>
+            {pick(semester.name, semester.name_ar)}
+          </h3>
+          
+          {semester.description && (
+            <p className="text-sm text-foreground/60 mb-3 line-clamp-2">
+              {pick(semester.description, semester.description_ar)}
+            </p>
+          )}
+
+          <div className="mt-3">
+            {hasDiscount ? (
+              <div className="flex items-baseline gap-2 flex-wrap">
+                <span className={`text-2xl font-black text-amber-800`}>
+                  {finalPrice.toFixed(2)} EGP
+                </span>
+                <span className="text-sm text-amber-700 line-through">{originalPrice.toFixed(2)} EGP</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${isNature ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'}`}>
+                  وفر {((originalPrice - finalPrice)).toFixed(2)} EGP
+                </span>
+              </div>
+            ) : (
+              <span className={`text-2xl font-black text-amber-800`}>
+                {originalPrice.toFixed(2)} EGP
+              </span>
+            )}
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-4 text-xs text-foreground/60">
+            <div className="flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              <span>{lang === "ar" ? "تعلّم بوتيرتك" : "Self-paced"}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Award className="w-3 h-3" />
+              <span>{lang === "ar" ? "شهادة معتمدة" : "Certificate"}</span>
+            </div>
+          </div>
+
+          {hasOfferDates && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="mt-3"
+            >
+              <OfferTimerDisplay 
+                startDate={offerStartDate} 
+                endDate={offerEndDate} 
+                lang={lang}
+                isDark={false}
+                isNature={isNature}
+                compact={true}
+                showIcon={true}
+              />
+            </motion.div>
+          )}
+
+          <div className="mt-4 pt-4 border-t border-border">
+            <div className="flex gap-3">
+              {/* ✅ زر الشراء يفتح المودال */}
+              <button
+                onClick={handleBuyClick}
+                className={`flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-white font-semibold text-sm shadow-soft hover:shadow-glow transition-all hover:scale-105 active:scale-95
+                  ${isNature ? 'bg-amber-600 hover:bg-amber-700' : 'bg-gradient-to-r from-emerald-500 to-teal-600'}`}
+              >
+                <ShoppingCart className="w-4 h-4" />
+                <span>{lang === "ar" ? "شراء الترم" : "Buy Semester"}</span>
+              </button>
+              
+              <Link
+                to={`/courses?semester_id=${semester.id}&semester_name=${encodeURIComponent(pick(semester.name, semester.name_ar))}`}
+                className={`
+                  inline-flex items-center gap-2 
+                  px-4 py-2.5 
+                  rounded-xl 
+                  border border-gray-200 dark:border-gray-700 
+                  text-gray-900 dark:text-white 
+                  font-semibold text-sm 
+                  transition-all duration-300
+                  hover:border-blue-400 dark:hover:border-blue-500 
+                  hover:bg-blue-50 dark:hover:bg-blue-950/30
+                `}
+              >
+                {lang === "ar" ? "عرض الكورسات" : "View Courses"}
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
         </div>
+      </motion.div>
 
-        {/* ✅ المؤقت جوة الكارد من تحت */}
-        {hasOfferDates && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="mt-3"
-          >
-            <OfferTimerDisplay 
-              startDate={offerStartDate} 
-              endDate={offerEndDate} 
-              lang={lang}
-              isDark={false}
-              isNature={isNature}
-              compact={true}
-              showIcon={true}
-            />
-          </motion.div>
-        )}
-
-        <div className="mt-4 pt-4 border-t border-border">
-          <div className="flex gap-3">
-            <button
-              onClick={handleBuySemester}
-              disabled={isBuying}
-              className={`flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-white font-semibold text-sm shadow-soft hover:shadow-glow transition-all hover:scale-105 active:scale-95 disabled:opacity-50
-                ${isNature ? 'bg-amber-600 hover:bg-amber-700' : 'bg-gradient-to-r from-emerald-500 to-teal-600'}`}
-            >
-              {isBuying ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
-              <span>{lang === "ar" ? "شراء الترم" : "Buy Semester"}</span>
-            </button>
-            
-            <Link
-              to={`/courses?semester_id=${semester.id}&semester_name=${encodeURIComponent(pick(semester.name, semester.name_ar))}`}
-              className={`
-                inline-flex items-center gap-2 
-                px-4 py-2.5 
-                rounded-xl 
-                border border-gray-200 dark:border-gray-700 
-                text-gray-900 dark:text-white 
-                font-semibold text-sm 
-                transition-all duration-300
-                hover:border-blue-400 dark:hover:border-blue-500 
-                hover:bg-blue-50 dark:hover:bg-blue-950/30
-              `}
-            >
-              {lang === "ar" ? "عرض الكورسات" : "View Courses"}
-              <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </div>
-    </motion.div>
+      {/* ✅ مودال الدفع */}
+      <RedeemModal
+        isOpen={showRedeemModal}
+        onClose={() => setShowRedeemModal(false)}
+        itemId={semester.id}
+        itemType="semester"
+        price={finalPrice}
+        onSuccess={handlePaymentSuccess}
+        onError={handlePaymentError}
+      />
+    </>
   );
 };
 

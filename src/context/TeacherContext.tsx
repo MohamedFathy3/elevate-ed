@@ -6,7 +6,7 @@ import { useParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useLang } from "@/i18n/LanguageContext";
 import api from "@/lib/api";
-import Loading from '@/themes/default/pages/Landing'; // ✅ تصحيح الاستيراد
+import Loading from '@/themes/default/pages/Landing';
 import { SeoSettings } from "@/types/seo";
 
 // Types من الـ API
@@ -70,14 +70,11 @@ const STATIC_PAGES = ['forgot-password', 'reset-password'];
 
 // ✅ دالة جلب البيانات بالـ host كامل
 const fetchTeacherByHost = async (host: string): Promise<TeacherWebsiteData> => {
-  
   if (!host) {
     throw new Error('Host is required');
   }
 
-  // ✅ نبعت الـ host كامل في الـ query parameter
   const url = `${encodeURIComponent(host)}`;
-
   const response = await api.get(url);
   const { data } = response;
 
@@ -88,16 +85,43 @@ const fetchTeacherByHost = async (host: string): Promise<TeacherWebsiteData> => 
   return data.data;
 };
 
+// ✅ دالة جلب الثيم من الـ API
+const fetchThemeSettings = async (teacherId: number): Promise<{ theme: 'default' | 'nature'; bgColor: string; textColor: string }> => {
+  console.log("🔵 FETCHING THEME FROM API FOR TEACHER ID:", teacherId);
+  
+  try {
+    const response = await api.post('/teachers/theme', { teacher_id: teacherId });
+    console.log("✅ API THEME RESPONSE:", response.data);
+    
+    if (response.data?.status === true) {
+      const activeTheme = response.data.active_theme;
+      let theme: 'default' | 'nature' = 'default';
+      if (activeTheme === "theme2") {
+        theme = 'nature';
+      }
+      
+      return {
+        theme,
+        bgColor: response.data.active_backgroud_color || '#FFFFFF',
+        textColor: response.data.active_font_color || '#111827',
+      };
+    }
+    
+    return { theme: 'default', bgColor: '#FFFFFF', textColor: '#111827' };
+  } catch (error) {
+    console.error("❌ Error fetching theme settings:", error);
+    return { theme: 'default', bgColor: '#FFFFFF', textColor: '#111827' };
+  }
+};
+
 export const TeacherProvider = ({ children }: { children: ReactNode }) => {
   const { slug } = useParams<{ slug: string }>();
   const { pathname } = useLocation();
   const { lang } = useLang();
   
-  // ✅ تصحيح استخدام useState
   const [isPageLoading, setIsPageLoading] = useState(true);
-  
-  // ✅ State للـ host
   const [host, setHost] = useState<string>('');
+  const [themeLoaded, setThemeLoaded] = useState(false);
 
   // ✅ جيب الـ host من المتصفح
   useEffect(() => {
@@ -110,9 +134,7 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
   const currentPath = pathname.split('/').pop() || '';
   const isStaticPage = STATIC_PAGES.includes(currentPath);
   
-  // ✅ نبعت الـ host بدل الـ slug
   const shouldFetch = !!host && !isStaticPage;
-
 
   const {
     data: teacher,
@@ -146,29 +168,65 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
     featured_courses: teacher?.website?.featured_courses || [],
   };
 
+  // ✅ 🔥 MAIN LOGIC: After teacher is loaded, fetch theme
+  useEffect(() => {
+    const loadTeacherTheme = async () => {
+      if (teacher?.id && !themeLoaded) {
+        console.log("🎯 Teacher loaded! Fetching theme for teacher ID:", teacher.id);
+        
+        try {
+          // ✅ Save teacherId to localStorage for ThemeProvider
+          localStorage.setItem('teacher-data', JSON.stringify({ id: teacher.id }));
+          
+          // ✅ Fetch theme from API
+          const themeSettings = await fetchThemeSettings(teacher.id);
+          console.log("📦 Theme settings from API:", themeSettings);
+          
+          // ✅ Save theme settings to localStorage for ThemeProvider
+          localStorage.setItem('app-theme', themeSettings.theme);
+          localStorage.setItem('api-bg-color', themeSettings.bgColor);
+          localStorage.setItem('api-text-color', themeSettings.textColor);
+          
+          // ✅ Dispatch custom event to notify ThemeProvider
+          window.dispatchEvent(new CustomEvent('theme-updated', {
+            detail: {
+              theme: themeSettings.theme,
+              bgColor: themeSettings.bgColor,
+              textColor: themeSettings.textColor
+            }
+          }));
+          
+          setThemeLoaded(true);
+          console.log("✅ Theme loaded and saved for teacher!");
+        } catch (error) {
+          console.error("❌ Error loading theme for teacher:", error);
+          setThemeLoaded(true);
+        }
+      }
+    };
+    
+    loadTeacherTheme();
+  }, [teacher?.id, themeLoaded]);
+
   // ✅ تحسين عملية التحميل
   useEffect(() => {
-    // إذا كان التحميل انتهى، ننتظر قليلاً ثم نخفي الـ Loading
     if (!isQueryLoading && shouldFetch) {
       const timer = setTimeout(() => {
         setIsPageLoading(false);
-      }, 500); // نصف ثانية فقط للأنيميشن
+      }, 500);
 
       return () => clearTimeout(timer);
     }
   }, [isQueryLoading, shouldFetch]);
 
-  // ✅ إذا كان في صفحة ثابتة، نضبط التحميل على false فوراً
   useEffect(() => {
     if (isStaticPage) {
       setIsPageLoading(false);
     }
   }, [isStaticPage]);
 
-  // ✅ حالة التحميل
   const isLoading = isPageLoading && shouldFetch && isQueryLoading;
 
-  // ✅ عرض الـ Loading بشكل أنيق
   if (isLoading) {
     return (
       <Loading 
@@ -182,7 +240,6 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
     );
   }
 
-  // ✅ عرض الخطأ
   if (error && shouldFetch) {
     console.error("❌ TeacherProvider Error:", error);
     return (

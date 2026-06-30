@@ -90,7 +90,6 @@ const SubdomainRoutes = () => {
   if (isSubdomain) {
     return (
       <TeacherProvider>
-          <ThemeProvider>
         <Routes>
           <Route path="/" element={<SiteLayout />}>
             <Route index element={<TeacherHome />} />
@@ -110,17 +109,32 @@ const SubdomainRoutes = () => {
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
-        </ThemeProvider>
       </TeacherProvider>
     );
   }
 
   // ✅ الموقع الرئيسي (web-lec.com)
   return (
-    <Routes>
-      <Route path="/" element={<Landing />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    
+  <Routes>
+          <Route path="/" element={<SiteLayout />}>
+            <Route index element={<TeacherHome />} />
+            <Route path="subjects" element={<SubjectsPage />} />
+            <Route path="stages" element={<StagesPage />} />
+            <Route path="semesters" element={<SemestersPage />} />
+            <Route path="courses" element={<CoursesPage />} />
+            <Route path="courses/:courseId" element={<CourseDetail />} />
+            <Route path="dashboard" element={<StudentDashboard />} />
+            <Route path="exam/:examId" element={<ExamPage />} />
+            <Route path="exam/:examId/lesson/:lessonId" element={<ExamPage />} />
+            <Route path="lesson/:lessonId" element={<LessonPage />} />
+            <Route path="semester/:semesterId" element={<SemesterDetails />} />
+            <Route path="login" element={<Login />} />
+            <Route path="register" element={<Register />} />
+            <Route path="center-hours" element={<CenterHours />} />
+            <Route path="*" element={<NotFound />} />
+          </Route>
+        </Routes>
   );
 };
 
