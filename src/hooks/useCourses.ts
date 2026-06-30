@@ -75,7 +75,7 @@ export const useCourses = (semesterId?: number, teacherId?: number) => {
       const filters: any = {};
       if (semesterId) filters.semester_id = semesterId;
       if (teacherId) filters.teacher_id = teacherId;
-      
+       filters.active = true;
       const { data } = await api.post<CoursesResponse>('/course/index', {
         filters,
         orderBy: "id",
@@ -111,7 +111,7 @@ export const useSubjectCourses = (subjectId?: number, teacherId?: number) => {
       const filters: any = {};
       if (subjectId) filters.subject_id = subjectId;
       if (teacherId) filters.teacher_id = teacherId;
-      
+       filters.active = true;
       
       const { data } = await api.post<CoursesResponse>('/course/index', {
         filters,
@@ -137,7 +137,8 @@ export const useSemesterCourses = (semesterId: number) => {
     queryFn: async () => {
       const response = await api.post('/course/index', {
         filters: {
-          semester_id: semesterId
+          semester_id: semesterId,
+           active:true
         },
         orderBy: "id",
         orderByDirection: "asc",

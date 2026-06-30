@@ -28,20 +28,19 @@ interface SemestersResponse {
 export const useSemesters = (teacherId?: number, stageId?: number) => {
   return useQuery({
     queryKey: ['semesters', teacherId, stageId],
-    queryFn: async () => {
-      const filters: any = {};
-      if (teacherId) filters.teacher_id = teacherId;
-      if (stageId) filters.subject_id = stageId;
-      
-      const { data } = await api.post<SemestersResponse>('/semesters/index', {
-        filters,
-        orderBy: "id",
-        orderByDirection: "asc",
-        perPage: 100,
-        paginate: false,
-        delete: false
-      });
-      
+   queryFn: async () => {
+  const filters: any = {};
+  if (teacherId) filters.teacher_id = teacherId;
+  if (stageId) filters.subject_id = stageId;
+  filters.active = true; // ✅ ثابتة true
+  const { data } = await api.post<SemestersResponse>('/semesters/index', {
+    filters,
+    orderBy: "id",
+    orderByDirection: "asc",
+    perPage: 100,
+    paginate: false,
+    delete: false
+  });
       return data.data;
     },
     enabled: !!teacherId,

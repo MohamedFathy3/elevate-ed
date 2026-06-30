@@ -1,7 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // hooks/useLessonDetails.ts
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 import Cookies from "js-cookie";
+import { useEffect } from "react";
+import { useAttendance } from "./useAttendance";
 
 export interface LessonDetail {
   id: number;
@@ -30,10 +33,11 @@ export interface LessonDetail {
   };
 }
 
-export const useLessonDetails = (lessonId: number) => {
+export const useLessonDetails = (lessonId: number, studentId?: number) => {
   const token = Cookies.get('student_token');
+  const { mutate: recordAttendance } = useAttendance();
   
-  return useQuery({
+  const query = useQuery({
     queryKey: ['lesson-details', lessonId],
     queryFn: async () => {
       const response = await api.get(`/course-detail/${lessonId}`);
@@ -43,4 +47,20 @@ export const useLessonDetails = (lessonId: number) => {
     enabled: !!lessonId && !!token,
     staleTime: 5 * 60 * 1000,
   });
+
+  // ✅ تسجيل الحضور تلقائياً عند تحميل الدرس
+  useEffect(() => {
+    const lessonData = query.data?.data;
+    
+    if (lessonId && studentId && lessonData?.attended === false && token) {
+      console.log("✅ Recording attendance for lesson:", lessonId);
+      
+      recordAttendance({
+        lesson_id: lessonId,
+        student_id: studentId,
+      });
+    }
+  }, [lessonId, studentId, query.data, token]);
+
+  return query;
 };

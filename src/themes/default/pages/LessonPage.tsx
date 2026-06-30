@@ -32,8 +32,12 @@ const LessonPage = () => {
   const navigate = useNavigate();
   const { student } = useCurrentStudent();
 
-  // ✅ Data
-  const { data: lessonData, isLoading, refetch: refetchLesson } = useLessonDetails(parseInt(lessonId || '0'));
+  // ✅ Data - استخدام واحد فقط
+  const lessonIdNum = parseInt(lessonId || '0');
+  const { data: lessonData, isLoading, refetch: refetchLesson } = useLessonDetails(
+    lessonIdNum,
+    student?.id // ✅ نمرر student.id لتسجيل الحضور تلقائياً
+  );
   const lesson = lessonData?.data;
 
   // ✅ Hooks
@@ -95,40 +99,34 @@ const LessonPage = () => {
     }
   }, [lesson]);
 
-  // ✅ Record attendance
+  // ✅ Record attendance - باستخدام useEffect مع مراقبة الحالة
   useEffect(() => {
-    if (!student?.id || !lessonId || !lesson || attendanceAttempted.current) {
-      return;
-    }
+    // ✅ شروط تسجيل الحضور
+    const shouldRecordAttendance = 
+      student?.id && 
+      lessonIdNum && 
+      lesson && 
+      !attendanceAttempted.current && // لم يتم المحاولة من قبل
+      !hasAttendanceCookie() && // مفيش كوكي
+      !lesson.attended && // مش مسجل في الـ API
+      !!Cookies.get('student_token'); // فيه token
 
-    // ✅ التحقق من الكوكي أولاً
-    if (hasAttendanceCookie()) {
-      setAttended(true);
+    if (shouldRecordAttendance) {
+      console.log("✅ Recording attendance for lesson:", lessonIdNum);
       attendanceAttempted.current = true;
-      return;
+      
+      markAttendance({
+        lesson_id: lessonIdNum,
+        student_id: student.id,
+        slug: slug,
+      });
     }
-
-    // لو الحضور مسجل مسبقاً من الـ API
-    if (attended) {
-      attendanceAttempted.current = true;
-      setAttendanceCookie();
-      return;
-    }
-
-    // ✅ تسجيل الحضور
-    attendanceAttempted.current = true;
-
-    markAttendance({
-      lesson_id: parseInt(lessonId),
-      student_id: student.id,
-      slug: slug,
-    });
-
-  }, [student?.id, lessonId, lesson, attended, markAttendance, slug]);
+  }, [student?.id, lessonIdNum, lesson, markAttendance, slug]);
 
   // ✅ Update attendance state on success
   useEffect(() => {
     if (attendanceSuccess) {
+      console.log("✅ Attendance recorded successfully!");
       setAttended(true);
       setAttendanceCookie();
       refetchLesson();
@@ -285,11 +283,11 @@ const LessonPage = () => {
               <p className="text-gray-600 dark:text-gray-400 mb-4">
                 {lang === "ar" && lesson.description_ar ? lesson.description_ar : lesson.description}
               </p>
-<p className="text-gray-600 dark:text-gray-400 mb-4">
-  {lang === "ar"
-    ? `عدد المشاهدات المتبقية: ${lesson.remainingWatchCount}`
-    : `Remaining watch count: ${lesson.remainingWatchCount}`}
-</p>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                {lang === "ar"
+                  ? `عدد المشاهدات المتبقية: ${lesson.remainingWatchCount || 0}`
+                  : `Remaining watch count: ${lesson.remainingWatchCount || 0}`}
+              </p>
               <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400">
                 <div className="flex items-center gap-1">
                   <span>{new Date(lesson.lession_date).toLocaleDateString()}</span>
@@ -315,6 +313,11 @@ const LessonPage = () => {
                 {attended && (
                   <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400 text-xs">
                     ✅ {lang === "ar" ? "تم الحضور" : "Attended"}
+                  </div>
+                )}
+                {attendancePending && (
+                  <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 text-xs">
+                    ⏳ {lang === "ar" ? "جاري تسجيل الحضور..." : "Recording attendance..."}
                   </div>
                 )}
               </div>
