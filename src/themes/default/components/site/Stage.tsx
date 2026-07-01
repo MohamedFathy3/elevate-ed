@@ -70,11 +70,11 @@ export const Stage = () => {
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
   const PrevIcon = dir === "rtl" ? ChevronRight : ChevronLeft;
   const NextIcon = dir === "rtl" ? ChevronLeft : ChevronRight;
-  
+
   // أيقونات حسب الثيم
   const BadgeIcon = isNature ? Leaf : Sparkles;
   const StageIcon = isNature ? Flower2 : GraduationCap;
-  
+
   // ألوان حسب الثيم
   const primaryColor = isNature ? 'emerald' : 'primary';
   const gradientFrom = isNature ? 'from-emerald-500' : 'from-primary';
@@ -112,9 +112,12 @@ export const Stage = () => {
       { gradient: "from-teal-500 to-cyan-600", icon: <BookOpen className="w-8 h-8 text-white" />, image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&h=250&fit=crop" },
       { gradient: "from-cyan-500 to-blue-600", icon: <Award className="w-8 h-8 text-white" />, image: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=400&h=250&fit=crop" }
     ];
+    if (!stages.length) {
+      return null;
+    }
 
     return (
-      <section className="relative overflow-hidden py-24 md:py-32 bg-gradient-to-br from-emerald-50 via-white to-teal-50 dark:from-gray-950 dark:via-emerald-950/10 dark:to-gray-950">
+      <section id="stages" className="relative overflow-hidden py-24 md:py-32 bg-gradient-to-br from-emerald-50 via-white to-teal-50 dark:from-gray-950 dark:via-emerald-950/10 dark:to-gray-950">
         {/* Background decorations */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-emerald-200/30 dark:bg-emerald-900/20 blur-3xl animate-pulse" />
@@ -223,12 +226,12 @@ export const Stage = () => {
                       <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
                         {stageName}
                       </h3>
-                      
+
                       {/* ✅ عرض المواد في الثيم الطبيعي */}
                       {stage.subjects && stage.subjects.length > 0 && (
                         <div className="flex flex-wrap justify-center gap-1.5 mb-4">
                           {stage.subjects.slice(0, 3).map((subject: any) => (
-                            <span 
+                            <span
                               key={subject.id}
                               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"
                             >
@@ -518,12 +521,12 @@ export const Stage = () => {
                             <h3 className={`text-3xl text-[#2266bf] dark:text-white transition-colors ${!isDisabled ? 'group-hover:text-primary' : ''}`}>
                               {stageName}
                             </h3>
-                            
+
                             {/* ✅ عرض المواد (Subjects) */}
                             {s.subjects && s.subjects.length > 0 && (
                               <div className="mt-3 flex flex-wrap gap-1.5">
                                 {s.subjects.slice(0, 4).map((subject: any) => (
-                                  <span 
+                                  <span
                                     key={subject.id}
                                     className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary dark:bg-primary/20"
                                   >
