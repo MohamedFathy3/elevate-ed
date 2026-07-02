@@ -13,7 +13,8 @@ import {
   Loader2, ArrowLeft, ArrowRight, Building, Wifi, Calendar, Clock,
   MapPin, AlertCircle, ChevronDown, Users, School, Landmark, BookOpen, Image,
   X, CheckCircle, AlertTriangle, Info, Shield, WifiOff, Users as UsersIcon,
-  BookMarked, CreditCard, RefreshCw, Smartphone, Laptop, Globe, Flag
+  BookMarked, CreditCard, RefreshCw, Smartphone, Laptop, Globe, Flag,
+  Cake // ✅ أيقونة عيد الميلاد
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -30,7 +31,6 @@ const validateFullName = (name: string): { isValid: boolean; message: string } =
     };
   }
 
-  // التحقق من أن كل كلمة تبدأ بحرف كبير (اختياري)
   const hasInvalidChars = /[^a-zA-Z\u0600-\u06FF\s]/.test(trimmed);
   if (hasInvalidChars) {
     return {
@@ -43,21 +43,13 @@ const validateFullName = (name: string): { isValid: boolean; message: string } =
 };
 
 const validateEgyptianPhone = (phone: string): { isValid: boolean; message: string } => {
-  // إزالة أي مسافات أو شرطات
   const clean = phone.replace(/[\s\-\\(\\)]/g, '');
 
-  // التحقق من الصيغة المصرية
-  // 1. 011xxxxxxxx (11 رقم)
-  // 2. 012xxxxxxxx (11 رقم)
-  // 3. 010xxxxxxxx (11 رقم)
-  // 4. 015xxxxxxxx (11 رقم)
-  // 5. +2011xxxxxxxx (13 رقم مع +)
-  // 6. 2011xxxxxxxx (12 رقم بدون +)
   const egyptPatterns = [
-    /^01[0125]\d{8}$/,           // 01123456789
-    /^\+201[0125]\d{8}$/,        // +201123456789
-    /^201[0125]\d{8}$/,          // 201123456789
-    /^00201[0125]\d{8}$/,        // 00201123456789
+    /^01[0125]\d{8}$/,
+    /^\+201[0125]\d{8}$/,
+    /^201[0125]\d{8}$/,
+    /^00201[0125]\d{8}$/,
   ];
 
   const isValid = egyptPatterns.some(pattern => pattern.test(clean));
@@ -72,21 +64,47 @@ const validateEgyptianPhone = (phone: string): { isValid: boolean; message: stri
   return { isValid: true, message: "" };
 };
 
+// ✅ دالة التحقق من تاريخ الميلاد
+const validateBirthDate = (date: string): { isValid: boolean; message: string } => {
+  if (!date) {
+    return { isValid: false, message: "تاريخ الميلاد مطلوب" };
+  }
+
+  const birthDate = new Date(date);
+  const today = new Date();
+  
+  // حساب العمر
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+
+  // ✅ التحقق من أن العمر بين 3 و 25 سنة
+  if (age < 3) {
+    return { isValid: false, message: "العمر يجب أن يكون 3 سنوات على الأقل" };
+  }
+  if (age > 25) {
+    return { isValid: false, message: "العمر يجب أن يكون 25 سنة كحد أقصى" };
+  }
+
+  // ✅ التحقق من أن التاريخ صحيح (ليس في المستقبل)
+  if (birthDate > today) {
+    return { isValid: false, message: "تاريخ الميلاد لا يمكن أن يكون في المستقبل" };
+  }
+
+  return { isValid: true, message: "" };
+};
+
 // ✅ دالة لتنسيق رقم الهاتف
 const formatPhoneNumber = (value: string): string => {
-  // إزالة كل ما ليس رقم أو +
   const cleaned = value.replace(/[^\d+]/g, '');
-
-  // إذا كان يبدأ بـ 0 وطوله أقل من 11، نضيف تلقائياً
   if (cleaned.startsWith('0') && cleaned.length <= 11) {
     return cleaned;
   }
-
-  // إذا كان يبدأ بـ +20
   if (cleaned.startsWith('+20')) {
     return cleaned;
   }
-
   return cleaned;
 };
 
@@ -120,6 +138,7 @@ const Register = () => {
     type_of_study: "general",
     image: "",
     region: "",
+    birth_date: "", // ✅ إضافة تاريخ الميلاد
   });
 
   const Arrow = dir === "rtl" ? ArrowRight : ArrowLeft;
@@ -226,6 +245,10 @@ const Register = () => {
         }
         return "";
       }
+      case "birth_date": {
+        const result = validateBirthDate(value);
+        return result.isValid ? "" : result.message;
+      }
       case "governorate": {
         if (!value) {
           return lang === "ar" ? "الرجاء اختيار المحافظة" : "Please select governorate";
@@ -272,6 +295,13 @@ const Register = () => {
       const phoneError = validateField("phone", formData.phone);
       if (phoneError) {
         newErrors.phone = phoneError;
+        isValid = false;
+      }
+
+      // ✅ التحقق من تاريخ الميلاد
+      const birthDateError = validateField("birth_date", formData.birth_date);
+      if (birthDateError) {
+        newErrors.birth_date = birthDateError;
         isValid = false;
       }
 
@@ -411,6 +441,7 @@ const Register = () => {
       type_of_study: formData.type_of_study as 'general' | 'azhar',
       image: formData.image ? parseInt(formData.image) : undefined,
       region: formData.region.trim(),
+      birth_date: formData.birth_date, // ✅ إضافة تاريخ الميلاد
     };
 
     register(submitData);
@@ -433,23 +464,18 @@ const Register = () => {
     }
   };
 
-  // ✅ أضف الدالة دي تحت prevStep
   const prevStep = () => {
     setStep(step - 1);
   };
 
-  // ✅ دالة التنقل بين الخطوات بالضغط على الأرقام
   const goToStep = (targetStep: number) => {
-    // ✅ إذا كانت الخطوة المستهدفة هي نفس الخطوة الحالية، لا نفعل شيئاً
     if (targetStep === step) return;
 
-    // ✅ الانتقال للخلف مسموح به بدون تحقق
     if (targetStep < step) {
       setStep(targetStep);
       return;
     }
 
-    // ✅ الانتقال للأمام مع التحقق
     if (targetStep > step) {
       if (step === 1) {
         if (validateStep(1)) {
@@ -487,8 +513,7 @@ const Register = () => {
 
   return (
     <>
-      {/* ✅ Popup التعليمات - نفس الكود الموجود */}
-      {/* ✅ Popup التعليمات - المحتوى الكامل */}
+      {/* ✅ Popup التعليمات */}
       <AnimatePresence>
         {showInstructions && (
           <motion.div
@@ -531,7 +556,7 @@ const Register = () => {
                 </div>
               </div>
 
-              {/* ✅ المحتوى */}
+              {/* ✅ المحتوى - نفس الكود */}
               <div className="p-6 space-y-4">
                 {/* 1. الاسم الرباعي */}
                 <div className="flex items-start gap-3 p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
@@ -550,7 +575,24 @@ const Register = () => {
                   </div>
                 </div>
 
-                {/* 2. رقم الهاتف */}
+                {/* 2. تاريخ الميلاد */}
+                <div className="flex items-start gap-3 p-4 rounded-2xl bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800">
+                  <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                    <Cake className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-purple-800 dark:text-purple-300">
+                      {lang === "ar" ? "🎂 تاريخ الميلاد" : "🎂 Birth Date"}
+                    </h3>
+                    <p className="text-sm text-purple-700 dark:text-purple-400">
+                      {lang === "ar"
+                        ? "يجب أن يكون العمر بين 3 و 25 سنة"
+                        : "Age must be between 3 and 25 years"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* 3. رقم الهاتف */}
                 <div className="flex items-start gap-3 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800">
                   <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
                     <Phone className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
@@ -567,36 +609,19 @@ const Register = () => {
                   </div>
                 </div>
 
-                {/* 3. كلمة المرور */}
-                <div className="flex items-start gap-3 p-4 rounded-2xl bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800">
-                  <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                    <Lock className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                {/* 4. كلمة المرور */}
+                <div className="flex items-start gap-3 p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
+                    <Lock className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-purple-800 dark:text-purple-300">
+                    <h3 className="font-bold text-indigo-800 dark:text-indigo-300">
                       {lang === "ar" ? "🔐 كلمة المرور" : "🔐 Password"}
                     </h3>
-                    <p className="text-sm text-purple-700 dark:text-purple-400">
+                    <p className="text-sm text-indigo-700 dark:text-indigo-400">
                       {lang === "ar"
                         ? "كلمة مرور قوية مكونة من 6 أحرف على الأقل (حروف وأرقام)"
                         : "Strong password at least 6 characters (letters and numbers)"}
-                    </p>
-                  </div>
-                </div>
-
-                {/* 4. نوع الحضور */}
-                <div className="flex items-start gap-3 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-                    <Users className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-amber-800 dark:text-amber-300">
-                      {lang === "ar" ? "🏫 نوع الحضور" : "🏫 Attendance Type"}
-                    </h3>
-                    <p className="text-sm text-amber-700 dark:text-amber-400">
-                      {lang === "ar"
-                        ? "طالب السنتر يختار 'سنتر' وطالب الأونلاين يختار 'أونلاين' - لا يمكن التبديل بعد التسجيل"
-                        : "Center students choose 'Center', Online students choose 'Online' - cannot be changed after registration"}
                     </p>
                   </div>
                 </div>
@@ -651,27 +676,9 @@ const Register = () => {
                     </p>
                   </div>
                 </div>
-
-                {/* 8. نصائح إضافية */}
-                <div className="flex items-start gap-3 p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
-                    <Info className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-indigo-800 dark:text-indigo-300">
-                      {lang === "ar" ? "💡 نصائح إضافية" : "💡 Additional Tips"}
-                    </h3>
-                    <ul className="text-sm text-indigo-700 dark:text-indigo-400 space-y-1 list-disc list-inside">
-                      <li>{lang === "ar" ? "استخدم اتصال إنترنت مستقر" : "Use a stable internet connection"}</li>
-                      <li>{lang === "ar" ? "احتفظ بكلمة المرور في مكان آمن" : "Keep your password in a safe place"}</li>
-                      <li>{lang === "ar" ? "تأكد من صحة البيانات قبل الضغط على 'إنشاء حساب'" : "Verify data before clicking 'Create Account'"}</li>
-                      <li>{lang === "ar" ? "في حالة وجود مشكلة، تواصل مع الدعم الفني" : "If you face any issue, contact technical support"}</li>
-                    </ul>
-                  </div>
-                </div>
               </div>
 
-              {/* ✅ Footer مع زر التأكيد */}
+              {/* ✅ Footer */}
               <div className="sticky bottom-0 bg-slate-50 dark:bg-slate-800/80 p-4 rounded-b-3xl border-t border-slate-200 dark:border-slate-700">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
@@ -694,7 +701,7 @@ const Register = () => {
       <section className="min-h-screen bg-[#eef1f6] dark:bg-[#0f1419] flex items-start lg:items-center px-4 py-28 sm:px-6 sm:py-32 lg:px-10 lg:py-24">
         <div className="w-full max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-2 rounded-2xl lg:rounded-3xl overflow-hidden shadow-[0_20px_60px_-15px_rgba(15,23,42,0.18)] ring-1 ring-slate-200/80 dark:ring-slate-700/50">
-            {/* ✅ الجزء الأيمن - نفس الكود */}
+            {/* ✅ الجزء الأيمن */}
             <div
               className={`relative min-h-[200px] sm:min-h-[240px] lg:min-h-[640px] flex flex-col justify-end overflow-hidden bg-[#1a2744] ${dir === "rtl" ? "lg:order-2" : "lg:order-1"
                 }`}
@@ -752,7 +759,6 @@ const Register = () => {
               </div>
 
               {/* ✅ Steps */}
-              {/* ✅ Steps - مع إمكانية التنقل بالضغط */}
               <div className="flex items-center justify-center gap-2 mb-7">
                 {[
                   { n: 1, ar: "أساسي", en: "Basic" },
@@ -765,23 +771,23 @@ const Register = () => {
                       type="button"
                       onClick={() => goToStep(n)}
                       className={`
-          flex items-center gap-1.5 
-          transition-all duration-300 
-          ${step !== n ? 'hover:scale-105' : ''}
-          ${step === n ? 'cursor-default' : 'cursor-pointer'}
-          ${step === n ? stepLabel(n) : step > n ? 'text-slate-500' : 'text-slate-400'}
-        `}
+                        flex items-center gap-1.5 
+                        transition-all duration-300 
+                        ${step !== n ? 'hover:scale-105' : ''}
+                        ${step === n ? 'cursor-default' : 'cursor-pointer'}
+                        ${step === n ? stepLabel(n) : step > n ? 'text-slate-500' : 'text-slate-400'}
+                      `}
                       title={lang === "ar" ? `الذهاب إلى ${ar}` : `Go to ${en}`}
                     >
                       <div
                         className={`
-            w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold 
-            transition-all duration-300
-            ${step === n ? 'bg-[#3b5bdb] text-white shadow-lg shadow-[#3b5bdb]/30 ring-2 ring-[#3b5bdb]/20' : ''}
-            ${step > n ? 'bg-[#edf2ff] dark:bg-[#3b5bdb]/20 text-[#3b5bdb] dark:text-sky-400' : ''}
-            ${step < n ? 'bg-slate-100 dark:bg-slate-800 text-slate-400' : ''}
-            ${step !== n ? 'hover:bg-slate-200 dark:hover:bg-slate-700 hover:scale-110' : ''}
-          `}
+                          w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold 
+                          transition-all duration-300
+                          ${step === n ? 'bg-[#3b5bdb] text-white shadow-lg shadow-[#3b5bdb]/30 ring-2 ring-[#3b5bdb]/20' : ''}
+                          ${step > n ? 'bg-[#edf2ff] dark:bg-[#3b5bdb]/20 text-[#3b5bdb] dark:text-sky-400' : ''}
+                          ${step < n ? 'bg-slate-100 dark:bg-slate-800 text-slate-400' : ''}
+                          ${step !== n ? 'hover:bg-slate-200 dark:hover:bg-slate-700 hover:scale-110' : ''}
+                        `}
                       >
                         {n}
                       </div>
@@ -831,7 +837,36 @@ const Register = () => {
                       </p>
                     </div>
 
-                    {/* رقم الهاتف مع علم مصر */}
+                    {/* ✅ تاريخ الميلاد - جديد */}
+                    <div>
+                      <label className={labelCls}>
+                        {lang === "ar" ? "تاريخ الميلاد" : "Birth Date"} <span className="text-red-500">*</span>
+                      </label>
+                      <div className={`${fieldCls} ${errors.birth_date && touched.birth_date ? fieldErrorCls : ''}`}>
+                        <span className="px-3.5 text-slate-400"><Cake className="size-4" /></span>
+                        <input
+                          type="date"
+                          name="birth_date"
+                          value={formData.birth_date}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          className={inputInnerCls}
+                          max={new Date().toISOString().split('T')[0]} // ✅ منع التواريخ المستقبلية
+                          required
+                        />
+                      </div>
+                      {errors.birth_date && touched.birth_date && (
+                        <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          {errors.birth_date}
+                        </p>
+                      )}
+                      <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                        {lang === "ar" ? "العمر يجب أن يكون بين 3 و 25 سنة" : "Age must be between 3 and 25 years"}
+                      </p>
+                    </div>
+
+                    {/* رقم الهاتف */}
                     <div>
                       <label className={labelCls}>
                         {lang === "ar" ? "رقم الهاتف" : "Phone Number"} <span className="text-red-500">*</span>
@@ -930,7 +965,7 @@ const Register = () => {
                   </div>
                 )}
 
-                {/* ✅ Step 2 - البيانات الدراسية */}
+                {/* ✅ Step 2 - البيانات الدراسية (نفس الكود) */}
                 {step === 2 && (
                   <div className="space-y-4">
                     <div>
@@ -964,17 +999,17 @@ const Register = () => {
                           onChange={handleChange}
                           onBlur={handleBlur}
                           className={`
-        ${inputInnerCls} 
-        appearance-none 
-        pr-8
-        bg-white dark:bg-slate-800
-        text-slate-900 dark:text-white
-        dark:[&>option]:bg-slate-800
-        dark:[&>option]:text-white
-        [&>option]:bg-white
-        [&>option]:text-slate-900
-        [&>option]:py-1.5
-      `}
+                            ${inputInnerCls} 
+                            appearance-none 
+                            pr-8
+                            bg-white dark:bg-slate-800
+                            text-slate-900 dark:text-white
+                            dark:[&>option]:bg-slate-800
+                            dark:[&>option]:text-white
+                            [&>option]:bg-white
+                            [&>option]:text-slate-900
+                            [&>option]:py-1.5
+                          `}
                           required
                         >
                           <option value="" className="text-slate-400 dark:text-slate-400">
@@ -1034,7 +1069,6 @@ const Register = () => {
                           </p>
                         </div>
                       ) : (
-
                         <div className={`${fieldCls} ${errors.stage_id && touched.stage_id ? fieldErrorCls : ''}`}>
                           <span className="px-3.5 text-slate-400"><GraduationCap className="size-4" /></span>
                           <select
@@ -1043,18 +1077,18 @@ const Register = () => {
                             onChange={handleChange}
                             onBlur={handleBlur}
                             className={`
-      ${inputInnerCls} 
-      appearance-none 
-      pr-8
-      bg-white dark:bg-slate-800
-      text-slate-900 dark:text-white
-      dark:[&>option]:bg-slate-800
-      dark:[&>option]:text-white
-      [&>option]:bg-white
-      [&>option]:text-slate-900
-      [&>option]:py-1.5
-      [&>option:checked]:bg-primary/10
-    `}
+                              ${inputInnerCls} 
+                              appearance-none 
+                              pr-8
+                              bg-white dark:bg-slate-800
+                              text-slate-900 dark:text-white
+                              dark:[&>option]:bg-slate-800
+                              dark:[&>option]:text-white
+                              [&>option]:bg-white
+                              [&>option]:text-slate-900
+                              [&>option]:py-1.5
+                              [&>option:checked]:bg-primary/10
+                            `}
                             required
                           >
                             <option value="" className="text-slate-400 dark:text-slate-400">
@@ -1068,7 +1102,6 @@ const Register = () => {
                           </select>
                           <ChevronDown className={`absolute ${chevronPos} text-slate-400 pointer-events-none size-4`} />
                         </div>
-
                       )}
                       {errors.stage_id && touched.stage_id && (
                         <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1">
@@ -1142,26 +1175,26 @@ const Register = () => {
                             onChange={handleChange}
                             onBlur={handleBlur}
                             className={`
-    w-full 
-    bg-white dark:bg-slate-800/60 
-    border ${errors.center_hour_id && touched.center_hour_id ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} 
-    rounded-xl 
-    px-4 py-2.5 
-    outline-none 
-    text-sm 
-    text-slate-900 dark:text-white
-    focus:border-[#3b5bdb] 
-    focus:ring-2 
-    focus:ring-[#3b5bdb]/15
-    appearance-none
-    [&>option]:text-slate-900 
-    [&>option]:dark:text-white 
-    [&>option]:bg-white 
-    [&>option]:dark:bg-slate-800
-    [&>option]:hover:bg-slate-100 
-    [&>option]:dark:hover:bg-slate-700
-    [&>option]:py-1.5
-  `}
+                              w-full 
+                              bg-white dark:bg-slate-800/60 
+                              border ${errors.center_hour_id && touched.center_hour_id ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} 
+                              rounded-xl 
+                              px-4 py-2.5 
+                              outline-none 
+                              text-sm 
+                              text-slate-900 dark:text-white
+                              focus:border-[#3b5bdb] 
+                              focus:ring-2 
+                              focus:ring-[#3b5bdb]/15
+                              appearance-none
+                              [&>option]:text-slate-900 
+                              [&>option]:dark:text-white 
+                              [&>option]:bg-white 
+                              [&>option]:dark:bg-slate-800
+                              [&>option]:hover:bg-slate-100 
+                              [&>option]:dark:hover:bg-slate-700
+                              [&>option]:py-1.5
+                            `}
                             required
                           >
                             <option value="" className="text-slate-400 dark:text-slate-400">

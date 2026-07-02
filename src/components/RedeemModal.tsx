@@ -43,7 +43,6 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
   const getTextColor = () => isDark ? 'text-white' : 'text-gray-900';
   
   // التحقق من الرصيد
-  const hasSufficientBalance = walletData?.data?.balance >= price;
   
   // دالة معالجة الدفع
   const handlePayment = async () => {
@@ -51,12 +50,7 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
     
     try {
       if (paymentMethod === 'wallet') {
-        // دفع من المحفظة
-        if (!hasSufficientBalance) {
-          toast.error('رصيد المحفظة غير كافي');
-          setIsProcessing(false);
-          return;
-        }
+      
         
         const response = await api.post(`/student/${itemType}/${itemId}/purchase`, {
           payment_method: 'wallet',

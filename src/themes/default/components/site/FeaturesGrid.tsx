@@ -32,10 +32,10 @@ import {
 // ============================================
 
 const DEFAULT_ICONS = [
-  Gift,        // جهاز وهدايا
-  BookMarked,  // شروح منيلة
-  BarChart3,   // تقييمات دورية
-  MessageCircle, // متابعة مستمرة
+  Gift,
+  BookMarked,
+  BarChart3,
+  MessageCircle,
   GraduationCap,
   Rocket,
   BrainCircuit,
@@ -101,16 +101,41 @@ interface FeaturesGridProps {
 }
 
 // ============================================
-// ✅ دالة مساعدة لاستخراج الصورة
+// ✅ دالة مساعدة لاستخراج الصورة مع تجاهل الصور الافتراضية
 // ============================================
 
 const getFeatureImage = (feature: any): string | null => {
   if (!feature) return null;
   
-  return feature.image?.fullUrl || 
-         feature.imageUrl || 
-         feature.image?.previewUrl || 
-         null;
+  // جلب الـ URL
+  let imageUrl = feature.image?.fullUrl || 
+                 feature.imageUrl || 
+                 feature.image?.previewUrl || 
+                 null;
+
+  // ✅ تجاهل الصور الافتراضية (default-logo.png, default-avatar, etc.)
+  if (imageUrl) {
+    const defaultPatterns = [
+      'default-logo.png',
+      'default-avatar',
+      'default-image',
+      'placeholder',
+      'no-image',
+      'default.png',
+      'default.jpg',
+      'default.svg',
+    ];
+    
+    const isDefaultImage = defaultPatterns.some(pattern => 
+      imageUrl?.toLowerCase().includes(pattern.toLowerCase())
+    );
+    
+    if (isDefaultImage) {
+      return null; // ✅ اعتبر الصورة غير موجودة واستخدم الـ fallbackBg
+    }
+  }
+
+  return imageUrl;
 };
 
 // ============================================
@@ -156,6 +181,8 @@ const FeatureCard = ({
       description: "text-gray-600 dark:text-gray-400",
       number: "text-gray-200/30 dark:text-gray-800/30",
       gradient: "from-emerald-500/20 to-blue-500/20",
+      // ✅ خلفية بديلة عند عدم وجود صورة
+      fallbackBg: "bg-gradient-to-br from-emerald-50 to-blue-50 dark:from-emerald-950/30 dark:to-blue-950/30",
     },
     nature: {
       card: "bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-amber-200/30 dark:border-amber-800/30 hover:border-amber-300/50",
@@ -164,6 +191,7 @@ const FeatureCard = ({
       description: "text-gray-600 dark:text-gray-400",
       number: "text-amber-200/30 dark:text-amber-800/30",
       gradient: "from-amber-500/20 to-orange-500/20",
+      fallbackBg: "bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30",
     },
     minimal: {
       card: "bg-transparent border-0 hover:bg-gray-50/50 dark:hover:bg-gray-900/50",
@@ -172,6 +200,7 @@ const FeatureCard = ({
       description: "text-gray-500 dark:text-gray-400",
       number: "text-gray-200/20 dark:text-gray-800/20",
       gradient: "from-gray-500/20 to-gray-500/20",
+      fallbackBg: "bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900/30 dark:to-gray-800/30",
     },
     compact: {
       card: "bg-white/40 dark:bg-gray-900/40 backdrop-blur-sm border border-gray-200/20 dark:border-gray-800/20 hover:border-emerald-300/30",
@@ -180,6 +209,7 @@ const FeatureCard = ({
       description: "text-gray-500 dark:text-gray-400 text-sm",
       number: "text-gray-200/20 dark:text-gray-800/20",
       gradient: "from-emerald-500/20 to-emerald-500/20",
+      fallbackBg: "bg-gradient-to-br from-emerald-50/50 to-emerald-100/50 dark:from-emerald-950/20 dark:to-emerald-900/20",
     },
   };
 
@@ -188,6 +218,12 @@ const FeatureCard = ({
   // ✅ اتجاه الميل (يمين أو يسار)
   const skewDirection = index % 2 === 0 ? 'skew-y-2' : '-skew-y-2';
   const rotateDirection = index % 2 === 0 ? 'rotate-1' : '-rotate-1';
+
+  // ✅ تحديد الخلفية: صورة أو لون بديل
+  const hasImage = showImages && imageUrl !== null;
+  const backgroundClass = hasImage 
+    ? '' 
+    : style.fallbackBg;
 
   return (
     <motion.div
@@ -207,17 +243,17 @@ const FeatureCard = ({
         transition: { duration: 0.2 }
       }}
       onClick={() => onClick?.(feature)}
-      className={`group relative overflow-hidden rounded-[32px] transition-all cursor-pointer ${style.card} ${skewDirection} ${rotateDirection}`}
+      className={`group relative overflow-hidden rounded-[32px] transition-all cursor-pointer ${style.card} ${skewDirection} ${rotateDirection} ${backgroundClass}`}
     >
-      {/* ✅ خلفية متدرجة مائلة */}
+      {/* ✅ خلفية متدرجة مائلة (تظهر عند الـ hover حتى مع الصورة) */}
       <div className={`absolute inset-0 bg-gradient-to-br ${style.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
 
-      {/* ✅ الصورة كخلفية كبيرة */}
-      {showImages && imageUrl && (
+      {/* ✅ الصورة كخلفية كبيرة (تظهر فقط لو موجودة ومش افتراضية) */}
+      {hasImage && (
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
           <img
-            src={imageUrl}
+            src={imageUrl!}
             alt={name}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
           />
@@ -256,7 +292,7 @@ const FeatureCard = ({
 };
 
 // ============================================
-// ✅ FeaturesGrid Component - مع تصميم مائل للقسم كله
+// ✅ FeaturesGrid Component
 // ============================================
 
 export const FeaturesGrid = ({
@@ -269,7 +305,7 @@ export const FeaturesGrid = ({
   variant = 'default',
   showNumbers = true,
   showImages = true,
-  imagePosition = 'background', // ✅ background افتراضي عشان الصورة كبيرة
+  imagePosition = 'background',
   className = '',
   onFeatureClick,
 }: FeaturesGridProps) => {
@@ -277,17 +313,14 @@ export const FeaturesGrid = ({
   const { theme } = useTheme();
   const isNature = theme === 'nature';
 
-  // ✅ دالة pick
   const pick = (en: string, ar: string) => {
     return lang === 'ar' ? ar || en : en || ar;
   };
 
-  // ✅ تحقق من وجود features
   if (!features || features.length === 0) {
     return null;
   }
 
-  // ✅ عدد الأعمدة مع تصميم مائل
   const columnsClass = {
     2: 'md:grid-cols-2',
     3: 'md:grid-cols-2 lg:grid-cols-3',
@@ -300,7 +333,7 @@ export const FeaturesGrid = ({
       <div className="absolute inset-0 -skew-y-3 bg-gradient-to-b from-transparent via-gray-50/50 dark:via-gray-900/50 to-transparent" />
 
       <div className="relative z-10">
-        {/* ✅ Header - مائل خفيف */}
+        {/* ✅ Header */}
         {(title || subtitle) && (
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -328,7 +361,7 @@ export const FeaturesGrid = ({
           </motion.div>
         )}
 
-        {/* ✅ Grid مع ميل خفيف للكروت */}
+        {/* ✅ Grid */}
         <div className={`grid grid-cols-1 ${columnsClass[columns]} gap-8 -skew-y-1`}>
           {features.map((feature, index) => (
             <FeatureCard
