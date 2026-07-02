@@ -164,7 +164,7 @@ export const Stage = () => {
               className="text-emerald-700/70 dark:text-emerald-300/70 text-lg"
             >
               {lang === "ar"
-                ? "على موبايالك، التابلت أو اللابتوب الخاص بيك. المنصة متاحة على:"
+                ? " المنصه متاحه علي  موبايالك او  التابلت أو اللابتوب الخاص بيك. "
                 : "On your mobile, tablet or laptop. The platform is available on:"}
             </motion.p>
           </div>
