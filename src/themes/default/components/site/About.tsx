@@ -210,7 +210,7 @@ export const About = () => {
                 </div>
                 <div>
                   <h4 className="font-bold text-gray-900 dark:text-white">{lang === "ar" ? "أفضل تجربة منصة تعلمية في مصر" : "Best Experience"}</h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Premium LMS UI</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400"></p>
                 </div>
               </div>
             </motion.div>
