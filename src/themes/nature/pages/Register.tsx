@@ -134,7 +134,7 @@ const Register = () => {
     type_of_study: "general",
     image: "",
     region: "",
-    birth_date: "", // ✅ إضافة تاريخ الميلاد
+    birth_date: "",
   });
 
   const Arrow = dir === "rtl" ? ArrowRight : ArrowLeft;
@@ -422,6 +422,47 @@ const Register = () => {
     setStep(step - 1);
   };
 
+  // ✅ دالة التنقل بين الخطوات من الـ Tabs
+  const goToStep = (targetStep: number) => {
+    // ✅ لو رايح لخطوة أقل، روح علطول من غير تحقق
+    if (targetStep < step) {
+      setStep(targetStep);
+      return;
+    }
+    
+    // ✅ لو رايح لخطوة أعلى أو نفسها
+    if (targetStep > step) {
+      // لو في الخطوة 1 وعاوز يروح للخطوة 2 أو 3
+      if (step === 1) {
+        if (validateStep(1)) {
+          if (targetStep === 3) {
+            // لو عاوز يروح للخطوة 3 مباشرة، يعدي على 2
+            setStep(2);
+            setTimeout(() => {
+              if (validateStep(2)) {
+                setStep(3);
+              } else {
+                toast.error(lang === "ar" ? "الرجاء تصحيح الأخطاء في البيانات الدراسية" : "Please fix errors in study data");
+              }
+            }, 100);
+          } else {
+            setStep(targetStep);
+          }
+        } else {
+          toast.error(lang === "ar" ? "الرجاء تصحيح الأخطاء في البيانات الأساسية" : "Please fix errors in basic data");
+        }
+      } 
+      // لو في الخطوة 2 وعاوز يروح للخطوة 3
+      else if (step === 2 && targetStep === 3) {
+        if (validateStep(2)) {
+          setStep(3);
+        } else {
+          toast.error(lang === "ar" ? "الرجاء تصحيح الأخطاء في البيانات الدراسية" : "Please fix errors in study data");
+        }
+      }
+    }
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Enter' && step !== 3) {
@@ -666,22 +707,40 @@ const Register = () => {
             </div>
           </div>
 
-          {/* Steps Indicator - UI القديم */}
+          {/* ✅ Steps Indicator - مع إمكانية الضغط */}
           <div className="flex items-center justify-center gap-2 mb-8">
-            <div className={`flex items-center gap-2 ${step === 1 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-gray-600'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step === 1 ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600'}`}>1</div>
-              <span className="text-sm hidden sm:inline">{lang === "ar" ? "المعلومات الأساسية" : "Basic Info"}</span>
-            </div>
-            <div className="w-8 h-px bg-gray-200 dark:bg-gray-700" />
-            <div className={`flex items-center gap-2 ${step === 2 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-gray-600'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step === 2 ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600'}`}>2</div>
-              <span className="text-sm hidden sm:inline">{lang === "ar" ? "البيانات الدراسية" : "Study Info"}</span>
-            </div>
-            <div className="w-8 h-px bg-gray-200 dark:bg-gray-700" />
-            <div className={`flex items-center gap-2 ${step === 3 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-gray-600'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step === 3 ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600'}`}>3</div>
-              <span className="text-sm hidden sm:inline">{lang === "ar" ? "الصورة" : "Photo"}</span>
-            </div>
+            {[
+              { n: 1, label: lang === "ar" ? "المعلومات الأساسية" : "Basic Info" },
+              { n: 2, label: lang === "ar" ? "البيانات الدراسية" : "Study Info" },
+              { n: 3, label: lang === "ar" ? "الصورة" : "Photo" },
+            ].map(({ n, label }, idx) => (
+              <div key={n} className="flex items-center gap-2">
+                {idx > 0 && <div className="w-8 h-px bg-gray-200 dark:bg-gray-700" />}
+                <div
+                  onClick={() => goToStep(n)}
+                  className={`
+                    flex items-center gap-2 
+                    cursor-pointer transition-all duration-300 
+                    hover:scale-105
+                    ${step === n ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-300'}
+                  `}
+                >
+                  <div className={`
+                    w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold 
+                    transition-all duration-300
+                    ${step === n 
+                      ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25' 
+                      : step > n 
+                        ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-800/50' 
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    }
+                  `}>
+                    {n}
+                  </div>
+                  <span className="text-sm hidden sm:inline font-medium">{label}</span>
+                </div>
+              </div>
+            ))}
           </div>
 
           <form
@@ -692,7 +751,7 @@ const Register = () => {
               }
             }}
           >
-            {/* Step 1: المعلومات الأساسية - UI القديم مع إضافة تاريخ الميلاد */}
+            {/* Step 1: المعلومات الأساسية */}
             {step === 1 && (
               <div className="space-y-4">
                 <div>
@@ -719,7 +778,6 @@ const Register = () => {
                   )}
                 </div>
 
-                {/* ✅ تاريخ الميلاد - مضاف للUI القديم */}
                 <div>
                   <label className="block text-sm font-bold mb-1.5 text-gray-700 dark:text-gray-300">
                     {lang === "ar" ? "تاريخ الميلاد" : "Birth Date"} <span className="text-red-500">*</span>
@@ -835,7 +893,7 @@ const Register = () => {
               </div>
             )}
 
-            {/* Step 2: البيانات الدراسية - UI القديم */}
+            {/* Step 2: البيانات الدراسية */}
             {step === 2 && (
               <div className="space-y-4">
                 <div>
@@ -1071,7 +1129,7 @@ const Register = () => {
               </div>
             )}
 
-            {/* Step 3: الصورة الشخصية - UI القديم */}
+            {/* Step 3: الصورة الشخصية */}
             {step === 3 && (
               <div className="space-y-6">
                 <div className="text-center">
@@ -1119,7 +1177,7 @@ const Register = () => {
               </div>
             )}
 
-            {/* Buttons - UI القديم */}
+            {/* Buttons */}
             <div className="flex gap-3 mt-8 pt-4 border-t border-gray-200 dark:border-gray-700">
               {step > 1 && (
                 <button
