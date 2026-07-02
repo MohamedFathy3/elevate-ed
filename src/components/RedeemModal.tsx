@@ -43,6 +43,7 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
   const getTextColor = () => isDark ? 'text-white' : 'text-gray-900';
   
   // التحقق من الرصيد
+  // const hasSufficientBalance = walletData?.data?.balance >= price;
   
   // دالة معالجة الدفع
   const handlePayment = async () => {
@@ -50,7 +51,12 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
     
     try {
       if (paymentMethod === 'wallet') {
-      
+        // دفع من المحفظة
+        // if (!hasSufficientBalance) {
+        //   toast.error('رصيد المحفظة غير كافي');
+        //   setIsProcessing(false);
+        //   return;
+        // }
         
         const response = await api.post(`/student/${itemType}/${itemId}/purchase`, {
           payment_method: 'wallet',
@@ -180,7 +186,7 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
         )}
         
         {/* تحذير الرصيد غير كافي */}
-        {paymentMethod === 'wallet' && price > 0 && !hasSufficientBalance && (
+        {paymentMethod === 'wallet' && price > 0 &&  (
           <div className="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
             ⚠️ {lang === "ar" 
               ? `رصيد المحفظة غير كافي. المطلوب: ${price} جنيه، المتاح: ${walletData?.data?.balance || 0} جنيه` 
@@ -198,7 +204,7 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
           </button>
           <button
             onClick={handlePayment}
-            disabled={isProcessing || (paymentMethod === 'wallet' && !hasSufficientBalance)}
+            disabled={isProcessing || (paymentMethod === 'wallet' )}
             className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed
               ${isNature 
                 ? 'bg-amber-600 hover:bg-amber-700' 
