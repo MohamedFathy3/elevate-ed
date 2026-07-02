@@ -1,51 +1,88 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // hooks/usePurchase.ts
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 
+// ✅ Types
+export type PurchaseItemType = 'course' | 'semester' | 'exam' | 'lesson' | 'book';
+
+export interface EnrollRequest {
+  type: PurchaseItemType;
+  course_id?: number | null;
+  semester_id?: number | null;
+  book_id?: number | null;
+  course_detail_id?: number | null;
+  price: number;
+}
+
+export interface RedeemCodeRequest {
+  code: string;
+}
+
 export const usePurchaseItem = () => {
   const queryClient = useQueryClient();
   
-  return useMutation({
-    mutationFn: async ({ 
-      itemId, 
-      itemType, 
-      paymentMethod,
-      code 
-    }: { 
-      itemId: string | number;
-      itemType: 'course' | 'semester' | 'exam' | 'lesson';
-      paymentMethod: 'wallet' | 'code';
-      code?: string;
-    }) => {
-      let endpoint = '';
-      
-      if (paymentMethod === 'wallet') {
-        endpoint = `/student/${itemType}/${itemId}/purchase`;
-        const response = await api.post(endpoint, { payment_method: 'wallet' });
-        return response.data;
-      } else {
-        endpoint = `/wallet/redeem`;
-        const response = await api.post(endpoint, { 
-          code,
-          item_id: itemId,
-          item_type: itemType,
-        });
-        return response.data;
-      }
+  // ✅ 1. شراء عادي عبر `/enroll/request` (كل حاجة في الـ Body)
+  const enroll = useMutation({
+    mutationFn: async (data: EnrollRequest) => {
+      const response = await api.post('/enroll/request', data);
+      return response.data;
     },
     onSuccess: (data) => {
       if (data.status === 200 || data.status === true) {
-        toast.success(data.message || "تمت العملية بنجاح!");
+        toast.success(data.message || "تم الشراء بنجاح!");
         queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
         queryClient.invalidateQueries({ queryKey: ['purchased-items'] });
+        queryClient.invalidateQueries({ queryKey: ['student-courses'] });
+        queryClient.invalidateQueries({ queryKey: ['student-books'] });
       } else {
-        toast.error(data.message || "فشلت العملية");
+        toast.error(data.message || "فشل الشراء");
       }
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || "حدث خطأ ما");
     },
   });
+
+  // ✅ 2. استخدام كود خصم فقط (بدون منتج) - `/enroll/redeem-code`
+  const redeemCode = useMutation({
+    mutationFn: async ({ code }: { code: string }) => {
+      const response = await api.post('/enroll/redeem-code', { code });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      if (data.status === 200 || data.status === true) {
+        toast.success(data.message || "تم استخدام الكود بنجاح!");
+        queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+        queryClient.invalidateQueries({ queryKey: ['purchased-items'] });
+        queryClient.invalidateQueries({ queryKey: ['student-courses'] });
+        queryClient.invalidateQueries({ queryKey: ['student-books'] });
+      } else {
+        toast.error(data.message || "كود غير صالح");
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "حدث خطأ ما");
+    },
+  });
+
+  return {
+    // ✅ 1. شراء عادي
+    enroll: enroll.mutate,
+    isEnrolling: enroll.isPending,
+    enrollError: enroll.error,
+    enrollData: enroll.data,
+
+    // ✅ 2. كود خصم
+    redeemCode: redeemCode.mutate,
+    isRedeeming: redeemCode.isPending,
+    redeemError: redeemCode.error,
+
+    // ✅ دالة مساعدة للتحقق من الرصيد (لو الطالب معاه رصيد)
+    canPurchaseWithWallet: (walletBalance: number, price: number) => {
+      return walletBalance >= price;
+    },
+  };
 };
