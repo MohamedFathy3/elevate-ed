@@ -541,8 +541,6 @@ export const SemestersPage = () => {
     </motion.div>
   );
 };
-
-// Direct Course Card Component with Modal
 const DirectCourseCard = ({ course, index, slug, lang, pick, isNature }: any) => {
   const [showRedeemModal, setShowRedeemModal] = useState(false);
   
@@ -560,7 +558,7 @@ const DirectCourseCard = ({ course, index, slug, lang, pick, isNature }: any) =>
   const lessonsCount = course.details?.length || 0;
   
   const primaryColor = isNature ? 'amber' : 'primary';
-  const textPrimary = isNature ? 'text-amber-600 dark:text-amber-400' : 'text-primary';
+  const textPrimary = isNature ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400';
   
   const handlePaymentSuccess = (data: any) => {
     console.log('✅ Payment success:', data);
@@ -582,7 +580,7 @@ const DirectCourseCard = ({ course, index, slug, lang, pick, isNature }: any) =>
     <>
       <motion.div
         whileHover={{ y: -5 }}
-        className={`group rounded-2xl border transition-all overflow-hidden bg-white dark:bg-gray-900 ${isNature ? 'border-amber-200 dark:border-amber-800' : 'border-border'} hover:border-${primaryColor}/30`}
+        className={`group rounded-2xl border transition-all overflow-hidden bg-white dark:bg-gray-900 ${isNature ? 'border-amber-200 dark:border-amber-800' : 'border-gray-200 dark:border-gray-700'} hover:border-${primaryColor}/30 dark:hover:border-${primaryColor}/50`}
       >
         <Link to={`/courses/${course.id}`}>
           <div className="relative h-40 overflow-hidden">
@@ -606,15 +604,15 @@ const DirectCourseCard = ({ course, index, slug, lang, pick, isNature }: any) =>
           </div>
           
           <div className="p-5">
-            <h3 className={`font-bold text-lg line-clamp-1 mb-2 transition-colors ${isNature ? 'text-amber-800 dark:text-amber-200 group-hover:text-amber-600' : 'group-hover:text-primary'}`}>
+            <h3 className={`font-bold text-lg line-clamp-1 mb-2 transition-colors text-gray-900 dark:text-white group-hover:${textPrimary}`}>
               {courseTitle}
             </h3>
             
-            <p className="text-sm text-foreground/60 line-clamp-2 mb-3">
+            <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-3">
               {pick(course.description, course.description_ar)?.replace(/<[^>]*>/g, '')}
             </p>
             
-            <div className="flex items-center gap-4 text-xs text-foreground/50 mb-4">
+            <div className="flex items-center gap-4 text-xs text-gray-400 dark:text-gray-500 mb-4">
               <span className="flex items-center gap-1">
                 <BookOpen className="w-3 h-3" />
                 {lessonsCount} {lang === "ar" ? "دروس" : "lessons"}
@@ -628,7 +626,7 @@ const DirectCourseCard = ({ course, index, slug, lang, pick, isNature }: any) =>
                     <span className={`text-xl font-bold ${textPrimary}`}>
                       {finalPrice.toFixed(2)} EGP
                     </span>
-                    <span className="text-xs text-foreground/40 line-through">{originalPrice.toFixed(2)} EGP</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500 line-through">{originalPrice.toFixed(2)} EGP</span>
                   </div>
                 ) : (
                   <span className={`text-xl font-bold ${textPrimary}`}>
