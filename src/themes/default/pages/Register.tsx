@@ -952,7 +952,6 @@ const Register = () => {
                         />
                       </div>
                     </div>
-
                     <div>
                       <label className={labelCls}>
                         {lang === "ar" ? "المحافظة" : "Governorate"} <span className="text-red-500">*</span>
@@ -965,17 +964,17 @@ const Register = () => {
                           onChange={handleChange}
                           onBlur={handleBlur}
                           className={`
-      ${inputInnerCls} 
-      appearance-none 
-      pr-8 
-      [&>option]:text-slate-900 
-      [&>option]:dark:text-white 
-      [&>option]:bg-white 
-      [&>option]:dark:bg-slate-800
-      [&>option]:hover:bg-slate-100 
-      [&>option]:dark:hover:bg-slate-700
-      [&>option]:py-1.5
-    `}
+        ${inputInnerCls} 
+        appearance-none 
+        pr-8
+        bg-white dark:bg-slate-800
+        text-slate-900 dark:text-white
+        dark:[&>option]:bg-slate-800
+        dark:[&>option]:text-white
+        [&>option]:bg-white
+        [&>option]:text-slate-900
+        [&>option]:py-1.5
+      `}
                           required
                         >
                           <option value="" className="text-slate-400 dark:text-slate-400">

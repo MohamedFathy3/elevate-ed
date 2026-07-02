@@ -581,7 +581,13 @@ const Register = () => {
                       name="governorate"
                       value={formData.governorate}
                       onChange={handleChange}
-                      className="flex-1 bg-transparent py-3 outline-none text-sm appearance-none pr-4 text-gray-900 dark:text-white"
+                      className="
+        flex-1 py-3 outline-none text-sm appearance-none pr-4
+        bg-gray-50 dark:bg-gray-800
+        text-gray-900 dark:text-white
+        [&>option]:bg-white [&>option]:text-gray-900
+        dark:[&>option]:bg-gray-800 dark:[&>option]:text-white
+      "
                       required
                     >
                       <option value="">{lang === "ar" ? "اختر المحافظة" : "Select governorate"}</option>
@@ -660,8 +666,8 @@ const Register = () => {
                       type="button"
                       onClick={() => setFormData({ ...formData, type_of_study: "general" })}
                       className={`px-4 py-3 rounded-2xl text-sm font-bold transition-all ${formData.type_of_study === "general"
-                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25"
-                          : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
+                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25"
+                        : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
                         }`}
                     >
                       {lang === "ar" ? "عام" : "General"}
@@ -670,8 +676,8 @@ const Register = () => {
                       type="button"
                       onClick={() => setFormData({ ...formData, type_of_study: "azhar" })}
                       className={`px-4 py-3 rounded-2xl text-sm font-bold transition-all ${formData.type_of_study === "azhar"
-                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25"
-                          : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
+                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25"
+                        : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
                         }`}
                     >
                       {lang === "ar" ? "أزهري" : "Azhar"}
@@ -689,8 +695,8 @@ const Register = () => {
                       type="button"
                       onClick={() => setFormData({ ...formData, type_of_attendance: "online", center_hour_id: "" })}
                       className={`px-4 py-3 rounded-2xl text-sm font-bold transition-all ${formData.type_of_attendance === "online"
-                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25"
-                          : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
+                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25"
+                        : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
                         }`}
                     >
                       {lang === "ar" ? "أونلاين" : "Online"}
@@ -699,8 +705,8 @@ const Register = () => {
                       type="button"
                       onClick={() => setFormData({ ...formData, type_of_attendance: "center" })}
                       className={`px-4 py-3 rounded-2xl text-sm font-bold transition-all ${formData.type_of_attendance === "center"
-                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25"
-                          : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
+                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25"
+                        : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
                         }`}
                     >
                       {lang === "ar" ? "سنتر" : "Center"}
@@ -749,8 +755,8 @@ const Register = () => {
                       type="button"
                       onClick={() => setFormData({ ...formData, gender: "male" })}
                       className={`px-4 py-3 rounded-2xl text-sm font-bold transition-all ${formData.gender === "male"
-                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25"
-                          : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
+                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25"
+                        : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
                         }`}
                     >
                       {lang === "ar" ? "ذكر" : "Male"}
@@ -759,8 +765,8 @@ const Register = () => {
                       type="button"
                       onClick={() => setFormData({ ...formData, gender: "female" })}
                       className={`px-4 py-3 rounded-2xl text-sm font-bold transition-all ${formData.gender === "female"
-                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25"
-                          : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
+                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25"
+                        : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
                         }`}
                     >
                       {lang === "ar" ? "أنثى" : "Female"}

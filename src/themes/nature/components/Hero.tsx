@@ -3,22 +3,22 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
-import { 
-  UserPlus, MapPin, BookOpen, Sparkles, Calendar, 
+import {
+  UserPlus, MapPin, BookOpen, Sparkles, Calendar,
   Star, ChevronRight, Users, Award, GraduationCap, Play
 } from "lucide-react";
 import heroTeacher from "@/assets/hero-teacher.png";
 import { useTeacher } from "@/context/TeacherContext";
 import { useLang } from "@/i18n/LanguageContext";
-import { useTheme } from "@/context/ThemeContext"; 
+import { useTheme } from "@/context/ThemeContext";
 import { motion } from "framer-motion";
 
 const Hero = () => {
   const { teacher, home, pick } = useTeacher();
   const { lang } = useLang();
   const { slug } = useParams();
-  const { apiColors, colorMode } = useTheme(); 
-  
+  const { apiColors, colorMode } = useTheme();
+
   const teacherName = teacher?.name || pick(teacher?.name, teacher?.name_ar) || "المعلم";
   const title = pick(home?.title, home?.title_ar) || "";
   const subTitle = pick(home?.sub_title, home?.sub_title_ar) || "";
@@ -26,12 +26,12 @@ const Hero = () => {
   const imageUrl = home?.image?.fullUrl || home?.imageUrl || heroTeacher;
 
   // كلمات متحركة
-  const rotatingWords = lang === "ar" 
+  const rotatingWords = lang === "ar"
     ? ["التميز", "النجاح", "الإبداع", "التفوق"]
     : ["Excellence", "Success", "Creativity", "Excellence"];
-  
+
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
-  
+
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentWordIndex((prev) => (prev + 1) % rotatingWords.length);
@@ -41,18 +41,18 @@ const Hero = () => {
 
   const genericColors = useMemo(() => {
     const isDark = colorMode === 'dark';
-    
+
     return {
       gradientFrom: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.9)',
       gradientTo: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(248, 250, 252, 0.95)',
-      
+
       cardBg: isDark ? '#1e293b' : '#ffffff',
       cardBorder: isDark ? 'rgba(51, 65, 85, 0.5)' : 'rgba(229, 231, 235, 0.8)',
-      
+
       textPrimary: isDark ? '#f1f5f9' : '#0f172a',
       textSecondary: isDark ? '#94a3b8' : '#64748b',
       textMuted: isDark ? '#64748b' : '#94a3b8',
-      
+
       accentColor: '#10b981', // emerald - ثابت
       accentColorLight: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.1)',
       accentBorder: isDark ? 'rgba(16, 185, 129, 0.3)' : 'rgba(16, 185, 129, 0.2)',
@@ -61,21 +61,21 @@ const Hero = () => {
 
   const getBackgroundStyle = () => {
     if (apiColors) {
-      const bgColor = colorMode === 'dark' 
+      const bgColor = colorMode === 'dark'
         ? adjustColorForDarkMode(apiColors.background)
         : apiColors.background;
-      
+
       const textColor = colorMode === 'dark'
         ? lightenColor(apiColors.text, 0.9)
         : apiColors.text;
-      
+
       return {
         backgroundColor: bgColor,
         color: textColor,
         backgroundImage: `radial-gradient(circle at 20% 30%, ${bgColor} 0%, ${colorMode === 'dark' ? '#0f172a' : '#f8fafc'} 100%)`,
       };
     }
-    
+
     // الألوان الافتراضية للثيم
     return {
       backgroundColor: 'transparent',
@@ -86,7 +86,7 @@ const Hero = () => {
   // ✅ حساب لون النص الثانوي
   const getSecondaryTextColor = () => {
     if (apiColors) {
-      return colorMode === 'dark' 
+      return colorMode === 'dark'
         ? `${lightenColor(apiColors.text, 0.7)}cc`
         : `${apiColors.text}cc`;
     }
@@ -108,17 +108,17 @@ const Hero = () => {
   const mutedTextColor = getMutedTextColor();
 
   return (
-    <section 
+    <section
       className="relative overflow-hidden pt-28 pb-40"
       style={backgroundStyle}
     >
 
       {/* ==================== BACKGROUND ANIMATIONS ==================== */}
-      
+
       {/* 1. الطبقة الأولى - خلفية متدرجة متحركة (تتكيف مع الـ API و Dark Mode) */}
       <div className="absolute inset-0 -z-20">
         {apiColors ? (
-          <div 
+          <div
             className="absolute inset-0"
             style={{
               background: `radial-gradient(circle at 20% 30%, ${colorMode === 'dark' ? adjustColorForDarkMode(apiColors.background) : apiColors.background} 0%, ${colorMode === 'dark' ? '#0f172a' : '#f8fafc'} 100%)`,
@@ -133,44 +133,41 @@ const Hero = () => {
       {/* 2. الطبقة الثانية - دوائر متحركة (تتكيف مع Dark Mode) */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <motion.div
-          animate={{ 
+          animate={{
             x: [0, 100, 0, -100, 0],
             y: [0, 50, 0, -50, 0],
             scale: [1, 1.2, 1, 0.8, 1]
           }}
           transition={{ duration: 30, repeat: Infinity, ease: "easeInOut" }}
-          className={`absolute top-10 -left-20 w-96 h-96 rounded-full blur-3xl ${
-            colorMode === 'dark' 
-              ? 'bg-emerald-500/5' 
-              : 'bg-emerald-300/20'
-          }`}
+          className={`absolute top-10 -left-20 w-96 h-96 rounded-full blur-3xl ${colorMode === 'dark'
+            ? 'bg-emerald-500/5'
+            : 'bg-emerald-300/20'
+            }`}
         />
-        
+
         <motion.div
-          animate={{ 
+          animate={{
             x: [0, -80, 0, 80, 0],
             y: [0, -60, 0, 60, 0],
             scale: [1, 0.8, 1, 1.2, 1]
           }}
           transition={{ duration: 35, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className={`absolute bottom-10 -right-20 w-[500px] h-[500px] rounded-full blur-3xl ${
-            colorMode === 'dark'
-              ? 'bg-teal-500/5'
-              : 'bg-teal-300/20'
-          }`}
+          className={`absolute bottom-10 -right-20 w-[500px] h-[500px] rounded-full blur-3xl ${colorMode === 'dark'
+            ? 'bg-teal-500/5'
+            : 'bg-teal-300/20'
+            }`}
         />
-        
+
         <motion.div
-          animate={{ 
+          animate={{
             x: [0, 50, 0, -50, 0],
             y: [0, -30, 0, 30, 0],
           }}
           transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 5 }}
-          className={`absolute top-1/2 left-1/3 w-80 h-80 rounded-full blur-3xl ${
-            colorMode === 'dark'
-              ? 'bg-amber-500/3'
-              : 'bg-amber-300/15'
-          }`}
+          className={`absolute top-1/2 left-1/3 w-80 h-80 rounded-full blur-3xl ${colorMode === 'dark'
+            ? 'bg-amber-500/3'
+            : 'bg-amber-300/15'
+            }`}
         />
       </div>
 
@@ -180,12 +177,12 @@ const Hero = () => {
           <motion.div
             key={i}
             initial={{ opacity: 0 }}
-            animate={{ 
+            animate={{
               y: [0, -200, 0],
               x: [0, (Math.random() - 0.5) * 100, 0],
               opacity: [0, colorMode === 'dark' ? 0.2 : 0.4, 0]
             }}
-            transition={{ 
+            transition={{
               duration: 5 + Math.random() * 7,
               repeat: Infinity,
               delay: Math.random() * 10,
@@ -197,7 +194,7 @@ const Hero = () => {
               height: `${Math.random() * 8 + 2}px`,
               left: `${Math.random() * 100}%`,
               bottom: 0,
-              backgroundColor: colorMode === 'dark' 
+              backgroundColor: colorMode === 'dark'
                 ? `hsl(${Math.random() * 60 + 140}, 70%, 40%)`
                 : `hsl(${Math.random() * 60 + 140}, 70%, 50%)`,
               opacity: colorMode === 'dark' ? 0.15 : 0.3
@@ -221,7 +218,7 @@ const Hero = () => {
               <stop offset="100%" stopColor="#14b8a6" stopOpacity="0" />
             </linearGradient>
           </defs>
-          
+
           <path
             d="M-100,100 Q200,50 400,150 T800,100 T1100,120"
             fill="none"
@@ -238,7 +235,7 @@ const Hero = () => {
                 M-100,100 Q200,50 400,150 T800,100 T1100,120"
             />
           </path>
-          
+
           <path
             d="M-100,250 Q300,200 500,300 T900,250 T1100,280"
             fill="none"
@@ -255,7 +252,7 @@ const Hero = () => {
                 M-100,250 Q300,200 500,300 T900,250 T1100,280"
             />
           </path>
-          
+
           <path
             d="M-100,400 Q400,350 600,450 T1000,400 T1100,420"
             fill="none"
@@ -276,7 +273,7 @@ const Hero = () => {
       </div>
 
       {/* 5. الطبقة الخامسة - شبكة خفيفة (تتكيف مع Dark Mode) */}
-      <div 
+      <div
         className="absolute inset-0 -z-5 pointer-events-none"
         style={{
           opacity: colorMode === 'dark' ? 0.03 : 0.02,
@@ -286,22 +283,21 @@ const Hero = () => {
       />
 
       {/* ==================== MAIN CONTENT ==================== */}
-      
+
       <div className="container mx-auto px-4 grid lg:grid-cols-2 gap-10 items-center relative z-10">
-        
+
         {/* Left Content */}
         <div className="text-center lg:text-right order-2 lg:order-1">
-          
+
           {/* Badge - ألوان تتكيف مع Dark Mode */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 ${
-              colorMode === 'dark'
-                ? 'bg-emerald-500/10 border border-emerald-800'
-                : 'bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-200'
-            }`}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 ${colorMode === 'dark'
+              ? 'bg-emerald-500/10 border border-emerald-800'
+              : 'bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-200'
+              }`}
           >
             <Sparkles className="w-4 h-4 text-emerald-500" />
             <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
@@ -312,15 +308,15 @@ const Hero = () => {
           {/* Title - ياخد لون مناسب (API أو Generic) */}
           <h1 className="font-black leading-[1.05] tracking-tight">
             {title && (
-              <motion.span 
+              <motion.span
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
                 className="block text-5xl md:text-6xl"
-                style={{ 
-                  color: apiColors?.text 
+                style={{
+                  color: apiColors?.text
                     ? (colorMode === 'dark' ? lightenColor(apiColors.text, 0.9) : apiColors.text)
-                    : genericColors.textPrimary 
+                    : genericColors.textPrimary
                 }}
               >
                 {title}
@@ -335,7 +331,7 @@ const Hero = () => {
             transition={{ delay: 0.5 }}
             className="mt-4 flex items-center justify-center lg:justify-start gap-2 flex-wrap"
           >
-            <span style={{ color: secondaryTextColor }}>
+            <span className="text-slate-600 dark:text-slate-300">
               {lang === "ar" ? "نحو" : "Towards"}
             </span>
             <div className="relative h-10 overflow-hidden">
@@ -347,7 +343,7 @@ const Hero = () => {
 
           {/* Subtitle */}
           {subTitle && (
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
@@ -360,7 +356,7 @@ const Hero = () => {
 
           {/* Description */}
           {description && (
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
@@ -372,44 +368,42 @@ const Hero = () => {
           )}
 
           {/* Buttons */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8 }}
             className="mt-8 flex flex-col items-center lg:items-start gap-3"
           >
             {/* الزر الرئيسي */}
-            <Link 
-              to={`/register`} 
+            <Link
+              to={`/register`}
               className="group inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-extrabold text-lg shadow-soft hover:shadow-xl transition-all duration-300 hover:scale-105"
             >
               <UserPlus className="size-5" />
               {lang === "ar" ? "انضم لينا الآن" : "Join Now"}
               <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
-            
+
             {/* الأزرار الثانوية */}
             <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
-              <a 
-                href={`/center-hours`} 
-                className={`inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm transition-all duration-300 hover:shadow-md ${
-                  colorMode === 'dark'
-                    ? 'bg-slate-800 border border-emerald-800 hover:border-emerald-600'
-                    : 'bg-white border border-emerald-200 hover:border-emerald-400'
-                }`}
+              <a
+                href={`/center-hours`}
+                className={`inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm transition-all duration-300 hover:shadow-md ${colorMode === 'dark'
+                  ? 'bg-slate-800 border border-emerald-800 hover:border-emerald-600 text-slate-200'
+                  : 'bg-white border border-emerald-200 hover:border-emerald-400 text-slate-800'
+                  }`}
               >
-                <Calendar className="size-4 text-emerald-500" /> 
+                <Calendar className="size-4 text-emerald-500" />
                 {lang === "ar" ? "مواعيد السناتر" : "Center Hours"}
               </a>
-              <a 
-                href="#books" 
-                className={`inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm transition-all duration-300 hover:shadow-md ${
-                  colorMode === 'dark'
-                    ? 'bg-slate-800 border border-emerald-800 hover:border-emerald-600'
-                    : 'bg-white border border-emerald-200 hover:border-emerald-400'
-                }`}
+              <a
+                href="#books"
+                className={`inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm transition-all duration-300 hover:shadow-md ${colorMode === 'dark'
+                  ? 'bg-slate-800 border border-emerald-800 hover:border-emerald-600 text-slate-200'
+                  : 'bg-white border border-emerald-200 hover:border-emerald-400 text-slate-800'
+                  }`}
               >
-                <BookOpen className="size-4 text-emerald-500" /> 
+                <BookOpen className="size-4 text-emerald-500" />
                 {lang === "ar" ? "الكتب" : "Books"}
               </a>
             </div>
@@ -419,28 +413,26 @@ const Hero = () => {
         {/* Right Image */}
         <div className="relative order-1 lg:order-2 flex justify-center">
           <div className="absolute inset-0 bg-sun blur-2xl animate-pulse-glow" aria-hidden />
-          <img 
-            src={imageUrl} 
-            alt={teacherName} 
-            width={1024} 
-            height={1024} 
-            className="relative w-[88%] max-w-[520px] drop-shadow-2xl animate-float" 
+          <img
+            src={imageUrl}
+            alt={teacherName}
+            width={1024}
+            height={1024}
+            className="relative w-[88%] max-w-[520px] drop-shadow-2xl animate-float"
           />
-          
+
           {/* Floating Card 1 */}
           <motion.div
             animate={{ y: [0, -10, 0] }}
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-            className={`absolute -bottom-10 right-5 lg:right-10 rounded-2xl p-3 shadow-xl border ${
-              colorMode === 'dark'
-                ? 'bg-slate-800 border-emerald-800'
-                : 'bg-white border-emerald-100'
-            }`}
+            className={`absolute -bottom-10 right-5 lg:right-10 rounded-2xl p-3 shadow-xl border ${colorMode === 'dark'
+              ? 'bg-slate-800 border-emerald-800'
+              : 'bg-white border-emerald-100'
+              }`}
           >
             <div className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                colorMode === 'dark' ? 'bg-emerald-900/50' : 'bg-emerald-100'
-              }`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${colorMode === 'dark' ? 'bg-emerald-900/50' : 'bg-emerald-100'
+                }`}>
                 <Star className="w-4 h-4 text-emerald-500 fill-emerald-500" />
               </div>
               <div>
@@ -456,16 +448,14 @@ const Hero = () => {
           <motion.div
             animate={{ y: [0, 10, 0] }}
             transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-            className={`absolute -top-10 left-5 lg:left-10 rounded-2xl p-3 shadow-xl border ${
-              colorMode === 'dark'
-                ? 'bg-slate-800 border-teal-800'
-                : 'bg-white border-teal-100'
-            }`}
+            className={`absolute -top-10 left-5 lg:left-10 rounded-2xl p-3 shadow-xl border ${colorMode === 'dark'
+              ? 'bg-slate-800 border-teal-800'
+              : 'bg-white border-teal-100'
+              }`}
           >
             <div className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                colorMode === 'dark' ? 'bg-teal-900/50' : 'bg-teal-100'
-              }`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${colorMode === 'dark' ? 'bg-teal-900/50' : 'bg-teal-100'
+                }`}>
                 <Users className="w-4 h-4 text-teal-500" />
               </div>
               <div>
@@ -525,25 +515,25 @@ const Hero = () => {
 function adjustColorForDarkMode(hexColor: string): string {
   // لو اللون فاتح جداً، نخفيه في الدارك مود
   if (!hexColor || !hexColor.startsWith('#')) return '#0f172a';
-  
+
   try {
     let r = parseInt(hexColor.slice(1, 3), 16);
     let g = parseInt(hexColor.slice(3, 5), 16);
     let b = parseInt(hexColor.slice(5, 7), 16);
-    
+
     // نحسب السطوع
     const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-    
+
     if (brightness > 200) {
       // لون فاتح جداً - نستخدم خلفية الدارك مود الافتراضية
       return '#0f172a';
     }
-    
+
     // نخفف اللون للدارك مود
     r = Math.floor(r * 0.3);
     g = Math.floor(g * 0.3);
     b = Math.floor(b * 0.3);
-    
+
     return `rgb(${r}, ${g}, ${b})`;
   } catch {
     return '#0f172a';
@@ -553,15 +543,15 @@ function adjustColorForDarkMode(hexColor: string): string {
 // ✅ تفتيح اللون
 function lightenColor(hex: string, percent: number): string {
   if (!hex || !hex.startsWith('#')) return hex;
-  
+
   let r = parseInt(hex.slice(1, 3), 16);
   let g = parseInt(hex.slice(3, 5), 16);
   let b = parseInt(hex.slice(5, 7), 16);
-  
+
   r = Math.min(255, Math.floor(r + (255 - r) * (1 - percent)));
   g = Math.min(255, Math.floor(g + (255 - g) * (1 - percent)));
   b = Math.min(255, Math.floor(b + (255 - b) * (1 - percent)));
-  
+
   return `rgb(${r}, ${g}, ${b})`;
 }
 
