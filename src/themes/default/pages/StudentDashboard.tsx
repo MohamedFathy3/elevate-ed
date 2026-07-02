@@ -25,6 +25,7 @@ import Cookies from "js-cookie";
 import { toast  } from "@/hooks/use-toast";
 import { useRedeemCode } from "@/hooks/useEnroll";
 import Barcode from "react-barcode";
+import { useTeacher } from "@/context/TeacherContext";
 
 // ==================== Types ====================
 type TabType = 'profile' | 'wallet' | 'courses' | 'lessons' | 'semesters' | 'books' | 'exams' | 'assignments';
