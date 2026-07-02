@@ -23,7 +23,7 @@ export const Navbar = () => {
   const isNature = theme === 'nature';
   const isDefault = theme === 'default';
   const isDark = colorMode === 'dark';
-  
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
     onScroll();
@@ -37,28 +37,50 @@ export const Navbar = () => {
   }, [pathname]);
 
   // ✅ دالة للتعامل مع الـ hash links
+  // const handleHashLink = (href: string, e: React.MouseEvent) => {
+  //   if (href.startsWith('#')) {
+  //     e.preventDefault();
+  //     const targetId = href.substring(1);
+  //     const targetElement = document.getElementById(targetId);
+
+  //     if (targetElement) {
+  //       if (pathname === '/') {
+  //         targetElement.scrollIntoView({ behavior: 'smooth' });
+  //       } else {
+  //         navigate('/');
+  //         setTimeout(() => {
+  //           const element = document.getElementById(targetId);
+  //           if (element) {
+  //             element.scrollIntoView({ behavior: 'smooth' });
+  //           }
+  //         }, 100);
+  //       }
+  //     }
+  //   }
+  // };
   const handleHashLink = (href: string, e: React.MouseEvent) => {
     if (href.startsWith('#')) {
       e.preventDefault();
       const targetId = href.substring(1);
-      const targetElement = document.getElementById(targetId);
-      
-      if (targetElement) {
-        if (pathname === '/') {
+
+      if (pathname === '/') {
+        // إحنا أصلاً في الصفحة الرئيسية، دور على العنصر واعمل سكرول
+        const targetElement = document.getElementById(targetId);
+        if (targetElement) {
           targetElement.scrollIntoView({ behavior: 'smooth' });
-        } else {
-          navigate('/');
-          setTimeout(() => {
-            const element = document.getElementById(targetId);
-            if (element) {
-              element.scrollIntoView({ behavior: 'smooth' });
-            }
-          }, 100);
         }
+      } else {
+        // مش في الصفحة الرئيسية، روح لها الأول وبعدين اعمل سكرول
+        navigate('/');
+        setTimeout(() => {
+          const element = document.getElementById(targetId);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 300); // زودتها من 100 لـ 300 عشان تدي وقت كافي للصفحة إنها تترندر
       }
     }
   };
-
   const links = [
     { href: "#stages", label: lang === "ar" ? "المراحل" : "Stages" },
     { href: "/courses", label: lang === "ar" ? "الكورسات" : "Courses" },
@@ -67,10 +89,10 @@ export const Navbar = () => {
   ];
 
   const teacherName = pick(teacher?.name, teacher?.name_ar) || (lang === "ar" ? "المعلم" : "Teacher");
-  
+
   // ✅ تحسين جلب الصورة - جرب أكثر من مصدر
   const logoImage = teacher?.image?.fullUrl || teacher?.imageUrl || teacher?.logoUrl || teacher?.website?.home?.image?.fullUrl || teacher?.website?.home?.imageUrl || null;
-  
+
   const studentName = student?.name || (lang === "ar" ? "الطالب" : "Student");
 
   // ✅ ألوان حسب الثيم
@@ -100,18 +122,18 @@ export const Navbar = () => {
       className="fixed top-3 md:top-5 inset-x-0 z-50 px-3 md:px-6"
     >
       <nav className={`max-w-7xl mx-auto rounded-full pl-3 pr-2 md:pl-5 md:pr-2 py-2 flex items-center justify-between gap-3 transition-all duration-300 
-        ${isDark 
-          ? 'bg-gray-900/90 backdrop-blur-xl border border-gray-800' 
+        ${isDark
+          ? 'bg-gray-900/90 backdrop-blur-xl border border-gray-800'
           : 'bg-white/90 backdrop-blur-xl border border-gray-200'} 
         shadow-lg`}>
-        
+
         {/* Logo */}
         <Link to={`/`} className="flex items-center gap-2 shrink-0">
           <div className={`w-10 h-10 rounded-xl bg-gradient-to-r ${getPrimaryGradient()} grid place-items-center shadow-md overflow-hidden flex-shrink-0`}>
             {logoImage ? (
-              <img 
-                src={logoImage} 
-                alt={teacherName} 
+              <img
+                src={logoImage}
+                alt={teacherName}
                 className="w-full h-full object-cover rounded-xl"
                 onError={(e) => {
                   // لو الصورة مش موجودة، نعرض الـ fallback
@@ -127,8 +149,8 @@ export const Navbar = () => {
               />
             ) : null}
             {/* ✅ Fallback أيقونة لو مفيش صورة */}
-            <div className="logo-fallback w-full h-full rounded-xl flex items-center justify-center" 
-                 style={{ display: logoImage ? 'none' : 'flex' }}>
+            <div className="logo-fallback w-full h-full rounded-xl flex items-center justify-center"
+              style={{ display: logoImage ? 'none' : 'flex' }}>
               <Zap className="w-5 h-5 text-white" fill="white" />
             </div>
           </div>
@@ -194,9 +216,9 @@ export const Navbar = () => {
               >
                 <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex-shrink-0">
                   {student?.imageUrl ? (
-                    <img 
-                      src={student.imageUrl} 
-                      alt={student?.name || 'Student'} 
+                    <img
+                      src={student.imageUrl}
+                      alt={student?.name || 'Student'}
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         e.currentTarget.style.display = 'none';
@@ -210,10 +232,10 @@ export const Navbar = () => {
                       }}
                     />
                   ) : null}
-                  
+
                   {/* Avatar بديل */}
-                  <div className="avatar-fallback w-full h-full rounded-full flex items-center justify-center text-white font-bold text-sm bg-gradient-to-br from-blue-500 to-blue-600" 
-                       style={{ display: student?.imageUrl ? 'none' : 'flex' }}>
+                  <div className="avatar-fallback w-full h-full rounded-full flex items-center justify-center text-white font-bold text-sm bg-gradient-to-br from-blue-500 to-blue-600"
+                    style={{ display: student?.imageUrl ? 'none' : 'flex' }}>
                     {student?.name ? student.name.charAt(0).toUpperCase() : '?'}
                   </div>
                 </div>
@@ -278,8 +300,8 @@ export const Navbar = () => {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className={`lg:hidden max-w-7xl mx-auto mt-2 rounded-3xl p-4 shadow-lg 
-            ${isDark 
-              ? 'bg-gray-900/95 backdrop-blur-xl border border-gray-800' 
+            ${isDark
+              ? 'bg-gray-900/95 backdrop-blur-xl border border-gray-800'
               : 'bg-white/95 backdrop-blur-xl border border-gray-200'}`}
         >
           <ul className="flex flex-col gap-1">

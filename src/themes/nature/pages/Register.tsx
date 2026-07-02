@@ -8,9 +8,9 @@ import { useTeacher } from "@/context/TeacherContext";
 import { useStudentRegister } from "@/hooks/useStudent";
 import { useCenterHours } from "@/hooks/useCenterHours";
 import FileUploader from "@/components/FileUploader";
-import { 
+import {
   UserPlus, Lock, User, Phone, GraduationCap, Eye, EyeOff,
-  Loader2, ArrowLeft, ArrowRight, Building, Wifi, Calendar, Clock, 
+  Loader2, ArrowLeft, ArrowRight, Building, Wifi, Calendar, Clock,
   MapPin, AlertCircle, ChevronDown, Users, School, Landmark, BookOpen, Image,
   X, CheckCircle, Info, Shield, WifiOff, CreditCard, RefreshCw, Smartphone
 } from "lucide-react";
@@ -23,10 +23,10 @@ const Register = () => {
   const { teacher, stages, pick, isLoading } = useTeacher();
   const { mutate: register, isPending } = useStudentRegister();
   const { data: centerHours, isLoading: hoursLoading } = useCenterHours(teacher?.id);
-  
+
   // ✅ State لإظهار/إخفاء popup التعليمات
   const [showInstructions, setShowInstructions] = useState(true);
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -46,7 +46,7 @@ const Register = () => {
   });
 
   const Arrow = dir === "rtl" ? ArrowRight : ArrowLeft;
-  
+
   const teacherName = teacher?.name || (lang === "ar" ? "المعلم" : "Teacher");
   const stagesList = stages || [];
   const hasStages = stagesList.length > 0;
@@ -114,28 +114,28 @@ const Register = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!teacher?.id) {
       toast.error(lang === "ar" ? "لم يتم العثور على المعلم" : "Teacher not found");
       return;
     }
-    
+
     if (!formData.stage_id) {
       toast.error(lang === "ar" ? "الرجاء اختيار المرحلة الدراسية" : "Please select educational stage");
       return;
     }
-    
+
     if (isCenter && !formData.center_hour_id) {
       toast.error(lang === "ar" ? "الرجاء اختيار الميعاد المناسب للسنتر" : "Please select a suitable center time");
       return;
     }
-    
+
     // ✅ التحقق من وجود الصورة (مطلوبة)
     if (!formData.image) {
       toast.error(lang === "ar" ? "الرجاء رفع الصورة الشخصية" : "Please upload profile picture");
       return;
     }
-    
+
     const submitData = {
       name: formData.name,
       phone: formData.phone,
@@ -152,7 +152,7 @@ const Register = () => {
       type_of_study: formData.type_of_study as 'general' | 'azhar',
       image: formData.image ? parseInt(formData.image) : undefined,
     };
-    
+
     register(submitData);
   };
 
@@ -171,7 +171,7 @@ const Register = () => {
         return;
       }
       setStep(2);
-    } 
+    }
     else if (step === 2) {
       if (!formData.governorate) {
         toast.error(lang === "ar" ? "الرجاء اختيار المحافظة" : "Please select governorate");
@@ -218,7 +218,7 @@ const Register = () => {
         <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-emerald-400/10 dark:bg-emerald-400/5 blur-3xl" />
         <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full bg-blue-400/10 dark:bg-blue-400/5 blur-3xl" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-emerald-300/5 dark:bg-emerald-300/5 blur-3xl" />
-        
+
         {/* نقط متحركة */}
         {[...Array(12)].map((_, i) => (
           <div
@@ -288,7 +288,7 @@ const Register = () => {
                       {lang === "ar" ? "📱 متوافق مع جميع الأجهزة" : "📱 Compatible with all devices"}
                     </h3>
                     <p className="text-sm text-blue-700 dark:text-blue-400">
-                      {lang === "ar" 
+                      {lang === "ar"
                         ? "المنصة تعمل على جميع الأجهزة (موبايل ولابتوب)"
                         : "The platform works on all devices (Mobile & Laptop)"}
                     </p>
@@ -305,7 +305,7 @@ const Register = () => {
                       {lang === "ar" ? "👥 نوع الحساب" : "👥 Account Type"}
                     </h3>
                     <p className="text-sm text-emerald-700 dark:text-emerald-400">
-                      {lang === "ar" 
+                      {lang === "ar"
                         ? "طالب سنتر يعمل أكونت سنتر وطالب الأونلاين يعمل أكونت أونلاين"
                         : "Center student creates center account, online student creates online account"}
                     </p>
@@ -322,7 +322,7 @@ const Register = () => {
                       {lang === "ar" ? "🔒 لا يمكن تعديل البيانات" : "🔒 No data modification"}
                     </h3>
                     <p className="text-sm text-amber-700 dark:text-amber-400">
-                      {lang === "ar" 
+                      {lang === "ar"
                         ? "لا يمكن تعديل البيانات إلا بالعودة للدعم"
                         : "Data cannot be modified except by contacting support"}
                     </p>
@@ -339,7 +339,7 @@ const Register = () => {
                       {lang === "ar" ? "💰 عدم استرجاع الكورسات" : "💰 No course refund"}
                     </h3>
                     <p className="text-sm text-red-700 dark:text-red-400">
-                      {lang === "ar" 
+                      {lang === "ar"
                         ? "لا يمكن استرجاع أو تبديل الكورس بعد الاشتراك"
                         : "No refund or exchange of course after subscription"}
                     </p>
@@ -356,7 +356,7 @@ const Register = () => {
                       {lang === "ar" ? "❓ اسأل قبل الاشتراك" : "❓ Ask before subscribing"}
                     </h3>
                     <p className="text-sm text-purple-700 dark:text-purple-400">
-                      {lang === "ar" 
+                      {lang === "ar"
                         ? "لو فيه حاجه مش متأكد منها اسأل الدعم قبل الأشتراك"
                         : "If you are unsure about anything, ask support before subscribing"}
                     </p>
@@ -373,7 +373,7 @@ const Register = () => {
                       {lang === "ar" ? "🌐 اتصال إنترنت قوي" : "🌐 Strong internet connection"}
                     </h3>
                     <p className="text-sm text-cyan-700 dark:text-cyan-400">
-                      {lang === "ar" 
+                      {lang === "ar"
                         ? "استخدم واي فاي قوي والنت يكون مستقر جدا حتي لا تواجه مشكلة مع الفيديوهات"
                         : "Use strong Wi-Fi and stable internet to avoid video issues"}
                     </p>
@@ -390,7 +390,7 @@ const Register = () => {
                       {lang === "ar" ? "👤 استخدام شخصي فقط" : "👤 Personal use only"}
                     </h3>
                     <p className="text-sm text-rose-700 dark:text-rose-400">
-                      {lang === "ar" 
+                      {lang === "ar"
                         ? "الحساب مخصص للاستخدام الشخصي فقط ومشاركته تعرضه للإغلاق"
                         : "Account is for personal use only; sharing it will lead to closure"}
                     </p>
@@ -420,8 +420,8 @@ const Register = () => {
 
       <div className="container mx-auto px-4 max-w-3xl relative z-10">
         {/* Back to Home Link */}
-        <Link 
-          to={``} 
+        <Link
+          to={``}
           className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors mb-4"
         >
           <Arrow className="w-4 h-4" />
@@ -463,13 +463,13 @@ const Register = () => {
             </div>
           </div>
 
-          <form 
+          <form
             onSubmit={(e) => {
               e.preventDefault();
               if (step === 3) {
                 handleSubmit(e);
               }
-            }} 
+            }}
           >
             {/* Step 1: المعلومات الأساسية */}
             {step === 1 && (
@@ -539,9 +539,9 @@ const Register = () => {
                       className="flex-1 bg-transparent py-3 outline-none text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                       required
                     />
-                    <button 
-                      type="button" 
-                      onClick={() => setShowPassword(!showPassword)} 
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
                       className="px-4 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition"
                     >
                       {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -581,7 +581,13 @@ const Register = () => {
                       name="governorate"
                       value={formData.governorate}
                       onChange={handleChange}
-                      className="flex-1 bg-transparent py-3 outline-none text-sm appearance-none pr-4 text-gray-900 dark:text-white"
+                      className="
+        flex-1 py-3 outline-none text-sm appearance-none pr-4
+        bg-gray-50 dark:bg-gray-800
+        text-gray-900 dark:text-white
+        [&>option]:bg-white [&>option]:text-gray-900
+        dark:[&>option]:bg-gray-800 dark:[&>option]:text-white
+      "
                       required
                     >
                       <option value="">{lang === "ar" ? "اختر المحافظة" : "Select governorate"}</option>
@@ -631,7 +637,13 @@ const Register = () => {
                         name="stage_id"
                         value={formData.stage_id}
                         onChange={handleChange}
-                        className="flex-1 bg-transparent py-3 outline-none text-sm appearance-none pr-4 text-gray-900 dark:text-white"
+                        className="
+          flex-1 py-3 outline-none text-sm appearance-none pr-4
+          bg-gray-50 dark:bg-gray-800
+          text-gray-900 dark:text-white
+          [&>option]:bg-white [&>option]:text-gray-900
+          dark:[&>option]:bg-gray-800 dark:[&>option]:text-white
+        "
                         required
                       >
                         <option value="">{lang === "ar" ? "اختر المرحلة" : "Select grade"}</option>
@@ -653,22 +665,20 @@ const Register = () => {
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, type_of_study: "general" })}
-                      className={`px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
-                        formData.type_of_study === "general" 
-                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25" 
-                          : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
-                      }`}
+                      className={`px-4 py-3 rounded-2xl text-sm font-bold transition-all ${formData.type_of_study === "general"
+                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25"
+                        : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
+                        }`}
                     >
                       {lang === "ar" ? "عام" : "General"}
                     </button>
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, type_of_study: "azhar" })}
-                      className={`px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
-                        formData.type_of_study === "azhar" 
-                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25" 
-                          : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
-                      }`}
+                      className={`px-4 py-3 rounded-2xl text-sm font-bold transition-all ${formData.type_of_study === "azhar"
+                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25"
+                        : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
+                        }`}
                     >
                       {lang === "ar" ? "أزهري" : "Azhar"}
                     </button>
@@ -684,22 +694,20 @@ const Register = () => {
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, type_of_attendance: "online", center_hour_id: "" })}
-                      className={`px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
-                        formData.type_of_attendance === "online" 
-                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25" 
-                          : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
-                      }`}
+                      className={`px-4 py-3 rounded-2xl text-sm font-bold transition-all ${formData.type_of_attendance === "online"
+                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25"
+                        : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
+                        }`}
                     >
                       {lang === "ar" ? "أونلاين" : "Online"}
                     </button>
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, type_of_attendance: "center" })}
-                      className={`px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
-                        formData.type_of_attendance === "center" 
-                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25" 
-                          : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
-                      }`}
+                      className={`px-4 py-3 rounded-2xl text-sm font-bold transition-all ${formData.type_of_attendance === "center"
+                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25"
+                        : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
+                        }`}
                     >
                       {lang === "ar" ? "سنتر" : "Center"}
                     </button>
@@ -712,7 +720,7 @@ const Register = () => {
                       <Calendar className="size-4" />
                       {lang === "ar" ? "اختر الميعاد المناسب" : "Select suitable time"}
                     </div>
-                    
+
                     {!hasHours ? (
                       <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3 flex items-start gap-2">
                         <AlertCircle className="w-4 h-4 text-amber-500 dark:text-amber-400 flex-shrink-0 mt-0.5" />
@@ -746,22 +754,20 @@ const Register = () => {
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, gender: "male" })}
-                      className={`px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
-                        formData.gender === "male" 
-                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25" 
-                          : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
-                      }`}
+                      className={`px-4 py-3 rounded-2xl text-sm font-bold transition-all ${formData.gender === "male"
+                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25"
+                        : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
+                        }`}
                     >
                       {lang === "ar" ? "ذكر" : "Male"}
                     </button>
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, gender: "female" })}
-                      className={`px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
-                        formData.gender === "female" 
-                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25" 
-                          : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
-                      }`}
+                      className={`px-4 py-3 rounded-2xl text-sm font-bold transition-all ${formData.gender === "female"
+                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25"
+                        : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-400 dark:hover:border-emerald-500"
+                        }`}
                     >
                       {lang === "ar" ? "أنثى" : "Female"}
                     </button>
@@ -829,7 +835,7 @@ const Register = () => {
                   {lang === "ar" ? "السابق" : "Previous"}
                 </button>
               )}
-              
+
               {step < 3 ? (
                 <button
                   type="button"
