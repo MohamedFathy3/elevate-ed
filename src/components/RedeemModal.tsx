@@ -185,14 +185,14 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
           </div>
         )}
         
-        {/* تحذير الرصيد غير كافي */}
+        {/* تحذير الرصيد غير كافي
         {paymentMethod === 'wallet' && price > 0 &&  (
           <div className="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
             ⚠️ {lang === "ar" 
               ? `رصيد المحفظة غير كافي. المطلوب: ${price} جنيه، المتاح: ${walletData?.data?.balance || 0} جنيه` 
               : `Insufficient balance. Required: ${price}, Available: ${walletData?.data?.balance || 0}`}
           </div>
-        )}
+        )} */}
         
         {/* أزرار التحكم */}
         <div className="flex gap-3">
@@ -204,7 +204,7 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
           </button>
           <button
             onClick={handlePayment}
-            disabled={isProcessing || (paymentMethod === 'wallet' )}
+            disabled={isProcessing}
             className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed
               ${isNature 
                 ? 'bg-amber-600 hover:bg-amber-700' 
