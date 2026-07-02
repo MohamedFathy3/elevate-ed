@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/themes/default/pages/CoursesPage.tsx
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -137,10 +138,27 @@ const CoursesPage = () => {
     toast.error(lang === "ar" ? "فشل الدفع، حاول مرة أخرى" : "Payment failed, please try again");
   };
 
-  const calculateFinalPrice = (course: any) => {
-    const originalPrice = parseFloat(course?.price) || 0;
-    const discountPercent = parseFloat(course?.discount) || 0;
-    return originalPrice - (originalPrice * discountPercent / 100);
+  // ✅ حساب السعر النهائي - الباك اند هو اللي بيحسب، احنا بس نعرض
+  const getCoursePrice = (course: any) => {
+    // ✅ لو فيه price من الباك اند، استخدمه
+    if (course?.price !== undefined && course?.price !== null) {
+      return parseFloat(course.price) || 0;
+    }
+    // ✅ لو فيه original_price و discount، احسب يدوياً (fallback)
+    const originalPrice = parseFloat(course?.original_price) || parseFloat(course?.price) || 0;
+    const discount = parseFloat(course?.discount) || 0;
+    return originalPrice - discount;
+  };
+
+  // ✅ التحقق من وجود خصم
+  const hasDiscount = (course: any) => {
+    const discount = parseFloat(course?.discount) || 0;
+    return discount > 0;
+  };
+
+  // ✅ جلب السعر الأصلي
+  const getOriginalPrice = (course: any) => {
+    return parseFloat(course?.original_price) || parseFloat(course?.price) || 0;
   };
 
   // ✅ دوال الصفحة
@@ -424,6 +442,10 @@ const CoursesPage = () => {
                     primaryGradient={primaryGradient}
                     isHovered={hoveredCard === idx}
                     onBuyClick={handleOpenModal}
+                    // ✅ تمرير دوال الأسعار
+                    getCoursePrice={getCoursePrice}
+                    getOriginalPrice={getOriginalPrice}
+                    hasDiscount={hasDiscount}
                   />
                 </motion.div>
               ))}
@@ -438,7 +460,7 @@ const CoursesPage = () => {
         onClose={handleCloseModal}
         itemId={selectedCourse?.id}
         itemType="course"
-        price={selectedCourse ? calculateFinalPrice(selectedCourse) : 0}
+        price={selectedCourse ? getCoursePrice(selectedCourse) : 0}
         onSuccess={handlePaymentSuccess}
         onError={handlePaymentError}
       />

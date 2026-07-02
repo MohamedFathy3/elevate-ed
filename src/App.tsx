@@ -1,4 +1,3 @@
-// src/App.tsx
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -36,14 +35,11 @@ const LoadingSpinner = () => {
     />
   );
 };
-
-// ✅ Component لإدارة الـ SEO ديناميكياً
 const SeoManager = () => {
   const { teacher } = useTeacher();
   const seo = teacher?.website?.seo;
   const home = teacher?.website?.home;
   
-  // ✅ استخدم بيانات الـ SEO من الـ API
   const title = seo?.seo_title || seo?.site_title || seo?.og_title || home?.title || teacher?.name || 'Moahemd';
   const description = seo?.seo_description || seo?.og_description || home?.description || 'A premium bilingual learning platform';
   const image = seo?.og_image || home?.image?.fullUrl || home?.imageUrl || seo?.favicon || '';
@@ -73,7 +69,6 @@ const SubdomainRoutes = () => {
     if (typeof window === 'undefined') {
       return { isSubdomain: false, subdomain: '' };
     }
-    
     const host = window.location.hostname;
     const parts = host.split('.');
     
@@ -105,13 +100,10 @@ const SubdomainRoutes = () => {
     CenterHours,
   } = pages;
 
-  // ✅ لو Subdomain اعرض الـ Teacher Routes
   if (isSubdomain) {
     return (
       <TeacherProvider>
-        {/* ✅ SEO Manager - يضيف الـ Meta Tags ديناميكياً */}
         <SeoManager />
-        
         <Routes>
           <Route path="/" element={<SiteLayout />}>
             <Route index element={<TeacherHome />} />
@@ -135,7 +127,6 @@ const SubdomainRoutes = () => {
     );
   }
 
-  // ✅ الموقع الرئيسي (web-lec.com)
   return (
     <Routes>
       <Route path="/" element={<SiteLayout />}>
@@ -158,7 +149,6 @@ const SubdomainRoutes = () => {
     </Routes>
   );
 };
-
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>

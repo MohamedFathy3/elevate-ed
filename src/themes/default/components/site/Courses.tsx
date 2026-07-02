@@ -286,9 +286,9 @@ const NatureCarouselCourses = ({ courses, pick, slug, lang, Arrow, dir, isDark }
   const go = (dir: number) => setIndex((i) => (i + dir + total) % total);
   const c = courses[index];
 
-  const originalPrice = parseFloat(c?.price) || 0;
+  const originalPrice = parseFloat(c?.original_price) || 0;
   const discount = parseFloat(c?.discount) || 0;
-  const finalPrice = originalPrice - (originalPrice * discount / 100);
+  const finalPrice = parseFloat(c.price);
   const hasDiscount = discount > 0;
 
   // ✅ استخراج تواريخ العرض

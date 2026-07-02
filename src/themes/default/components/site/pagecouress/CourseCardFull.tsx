@@ -42,10 +42,17 @@ export const CourseCardFull = ({
   const offerStartDate = course?.offer_start_date;
   const offerEndDate = course?.offer_end_date;
   const hasOfferDates = offerStartDate && offerEndDate;
-  const originalPrice = parseFloat(course?.price) || 0;
-  const discountPercent = parseFloat(course?.discount) || 0;
-  const finalPrice = originalPrice - (originalPrice * discountPercent / 100);
-  const hasDiscount = discountPercent > 0;
+
+  // ✅ الأسعار من الباك اند مباشرة
+  // price = السعر النهائي (بعد الخصم)
+  // original_price = السعر الأصلي (قبل الخصم)
+  // discount = قيمة الخصم
+  const finalPrice = parseFloat(course?.price) || 0;
+  const originalPrice = parseFloat(course?.original_price) || 0;
+  const discountValue = parseFloat(course?.discount) || 0;
+  
+  // ✅ التحقق من وجود خصم
+  const hasDiscount = discountValue > 0 && originalPrice > finalPrice;
 
   const getImageUrl = () => {
     if (course?.image?.fullUrl) return course.image.fullUrl;
@@ -64,6 +71,11 @@ export const CourseCardFull = ({
   const subjectName = pick(course?.subject?.name, course?.subject?.name_ar) || "";
   const semesterName = pick(course?.semester?.name, course?.semester?.name_ar) || "";
   const lessonsCount = course?.details?.length || 0;
+
+  // ✅ حساب نسبة الخصم للعرض (اختياري)
+  const discountPercent = hasDiscount 
+    ? Math.round(((originalPrice - finalPrice) / originalPrice) * 100) 
+    : 0;
 
   // ألوان ديناميكية
   const cardBg = isNature 
@@ -147,8 +159,8 @@ export const CourseCardFull = ({
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
           
-          {/* Discount Badge */}
-          {hasDiscount && (
+          {/* ✅ Discount Badge - يحسب النسبة المئوية للخصم */}
+          {hasDiscount && discountPercent > 0 && (
             <motion.div 
               initial={{ x: -50, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
@@ -156,7 +168,7 @@ export const CourseCardFull = ({
             >
               <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r from-red-500 to-rose-500 text-white text-xs font-bold shadow-lg">
                 <Percent className="w-3 h-3" />
-                <span>{discountPercent}% خصم</span>
+                <span>{discountPercent}% {lang === "ar" ? "خصم" : "OFF"}</span>
               </div>
             </motion.div>
           )}
@@ -167,14 +179,24 @@ export const CourseCardFull = ({
               : (lang === "ar" ? "🏢 مركز" : "🏢 Center")}
           </div>
           
+          {/* ✅ عرض الأسعار */}
           <div className="absolute bottom-3 left-3 right-3 z-10">
             {hasDiscount ? (
               <div className="flex items-baseline gap-2">
-                <span className={`text-xl font-black ${priceColor} drop-shadow-md`}>{finalPrice.toFixed(2)} EGP</span>
-                <span className="text-xs text-white/50 line-through">{originalPrice.toFixed(2)} EGP</span>
+                <span className={`text-xl font-black ${priceColor} drop-shadow-md text-white`}>
+                  {finalPrice.toFixed(2)} EGP
+                </span>
+                <span className="text-xs text-white/50 line-through">
+                  {originalPrice.toFixed(2)} EGP
+                </span>
+                <span className="text-xs text-green-400 font-semibold bg-black/40 px-1.5 py-0.5 rounded">
+                  -{discountPercent}%
+                </span>
               </div>
             ) : (
-              <span className={`text-xl font-black ${priceColor} drop-shadow-md text-white`}>{originalPrice.toFixed(2)} EGP</span>
+              <span className={`text-xl font-black ${priceColor} drop-shadow-md text-white`}>
+                {finalPrice.toFixed(2)} EGP
+              </span>
             )}
           </div>
         </div>

@@ -6,7 +6,6 @@ import { useLang } from "@/i18n/LanguageContext";
 import { useSemesters } from "@/hooks/useSemesters";
 import { useSubjectCourses } from "@/hooks/useCourses";
 import { useTeacher } from "@/context/TeacherContext";
-import { useBuyCourse } from "@/hooks/useEnroll";
 import { useTheme } from "@/context/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -18,7 +17,34 @@ import {
 import { useState, useMemo } from "react";
 import { toast } from "@/hooks/use-toast";
 import OfferTimerDisplay from "@/components/ui/OfferTimer";
-import { RedeemModal } from "@/components/RedeemModal"; // ✅ إضافة الـ Modal
+import { RedeemModal } from "@/components/RedeemModal";
+
+// ✅ دالة مساعدة لحساب الأسعار من الباك اند
+const getCoursePrice = (item: any) => {
+  // ✅ price هو السعر النهائي (بعد الخصم)
+  return parseFloat(item?.price) || 0;
+};
+
+const getOriginalPrice = (item: any) => {
+  // ✅ original_price هو السعر الأصلي (قبل الخصم)
+  return parseFloat(item?.original_price) || parseFloat(item?.price) || 0;
+};
+
+const hasDiscount = (item: any) => {
+  const discount = parseFloat(item?.discount) || 0;
+  const originalPrice = parseFloat(item?.original_price) || 0;
+  const finalPrice = parseFloat(item?.price) || 0;
+  return discount > 0 && originalPrice > finalPrice;
+};
+
+const getDiscountPercent = (item: any) => {
+  const originalPrice = parseFloat(item?.original_price) || 0;
+  const finalPrice = parseFloat(item?.price) || 0;
+  if (originalPrice > 0 && finalPrice > 0 && originalPrice > finalPrice) {
+    return Math.round(((originalPrice - finalPrice) / originalPrice) * 100);
+  }
+  return 0;
+};
 
 export const SemestersPage = () => {
   const { lang, dir } = useLang();
@@ -74,7 +100,7 @@ export const SemestersPage = () => {
     let filtered = [...semesters];
     
     filtered = filtered.filter((s: any) => {
-      const price = parseFloat(s.price) || 0;
+      const price = getCoursePrice(s);
       return price >= priceRange[0] && price <= priceRange[1];
     });
     
@@ -91,10 +117,10 @@ export const SemestersPage = () => {
     
     switch (sortBy) {
       case "price_asc":
-        filtered.sort((a, b) => (parseFloat(a.price) || 0) - (parseFloat(b.price) || 0));
+        filtered.sort((a, b) => getCoursePrice(a) - getCoursePrice(b));
         break;
       case "price_desc":
-        filtered.sort((a, b) => (parseFloat(b.price) || 0) - (parseFloat(a.price) || 0));
+        filtered.sort((a, b) => getCoursePrice(b) - getCoursePrice(a));
         break;
       case "popularity":
         filtered.sort((a, b) => (b.courses?.length || 0) - (a.courses?.length || 0));
@@ -113,7 +139,7 @@ export const SemestersPage = () => {
     let filtered = [...directCourses];
     
     filtered = filtered.filter((c: any) => {
-      const price = parseFloat(c.price) || 0;
+      const price = getCoursePrice(c);
       return price >= priceRange[0] && price <= priceRange[1];
     });
     
@@ -130,10 +156,10 @@ export const SemestersPage = () => {
     
     switch (sortBy) {
       case "price_asc":
-        filtered.sort((a, b) => (parseFloat(a.price) || 0) - (parseFloat(b.price) || 0));
+        filtered.sort((a, b) => getCoursePrice(a) - getCoursePrice(b));
         break;
       case "price_desc":
-        filtered.sort((a, b) => (parseFloat(b.price) || 0) - (parseFloat(a.price) || 0));
+        filtered.sort((a, b) => getCoursePrice(b) - getCoursePrice(a));
         break;
       case "popularity":
         filtered.sort((a, b) => (b.count_student || 0) - (a.count_student || 0));
@@ -176,9 +202,8 @@ export const SemestersPage = () => {
     return <SemestersSkeleton isNature={isNature} />;
   }
 
-  // عنوان الصفحة (أولوية للمرحلة ثم المادة)
+  // عنوان الصفحة
   const pageTitle = stageName || subjectName || (lang === "ar" ? "الترمات والكورسات" : "Semesters & Courses");
-  const pageBreadcrumb = stageName ? "المرحلة" : "المادة";
 
   return (
     <motion.div 
@@ -519,12 +544,16 @@ export const SemestersPage = () => {
 
 // Direct Course Card Component with Modal
 const DirectCourseCard = ({ course, index, slug, lang, pick, isNature }: any) => {
-  const [showRedeemModal, setShowRedeemModal] = useState(false); // ✅ ستيت المودال
+  const [showRedeemModal, setShowRedeemModal] = useState(false);
   
-  const originalPrice = parseFloat(course.price) || 0;
-  const discountPercent = parseFloat(course.discount) || 0;
-  const finalPrice = originalPrice - (originalPrice * discountPercent / 100);
-  const hasDiscount = discountPercent > 0;
+  // ✅ الأسعار من الباك اند مباشرة
+  const finalPrice = parseFloat(course?.price) || 0;
+  const originalPrice = parseFloat(course?.original_price) || 0;
+  const discountValue = parseFloat(course?.discount) || 0;
+  const hasDiscount = discountValue > 0 && originalPrice > finalPrice;
+  const discountPercent = hasDiscount 
+    ? Math.round(((originalPrice - finalPrice) / originalPrice) * 100) 
+    : 0;
   
   const courseTitle = pick(course.title, course.title_ar) || "Course";
   const courseImage = course.image?.fullUrl || course.imageUrl || "/default-course.jpg";
@@ -533,19 +562,16 @@ const DirectCourseCard = ({ course, index, slug, lang, pick, isNature }: any) =>
   const primaryColor = isNature ? 'amber' : 'primary';
   const textPrimary = isNature ? 'text-amber-600 dark:text-amber-400' : 'text-primary';
   
-  // ✅ دالة نجاح الدفع
   const handlePaymentSuccess = (data: any) => {
     console.log('✅ Payment success:', data);
     toast.success(lang === "ar" ? 'تم الدفع بنجاح!' : 'Payment successful!');
   };
 
-  // ✅ دالة فشل الدفع
   const handlePaymentError = (error: any) => {
     console.error('❌ Payment error:', error);
     toast.error(lang === "ar" ? 'فشل الدفع، حاول مرة أخرى' : 'Payment failed, please try again');
   };
 
-  // ✅ دالة فتح المودال
   const handleBuyClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -606,12 +632,11 @@ const DirectCourseCard = ({ course, index, slug, lang, pick, isNature }: any) =>
                   </div>
                 ) : (
                   <span className={`text-xl font-bold ${textPrimary}`}>
-                    {originalPrice.toFixed(2)} EGP
+                    {finalPrice.toFixed(2)} EGP
                   </span>
                 )}
               </div>
               
-              {/* ✅ زر الشراء يفتح المودال */}
               <button
                 onClick={handleBuyClick}
                 className={`px-4 py-2 rounded-xl text-white text-sm font-semibold flex items-center gap-1
@@ -625,7 +650,6 @@ const DirectCourseCard = ({ course, index, slug, lang, pick, isNature }: any) =>
         </Link>
       </motion.div>
 
-      {/* ✅ مودال الدفع */}
       <RedeemModal
         isOpen={showRedeemModal}
         onClose={() => setShowRedeemModal(false)}
@@ -641,12 +665,17 @@ const DirectCourseCard = ({ course, index, slug, lang, pick, isNature }: any) =>
 
 // Semester Card Component with Modal
 const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isNature }: any) => {
-  const [showRedeemModal, setShowRedeemModal] = useState(false); // ✅ ستيت المودال
+  const [showRedeemModal, setShowRedeemModal] = useState(false);
   
-  const originalPrice = parseFloat(semester.price) || 0;
-  const discountPercent = parseFloat(semester.discount) || 0;
-  const finalPrice = originalPrice - (originalPrice * discountPercent / 100);
-  const hasDiscount = discountPercent > 0;
+  // ✅ الأسعار من الباك اند مباشرة
+  const finalPrice = parseFloat(semester?.price) || 0;
+  const originalPrice = parseFloat(semester?.original_price) || 0;
+  const discountValue = parseFloat(semester?.discount) || 0;
+  const hasDiscount = discountValue > 0 && originalPrice > finalPrice;
+  const discountPercent = hasDiscount 
+    ? Math.round(((originalPrice - finalPrice) / originalPrice) * 100) 
+    : 0;
+    
   const coursesCount = semester.courses?.length || 0;
   
   // ✅ جلب تواريخ العرض
@@ -663,20 +692,17 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
   const primaryColor = isNature ? 'amber' : 'primary';
   const textPrimary = isNature ? 'text-amber-600 dark:text-amber-400' : 'text-primary';
   
-  // ✅ دالة نجاح الدفع
   const handlePaymentSuccess = (data: any) => {
     console.log('✅ Payment success:', data);
     toast.success(lang === "ar" ? 'تم شراء الترم بنجاح!' : 'Semester purchased successfully!');
     setTimeout(() => refetchSemesters(), 2000);
   };
 
-  // ✅ دالة فشل الدفع
   const handlePaymentError = (error: any) => {
     console.error('❌ Payment error:', error);
     toast.error(lang === "ar" ? 'فشل الدفع، حاول مرة أخرى' : 'Payment failed, please try again');
   };
 
-  // ✅ دالة فتح المودال
   const handleBuyClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -749,7 +775,7 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
               </div>
             ) : (
               <span className={`text-2xl font-black text-amber-800`}>
-                {originalPrice.toFixed(2)} EGP
+                {finalPrice.toFixed(2)} EGP
               </span>
             )}
           </div>
@@ -786,7 +812,6 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
 
           <div className="mt-4 pt-4 border-t border-border">
             <div className="flex gap-3">
-              {/* ✅ زر الشراء يفتح المودال */}
               <button
                 onClick={handleBuyClick}
                 className={`flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-white font-semibold text-sm shadow-soft hover:shadow-glow transition-all hover:scale-105 active:scale-95
@@ -818,7 +843,6 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
         </div>
       </motion.div>
 
-      {/* ✅ مودال الدفع */}
       <RedeemModal
         isOpen={showRedeemModal}
         onClose={() => setShowRedeemModal(false)}
