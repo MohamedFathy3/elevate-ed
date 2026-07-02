@@ -1,18 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
-import { useRechargeWallet, useWalletBalance } from '@/hooks/useWallet';
+import { useWalletBalance } from '@/hooks/useWallet';
+import { usePurchaseItem } from '@/hooks/usePurchase';
 import { useTheme } from '@/context/ThemeContext';
 import { toast } from '@/hooks/use-toast';
-import api from '@/lib/api';
 
 interface RedeemModalProps {
   isOpen: boolean;
   onClose: () => void;
-  itemId: string | number; // ID الكورس أو السيمستر
-  itemType: 'course' | 'semester' | 'exam' | 'lesson'; // نوع العنصر
-  price?: number; // السعر (اختياري)
+  itemId: string | number;
+  itemType: 'course' | 'semester' | 'exam' | 'lesson' | 'book';
+  price?: number;
   onSuccess?: (data: any) => void;
   onError?: (error: any) => void;
 }
@@ -28,79 +28,84 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
 }) => {
   const [redeemCodeInput, setRedeemCodeInput] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'code'>('wallet');
-  const [isProcessing, setIsProcessing] = useState(false);
   
   const { theme, colorMode } = useTheme();
   const isNature = theme === 'nature';
   const isDark = colorMode === 'dark';
   
   const { data: walletData, refetch: refetchWallet } = useWalletBalance();
-  const rechargeMutation = useRechargeWallet();
   
-  // اللغة (افتراضي عربي)
+  // ✅ استخدام Hook الشراء
+  const { 
+    enroll, 
+    isEnrolling,
+    redeemCode, 
+    isRedeeming,
+  } = usePurchaseItem();
+  
+  const isProcessing = isEnrolling || isRedeeming;
+  
   const lang = 'ar';
   
   const getTextColor = () => isDark ? 'text-white' : 'text-gray-900';
   
-  // التحقق من الرصيد
-  // const hasSufficientBalance = walletData?.data?.balance >= price;
-  
-  // دالة معالجة الدفع
+  // ✅ دالة معالجة الدفع
   const handlePayment = async () => {
-    setIsProcessing(true);
-    
     try {
       if (paymentMethod === 'wallet') {
-        // دفع من المحفظة
-        // if (!hasSufficientBalance) {
-        //   toast.error('رصيد المحفظة غير كافي');
-        //   setIsProcessing(false);
-        //   return;
-        // }
-        
-        const response = await api.post(`/student/${itemType}/${itemId}/purchase`, {
-          payment_method: 'wallet',
+        // ✅ شراء بالرصيد - `/enroll/request`
+        enroll({
+          type: itemType,
+          course_id: itemType === 'course' ? Number(itemId) : null,
+          semester_id: itemType === 'semester' ? Number(itemId) : null,
+          book_id: itemType === 'book' ? Number(itemId) : null,
+          course_detail_id: itemType === 'lesson' ? Number(itemId) : null,
+          price: price,
+        }, {
+          onSuccess: (data) => {
+            toast.success(lang === "ar" ? "تم الدفع بنجاح!" : "Payment successful!");
+            refetchWallet();
+            onSuccess?.(data);
+            onClose();
+          },
+          onError: (error) => {
+            toast.error(error?.response?.data?.message || lang === "ar" ? "فشل الدفع" : "Payment failed");
+            onError?.(error);
+          }
         });
         
-        if (response.data?.status === 200 || response.data?.status === true) {
-          toast.success('تم الدفع بنجاح!');
-          refetchWallet();
-          onSuccess?.(response.data);
-          onClose();
-        } else {
-          toast.error(response.data?.message || 'فشل الدفع');
-          onError?.(response.data);
-        }
       } else {
-        // دفع باستخدام الكود
+        // ✅ استخدام كود خصم - `/enroll/redeem-code`
         if (!redeemCodeInput.trim()) {
-          toast.error('الرجاء إدخال الكود');
-          setIsProcessing(false);
+          toast.error(lang === "ar" ? "الرجاء إدخال الكود" : "Please enter the code");
           return;
         }
         
-        const response = await rechargeMutation.mutateAsync(redeemCodeInput);
-        
-        if (response.status === 200 || response.status === true) {
-          toast.success('تم تفعيل الكود بنجاح!');
-          refetchWallet();
-          onSuccess?.(response);
-          onClose();
-        } else {
-          toast.error(response.message || 'الكود غير صالح');
-          onError?.(response);
-        }
+        redeemCode({
+          code: redeemCodeInput.trim().toUpperCase()
+        }, {
+          onSuccess: (data) => {
+            toast.success(lang === "ar" ? "تم تفعيل الكود بنجاح!" : "Code activated successfully!");
+            refetchWallet();
+            onSuccess?.(data);
+            onClose();
+          },
+          onError: (error) => {
+            toast.error(error?.response?.data?.message || lang === "ar" ? "الكود غير صالح" : "Invalid code");
+            onError?.(error);
+          }
+        });
       }
     } catch (error: any) {
       console.error('❌ Payment error:', error);
-      toast.error(error.response?.data?.message || 'حدث خطأ أثناء الدفع');
+      toast.error(error?.response?.data?.message || lang === "ar" ? "حدث خطأ أثناء الدفع" : "An error occurred during payment");
       onError?.(error);
-    } finally {
-      setIsProcessing(false);
     }
   };
   
   if (!isOpen) return null;
+  
+  const balance = walletData?.data?.balance || 0;
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -115,25 +120,20 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
           </h3>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700"
+            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
           >
             ✕
           </button>
         </div>
         
-        {/* السعر */}
-        {price > 0 && (
-          <div className={`mb-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-900 ${getTextColor()}`}>
-            <div className="flex justify-between items-center">
-              <span>{lang === "ar" ? "السعر" : "Price"}</span>
-              <span className="font-bold text-lg">{price} جنيه</span>
-            </div>
-            <div className="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
-              <span>{lang === "ar" ? "رصيد المحفظة" : "Wallet Balance"}</span>
-              <span>{walletData?.data?.balance || 0} جنيه</span>
-            </div>
+        {/* السعر والرصيد */}
+        <div className={`mb-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-900 ${getTextColor()}`}>
+          <div className="flex justify-between items-center">
+            <span>{lang === "ar" ? "السعر" : "Price"}</span>
+            <span className="font-bold text-lg">{price} جنيه</span>
           </div>
-        )}
+         
+        </div>
         
         {/* خيارات الدفع */}
         <div className="flex gap-3 mb-4">
@@ -144,7 +144,7 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
                 ? isNature
                   ? 'bg-amber-600 text-white'
                   : 'bg-primary text-white'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
             }`}
           >
             {lang === "ar" ? "المحفظة" : "Wallet"}
@@ -156,14 +156,14 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
                 ? isNature
                   ? 'bg-amber-600 text-white'
                   : 'bg-primary text-white'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
             }`}
           >
             {lang === "ar" ? "كود" : "Code"}
           </button>
         </div>
         
-        {/* حقل الكود (يظهر عند اختيار كود) */}
+        {/* حقل الكود */}
         {paymentMethod === 'code' && (
           <div className="mb-6">
             <label className={`block text-sm font-medium mb-2 ${getTextColor()}`}>
@@ -184,15 +184,6 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
             </p>
           </div>
         )}
-        
-        {/* تحذير الرصيد غير كافي
-        {paymentMethod === 'wallet' && price > 0 &&  (
-          <div className="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
-            ⚠️ {lang === "ar" 
-              ? `رصيد المحفظة غير كافي. المطلوب: ${price} جنيه، المتاح: ${walletData?.data?.balance || 0} جنيه` 
-              : `Insufficient balance. Required: ${price}, Available: ${walletData?.data?.balance || 0}`}
-          </div>
-        )} */}
         
         {/* أزرار التحكم */}
         <div className="flex gap-3">
@@ -221,6 +212,5 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
     </div>
   );
 };
-
 
 export default RedeemModal;
