@@ -48,66 +48,40 @@ const Hero = () => {
   }, [rotatingWords.length]);
 
   // ✅ حساب الألوان بناءً على colorMode مع تحديث فوري
-  const colors = useMemo(() => {
-    console.log("🎨 Calculating colors for mode:", colorMode);
-    const isDark = colorMode === 'dark';
+const colors = useMemo(() => {
+  console.log("🎨 Calculating colors for mode:", colorMode);
+  const isDark = colorMode === 'dark';
+  
+  // ✅ لو في API Colors - استخدمها دايماً
+  if (apiColors) {
+    const bgColor = isDark 
+      ? adjustColorForDarkMode(apiColors.background) 
+      : apiColors.background;
     
-    // ✅ لو في API Colors - استخدمها دايماً
-    if (apiColors) {
-      const bgColor = isDark 
-        ? adjustColorForDarkMode(apiColors.background) 
-        : apiColors.background;
-      
-      const textColor = isDark 
-        ? lightenColor(apiColors.text, 0.85) 
-        : apiColors.text;
-      
-      const textSecondary = isDark 
-        ? `${lightenColor(apiColors.text, 0.6)}cc` 
-        : `${apiColors.text}cc`;
-      
-      const textMuted = isDark 
-        ? `${lightenColor(apiColors.text, 0.4)}80` 
-        : `${apiColors.text}80`;
+    // ✅ في Dark Mode، خلي النص أبيض أو فاتح
+    const textColor = isDark 
+      ? '#f1f5f9'  // ✅ أبيض فاتح
+      : apiColors.text;
+    
+    const textSecondary = isDark 
+      ? '#94a3b8'  // ✅ رمادي فاتح
+      : `${apiColors.text}cc`;
+    
+    const textMuted = isDark 
+      ? '#64748b'  // ✅ رمادي متوسط
+      : `${apiColors.text}80`;
 
-      return {
-        background: bgColor,
-        textPrimary: textColor,
-        textSecondary: textSecondary,
-        textMuted: textMuted,
-        cardBg: isDark ? '#1e293b' : '#ffffff',
-        cardBorder: isDark ? 'rgba(51, 65, 85, 0.5)' : 'rgba(229, 231, 235, 0.8)',
-        badgeBg: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.1)',
-        badgeBorder: isDark ? 'rgba(16, 185, 129, 0.3)' : 'rgba(16, 185, 129, 0.2)',
-        sectionBg: isDark 
-          ? `bg-[${adjustColorForDarkMode(apiColors.background)}]` 
-          : 'bg-gradient-to-br from-emerald-50/50 via-white to-teal-50/50',
-        floatCardBg: isDark ? 'bg-slate-800' : 'bg-white',
-        floatCardBorder: isDark ? 'border-emerald-800' : 'border-emerald-100',
-        badgeText: isDark ? 'text-emerald-400' : 'text-emerald-600',
-        badgeBgClass: isDark ? 'bg-emerald-500/10 border-emerald-800' : 'bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border-emerald-200',
-        secondaryBtnBg: isDark ? 'bg-slate-800 border-emerald-800 hover:border-emerald-600 text-slate-200' : 'bg-white border-emerald-200 hover:border-emerald-400 text-slate-800',
-        rotatingText: isDark ? 'text-emerald-400' : 'text-emerald-600',
-        // ✅ ألوان الخلفية للـ section
-        sectionBgColor: bgColor,
-        sectionBgGradient: isDark 
-          ? `radial-gradient(circle at 20% 30%, ${bgColor} 0%, #0f172a 100%)`
-          : `radial-gradient(circle at 20% 30%, ${bgColor} 0%, #f8fafc 100%)`,
-      };
-    }
-
-    // ✅ الألوان الافتراضية (بدون API)
     return {
-      background: isDark ? '#0f172a' : '#f8fafc',
-      textPrimary: isDark ? '#f1f5f9' : '#0f172a',
-      textSecondary: isDark ? '#94a3b8' : '#64748b',
-      textMuted: isDark ? '#64748b' : '#94a3b8',
+      background: bgColor,
+      textPrimary: textColor,
+      textSecondary: textSecondary,
+      textMuted: textMuted,
       cardBg: isDark ? '#1e293b' : '#ffffff',
       cardBorder: isDark ? 'rgba(51, 65, 85, 0.5)' : 'rgba(229, 231, 235, 0.8)',
       badgeBg: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.1)',
       badgeBorder: isDark ? 'rgba(16, 185, 129, 0.3)' : 'rgba(16, 185, 129, 0.2)',
       sectionBg: isDark 
-        ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' 
+        ? `bg-[${adjustColorForDarkMode(apiColors.background)}]` 
         : 'bg-gradient-to-br from-emerald-50/50 via-white to-teal-50/50',
       floatCardBg: isDark ? 'bg-slate-800' : 'bg-white',
       floatCardBorder: isDark ? 'border-emerald-800' : 'border-emerald-100',
@@ -115,12 +89,38 @@ const Hero = () => {
       badgeBgClass: isDark ? 'bg-emerald-500/10 border-emerald-800' : 'bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border-emerald-200',
       secondaryBtnBg: isDark ? 'bg-slate-800 border-emerald-800 hover:border-emerald-600 text-slate-200' : 'bg-white border-emerald-200 hover:border-emerald-400 text-slate-800',
       rotatingText: isDark ? 'text-emerald-400' : 'text-emerald-600',
-      sectionBgColor: isDark ? '#0f172a' : '#f8fafc',
+      sectionBgColor: bgColor,
       sectionBgGradient: isDark 
-        ? 'radial-gradient(circle at 20% 30%, #0f172a 0%, #0a0f1a 100%)'
-        : 'radial-gradient(circle at 20% 30%, #f8fafc 0%, #eef2f6 100%)',
+        ? `radial-gradient(circle at 20% 30%, ${bgColor} 0%, #0f172a 100%)`
+        : `radial-gradient(circle at 20% 30%, ${bgColor} 0%, #f8fafc 100%)`,
     };
-  }, [colorMode, apiColors, key]);
+  }
+
+  // ✅ الألوان الافتراضية (بدون API)
+  return {
+    background: isDark ? '#0f172a' : '#f8fafc',
+    textPrimary: isDark ? '#f1f5f9' : '#0f172a',  // ✅ أبيض في Dark Mode
+    textSecondary: isDark ? '#94a3b8' : '#64748b', // ✅ رمادي فاتح
+    textMuted: isDark ? '#64748b' : '#94a3b8',     // ✅ رمادي متوسط
+    cardBg: isDark ? '#1e293b' : '#ffffff',
+    cardBorder: isDark ? 'rgba(51, 65, 85, 0.5)' : 'rgba(229, 231, 235, 0.8)',
+    badgeBg: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.1)',
+    badgeBorder: isDark ? 'rgba(16, 185, 129, 0.3)' : 'rgba(16, 185, 129, 0.2)',
+    sectionBg: isDark 
+      ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' 
+      : 'bg-gradient-to-br from-emerald-50/50 via-white to-teal-50/50',
+    floatCardBg: isDark ? 'bg-slate-800' : 'bg-white',
+    floatCardBorder: isDark ? 'border-emerald-800' : 'border-emerald-100',
+    badgeText: isDark ? 'text-emerald-400' : 'text-emerald-600',
+    badgeBgClass: isDark ? 'bg-emerald-500/10 border-emerald-800' : 'bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border-emerald-200',
+    secondaryBtnBg: isDark ? 'bg-slate-800 border-emerald-800 hover:border-emerald-600 text-slate-200' : 'bg-white border-emerald-200 hover:border-emerald-400 text-slate-800',
+    rotatingText: isDark ? 'text-emerald-400' : 'text-emerald-600',
+    sectionBgColor: isDark ? '#0f172a' : '#f8fafc',
+    sectionBgGradient: isDark 
+      ? 'radial-gradient(circle at 20% 30%, #0f172a 0%, #0a0f1a 100%)'
+      : 'radial-gradient(circle at 20% 30%, #f8fafc 0%, #eef2f6 100%)',
+  };
+}, [colorMode, apiColors, key]);
 
   return (
     <section
