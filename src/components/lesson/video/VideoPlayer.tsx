@@ -125,9 +125,6 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   const embedUrl = getVideoUrl(currentVideoUrl || '');
   const isEmbedVideo = isVideoLink(currentVideoUrl || '');
 
-  console.log("🎬 Video URL:", currentVideoUrl);
-  console.log("🎬 Embed URL:", embedUrl);
-  console.log("🎬 Is Video:", isEmbedVideo);
 
   // ✅ إعادة تعيين حالة التحميل عند تغيير الرابط
   useEffect(() => {
@@ -171,7 +168,6 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
             allowFullScreen
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             onLoad={() => {
-              console.log("✅ Iframe loaded successfully");
               setIsLoading(false);
             }}
             onError={() => {

@@ -67,7 +67,6 @@ export const useAdvancedProtection = ({
       if (typeof window !== 'undefined' && window.ScreenshotPrevention) {
         // ✅ نعطل المكتبة لأنها بتسبب false positives كتير
         // screenshotPreventionRef.current = new window.ScreenshotPrevention({...});
-        console.log('⚠️ Screenshot Prevention disabled to avoid false positives');
       }
     } catch (error) {
       console.warn('Screenshot Prevention failed:', error);
@@ -226,7 +225,6 @@ export const useAdvancedProtection = ({
   // ✅ 7. تعطيل Screen Capture Detection (عشان بتطلب الإذن)
   const setupScreenCaptureDetection = useCallback(() => {
     // ❌ معطل تماماً عشان ما يطلبش الإذن
-    console.log('✅ Screen Capture Detection disabled to avoid permission popup');
     return () => {};
   }, []);
 

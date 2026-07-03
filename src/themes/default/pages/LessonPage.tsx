@@ -10,7 +10,7 @@ import { useAttendance } from "@/hooks/useAttendance";
 import { useWatermark } from '@/hooks/useWatermark';
 import { usePreventScreenshot } from '@/hooks/usePreventScreenshot';
 import { motion } from "framer-motion";
-import { AlertCircle, ArrowRight, FileQuestion, Lock, Unlock, CheckCircle, Loader2, XCircle, MessageCircle, Play } from "lucide-react";
+import { AlertCircle, ArrowRight, FileQuestion, Lock, Unlock, CheckCircle, Loader2, XCircle, Play } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { enableFullProtection } from "@/utils/protection";
 import Cookies from "js-cookie";
@@ -74,9 +74,11 @@ const ContactTeacherModal = ({ isOpen, onClose, lang, teacherName, failedExams }
   );
 };
 
-// ✅ Card لعرض الامتحان
-const ExamCard = ({ exam, examIndex, totalExams, isActive, isPassed, isFailed, isLocked, onStart, lang }: any) => {
+const ExamCard = ({ exam, examIndex, totalExams, isActive, isPassed, isFailed, isLocked, isHidden, onStart, lang }: any) => {
   const isRtl = lang === 'ar';
+  
+  // ✅ إذا كان الامتحان مخفياً لا نعرضه
+  if (isHidden) return null;
   
   let status = '';
   let bgColor = '';
@@ -95,9 +97,10 @@ const ExamCard = ({ exam, examIndex, totalExams, isActive, isPassed, isFailed, i
     bgColor = 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 ring-2 ring-amber-500/50';
     icon = <Loader2 className="w-5 h-5 text-amber-600 dark:text-amber-400 animate-spin" />;
   } else {
-    status = isRtl ? '🔒 مقفول' : '🔒 Locked';
-    bgColor = 'bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-700';
-    icon = <Lock className="w-5 h-5 text-gray-500 dark:text-gray-400" />;
+    // ✅ إذا كان الامتحان غير نشط ولا نجح ولا فشل → يظهر كمفتوح (pending)
+    status = isRtl ? '⏳ ينتظر' : '⏳ Pending';
+    bgColor = 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 ring-2 ring-amber-500/50';
+    icon = <Loader2 className="w-5 h-5 text-amber-600 dark:text-amber-400 animate-spin" />;
   }
 
   return (
@@ -111,7 +114,7 @@ const ExamCard = ({ exam, examIndex, totalExams, isActive, isPassed, isFailed, i
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
             isPassed ? 'bg-green-500/20' : 
             isFailed ? 'bg-red-500/20' : 
-            isActive ? 'bg-amber-500/20' : 
+            (isActive || !isLocked) ? 'bg-amber-500/20' : 
             'bg-gray-500/20'
           }`}>
             {icon}
@@ -129,7 +132,7 @@ const ExamCard = ({ exam, examIndex, totalExams, isActive, isPassed, isFailed, i
         <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
           isPassed ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 
           isFailed ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' : 
-          isActive ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 animate-pulse' : 
+          (isActive || !isLocked) ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 animate-pulse' : 
           'bg-gray-100 dark:bg-gray-900/30 text-gray-500 dark:text-gray-400'
         }`}>
           {status}
@@ -152,7 +155,11 @@ const ExamCard = ({ exam, examIndex, totalExams, isActive, isPassed, isFailed, i
         )}
       </div>
 
-      {!isPassed && !isFailed && isActive && (
+      {/* ✅ زر بدء الامتحان يظهر إذا:
+          - الامتحان نشط (isActive) ✅
+          - أو الامتحان غير مقفول (isLocked = false) ✅
+      */}
+      {!isPassed && !isFailed && (isActive || !isLocked) && (
         <button
           onClick={onStart}
           className="w-full py-2 rounded-xl font-semibold flex items-center justify-center gap-2 text-sm bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25 transition-all"
@@ -176,7 +183,8 @@ const ExamCard = ({ exam, examIndex, totalExams, isActive, isPassed, isFailed, i
         </div>
       )}
 
-      {isLocked && (
+      {/* ✅ يظهر مقفول فقط إذا isLocked = true */}
+      {isLocked && !isActive && !isPassed && !isFailed && (
         <div className="w-full py-2 rounded-xl font-semibold flex items-center justify-center gap-2 text-sm bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
           <Lock className="w-4 h-4" />
           {isRtl ? "🔒 مقفول" : "🔒 Locked"}
@@ -213,6 +221,7 @@ const LessonPage = () => {
     checked: boolean; 
     locked: boolean;
     failed: boolean;
+    hidden: boolean;
     total: number;
     passMarks: number;
   }>>({});
@@ -253,7 +262,6 @@ const LessonPage = () => {
       !!Cookies.get('student_token');
 
     if (shouldRecordAttendance) {
-      console.log("✅ Recording attendance for lesson:", lessonIdNum);
       attendanceAttempted.current = true;
       markAttendance({ lesson_id: lessonIdNum, student_id: student.id, slug });
     }
@@ -299,26 +307,21 @@ const LessonPage = () => {
           statuses[exam.id] = {
             passed: passed,
             failed: hasData && !passed, // ✅ فشل فقط لو دخل الامتحان ومجابش النجاح
-            checked: true,
+            checked: hasData || false,
             locked: false,
+            hidden: false,
             total: total,
             passMarks: passMarks
           };
           
-          console.log(`📊 Exam ${exam.id} (${exam.title}):`, {
-            total,
-            passMarks,
-            passed,
-            failed: hasData && !passed,
-            hasData
-          });
+       
         } catch (error) {
-          console.error(`Error fetching result for exam ${exam.id}:`, error);
           statuses[exam.id] = {
             passed: false,
             failed: false,
             checked: false, // ✅ لسه مبدأش
             locked: false,
+            hidden: false,
             total: 0,
             passMarks: exam.total_must_pass_marks || 0
           };
@@ -333,45 +336,68 @@ const LessonPage = () => {
     fetchAllExamResults();
   }, [exams, student?.id]);
 
-  // ✅ تحديد الامتحان النشط
-  const activeExamIndex = useMemo(() => {
-    if (exams.length === 0) return -1;
-    if (loadingExams) return -1;
+  // ✅ المنطق: تحديد الامتحان النشط وحالة الإخفاء لكل امتحان
+  const { activeExamIndex, examVisibility } = useMemo(() => {
+    if (exams.length === 0 || loadingExams) {
+      return { activeExamIndex: -1, examVisibility: {} };
+    }
 
-    // ✅ جيب أول امتحان لسه مبدأش أو فشل
+    const visibility: Record<number, boolean> = {};
+    let firstFailedIndex = -1;
+
+    // ✅ تحديد أول امتحان فشل
     for (let i = 0; i < exams.length; i++) {
       const exam = exams[i];
       const status = examStatuses[exam.id];
-      
-      // ✅ لو الامتحان لسه مبدأش (مفيش نتيجة) → نشط
-      if (!status?.checked) {
-        console.log(`📌 Exam ${i + 1} (${exam.title}): Not started yet → Active`);
-        return i;
-      }
-      
-      // ✅ لو الامتحان فشل → نشط (يعيده أو يروح للبعد)
+
+      // ✅ إذا كان الامتحان فشل
       if (status?.failed === true) {
-        console.log(`📌 Exam ${i + 1} (${exam.title}): Failed → Active`);
-        return i;
-      }
-      
-      // ✅ لو الامتحان مكتشلش (passed = false) → نشط
-      if (!status?.passed) {
-        console.log(`📌 Exam ${i + 1} (${exam.title}): Not passed → Active`);
-        return i;
+        firstFailedIndex = i;
+        break;
       }
     }
 
-    // ✅ كل الامتحانات نجحت
-    const allPassed = exams.every((exam: any) => {
-      const status = examStatuses[exam.id];
-      return status?.passed === true;
-    });
+    // ✅ تحديد الامتحان النشط
+    let activeIdx = -1;
+    
+    // ✅ لو في امتحان فشل → هو النشط
+    if (firstFailedIndex !== -1) {
+      activeIdx = firstFailedIndex;
+    } 
+    // ✅ لو أول امتحان لسه مبدأش → هو النشط
+    else if (!examStatuses[exams[0]?.id]?.checked) {
+      activeIdx = 0;
+    }
+    // ✅ لو كل الامتحانات نجحت
+    else {
+      const allPassed = exams.every((exam: any) => {
+        const status = examStatuses[exam.id];
+        return status?.passed === true;
+      });
+      activeIdx = allPassed ? -2 : -1;
+    }
 
-    return allPassed ? -2 : -1;
+    // ✅ تحديد رؤية كل امتحان
+    // ✅ الامتحان الأول دائماً ظاهر
+    visibility[exams[0]?.id] = true;
+
+    for (let i = 1; i < exams.length; i++) {
+      const currentExam = exams[i];
+      const prevExam = exams[i - 1];
+      const prevStatus = examStatuses[prevExam?.id];
+      
+      // ✅ الامتحان الحالي يظهر فقط إذا فشل الامتحان السابق
+      // ✅ يختفي إذا نجح الامتحان السابق
+      const shouldShow = prevStatus?.failed === true;
+      
+      visibility[currentExam.id] = shouldShow;
+    }
+
+
+    return { activeExamIndex: activeIdx, examVisibility: visibility };
   }, [exams, examStatuses, loadingExams]);
 
-  // ✅ تحديث حالة القفل لكل امتحان
+  // ✅ تحديث حالة القفل والإخفاء لكل امتحان
   useEffect(() => {
     if (Object.keys(examStatuses).length === 0 || loadingExams) return;
 
@@ -383,7 +409,8 @@ const LessonPage = () => {
         newStatuses[exam.id] = {
           ...newStatuses[exam.id],
           locked: false,
-          checked: true
+          hidden: false,
+          checked: newStatuses[exam.id]?.checked || false
         };
         return;
       }
@@ -392,24 +419,21 @@ const LessonPage = () => {
       const previousExam = exams[index - 1];
       const previousStatus = examStatuses[previousExam?.id];
       
+      // ✅ الامتحان التالي:
+      // - مقفول إذا نجح الامتحان السابق (عشان يختفي)
+      // - مفتوح إذا فشل الامتحان السابق (عشان يظهر ويعيده)
+      const shouldLock = previousStatus?.passed === true;
       
-      let shouldLock = true;
+      // ✅ الامتحان التالي يختفي إذا نجح الامتحان السابق
+      // ✅ يظهر إذا فشل الامتحان السابق
+      const shouldHide = previousStatus?.passed === true;
       
-      if (!previousStatus) {
-        shouldLock = true;
-      } 
-      else if (previousStatus.passed === true) {
-        shouldLock = true;
-      } else if (!previousStatus.checked) {
-        shouldLock = true;
-      }
-      
-      console.log(`🔒 Exam ${index + 1} (${exam.title}): locked = ${shouldLock}`);
       
       newStatuses[exam.id] = {
         ...newStatuses[exam.id],
         locked: shouldLock,
-        checked: true
+        hidden: shouldHide,
+        checked: newStatuses[exam.id]?.checked || false
       };
     });
 
@@ -445,7 +469,7 @@ const LessonPage = () => {
     
     return exams.some((exam: any) => {
       const status = examStatuses[exam.id];
-      return status?.passed === true;
+      return status?.passed === false && status?.checked === true;
     });
   }, [lesson?.must_pass_to_unlock, exams, examStatuses]);
 
@@ -453,19 +477,20 @@ const LessonPage = () => {
   useEffect(() => {
     if (!lesson?.must_pass_to_unlock) return;
     if (loadingExams) return;
+    if (exams.length === 0) return;
     
     // ✅ جيب كل الامتحانات الفاشلة
     const failedList = exams.filter((exam: any) => {
       const status = examStatuses[exam.id];
-      return status?.passed === false;
+      return status?.passed === false && status?.checked === true;
     });
     
-    // ✅ لو في امتحانات فاشلة وكل الامتحانات المتبقية مقفولة (يعني خلص كل المحاولات)
+    // ✅ لو في امتحانات فاشلة
     if (failedList.length > 0) {
-      // ✅ تحقق: هل كل الامتحانات إما نجحت أو فشلت؟
+      // ✅ تحقق هل كل الامتحانات إما نجحت أو فشلت؟
       const allExamsDone = exams.every((exam: any) => {
         const status = examStatuses[exam.id];
-        return status?.passed === true || status?.passed === false;
+        return status?.passed === true || (status?.passed === false && status?.checked === true);
       });
       
       // ✅ لو كل الامتحانات اتعملت وفيه فشل → أظهر المودال
@@ -587,6 +612,10 @@ const LessonPage = () => {
                     const isActive = idx === activeExamIndex;
                     const isPassed = status?.passed;
                     const isFailed = status?.failed;
+                    const isHidden = status?.hidden;
+                    
+                    // ✅ إذا كان الامتحان مخفياً لا نعرضه
+                    if (isHidden) return null;
                     
                     return (
                       <div
@@ -682,15 +711,10 @@ const LessonPage = () => {
                 )}
                 
                 {lesson?.must_pass_to_unlock ? (
-                  !canWatch && exams.length > 0 && !hasFailedExams ? (
+                  !canWatch && exams.length > 0 ? (
                     <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 text-xs">
                       <Lock className="w-3 h-3" />
                       {lang === "ar" ? "يتطلب اجتياز الامتحانات" : "Requires passing exams"}
-                    </div>
-                  ) : hasFailedExams ? (
-                    <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-xs">
-                      <XCircle className="w-3 h-3" />
-                      {lang === "ar" ? "❌ فشل في الامتحان" : "❌ Exam failed"}
                     </div>
                   ) : canWatch && exams.length > 0 ? (
                     <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400 text-xs">
@@ -744,6 +768,7 @@ const LessonPage = () => {
                 const isPassed = status?.passed || false;
                 const isLocked = status?.locked || false;
                 const isFailed = status?.failed || false;
+                const isHidden = status?.hidden || false;
 
                 return (
                   <ExamCard
@@ -759,6 +784,7 @@ const LessonPage = () => {
                     isPassed={isPassed}
                     isLocked={isLocked}
                     isFailed={isFailed}
+                    isHidden={isHidden}
                     onStart={() => handleStartExam(exam.id)}
                     lang={lang}
                   />
