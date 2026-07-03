@@ -50,7 +50,6 @@ const LessonPage = () => {
   // ✅ State
   const [attended, setAttended] = useState(false);
   const [videoError, setVideoError] = useState(false);
-  const [examPassed, setExamPassed] = useState(false);
 
   // ✅ DevTools Protection
   // const { devToolsOpen } = useDetectDevTools(true);
@@ -143,7 +142,6 @@ const LessonPage = () => {
   useEffect(() => {
     if (examResultData) {
       const passed = examResultData.status === true;
-      setExamPassed(passed);
     }
   }, [examResultData]);
 
@@ -175,7 +173,7 @@ const LessonPage = () => {
 
   // ✅ Check if lesson needs exam to unlock
   const needsExamToUnlock = lesson?.must_pass_to_unlock === true;
-  const canWatch = !needsExamToUnlock || examPassed;
+  const canWatch = !needsExamToUnlock ;
 
   // ✅ دالة للحصول على رابط الفيديو من الـ part
   const getVideoUrlFromPart = (part: any) => {
@@ -300,16 +298,12 @@ const LessonPage = () => {
                     {totalParts} {lang === "ar" ? "أجزاء" : "parts"}
                   </div>
                 )}
-                {needsExamToUnlock && !examPassed && (
+                {needsExamToUnlock   && (
                   <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 text-xs">
                     {lang === "ar" ? "يتطلب اجتياز امتحان" : "Requires exam"}
                   </div>
                 )}
-                {examPassed && (
-                  <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400 text-xs">
-                    ✅ {lang === "ar" ? "تم اجتياز الامتحان" : "Exam passed"}
-                  </div>
-                )}
+              
                 {attended && (
                   <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400 text-xs">
                     ✅ {lang === "ar" ? "تم الحضور" : "Attended"}
@@ -336,7 +330,7 @@ const LessonPage = () => {
             )}
 
             {/* Required Exam - when locked or not passed */}
-            {needsExamToUnlock && !examPassed && requiredExam && (
+            {needsExamToUnlock  && requiredExam && (
               <RequiredExamCard
                 exam={requiredExam}
                 onStartExam={handleStartExam}

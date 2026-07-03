@@ -24,20 +24,23 @@ export interface RedeemCodeRequest {
 export const usePurchaseItem = () => {
   const queryClient = useQueryClient();
   
-  // ✅ 1. شراء عادي عبر `/enroll/request` (كل حاجة في الـ Body)
+  // ✅ 1. شراء عادي عبر `/enroll/request`
   const enroll = useMutation({
     mutationFn: async (data: EnrollRequest) => {
       const response = await api.post('/enroll/request', data);
       return response.data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
+      // ✅ التحقق من الحالة
       if (data.status === 200 || data.status === true) {
+        // ✅ نجاح الشراء
         toast.success(data.message || "تم الشراء بنجاح!");
         queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
         queryClient.invalidateQueries({ queryKey: ['purchased-items'] });
         queryClient.invalidateQueries({ queryKey: ['student-courses'] });
         queryClient.invalidateQueries({ queryKey: ['student-books'] });
       } else {
+        // ✅ فشل الشراء (رصيد غير كافي، إلخ)
         toast.error(data.message || "فشل الشراء");
       }
     },
@@ -46,7 +49,7 @@ export const usePurchaseItem = () => {
     },
   });
 
-  // ✅ 2. استخدام كود خصم فقط (بدون منتج) - `/enroll/redeem-code`
+  // ✅ 2. استخدام كود خصم
   const redeemCode = useMutation({
     mutationFn: async ({ code }: { code: string }) => {
       const response = await api.post('/enroll/redeem-code', { code });
@@ -69,18 +72,15 @@ export const usePurchaseItem = () => {
   });
 
   return {
-    // ✅ 1. شراء عادي
     enroll: enroll.mutate,
     isEnrolling: enroll.isPending,
     enrollError: enroll.error,
     enrollData: enroll.data,
 
-    // ✅ 2. كود خصم
     redeemCode: redeemCode.mutate,
     isRedeeming: redeemCode.isPending,
     redeemError: redeemCode.error,
 
-    // ✅ دالة مساعدة للتحقق من الرصيد (لو الطالب معاه رصيد)
     canPurchaseWithWallet: (walletBalance: number, price: number) => {
       return walletBalance >= price;
     },
