@@ -32,6 +32,77 @@ export const CenterHours = () => {
   const isNature = theme === 'nature';
   const isDark = colorMode === 'dark';
 
+  // ✅ دالة تنسيق الوقت
+  const getTimeDisplay = (hour: any) => {
+    const start = hour.hours_start || '';
+    const end = hour.hours_end || '';
+    
+    if (start && end) {
+      return `${start} - ${end}`;
+    }
+    if (start) {
+      return start;
+    }
+    if (end) {
+      return end;
+    }
+    return '';
+  };
+
+  // ✅ دالة عرض التاريخ
+  const getDateDisplay = (dateStr: string) => {
+    if (!dateStr) return '';
+    
+    // لو التاريخ جاي كـ اسم يوم
+    const weekdaysAr = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    const weekdaysEn = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    
+    if (weekdaysAr.includes(dateStr) || weekdaysEn.includes(dateStr)) {
+      return dateStr;
+    }
+    
+    // لو التاريخ جاي كـ ISO date
+    try {
+      const date = new Date(dateStr);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric"
+        });
+      }
+    } catch {
+      return dateStr;
+    }
+    
+    return dateStr;
+  };
+
+  // ✅ دالة الحصول على اليوم
+  const getDayName = (dateStr: string) => {
+    if (!dateStr) return '';
+    
+    const weekdaysAr = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    const weekdaysEn = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    
+    if (weekdaysAr.includes(dateStr)) return dateStr;
+    if (weekdaysEn.includes(dateStr)) {
+      const map: Record<string, string> = {
+        'Sunday': 'الأحد',
+        'Monday': 'الإثنين',
+        'Tuesday': 'الثلاثاء',
+        'Wednesday': 'الأربعاء',
+        'Thursday': 'الخميس',
+        'Friday': 'الجمعة',
+        'Saturday': 'السبت'
+      };
+      return map[dateStr] || dateStr;
+    }
+    
+    return dateStr;
+  };
+
   if (isLoading) {
     return <CenterHoursSkeleton isNature={isNature} />;
   }
@@ -42,7 +113,7 @@ export const CenterHours = () => {
 
   // تجميع المواعيد حسب التاريخ
   const groupedHours = centerHours.reduce((acc: any, hour: any) => {
-    const date = hour.date;
+    const date = hour.date || 'unknown';
     if (!acc[date]) {
       acc[date] = [];
     }
@@ -51,36 +122,13 @@ export const CenterHours = () => {
   }, {});
 
   // ترتيب التواريخ
-  const sortedDates = Object.keys(groupedHours).sort(
-    (a, b) => new Date(a).getTime() - new Date(b).getTime()
-  );
+  const sortedDates = Object.keys(groupedHours);
 
-  // أيام الأسبوع
-  const weekdaysAr: Record<string, string> = {
-    Saturday: "السبت",
-    Sunday: "الأحد",
-    Monday: "الإثنين",
-    Tuesday: "الثلاثاء",
-    Wednesday: "الأربعاء",
-    Thursday: "الخميس",
-    Friday: "الجمعة",
-  };
-
-  const weekdaysEn: Record<string, string> = {
-    Saturday: "Saturday",
-    Sunday: "Sunday",
-    Monday: "Monday",
-    Tuesday: "Tuesday",
-    Wednesday: "Wednesday",
-    Thursday: "Thursday",
-    Friday: "Friday",
-  };
-
-  const getDayName = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
-    return lang === "ar" ? weekdaysAr[dayName] : weekdaysEn[dayName];
-  };
+  // الألوان حسب الثيم
+  const accentColor = isNature ? 'amber' : 'accent';
+  const gradientFrom = isNature ? 'from-amber-500' : 'from-accent';
+  const gradientTo = isNature ? 'to-orange-500' : 'to-pink-500';
+  const bgColor = isNature ? 'bg-cream' : 'bg-background';
 
   const toggleDay = (date: string) => {
     if (expandedDay === date) {
@@ -89,12 +137,6 @@ export const CenterHours = () => {
       setExpandedDay(date);
     }
   };
-
-  // الألوان حسب الثيم
-  const accentColor = isNature ? 'amber' : 'accent';
-  const gradientFrom = isNature ? 'from-amber-500' : 'from-accent';
-  const gradientTo = isNature ? 'to-orange-500' : 'to-pink-500';
-  const bgColor = isNature ? 'bg-cream' : 'bg-background';
 
   return (
     <section id="center-hours" className={`relative overflow-hidden py-28 md:py-36 ${bgColor}`}>
@@ -198,10 +240,7 @@ export const CenterHours = () => {
             const hours = groupedHours[date];
             const isExpanded = expandedDay === date;
             const dayName = getDayName(date);
-            const formattedDate = new Date(date).toLocaleDateString(
-              lang === "ar" ? "ar-EG" : "en-US",
-              { month: "long", day: "numeric" }
-            );
+            const dateDisplay = getDateDisplay(date);
 
             return (
               <motion.div
@@ -227,8 +266,10 @@ export const CenterHours = () => {
                         <Calendar className={`w-6 h-6 ${isNature ? 'text-amber-600' : 'text-accent'}`} />
                       </div>
                       <div>
-                        <h3 className={`text-xl font-bold ${isNature ? 'text-amber-800' : ''}`}>{dayName}</h3>
-                        <p className="text-sm text-foreground/50">{formattedDate}</p>
+                        <h3 className={`text-xl font-bold ${isNature ? 'text-amber-800' : ''}`}>
+                          {dayName || dateDisplay}
+                        </h3>
+                        <p className="text-sm text-foreground/50">{dateDisplay}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -255,38 +296,60 @@ export const CenterHours = () => {
                     exit={{ opacity: 0, height: 0 }}
                     className="mt-3 ml-16 space-y-3"
                   >
-                    {hours.map((hour: any, hourIdx: number) => (
-                      <div
-                        key={hour.id}
-                        className={`backdrop-blur-sm border rounded-xl p-4 transition-all
-                          ${isNature 
-                            ? 'bg-white/80 border-amber-100 hover:bg-amber-50' 
-                            : 'bg-card/40 border-border hover:bg-accent/5'}`}
-                      >
-                        <div className="flex items-center justify-between flex-wrap gap-4">
-                          <div className="flex items-center gap-4">
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center
-                              ${isNature 
-                                ? 'bg-amber-100' 
-                                : 'bg-accent/10'}`}>
-                              <Clock className={`w-5 h-5 ${isNature ? 'text-amber-600' : 'text-accent'}`} />
-                            </div>
-                            <div>
-                              <h4 className={`font-semibold ${isNature ? 'text-amber-800' : ''}`}>{hour.title}</h4>
-                              <div className="flex items-center gap-2 text-sm text-foreground/50 mt-1">
-                                <Clock className="w-3 h-3" />
-                                <span>{hour.hours}</span>
+                    {hours.map((hour: any, hourIdx: number) => {
+                      const timeDisplay = getTimeDisplay(hour);
+                      const address = hour.address || '';
+                      const phone = hour.phone || '';
+                      
+                      return (
+                        <div
+                          key={hour.id}
+                          className={`backdrop-blur-sm border rounded-xl p-4 transition-all
+                            ${isNature 
+                              ? 'bg-white/80 border-amber-100 hover:bg-amber-50' 
+                              : 'bg-card/40 border-border hover:bg-accent/5'}`}
+                        >
+                          <div className="flex items-center justify-between flex-wrap gap-4">
+                            <div className="flex items-center gap-4">
+                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center
+                                ${isNature 
+                                  ? 'bg-amber-100' 
+                                  : 'bg-accent/10'}`}>
+                                <Clock className={`w-5 h-5 ${isNature ? 'text-amber-600' : 'text-accent'}`} />
+                              </div>
+                              <div>
+                                <h4 className={`font-semibold ${isNature ? 'text-amber-800' : ''}`}>
+                                  {hour.title}
+                                </h4>
+                                <div className="flex flex-wrap items-center gap-3 text-sm text-foreground/50 mt-1">
+                                  <div className="flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    <span>{timeDisplay || hour.hours || 'وقت غير محدد'}</span>
+                                  </div>
+                                  {address && (
+                                    <div className="flex items-center gap-1">
+                                      <MapPin className="w-3 h-3" />
+                                      <span>{address}</span>
+                                    </div>
+                                  )}
+                                  {phone && (
+                                    <div className="flex items-center gap-1">
+                                      <span>📞</span>
+                                      <span>{phone}</span>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </div>
+                            {hour.note && (
+                              <div className="px-3 py-1.5 rounded-full bg-yellow-500/10 text-yellow-600 text-xs">
+                                📌 {hour.note}
+                              </div>
+                            )}
                           </div>
-                          {hour.note && (
-                            <div className="px-3 py-1.5 rounded-full bg-yellow-500/10 text-yellow-600 text-xs">
-                              📌 {hour.note}
-                            </div>
-                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </motion.div>
                 )}
               </motion.div>
@@ -351,3 +414,5 @@ const CenterHoursSkeleton = ({ isNature }: { isNature: boolean }) => {
     </section>
   );
 };
+
+export default CenterHours;
