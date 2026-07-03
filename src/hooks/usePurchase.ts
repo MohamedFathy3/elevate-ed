@@ -32,20 +32,40 @@ export const usePurchaseItem = () => {
     },
     onSuccess: (data, variables) => {
       // ✅ التحقق من الحالة
-      if (data.status === 200 || data.status === true) {
-        // ✅ نجاح الشراء
+      const isSuccess = data.status === 200 || data.status === true;
+      
+      // ✅ التحقق من رسالة "رصيد غير كافٍ"
+      const isInsufficientBalance = data.message?.includes('رصيد المحفظة غير كاف') || 
+                                     data.message?.includes('Insufficient balance');
+      
+      if (isSuccess && !isInsufficientBalance) {
+        // ✅ نجاح حقيقي - تم الدفع وخصم الرصيد
         toast.success(data.message || "تم الشراء بنجاح!");
         queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
         queryClient.invalidateQueries({ queryKey: ['purchased-items'] });
         queryClient.invalidateQueries({ queryKey: ['student-courses'] });
         queryClient.invalidateQueries({ queryKey: ['student-books'] });
-      } else {
-        // ✅ فشل الشراء (رصيد غير كافي، إلخ)
+        return { success: true, data };
+      } 
+      else if (isInsufficientBalance) {
+        // ✅ رصيد غير كافٍ - تم إرسال طلب للمدرس
+        toast.info(
+          "📩 " + (data.message || "رصيد المحفظة غير كافٍ، تم إرسال طلب للمدرس")
+        );
+        // ✅ نعمل invalidate عشان نحدث الرصيد
+        queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+        return { success: false, data, isPending: true };
+      }
+      else {
+        // ✅ فشل آخر
         toast.error(data.message || "فشل الشراء");
+        return { success: false, data };
       }
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "حدث خطأ ما");
+      const errorMsg = error.response?.data?.message || "حدث خطأ ما";
+      toast.error(errorMsg);
+      return { success: false, error };
     },
   });
 
