@@ -37,8 +37,7 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
   const isNature = theme === 'nature';
   const isDark = colorMode === 'dark';
   
-  const { data: walletData, refetch: refetchWallet } = useWalletBalance();
-  
+const { data: walletData, refetch: refetchWallet } = useWalletBalance();
   const { 
     enroll, 
     isEnrolling,
@@ -54,7 +53,7 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
   const getTextColor = () => isDark ? 'text-white' : 'text-gray-900';
   const getMutedColor = () => isDark ? 'text-gray-400' : 'text-gray-500';
   
-  const balance = walletData?.data?.balance || 0;
+ const balance = walletData?.data?.balance || 0;  
   const hasSufficientBalance = canPurchaseWithWallet(balance, price);
 
   // ✅ دالة معالجة الدفع
