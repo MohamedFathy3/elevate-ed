@@ -24,7 +24,7 @@ const Hero = () => {
   
   useEffect(() => {
     console.log("🔄 ColorMode changed to:", colorMode);
-    setKey(prev => prev + 1); // Force re-render
+    setKey(prev => prev + 1);
   }, [colorMode]);
 
   const teacherName = teacher?.name || pick(teacher?.name, teacher?.name_ar) || "المعلم";
@@ -52,7 +52,7 @@ const Hero = () => {
     console.log("🎨 Calculating colors for mode:", colorMode);
     const isDark = colorMode === 'dark';
     
-    // لو في API Colors
+    // ✅ لو في API Colors - استخدمها دايماً
     if (apiColors) {
       const bgColor = isDark 
         ? adjustColorForDarkMode(apiColors.background) 
@@ -80,17 +80,19 @@ const Hero = () => {
         badgeBg: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.1)',
         badgeBorder: isDark ? 'rgba(16, 185, 129, 0.3)' : 'rgba(16, 185, 129, 0.2)',
         sectionBg: isDark 
-          ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' 
+          ? `bg-[${adjustColorForDarkMode(apiColors.background)}]` 
           : 'bg-gradient-to-br from-emerald-50/50 via-white to-teal-50/50',
         floatCardBg: isDark ? 'bg-slate-800' : 'bg-white',
         floatCardBorder: isDark ? 'border-emerald-800' : 'border-emerald-100',
-        // ✅ للـ badge
         badgeText: isDark ? 'text-emerald-400' : 'text-emerald-600',
         badgeBgClass: isDark ? 'bg-emerald-500/10 border-emerald-800' : 'bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border-emerald-200',
-        // ✅ للأزرار الثانوية
         secondaryBtnBg: isDark ? 'bg-slate-800 border-emerald-800 hover:border-emerald-600 text-slate-200' : 'bg-white border-emerald-200 hover:border-emerald-400 text-slate-800',
-        // ✅ لون النص المتحرك
         rotatingText: isDark ? 'text-emerald-400' : 'text-emerald-600',
+        // ✅ ألوان الخلفية للـ section
+        sectionBgColor: bgColor,
+        sectionBgGradient: isDark 
+          ? `radial-gradient(circle at 20% 30%, ${bgColor} 0%, #0f172a 100%)`
+          : `radial-gradient(circle at 20% 30%, ${bgColor} 0%, #f8fafc 100%)`,
       };
     }
 
@@ -113,54 +115,33 @@ const Hero = () => {
       badgeBgClass: isDark ? 'bg-emerald-500/10 border-emerald-800' : 'bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border-emerald-200',
       secondaryBtnBg: isDark ? 'bg-slate-800 border-emerald-800 hover:border-emerald-600 text-slate-200' : 'bg-white border-emerald-200 hover:border-emerald-400 text-slate-800',
       rotatingText: isDark ? 'text-emerald-400' : 'text-emerald-600',
+      sectionBgColor: isDark ? '#0f172a' : '#f8fafc',
+      sectionBgGradient: isDark 
+        ? 'radial-gradient(circle at 20% 30%, #0f172a 0%, #0a0f1a 100%)'
+        : 'radial-gradient(circle at 20% 30%, #f8fafc 0%, #eef2f6 100%)',
     };
-  }, [colorMode, apiColors, key]); // ✅ key force re-calculate
-
-  // ✅ حساب خلفية الـ section مع التحديث التلقائي
-  const sectionStyle = useMemo(() => {
-    console.log("🎨 Calculating section style for mode:", colorMode);
-    if (apiColors) {
-      const bgColor = colorMode === 'dark'
-        ? adjustColorForDarkMode(apiColors.background)
-        : apiColors.background;
-
-      return {
-        backgroundColor: bgColor,
-        backgroundImage: `radial-gradient(circle at 20% 30%, ${bgColor} 0%, ${colorMode === 'dark' ? '#0f172a' : '#f8fafc'} 100%)`,
-      };
-    }
-
-    return {};
-  }, [colorMode, apiColors, key]); // ✅ key force re-calculate
-
-  // ✅ Debugging
-  useEffect(() => {
-    console.log("📍 Current colorMode:", colorMode);
-    console.log("📍 Colors:", colors);
-    console.log("📍 Section Style:", sectionStyle);
-  }, [colorMode, colors, sectionStyle]);
+  }, [colorMode, apiColors, key]);
 
   return (
     <section
-      key={`hero-${colorMode}-${key}`} // ✅ Force re-render على تغيير المود
-      className={`relative overflow-hidden pt-28 pb-40 transition-all duration-500 ${!apiColors ? colors.sectionBg : ''}`}
-      style={sectionStyle}
+      key={`hero-${colorMode}-${key}`}
+      className={`relative overflow-hidden pt-28 pb-40 transition-all duration-500`}
+      style={{
+        background: colors.sectionBgGradient,
+        backgroundColor: colors.sectionBgColor,
+      }}
     >
       {/* ==================== BACKGROUND ANIMATIONS ==================== */}
 
       {/* 1. الطبقة الأولى - خلفية متدرجة متحركة */}
       <div className="absolute inset-0 -z-20 transition-all duration-500">
-        {apiColors ? (
-          <div
-            className="absolute inset-0 transition-all duration-500"
-            style={{
-              background: `radial-gradient(circle at 20% 30%, ${colorMode === 'dark' ? adjustColorForDarkMode(apiColors.background) : apiColors.background} 0%, ${colorMode === 'dark' ? '#0f172a' : '#f8fafc'} 100%)`,
-              opacity: colorMode === 'dark' ? 0.5 : 0.7
-            }}
-          />
-        ) : (
-          <div className={`absolute inset-0 transition-all duration-500 ${colorMode === 'dark' ? 'bg-slate-900' : 'bg-emerald-50/50'}`} />
-        )}
+        <div
+          className="absolute inset-0 transition-all duration-500"
+          style={{
+            background: colors.sectionBgGradient,
+            opacity: colorMode === 'dark' ? 0.8 : 0.6
+          }}
+        />
       </div>
 
       {/* 2. الطبقة الثانية - دوائر متحركة */}
@@ -175,7 +156,7 @@ const Hero = () => {
           transition={{ duration: 30, repeat: Infinity, ease: "easeInOut" }}
           className={`absolute top-10 -left-20 w-96 h-96 rounded-full blur-3xl transition-all duration-500 ${
             colorMode === 'dark'
-              ? 'bg-emerald-500/5'
+              ? 'bg-emerald-500/10'
               : 'bg-emerald-300/20'
           }`}
         />
@@ -190,7 +171,7 @@ const Hero = () => {
           transition={{ duration: 35, repeat: Infinity, ease: "easeInOut", delay: 2 }}
           className={`absolute bottom-10 -right-20 w-[500px] h-[500px] rounded-full blur-3xl transition-all duration-500 ${
             colorMode === 'dark'
-              ? 'bg-teal-500/5'
+              ? 'bg-teal-500/10'
               : 'bg-teal-300/20'
           }`}
         />
@@ -204,7 +185,7 @@ const Hero = () => {
           transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 5 }}
           className={`absolute top-1/2 left-1/3 w-80 h-80 rounded-full blur-3xl transition-all duration-500 ${
             colorMode === 'dark'
-              ? 'bg-amber-500/3'
+              ? 'bg-amber-500/8'
               : 'bg-amber-300/15'
           }`}
         />
@@ -219,7 +200,7 @@ const Hero = () => {
             animate={{
               y: [0, -200, 0],
               x: [0, (Math.random() - 0.5) * 100, 0],
-              opacity: [0, colorMode === 'dark' ? 0.2 : 0.4, 0]
+              opacity: [0, colorMode === 'dark' ? 0.3 : 0.4, 0]
             }}
             transition={{
               duration: 5 + Math.random() * 7,
@@ -234,9 +215,9 @@ const Hero = () => {
               left: `${Math.random() * 100}%`,
               bottom: 0,
               backgroundColor: colorMode === 'dark'
-                ? `hsl(${Math.random() * 60 + 140}, 70%, 40%)`
+                ? `hsl(${Math.random() * 60 + 140}, 70%, 50%)`
                 : `hsl(${Math.random() * 60 + 140}, 70%, 50%)`,
-              opacity: colorMode === 'dark' ? 0.15 : 0.3
+              opacity: colorMode === 'dark' ? 0.3 : 0.4
             }}
           />
         ))}
@@ -244,16 +225,16 @@ const Hero = () => {
 
       {/* 4. الطبقة الرابعة - خطوط منحنية متحركة */}
       <div className="absolute inset-0 -z-5 overflow-hidden pointer-events-none">
-        <svg className="absolute w-full h-full opacity-20" viewBox="0 0 1000 600">
+        <svg className="absolute w-full h-full" viewBox="0 0 1000 600">
           <defs>
             <linearGradient id={`lineGrad1-${colorMode}`} x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#10b981" stopOpacity="0" />
-              <stop offset="50%" stopColor="#10b981" stopOpacity={colorMode === 'dark' ? 0.3 : 0.5} />
+              <stop offset="50%" stopColor="#10b981" stopOpacity={colorMode === 'dark' ? 0.4 : 0.5} />
               <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
             </linearGradient>
             <linearGradient id={`lineGrad2-${colorMode}`} x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#14b8a6" stopOpacity="0" />
-              <stop offset="50%" stopColor="#14b8a6" stopOpacity={colorMode === 'dark' ? 0.25 : 0.4} />
+              <stop offset="50%" stopColor="#14b8a6" stopOpacity={colorMode === 'dark' ? 0.35 : 0.4} />
               <stop offset="100%" stopColor="#14b8a6" stopOpacity="0" />
             </linearGradient>
           </defs>
@@ -315,7 +296,7 @@ const Hero = () => {
       <div
         className="absolute inset-0 -z-5 pointer-events-none transition-all duration-500"
         style={{
-          opacity: colorMode === 'dark' ? 0.03 : 0.02,
+          opacity: colorMode === 'dark' ? 0.05 : 0.02,
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fillRule='evenodd'%3E%3Cg fill='%23${colorMode === 'dark' ? 'ffffff' : '000000'}' fillOpacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           backgroundRepeat: 'repeat'
         }}
@@ -508,7 +489,7 @@ const Hero = () => {
         <svg className="relative block w-full h-20" viewBox="0 0 1200 120" preserveAspectRatio="none">
           <path
             fill="#10b981"
-            fillOpacity={colorMode === 'dark' ? 0.08 : 0.15}
+            fillOpacity={colorMode === 'dark' ? 0.1 : 0.15}
             d="M0,64 C250,140 950,0 1200,64 L1200,120 L0,120 Z"
           >
             <animate
@@ -523,7 +504,7 @@ const Hero = () => {
           </path>
           <path
             fill="#14b8a6"
-            fillOpacity={colorMode === 'dark' ? 0.12 : 0.25}
+            fillOpacity={colorMode === 'dark' ? 0.15 : 0.25}
             d="M0,80 C350,20 850,140 1200,80 L1200,120 L0,120 Z"
           >
             <animate
@@ -556,13 +537,15 @@ function adjustColorForDarkMode(hexColor: string): string {
 
     const brightness = (r * 299 + g * 587 + b * 114) / 1000;
 
+    // ✅ لو اللون فاتح، استخدم dark mode
     if (brightness > 200) {
       return '#0f172a';
     }
 
-    r = Math.floor(r * 0.3);
-    g = Math.floor(g * 0.3);
-    b = Math.floor(b * 0.3);
+    // ✅ لو اللون غامق، استخدم نسخة داكنة منه
+    r = Math.floor(r * 0.2);
+    g = Math.floor(g * 0.2);
+    b = Math.floor(b * 0.2);
 
     return `rgb(${r}, ${g}, ${b})`;
   } catch {

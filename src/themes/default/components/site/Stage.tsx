@@ -101,7 +101,7 @@ export const Stage = () => {
   const studentStage = stages.find((s: any) => s.id === studentStageId);
   const otherStages = stages.filter((s: any) => s.id !== studentStageId);
   const orderedStages = studentStage ? [studentStage, ...otherStages] : stages;
-  const visibleStages = showAll ? orderedStages : orderedStages.slice(0, 6);
+  const visibleStages = showAll ? orderedStages : orderedStages.slice(0, 20);
 
   const totalCourses = stages.reduce((acc: number, stage: any) => acc + (stage.courses_count || 0), 0);
   const totalStudents = stages.reduce((acc: number, stage: any) => acc + (stage.students_count || 0), 0);

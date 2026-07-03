@@ -3,7 +3,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo } from "react";
-import { useSearchParams, Link, useParams } from "react-router-dom";
+import { useSearchParams, Link, useParams, Navigate } from "react-router-dom";
 import { 
   Search, Filter, Sparkles, Leaf, ArrowLeft, ArrowRight
 } from "lucide-react";
@@ -12,6 +12,7 @@ import { useLang } from "@/i18n/LanguageContext";
 import { useSafeTeacherData } from "@/hooks/useSafeTeacherData";
 import { useCourses, useSubjectCourses } from "@/hooks/useCourses";
 import { useTheme } from "@/context/ThemeContext";
+import { useStudentAuth } from "@/context/StudentAuthContext"; // ✅ استخدم StudentAuth
 import { toast } from "@/hooks/use-toast";
 
 import { CourseCardFull } from "@/themes/default/components/site/pagecouress/CourseCardFull";
@@ -25,6 +26,8 @@ const CoursesPage = () => {
   const { theme, colorMode } = useTheme();
   const { slug } = useParams();
   const { teacher, pick, isLoading: teacherLoading } = useSafeTeacherData();
+  const { isAuthenticated, isLoading: authLoading } = useStudentAuth(); // ✅ استخدم useStudentAuth
+  
   const [searchParams] = useSearchParams();
   
   const semesterId = searchParams.get('semester_id');
@@ -67,8 +70,13 @@ const CoursesPage = () => {
     return allCourses;
   }, [semesterId, semesterCourses, subjectId, subjectCoursesData, allCourses]);
   
-  const isLoading = teacherLoading || semesterLoading || subjectLoading || allCoursesLoading;
+  const isLoading = teacherLoading || semesterLoading || subjectLoading || allCoursesLoading || authLoading;
   
+  // ✅ لو مش مسجل، حول للـ Login
+  if (!authLoading && !isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  }
+
   // ✅ مستويات وأنواع
   const levels = useMemo(() => {
     const set = new Set<string>();
@@ -136,25 +144,21 @@ const CoursesPage = () => {
     toast.error(lang === "ar" ? "فشل الدفع، حاول مرة أخرى" : "Payment failed, please try again");
   };
 
-  // ✅ حساب السعر النهائي - الباك اند هو اللي بيحسب، احنا بس نعرض
+  // ✅ حساب السعر النهائي
   const getCoursePrice = (course: any) => {
-    // ✅ لو فيه price من الباك اند، استخدمه
     if (course?.price !== undefined && course?.price !== null) {
       return parseFloat(course.price) || 0;
     }
-    // ✅ لو فيه original_price و discount، احسب يدوياً (fallback)
     const originalPrice = parseFloat(course?.original_price) || parseFloat(course?.price) || 0;
     const discount = parseFloat(course?.discount) || 0;
     return originalPrice - discount;
   };
 
-  // ✅ التحقق من وجود خصم
   const hasDiscount = (course: any) => {
     const discount = parseFloat(course?.discount) || 0;
     return discount > 0;
   };
 
-  // ✅ جلب السعر الأصلي
   const getOriginalPrice = (course: any) => {
     return parseFloat(course?.original_price) || parseFloat(course?.price) || 0;
   };
@@ -440,7 +444,6 @@ const CoursesPage = () => {
                     primaryGradient={primaryGradient}
                     isHovered={hoveredCard === idx}
                     onBuyClick={handleOpenModal}
-                    // ✅ تمرير دوال الأسعار
                     getCoursePrice={getCoursePrice}
                     getOriginalPrice={getOriginalPrice}
                     hasDiscount={hasDiscount}
@@ -452,7 +455,7 @@ const CoursesPage = () => {
         </AnimatePresence>
       </div>
 
-      {/* ✅ Modal - خارج الـ section */}
+      {/* ✅ Modal */}
       <RedeemModal
         isOpen={showRedeemModal}
         onClose={handleCloseModal}
