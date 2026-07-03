@@ -1,50 +1,75 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// features/exam/hooks/useExamSubmission.ts
-import { useCallback } from 'react';
-import { useSubmitExam, useExamResult } from '@/hooks/useExams';
-import { EssayAnswer } from '../types/exam.types';
+// hooks/useExamSubmission.ts - ✅ النسخة المعدلة
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "@/lib/api";
+import { toast } from "@/hooks/use-toast";
+import Cookies from "js-cookie";
 
 export const useExamSubmission = (examId: number, studentId: number, answers: Record<number, any>) => {
-  const { mutate: submitExam, isPending } = useSubmitExam();
-  const { refetch: refetchResult } = useExamResult(examId, studentId);
-
-  const formatAnswers = useCallback(() => {
-    return Object.entries(answers).map(([questionId, answer]) => {
-      if (typeof answer === 'object' && answer !== null && 'text' in answer) {
-        const essayAns = answer as EssayAnswer;
-        const formatted: any = {
-          question_id: parseInt(questionId),
-          answer: essayAns.text || '',
-        };
-        
-        // ✅ إضافة الصورة لو موجودة
-        if (essayAns.images && essayAns.images.length > 0) {
-          formatted.image = essayAns.images[0]; // API باخد صورة واحدة
-        }
-        
-        return formatted;
+  const queryClient = useQueryClient();
+  const token = Cookies.get('student_token');
+  
+  return {
+    submit: (onSuccess?: () => void, onError?: (error: any) => void) => {
+      // ✅ تحويل الـ answers من object لـ array
+      const answersArray = Object.keys(answers)
+        .filter(key => answers[key] !== undefined && answers[key] !== null && answers[key] !== '')
+        .map(key => ({
+          question_id: parseInt(key),
+          answer: answers[key]
+        }));
+      
+      // ✅ لو مفيش إجابات، نرسل array فاضي
+      if (answersArray.length === 0) {
+        toast.warning(
+          "⚠️ لا توجد إجابات للحفظ"
+        );
+        return;
       }
-
-      // الأسئلة العادية
-      return {
-        question_id: parseInt(questionId),
-        answer: Array.isArray(answer) ? answer.join(',') : answer.toString(),
+      
+      const payload = {
+        exam_id: examId,
+        student_id: studentId,
+        answers: answersArray
       };
-    });
-  }, [answers]);
-
-  const submit = useCallback((onSuccess?: () => void, onError?: (error: any) => void) => {
-    const formatted = formatAnswers();
-    submitExam({ examId, answers: formatted }, {
-      onSuccess: () => {
-        onSuccess?.();
-        setTimeout(() => refetchResult(), 500);
-      },
-      onError: (error) => {
-        onError?.(error);
-      }
-    });
-  }, [examId, formatAnswers, submitExam, refetchResult]);
-
-  return { submit, isPending };
+      
+      console.log("📝 Submitting exam payload:", payload);
+      
+      api.post('/exam/submit', payload)
+        .then(response => {
+          console.log("✅ Submit response:", response.data);
+          
+          // ✅ التحقق من النجاح
+          const isSuccess = 
+            response.data?.status === true || 
+            response.data?.status === "success" || 
+            response.data?.status === 200 || 
+            response.data?.status === 201;
+          
+          if (isSuccess) {
+            toast.success(response.data?.message || "تم تقديم الامتحان بنجاح! 🎉");
+            queryClient.invalidateQueries({ queryKey: ['exam-result', examId, studentId] });
+            queryClient.invalidateQueries({ queryKey: ['exam-questions', examId] });
+            if (onSuccess) onSuccess();
+          } else {
+            toast.error(response.data?.message || "فشل تقديم الامتحان");
+            if (onError) onError(response.data);
+          }
+        })
+        .catch(error => {
+          console.error("❌ Submit error:", error);
+          
+          // ✅ حتى لو error، نحاول نرسل الإجابات الفارغة عادي
+          if (answersArray.length === 0) {
+            toast.info("📝 تم حفظ الإجابات الفارغة");
+            if (onSuccess) onSuccess();
+            return;
+          }
+          
+          toast.error(error.response?.data?.message || "حدث خطأ ما");
+          if (onError) onError(error);
+        });
+    },
+    isPending: false // ✅ نحذف الـ isPending عشان نتحكم فيه بنفسنا
+  };
 };

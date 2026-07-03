@@ -10,7 +10,7 @@ import { useAttendance } from "@/hooks/useAttendance";
 import { useWatermark } from '@/hooks/useWatermark';
 import { usePreventScreenshot } from '@/hooks/usePreventScreenshot';
 import { motion } from "framer-motion";
-import { AlertCircle, ArrowRight, FileQuestion, Lock, Unlock, CheckCircle, Loader2, XCircle, Play } from "lucide-react";
+import { AlertCircle, ArrowRight, FileQuestion, Lock, Unlock, CheckCircle, Loader2, XCircle, Play, MessageCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { enableFullProtection } from "@/utils/protection";
 import Cookies from "js-cookie";
@@ -23,50 +23,70 @@ import { LessonSkeleton } from "@/components/lesson/LessonSkeleton";
 import { useLessonParts } from "@/hooks/useLessonParts";
 
 // ✅ Modal للتواصل مع المعلم
-const ContactTeacherModal = ({ isOpen, onClose, lang, teacherName, failedExams }: any) => {
+const ContactTeacherModal = ({ isOpen, onClose, lang, teacherName, phone }: any) => {
   if (!isOpen) return null;
 
   const isRtl = lang === 'ar';
-  
+  const [isHovered, setIsHovered] = useState(false);
+
+  const message = `السلام عليكم، أحتاج إلى مساعدة بخصوص منصة الأستاذ ${teacherName || 'المعلم'}`;
+  const cleanPhone = phone?.replace(/\s/g, "").replace(/[^0-9+]/g, "") || "201154853195";
+
+  const handleWhatsApp = () => {
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
+    window.open(whatsappUrl, "_blank");
+    onClose();
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-white dark:bg-gray-900 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl border border-gray-200 dark:border-gray-700"
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="bg-white dark:bg-gray-900 rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl border border-gray-200 dark:border-gray-700"
       >
         <div className="text-center">
-          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-            <XCircle className="w-10 h-10 text-red-500" />
+          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/30">
+            <MessageCircle className="w-10 h-10 text-white" />
           </div>
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-            {isRtl ? '🚫 لم تجتز جميع الامتحانات' : '❌ Failed All Exams'}
+          
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            {isRtl ? '💬 تحتاج مساعدة؟' : '💬 Need Help?'}
           </h3>
+          
           <p className="text-gray-600 dark:text-gray-400 mb-2">
             {isRtl 
-              ? `لم تتمكن من اجتياز الامتحانات المطلوبة لفتح هذا الدرس`
-              : `You didn't pass the required exams to unlock this lesson`}
+              ? `لم تتمكن من اجتياز الامتحانات المطلوبة`
+              : `You couldn't pass the required exams`}
           </p>
-          <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-            {isRtl ? 'الامتحانات التي فشلت فيها:' : 'Failed exams:'}
-            <ul className="mt-2 space-y-1">
-              {failedExams?.map((exam: any) => (
-                <li key={exam.id} className="text-red-600 dark:text-red-400">
-                  ❌ {exam.title} (حصلت على {exam.total || 0} من {exam.passMarks || exam.total_must_pass_marks || 0})
-                </li>
-              ))}
-            </ul>
-          </div>
-          <p className="text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 p-3 rounded-xl mb-4">
+          
+          <p className="text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 p-3 rounded-xl mb-6">
             {isRtl
-              ? `📞 يرجى التواصل مع المعلم "${teacherName}" للحصول على المساعدة`
-              : `📞 Please contact teacher "${teacherName}" for assistance`}
+              ? `📞 تواصل مع المعلم "${teacherName || 'المعلم'}" عبر واتساب للحصول على المساعدة`
+              : `📞 Contact teacher "${teacherName || 'the teacher'}" via WhatsApp for assistance`}
           </p>
+
+          <motion.button
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            onClick={handleWhatsApp}
+            animate={{
+              scale: isHovered ? 1.05 : 1,
+            }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            className="group relative w-full py-4 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 hover:shadow-lg hover:shadow-green-500/30 text-white font-bold text-lg flex items-center justify-center gap-3 transition-all duration-300"
+          >
+            <MessageCircle className="w-6 h-6" />
+            <span>{isRtl ? "📱 تواصل عبر واتساب" : "📱 Contact via WhatsApp"}</span>
+          </motion.button>
+
           <button
             onClick={onClose}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold transition-all"
+            className="mt-4 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
           >
-            {isRtl ? 'حسناً' : 'OK'}
+            {isRtl ? 'حسناً، سأتواصل لاحقاً' : 'OK, I\'ll contact later'}
           </button>
         </div>
       </motion.div>
@@ -77,7 +97,6 @@ const ContactTeacherModal = ({ isOpen, onClose, lang, teacherName, failedExams }
 const ExamCard = ({ exam, examIndex, totalExams, isActive, isPassed, isFailed, isLocked, isHidden, onStart, lang }: any) => {
   const isRtl = lang === 'ar';
   
-  // ✅ إذا كان الامتحان مخفياً لا نعرضه
   if (isHidden) return null;
   
   let status = '';
@@ -97,7 +116,6 @@ const ExamCard = ({ exam, examIndex, totalExams, isActive, isPassed, isFailed, i
     bgColor = 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 ring-2 ring-amber-500/50';
     icon = <Loader2 className="w-5 h-5 text-amber-600 dark:text-amber-400 animate-spin" />;
   } else {
-    // ✅ إذا كان الامتحان غير نشط ولا نجح ولا فشل → يظهر كمفتوح (pending)
     status = isRtl ? '⏳ ينتظر' : '⏳ Pending';
     bgColor = 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 ring-2 ring-amber-500/50';
     icon = <Loader2 className="w-5 h-5 text-amber-600 dark:text-amber-400 animate-spin" />;
@@ -155,10 +173,6 @@ const ExamCard = ({ exam, examIndex, totalExams, isActive, isPassed, isFailed, i
         )}
       </div>
 
-      {/* ✅ زر بدء الامتحان يظهر إذا:
-          - الامتحان نشط (isActive) ✅
-          - أو الامتحان غير مقفول (isLocked = false) ✅
-      */}
       {!isPassed && !isFailed && (isActive || !isLocked) && (
         <button
           onClick={onStart}
@@ -183,7 +197,6 @@ const ExamCard = ({ exam, examIndex, totalExams, isActive, isPassed, isFailed, i
         </div>
       )}
 
-      {/* ✅ يظهر مقفول فقط إذا isLocked = true */}
       {isLocked && !isActive && !isPassed && !isFailed && (
         <div className="w-full py-2 rounded-xl font-semibold flex items-center justify-center gap-2 text-sm bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
           <Lock className="w-4 h-4" />
@@ -301,12 +314,11 @@ const LessonPage = () => {
           const passMarks = exam.total_must_pass_marks || 0;
           const passed = total >= passMarks;
           
-          // ✅ التحقق من وجود بيانات (يعني الطالب دخل الامتحان)
           const hasData = data.data && data.data.length > 0;
           
           statuses[exam.id] = {
             passed: passed,
-            failed: hasData && !passed, // ✅ فشل فقط لو دخل الامتحان ومجابش النجاح
+            failed: hasData && !passed,
             checked: hasData || false,
             locked: false,
             hidden: false,
@@ -314,12 +326,11 @@ const LessonPage = () => {
             passMarks: passMarks
           };
           
-       
         } catch (error) {
           statuses[exam.id] = {
             passed: false,
             failed: false,
-            checked: false, // ✅ لسه مبدأش
+            checked: false,
             locked: false,
             hidden: false,
             total: 0,
@@ -336,7 +347,7 @@ const LessonPage = () => {
     fetchAllExamResults();
   }, [exams, student?.id]);
 
-  // ✅ المنطق: تحديد الامتحان النشط وحالة الإخفاء لكل امتحان
+  // ✅ المنطق: تحديد الامتحان النشط
   const { activeExamIndex, examVisibility } = useMemo(() => {
     if (exams.length === 0 || loadingExams) {
       return { activeExamIndex: -1, examVisibility: {} };
@@ -345,31 +356,23 @@ const LessonPage = () => {
     const visibility: Record<number, boolean> = {};
     let firstFailedIndex = -1;
 
-    // ✅ تحديد أول امتحان فشل
     for (let i = 0; i < exams.length; i++) {
       const exam = exams[i];
       const status = examStatuses[exam.id];
 
-      // ✅ إذا كان الامتحان فشل
       if (status?.failed === true) {
         firstFailedIndex = i;
         break;
       }
     }
 
-    // ✅ تحديد الامتحان النشط
     let activeIdx = -1;
     
-    // ✅ لو في امتحان فشل → هو النشط
     if (firstFailedIndex !== -1) {
       activeIdx = firstFailedIndex;
-    } 
-    // ✅ لو أول امتحان لسه مبدأش → هو النشط
-    else if (!examStatuses[exams[0]?.id]?.checked) {
+    } else if (!examStatuses[exams[0]?.id]?.checked) {
       activeIdx = 0;
-    }
-    // ✅ لو كل الامتحانات نجحت
-    else {
+    } else {
       const allPassed = exams.every((exam: any) => {
         const status = examStatuses[exam.id];
         return status?.passed === true;
@@ -377,8 +380,6 @@ const LessonPage = () => {
       activeIdx = allPassed ? -2 : -1;
     }
 
-    // ✅ تحديد رؤية كل امتحان
-    // ✅ الامتحان الأول دائماً ظاهر
     visibility[exams[0]?.id] = true;
 
     for (let i = 1; i < exams.length; i++) {
@@ -386,13 +387,10 @@ const LessonPage = () => {
       const prevExam = exams[i - 1];
       const prevStatus = examStatuses[prevExam?.id];
       
-      // ✅ الامتحان الحالي يظهر فقط إذا فشل الامتحان السابق
-      // ✅ يختفي إذا نجح الامتحان السابق
       const shouldShow = prevStatus?.failed === true;
       
       visibility[currentExam.id] = shouldShow;
     }
-
 
     return { activeExamIndex: activeIdx, examVisibility: visibility };
   }, [exams, examStatuses, loadingExams]);
@@ -404,7 +402,6 @@ const LessonPage = () => {
     const newStatuses = { ...examStatuses };
     
     exams.forEach((exam: any, index: number) => {
-      // ✅ الامتحان الأول دايمًا نشط (مش مقفول)
       if (index === 0) {
         newStatuses[exam.id] = {
           ...newStatuses[exam.id],
@@ -415,19 +412,11 @@ const LessonPage = () => {
         return;
       }
 
-      // ✅ الامتحانات التالية
       const previousExam = exams[index - 1];
       const previousStatus = examStatuses[previousExam?.id];
       
-      // ✅ الامتحان التالي:
-      // - مقفول إذا نجح الامتحان السابق (عشان يختفي)
-      // - مفتوح إذا فشل الامتحان السابق (عشان يظهر ويعيده)
       const shouldLock = previousStatus?.passed === true;
-      
-      // ✅ الامتحان التالي يختفي إذا نجح الامتحان السابق
-      // ✅ يظهر إذا فشل الامتحان السابق
       const shouldHide = previousStatus?.passed === true;
-      
       
       newStatuses[exam.id] = {
         ...newStatuses[exam.id],
@@ -437,7 +426,6 @@ const LessonPage = () => {
       };
     });
 
-    setExamStatuses(newStatuses);
   }, [exams, examStatuses, loadingExams]);
 
   // ✅ هل يقدر يشوف الفيديو؟
@@ -454,7 +442,6 @@ const LessonPage = () => {
       return false;
     }
     
-    // ✅ كل الامتحانات نجحت؟
     const allPassed = exams.every((exam: any) => {
       const status = examStatuses[exam.id];
       return status?.passed === true;
@@ -463,37 +450,32 @@ const LessonPage = () => {
     return allPassed;
   }, [lesson?.must_pass_to_unlock, exams, examStatuses, loadingExams]);
 
-  // ✅ هل في امتحانات فاشلة؟
-  const hasFailedExams = useMemo(() => {
-    if (!lesson?.must_pass_to_unlock) return false;
-    
-    return exams.some((exam: any) => {
-      const status = examStatuses[exam.id];
-      return status?.passed === false && status?.checked === true;
-    });
-  }, [lesson?.must_pass_to_unlock, exams, examStatuses]);
-
-  // ✅ عرض مودال الفشل (فقط لو كل الامتحانات فشلت)
+  // ✅ عرض مودال التواصل مع المعلم (need_support بس)
   useEffect(() => {
+    // ✅ لو need_support = true → افتح المودال
+    if (lesson?.need_support === true) {
+      const timer = setTimeout(() => {
+        setShowContactModal(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+
+    // ✅ المنطق القديم للامتحانات
     if (!lesson?.must_pass_to_unlock) return;
     if (loadingExams) return;
     if (exams.length === 0) return;
     
-    // ✅ جيب كل الامتحانات الفاشلة
     const failedList = exams.filter((exam: any) => {
       const status = examStatuses[exam.id];
       return status?.passed === false && status?.checked === true;
     });
     
-    // ✅ لو في امتحانات فاشلة
     if (failedList.length > 0) {
-      // ✅ تحقق هل كل الامتحانات إما نجحت أو فشلت؟
       const allExamsDone = exams.every((exam: any) => {
         const status = examStatuses[exam.id];
         return status?.passed === true || (status?.passed === false && status?.checked === true);
       });
       
-      // ✅ لو كل الامتحانات اتعملت وفيه فشل → أظهر المودال
       if (allExamsDone) {
         const timer = setTimeout(() => {
           const failedExamsList = failedList.map((exam: any) => {
@@ -512,7 +494,7 @@ const LessonPage = () => {
         return () => clearTimeout(timer);
       }
     }
-  }, [lesson?.must_pass_to_unlock, exams, examStatuses, loadingExams]);
+  }, [lesson?.need_support, lesson?.must_pass_to_unlock, exams, examStatuses, loadingExams]);
 
   // Enable protection
   useEffect(() => {
@@ -560,10 +542,8 @@ const LessonPage = () => {
   const lessonVideoUrl = lesson?.content_link || lesson?.video_url;
   const finalVideoUrl = partVideoUrl || lessonVideoUrl;
 
-  // Loading
   if (isLoading) return <LessonSkeleton lang={lang} />;
 
-  // Not found
   if (!lesson) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-32">
@@ -614,7 +594,6 @@ const LessonPage = () => {
                     const isFailed = status?.failed;
                     const isHidden = status?.hidden;
                     
-                    // ✅ إذا كان الامتحان مخفياً لا نعرضه
                     if (isHidden) return null;
                     
                     return (
@@ -813,15 +792,14 @@ const LessonPage = () => {
         </div>
       </div>
 
-      {lesson?.must_pass_to_unlock && (
-        <ContactTeacherModal
-          isOpen={showContactModal}
-          onClose={() => setShowContactModal(false)}
-          lang={lang}
-          teacherName={lesson.teacher_id?.name || 'المعلم'}
-          failedExams={failedExams}
-        />
-      )}
+      {/* ✅ مودال التواصل مع المعلم - need_support */}
+      <ContactTeacherModal
+        isOpen={showContactModal}
+        onClose={() => setShowContactModal(false)}
+        lang={lang}
+        teacherName={lesson?.teacher_id?.name || 'المعلم'}
+        phone={lesson?.teacher_id?.phone}
+      />
 
       <style>{`
         .shadow-card {
