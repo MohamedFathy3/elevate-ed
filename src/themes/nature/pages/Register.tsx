@@ -211,8 +211,13 @@ const Register = () => {
   };
 
   const getHourLabel = (hour: any) => {
-    const date = new Date(hour.date).toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US");
-    return `${hour.title} - ${date} الساعة ${hour.hours}`;
+    // ✅ استخدم hours_start و hours_end من الـ API
+    const start = hour.hours_start || '';
+    const end = hour.hours_end || '';
+    const date = hour.date || '';
+    const title = hour.title || '';
+    
+    return `${title} - ${date} من ${start} إلى ${end}`;
   };
 
   const validateField = (name: string, value: string): string => {
