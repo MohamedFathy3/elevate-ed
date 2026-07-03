@@ -162,17 +162,47 @@ export const useSubmitExam = () => {
   });
 };
 
-// ✅ جلب نتيجة الامتحان (exam_id أولاً ثم student_id)
+// hooks/useExams.ts
+
 export const useExamResult = (examId: number, studentId: number) => {
   const token = Cookies.get('student_token');
   
   return useQuery({
     queryKey: ['exam-result', examId, studentId],
     queryFn: async () => {
-      // الترتيب الجديد: exam_id أولاً ثم student_id
-      const response = await api.get(`/exam/result/${examId}/${studentId}`);
-      console.log("📊 Exam result response:", response.data);
-      return response.data;
+      if (!examId || !studentId) return null;
+      
+      try {
+        const response = await api.get(`/exam/result/${examId}/${studentId}`);
+        console.log("📊 Exam result response:", response.data);
+        
+        // ✅ التحقق من وجود بيانات حقيقية
+        const data = response.data;
+        
+        // لو مفيش data أو data.id مش موجود => مفيش نتيجة
+        if (!data || !data.data || !data.data.id) {
+          return {
+            status: false,
+            hasResult: false,
+            message: "No exam result found"
+          };
+        }
+        
+        return {
+          ...data,
+          hasResult: true
+        };
+      } catch (error: any) {
+        // ✅ لو الـ API رجع 404 أو error => مفيش نتيجة
+        if (error.response?.status === 404) {
+          return {
+            status: false,
+            hasResult: false,
+            message: "No exam result found"
+          };
+        }
+        throw error;
+      }
     },
     enabled: !!token && !!examId && !!studentId,
     staleTime: 60 * 1000,

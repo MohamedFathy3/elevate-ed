@@ -40,21 +40,23 @@ export const useLessonDetails = (lessonId: number, studentId?: number) => {
   const query = useQuery({
     queryKey: ['lesson-details', lessonId],
     queryFn: async () => {
+      console.log(`🔄 Fetching lesson details for ID: ${lessonId}`);
       const response = await api.get(`/course-detail/${lessonId}`);
       console.log("📚 Lesson details response:", response.data);
       return response.data;
     },
     enabled: !!lessonId && !!token,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0, // ✅ مهم: ميحفظش البيانات القديمة
+    refetchOnMount: true, // ✅ يعيد الجلب عند تحميل الصفحة
+    refetchOnWindowFocus: true, // ✅ يعيد الجلب عند التركيز على الصفحة
   });
 
-  // ✅ تسجيل الحضور تلقائياً عند تحميل الدرس
+  // ✅ تسجيل الحضور تلقائياً
   useEffect(() => {
     const lessonData = query.data?.data;
     
     if (lessonId && studentId && lessonData?.attended === false && token) {
       console.log("✅ Recording attendance for lesson:", lessonId);
-      
       recordAttendance({
         lesson_id: lessonId,
         student_id: studentId,

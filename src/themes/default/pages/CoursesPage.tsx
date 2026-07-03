@@ -86,7 +86,6 @@ const CoursesPage = () => {
     return ["all", ...Array.from(set)];
   }, [displayCourses]);
   
-  // ✅ فلترة الكورسات
   const filteredCourses = useMemo(() => {
     if (!Array.isArray(displayCourses)) return [];
     return displayCourses.filter((c: any) => {
@@ -101,7 +100,6 @@ const CoursesPage = () => {
     });
   }, [displayCourses, searchQuery, selectedLevel, selectedType, pick]);
 
-  // ✅ أنيميشن
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { 

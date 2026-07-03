@@ -323,14 +323,27 @@ export const useLessonAttendance = () => {
   });
 };
 
+// hooks/useStudent.ts - أضف هذا
+
 export const useCurrentStudent = () => {
   const token = Cookies.get('student_token');
   const studentData = Cookies.get('student_data');
   
+  const student = useMemo(() => {
+    if (studentData) {
+      try {
+        return JSON.parse(studentData);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }, [studentData]);
+  
   return {
     token,
-    isAuthenticated: !!token,
-    student: studentData ? JSON.parse(studentData) : null,
+    isAuthenticated: !!token && !!student,
+    student,
     logout: () => {
       Cookies.remove('student_token');
       Cookies.remove('student_data');
@@ -338,7 +351,6 @@ export const useCurrentStudent = () => {
     }
   };
 };
-
 
 
 export const useStudentCourses = () => {

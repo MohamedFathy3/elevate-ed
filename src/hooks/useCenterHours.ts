@@ -19,7 +19,6 @@ export const useCenterHours = (teacherId?: number) => {
     queryFn: async () => {
       const filters: any = {};
       if (teacherId) filters.teacher_id = teacherId;
-       filters.active = true;
       const { data } = await api.post('/center-hour/index', {
         filters,
         orderBy: "date",

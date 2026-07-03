@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { useLang } from "@/i18n/LanguageContext";
 import { useParams, Link } from "react-router-dom";
-import { useTeacher } from "@/context/TeacherContext";
+import { useSafeTeacherData } from "@/hooks/useSafeTeacherData";
 import { useStudentRegister } from "@/hooks/useStudent";
 import { useCenterHours } from "@/hooks/useCenterHours";
 import FileUploader from "@/components/FileUploader";
@@ -107,9 +107,24 @@ const formatPhoneNumber = (value: string): string => {
 const Register = () => {
   const { lang, dir } = useLang();
   const { slug } = useParams();
-  const { teacher, stages, pick, isLoading } = useTeacher();
+  
+  // ✅ استخدم useSafeTeacherData بدل useTeacher
+  const { 
+    teacher, 
+    stages, 
+    pick, 
+    isLoading: teacherLoading,
+    centerHours: teacherCenterHours,
+    hasCenterHours: teacherHasCenterHours
+  } = useSafeTeacherData();
+  
+  // ✅ جيب centerHours من API مباشرة
+  const { 
+    data: apiCenterHours, 
+    isLoading: hoursLoading 
+  } = useCenterHours(teacher?.id);
+  
   const { mutate: register, isPending } = useStudentRegister();
-  const { data: centerHours, isLoading: hoursLoading } = useCenterHours(teacher?.id);
 
   // ✅ State للتحقق من الأخطاء
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -143,15 +158,24 @@ const Register = () => {
   const stagesList = stages || [];
   const hasStages = stagesList.length > 0;
   const isCenter = formData.type_of_attendance === "center";
-  const hoursList = centerHours || [];
+  
+  // ✅ استخدم centerHours من API أو من context
+  const hoursList = apiCenterHours || teacherCenterHours || [];
   const hasHours = hoursList.length > 0;
 
-  // ✅ إغلاق popup
+  // ✅ للتأكد من البيانات
+  console.log("📊 Center Hours Debug:", {
+    fromAPI: apiCenterHours,
+    fromContext: teacherCenterHours,
+    merged: hoursList,
+    count: hoursList.length,
+    hasHours: hasHours
+  });
+
   const handleCloseInstructions = () => {
     setShowInstructions(false);
   };
 
-  // قائمة المحافظات
   const governorates = [
     { value: "cairo", label: "القاهرة", label_en: "Cairo" },
     { value: "alexandria", label: "الإسكندرية", label_en: "Alexandria" },
@@ -191,7 +215,6 @@ const Register = () => {
     return `${hour.title} - ${date} الساعة ${hour.hours}`;
   };
 
-  // ✅ دالة التحقق من الحقل
   const validateField = (name: string, value: string): string => {
     switch (name) {
       case "name": {
@@ -247,7 +270,6 @@ const Register = () => {
     }
   };
 
-  // ✅ دالة التحقق من جميع الحقول في الخطوة
   const validateStep = (stepNumber: number): boolean => {
     const newErrors: Record<string, string> = {};
     let isValid = true;
@@ -422,21 +444,16 @@ const Register = () => {
     setStep(step - 1);
   };
 
-  // ✅ دالة التنقل بين الخطوات من الـ Tabs
   const goToStep = (targetStep: number) => {
-    // ✅ لو رايح لخطوة أقل، روح علطول من غير تحقق
     if (targetStep < step) {
       setStep(targetStep);
       return;
     }
     
-    // ✅ لو رايح لخطوة أعلى أو نفسها
     if (targetStep > step) {
-      // لو في الخطوة 1 وعاوز يروح للخطوة 2 أو 3
       if (step === 1) {
         if (validateStep(1)) {
           if (targetStep === 3) {
-            // لو عاوز يروح للخطوة 3 مباشرة، يعدي على 2
             setStep(2);
             setTimeout(() => {
               if (validateStep(2)) {
@@ -451,9 +468,7 @@ const Register = () => {
         } else {
           toast.error(lang === "ar" ? "الرجاء تصحيح الأخطاء في البيانات الأساسية" : "Please fix errors in basic data");
         }
-      } 
-      // لو في الخطوة 2 وعاوز يروح للخطوة 3
-      else if (step === 2 && targetStep === 3) {
+      } else if (step === 2 && targetStep === 3) {
         if (validateStep(2)) {
           setStep(3);
         } else {
@@ -473,7 +488,8 @@ const Register = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [step]);
 
-  if (isLoading || hoursLoading) {
+  // ✅ تحميل
+  if (teacherLoading || hoursLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
         <Loader2 className="w-8 h-8 animate-spin text-emerald-600 dark:text-emerald-400" />
@@ -707,7 +723,7 @@ const Register = () => {
             </div>
           </div>
 
-          {/* ✅ Steps Indicator - مع إمكانية الضغط */}
+          {/* ✅ Steps Indicator */}
           <div className="flex items-center justify-center gap-2 mb-8">
             {[
               { n: 1, label: lang === "ar" ? "المعلومات الأساسية" : "Basic Info" },
@@ -1068,12 +1084,26 @@ const Register = () => {
                       {lang === "ar" ? "اختر الميعاد المناسب" : "Select suitable time"}
                     </div>
 
-                    {!hasHours ? (
+                    {hoursLoading ? (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="w-5 h-5 animate-spin text-emerald-500" />
+                        <span className="mr-2 text-sm text-gray-500">
+                          {lang === "ar" ? "جاري تحميل المواعيد..." : "Loading times..."}
+                        </span>
+                      </div>
+                    ) : !hasHours ? (
                       <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3 flex items-start gap-2">
                         <AlertCircle className="w-4 h-4 text-amber-500 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-                        <p className="text-xs text-amber-700 dark:text-amber-400">
-                          {lang === "ar" ? "لا توجد مواعيد متاحة حالياً" : "No available times"}
-                        </p>
+                        <div>
+                          <p className="text-sm text-amber-700 dark:text-amber-400 font-medium">
+                            {lang === "ar" ? "⚠️ لا توجد مواعيد متاحة حالياً" : "⚠️ No available times"}
+                          </p>
+                          <p className="text-xs text-amber-600 dark:text-amber-500 mt-1">
+                            {lang === "ar" 
+                              ? "يرجى التواصل مع المعلم لإضافة مواعيد السنتر" 
+                              : "Please contact the teacher to add center hours"}
+                          </p>
+                        </div>
                       </div>
                     ) : (
                       <select

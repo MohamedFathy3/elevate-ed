@@ -40,10 +40,10 @@ const SeoManager = () => {
   const seo = teacher?.website?.seo;
   const home = teacher?.website?.home;
   
-  const title = seo?.seo_title || seo?.site_title || seo?.og_title || home?.title || teacher?.name || 'Moahemd';
-  const description = seo?.seo_description || seo?.og_description || home?.description || 'A premium bilingual learning platform';
+  const title = seo?.seo_title || seo?.site_title || seo?.og_title || home?.title || teacher?.name || '';
+  const description = seo?.seo_description || seo?.og_description || home?.description || '';
   const image = seo?.og_image || home?.image?.fullUrl || home?.imageUrl || seo?.favicon || '';
-  const siteName = seo?.og_site_name || seo?.site_name || teacher?.name || 'Moahemd';
+  const siteName = seo?.og_site_name || seo?.site_name || teacher?.name || '';
   const keywords = seo?.seo_keywords || seo?.site_keywords || '';
   const twitterCard = seo?.twitter_card || 'summary_large_image';
   const favicon = seo?.favicon || '';

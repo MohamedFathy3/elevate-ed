@@ -1245,14 +1245,14 @@ const ExamResultCard = ({ examItem, lang, slug, isNature, isDark, cardBg }: any)
           </div>
         </div>
         
-        <Link
+        {/* <Link
           to={`/exam/${exam?.id}`}
           className={`px-4 py-2 rounded-lg bg-gradient-to-r ${gradientClass} text-white text-sm font-semibold flex items-center gap-1 whitespace-nowrap`}
           onClick={(e) => e.stopPropagation()}
         >
           <Eye className="w-4 h-4" />
           {lang === "ar" ? "عرض النتيجة" : "View Result"}
-        </Link>
+        </Link> */}
       </div>
       
       {expanded && (

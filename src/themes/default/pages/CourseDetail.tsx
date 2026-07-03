@@ -142,7 +142,7 @@ const CourseDetail = () => {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (isAuthenticated) {
-      enableFullProtection();
+      // enableFullProtection();
       setShowProtectionWarning(true);
       setTimeout(() => setShowProtectionWarning(false), 5000);
     }
@@ -160,13 +160,11 @@ const CourseDetail = () => {
     setTimeout(() => refetchDetails(), 1000);
   };
 
-  // ✅ دالة فشل الدفع للكورس
   const handleCoursePaymentError = (error: any) => {
     console.error('❌ Course payment error:', error);
     toast.error(error?.message || (lang === "ar" ? "فشل الدفع، حاول مرة أخرى" : "Payment failed, please try again"));
   };
 
-  // ✅ دالة نجاح الدفع للدرس
   const handleLessonPaymentSuccess = (data: any) => {
     console.log('✅ Lesson payment success:', data);
     toast.success(lang === "ar" ? "تم شراء الدرس بنجاح!" : "Lesson purchased successfully!");
@@ -178,13 +176,11 @@ const CourseDetail = () => {
     }
   };
 
-  // ✅ دالة فشل الدفع للدرس
   const handleLessonPaymentError = (error: any) => {
     console.error('❌ Lesson payment error:', error);
     toast.error(error?.message || (lang === "ar" ? "فشل الدفع، حاول مرة أخرى" : "Payment failed, please try again"));
   };
 
-  // ✅ دالة فتح مودال شراء الكورس
   const handleOpenBuyCourseModal = () => {
     const token = Cookies.get('student_token');
     if (!token) {
@@ -198,7 +194,6 @@ const CourseDetail = () => {
     setShowRedeemModal(true);
   };
 
-  // ✅ دالة فتح مودال شراء الدرس
   const handleOpenBuyLessonModal = (lessonId: number, price: number) => {
     const token = Cookies.get('student_token');
     if (!token) {

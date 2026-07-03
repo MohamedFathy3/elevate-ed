@@ -76,7 +76,6 @@ const LessonPage = () => {
     }
   }, [examResultData, requiredExam]);
   
-  // ✅ المنطق الصحيح لقفل المحتوى
   const needsExamToUnlock = lesson?.must_pass_to_unlock === true;
   const isContentLocked = needsExamToUnlock;
   const canWatch = !isContentLocked;
