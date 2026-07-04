@@ -1,6 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// pages/LessonPage.tsx
-
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useLang } from "@/i18n/LanguageContext";
@@ -10,11 +8,13 @@ import { useAttendance } from "@/hooks/useAttendance";
 import { useWatermark } from '@/hooks/useWatermark';
 import { usePreventScreenshot } from '@/hooks/usePreventScreenshot';
 import { motion } from "framer-motion";
-import { AlertCircle, ArrowRight, FileQuestion, Lock, Unlock, CheckCircle, Loader2, XCircle, Play, MessageCircle } from "lucide-react";
+import { AlertCircle, ArrowRight, FileQuestion, Lock, Unlock, CheckCircle, Loader2, XCircle, Play } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { enableFullProtection } from "@/utils/protection";
 import Cookies from "js-cookie";
+import { useTeacher } from "@/context/TeacherContext";
 
+// ✅ Imports المكونات الموجودة
 import { VideoPlayer } from "@/components/lesson/video/VideoPlayer";
 import { LessonBreadcrumb } from "@/components/lesson/LessonBreadcrumb";
 import { LessonPartsList } from "@/components/lesson/LessonSidebar/LessonPartsList";
@@ -22,204 +22,27 @@ import { AssignmentsList } from "@/components/lesson/LessonSidebar/AssignmentsLi
 import { LessonSkeleton } from "@/components/lesson/LessonSkeleton";
 import { useLessonParts } from "@/hooks/useLessonParts";
 
-// ✅ Modal للتواصل مع المعلم
-const ContactTeacherModal = ({ isOpen, onClose, lang, teacherName, phone }: any) => {
-  if (!isOpen) return null;
-
-  const isRtl = lang === 'ar';
-  const [isHovered, setIsHovered] = useState(false);
-
-  const message = `السلام عليكم، أحتاج إلى مساعدة بخصوص منصة الأستاذ ${teacherName || 'المعلم'}`;
-  const cleanPhone = phone?.replace(/\s/g, "").replace(/[^0-9+]/g, "") || "201154853195";
-
-  const handleWhatsApp = () => {
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
-    window.open(whatsappUrl, "_blank");
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-white dark:bg-gray-900 rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl border border-gray-200 dark:border-gray-700"
-      >
-        <div className="text-center">
-          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/30">
-            <MessageCircle className="w-10 h-10 text-white" />
-          </div>
-          
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            {isRtl ? '💬 تحتاج مساعدة؟' : '💬 Need Help?'}
-          </h3>
-          
-          <p className="text-gray-600 dark:text-gray-400 mb-2">
-            {isRtl 
-              ? `لم تتمكن من اجتياز الامتحانات المطلوبة`
-              : `You couldn't pass the required exams`}
-          </p>
-          
-          <p className="text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 p-3 rounded-xl mb-6">
-            {isRtl
-              ? `📞 تواصل مع المعلم "${teacherName || 'المعلم'}" عبر واتساب للحصول على المساعدة`
-              : `📞 Contact teacher "${teacherName || 'the teacher'}" via WhatsApp for assistance`}
-          </p>
-
-          <motion.button
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-            onClick={handleWhatsApp}
-            animate={{
-              scale: isHovered ? 1.05 : 1,
-            }}
-            transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            className="group relative w-full py-4 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 hover:shadow-lg hover:shadow-green-500/30 text-white font-bold text-lg flex items-center justify-center gap-3 transition-all duration-300"
-          >
-            <MessageCircle className="w-6 h-6" />
-            <span>{isRtl ? "📱 تواصل عبر واتساب" : "📱 Contact via WhatsApp"}</span>
-          </motion.button>
-
-          <button
-            onClick={onClose}
-            className="mt-4 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
-          >
-            {isRtl ? 'حسناً، سأتواصل لاحقاً' : 'OK, I\'ll contact later'}
-          </button>
-        </div>
-      </motion.div>
-    </div>
-  );
-};
-
-const ExamCard = ({ exam, examIndex, totalExams, isActive, isPassed, isFailed, isLocked, isHidden, onStart, lang }: any) => {
-  const isRtl = lang === 'ar';
-  
-  if (isHidden) return null;
-  
-  let status = '';
-  let bgColor = '';
-  let icon = null;
-  
-  if (isPassed) {
-    status = isRtl ? '✅ نجح' : '✅ Passed';
-    bgColor = 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800';
-    icon = <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />;
-  } else if (isFailed) {
-    status = isRtl ? '❌ فشل' : '❌ Failed';
-    bgColor = 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800';
-    icon = <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />;
-  } else if (isActive) {
-    status = isRtl ? '⏳ ينتظر' : '⏳ Pending';
-    bgColor = 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 ring-2 ring-amber-500/50';
-    icon = <Loader2 className="w-5 h-5 text-amber-600 dark:text-amber-400 animate-spin" />;
-  } else {
-    status = isRtl ? '⏳ ينتظر' : '⏳ Pending';
-    bgColor = 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 ring-2 ring-amber-500/50';
-    icon = <Loader2 className="w-5 h-5 text-amber-600 dark:text-amber-400 animate-spin" />;
-  }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      className={`rounded-2xl border p-5 transition-all ${bgColor}`}
-    >
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-            isPassed ? 'bg-green-500/20' : 
-            isFailed ? 'bg-red-500/20' : 
-            (isActive || !isLocked) ? 'bg-amber-500/20' : 
-            'bg-gray-500/20'
-          }`}>
-            {icon}
-          </div>
-          <div>
-            <h3 className="font-bold text-gray-900 dark:text-white text-sm">
-              {isRtl ? `الامتحان ${examIndex + 1}` : `Exam ${examIndex + 1}`}
-            </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {exam.title}
-            </p>
-          </div>
-        </div>
-        
-        <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
-          isPassed ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 
-          isFailed ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' : 
-          (isActive || !isLocked) ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 animate-pulse' : 
-          'bg-gray-100 dark:bg-gray-900/30 text-gray-500 dark:text-gray-400'
-        }`}>
-          {status}
-        </span>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400 mb-3">
-        <span>📝 {exam.total_marks} درجة</span>
-        <span>🎯 {exam.total_must_pass_marks} درجة للنجاح</span>
-        <span>⏱️ {exam.duration_minutes} دقيقة</span>
-        {isFailed && (
-          <span className="text-red-600 dark:text-red-400 font-semibold">
-            ❌ حصلت على {exam.total || 0} من {exam.total_must_pass_marks || 0}
-          </span>
-        )}
-        {isPassed && (
-          <span className="text-green-600 dark:text-green-400 font-semibold">
-            ✅ حصلت على {exam.total || 0} من {exam.total_must_pass_marks || 0}
-          </span>
-        )}
-      </div>
-
-      {!isPassed && !isFailed && (isActive || !isLocked) && (
-        <button
-          onClick={onStart}
-          className="w-full py-2 rounded-xl font-semibold flex items-center justify-center gap-2 text-sm bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25 transition-all"
-        >
-          <Play className="w-4 h-4" />
-          {isRtl ? "ابدأ الامتحان" : "Start Exam"}
-        </button>
-      )}
-
-      {isPassed && (
-        <div className="w-full py-2 rounded-xl font-semibold flex items-center justify-center gap-2 text-sm bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
-          <CheckCircle className="w-4 h-4" />
-          {isRtl ? "✅ تم الاجتياز" : "✅ Passed"}
-        </div>
-      )}
-
-      {isFailed && (
-        <div className="w-full py-2 rounded-xl font-semibold flex items-center justify-center gap-2 text-sm bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
-          <XCircle className="w-4 h-4" />
-          {isRtl ? "❌ لم تجتز" : "❌ Failed"}
-        </div>
-      )}
-
-      {isLocked && !isActive && !isPassed && !isFailed && (
-        <div className="w-full py-2 rounded-xl font-semibold flex items-center justify-center gap-2 text-sm bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-          <Lock className="w-4 h-4" />
-          {isRtl ? "🔒 مقفول" : "🔒 Locked"}
-        </div>
-      )}
-    </motion.div>
-  );
-};
+// ✅ Imports المكونات الجديدة
+import { ContactTeacherModal } from "@/components/lesson/LessonPage/components/ContactTeacherModal";
+import { ExamCard } from "@/components/lesson/LessonPage/components/ExamCard";
+import { AssignmentCard } from "@/components/lesson/LessonPage/components/AssignmentCard";
+import { useExamResults } from "@/hooks/useExamResults";
+import { useAssignmentResults } from "@/hooks/useAssignmentResults";
 
 const LessonPage = () => {
   const { lang, dir } = useLang();
   const { slug, lessonId } = useParams();
   const navigate = useNavigate();
   const { student } = useCurrentStudent();
-
+  const { teacher } = useTeacher();
+  
   const lessonIdNum = parseInt(lessonId || '0');
   const { data: lessonData, isLoading, refetch: refetchLesson } = useLessonDetails(
     lessonIdNum,
     student?.id
   );
   const lesson = lessonData?.data;
-
+  
   const { parts, currentPart, selectedPartIndex, selectPart, totalParts } = useLessonParts(lesson);
   const { mutate: markAttendance, isPending: attendancePending, isSuccess: attendanceSuccess } = useAttendance();
   const attendanceAttempted = useRef(false);
@@ -227,18 +50,14 @@ const LessonPage = () => {
   const [attended, setAttended] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
+  const [contactModalType, setContactModalType] = useState<'default' | 'exam_hidden' | 'need_support'>('default');
   const [failedExams, setFailedExams] = useState<any[]>([]);
-  const [examResults, setExamResults] = useState<Record<number, any>>({});
-  const [examStatuses, setExamStatuses] = useState<Record<number, { 
-    passed: boolean; 
-    checked: boolean; 
-    locked: boolean;
-    failed: boolean;
-    hidden: boolean;
-    total: number;
-    passMarks: number;
-  }>>({});
-  const [loadingExams, setLoadingExams] = useState(true);
+
+  const exams = lesson?.exams || [];
+  const assignments = lesson?.assignments || [];
+  
+  const { examStatuses, loadingExams, setExamStatuses } = useExamResults(exams, student?.id || 0);
+  const { assignmentStatuses, loadingAssignments } = useAssignmentResults(assignments, student?.id || 0);
 
   // Watermark
   const watermarkText = student
@@ -287,65 +106,6 @@ const LessonPage = () => {
       refetchLesson();
     }
   }, [attendanceSuccess, refetchLesson]);
-
-  // جلب الامتحانات من الدرس
-  const exams = lesson?.exams || [];
-
-  // جلب نتيجة كل امتحان
-  useEffect(() => {
-    if (!exams.length || !student?.id) {
-      setLoadingExams(false);
-      return;
-    }
-
-    const fetchAllExamResults = async () => {
-      setLoadingExams(true);
-      const results: Record<number, any> = {};
-      const statuses: Record<number, any> = {};
-
-      for (const exam of exams) {
-        try {
-          const response = await fetch(`/api/exam/result/${exam.id}/${student.id}`);
-          const data = await response.json();
-          
-          results[exam.id] = data;
-          
-          const total = data.total || 0;
-          const passMarks = exam.total_must_pass_marks || 0;
-          const passed = total >= passMarks;
-          
-          const hasData = data.data && data.data.length > 0;
-          
-          statuses[exam.id] = {
-            passed: passed,
-            failed: hasData && !passed,
-            checked: hasData || false,
-            locked: false,
-            hidden: false,
-            total: total,
-            passMarks: passMarks
-          };
-          
-        } catch (error) {
-          statuses[exam.id] = {
-            passed: false,
-            failed: false,
-            checked: false,
-            locked: false,
-            hidden: false,
-            total: 0,
-            passMarks: exam.total_must_pass_marks || 0
-          };
-        }
-      }
-
-      setExamResults(results);
-      setExamStatuses(statuses);
-      setLoadingExams(false);
-    };
-
-    fetchAllExamResults();
-  }, [exams, student?.id]);
 
   // ✅ المنطق: تحديد الامتحان النشط
   const { activeExamIndex, examVisibility } = useMemo(() => {
@@ -399,16 +159,20 @@ const LessonPage = () => {
   useEffect(() => {
     if (Object.keys(examStatuses).length === 0 || loadingExams) return;
 
+    let hasChanges = false;
     const newStatuses = { ...examStatuses };
     
     exams.forEach((exam: any, index: number) => {
       if (index === 0) {
-        newStatuses[exam.id] = {
-          ...newStatuses[exam.id],
-          locked: false,
-          hidden: false,
-          checked: newStatuses[exam.id]?.checked || false
-        };
+        if (newStatuses[exam.id]?.locked !== false || newStatuses[exam.id]?.hidden !== false) {
+          newStatuses[exam.id] = {
+            ...newStatuses[exam.id],
+            locked: false,
+            hidden: false,
+            checked: newStatuses[exam.id]?.checked || false
+          };
+          hasChanges = true;
+        }
         return;
       }
 
@@ -418,29 +182,27 @@ const LessonPage = () => {
       const shouldLock = previousStatus?.passed === true;
       const shouldHide = previousStatus?.passed === true;
       
-      newStatuses[exam.id] = {
-        ...newStatuses[exam.id],
-        locked: shouldLock,
-        hidden: shouldHide,
-        checked: newStatuses[exam.id]?.checked || false
-      };
+      if (newStatuses[exam.id]?.locked !== shouldLock || newStatuses[exam.id]?.hidden !== shouldHide) {
+        newStatuses[exam.id] = {
+          ...newStatuses[exam.id],
+          locked: shouldLock,
+          hidden: shouldHide,
+          checked: newStatuses[exam.id]?.checked || false
+        };
+        hasChanges = true;
+      }
     });
 
-  }, [exams, examStatuses, loadingExams]);
+    if (hasChanges) {
+      setExamStatuses(newStatuses);
+    }
+  }, [exams, loadingExams]);
 
   // ✅ هل يقدر يشوف الفيديو؟
   const canWatch = useMemo(() => {
-    if (!lesson?.must_pass_to_unlock) {
-      return true;
-    }
-    
-    if (exams.length === 0) {
-      return true;
-    }
-    
-    if (loadingExams) {
-      return false;
-    }
+    if (!lesson?.must_pass_to_unlock) return true;
+    if (exams.length === 0) return true;
+    if (loadingExams) return false;
     
     const allPassed = exams.every((exam: any) => {
       const status = examStatuses[exam.id];
@@ -450,20 +212,32 @@ const LessonPage = () => {
     return allPassed;
   }, [lesson?.must_pass_to_unlock, exams, examStatuses, loadingExams]);
 
-  // ✅ عرض مودال التواصل مع المعلم (need_support بس)
+  // ✅ عرض مودال التواصل مع المعلم
   useEffect(() => {
-    // ✅ لو need_support = true → افتح المودال
     if (lesson?.need_support === true) {
       const timer = setTimeout(() => {
+        setContactModalType('need_support');
         setShowContactModal(true);
       }, 500);
       return () => clearTimeout(timer);
     }
 
-    // ✅ المنطق القديم للامتحانات
     if (!lesson?.must_pass_to_unlock) return;
     if (loadingExams) return;
     if (exams.length === 0) return;
+    
+    const hiddenExams = exams.filter((exam: any) => {
+      const status = examStatuses[exam.id];
+      return status?.waitingResult === true;
+    });
+    
+    if (hiddenExams.length > 0) {
+      const timer = setTimeout(() => {
+        setContactModalType('exam_hidden');
+        setShowContactModal(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
     
     const failedList = exams.filter((exam: any) => {
       const status = examStatuses[exam.id];
@@ -478,19 +252,9 @@ const LessonPage = () => {
       
       if (allExamsDone) {
         const timer = setTimeout(() => {
-          const failedExamsList = failedList.map((exam: any) => {
-            const status = examStatuses[exam.id];
-            return {
-              ...exam,
-              total: status?.total || 0,
-              passMarks: status?.passMarks || exam.total_must_pass_marks || 0
-            };
-          });
-          
-          setFailedExams(failedExamsList);
+          setContactModalType('default');
           setShowContactModal(true);
         }, 500);
-        
         return () => clearTimeout(timer);
       }
     }
@@ -513,11 +277,45 @@ const LessonPage = () => {
   };
 
   const handleStartExam = (examId: number) => {
+    const status = examStatuses[examId];
+    
+    if (status?.waitingResult) {
+      setContactModalType('exam_hidden');
+      setShowContactModal(true);
+      return;
+    }
+    
+    if (status?.locked) {
+      toast.warning(
+        lang === "ar" 
+          ? "🔒 هذا الامتحان مقفول"
+          : "🔒 This exam is locked"
+      );
+      return;
+    }
+    
     navigate(`/exam/${examId}?redirect=${encodeURIComponent(window.location.pathname)}`);
   };
 
-  const handleStartAssignment = (assignment: any) => {
-    navigate(`/exam/${assignment.id}?redirect=${encodeURIComponent(window.location.pathname)}`);
+  const handleStartAssignment = (assignmentId: number) => {
+    const status = assignmentStatuses[assignmentId];
+    
+    if (status?.waitingResult) {
+      setContactModalType('exam_hidden');
+      setShowContactModal(true);
+      return;
+    }
+    
+    if (status?.locked) {
+      toast.warning(
+        lang === "ar" 
+          ? "🔒 هذا الواجب مقفول"
+          : "🔒 This assignment is locked"
+      );
+      return;
+    }
+    
+    navigate(`/exam/${assignmentId}?redirect=${encodeURIComponent(window.location.pathname)}`);
   };
 
   const getVideoUrlFromPart = (part: any) => {
@@ -593,6 +391,7 @@ const LessonPage = () => {
                     const isPassed = status?.passed;
                     const isFailed = status?.failed;
                     const isHidden = status?.hidden;
+                    const isWaitingResult = status?.waitingResult;
                     
                     if (isHidden) return null;
                     
@@ -604,13 +403,15 @@ const LessonPage = () => {
                             ? 'bg-green-500 text-white'
                             : isFailed
                               ? 'bg-red-500 text-white'
-                              : isActive
-                                ? 'bg-amber-500 text-white ring-4 ring-amber-500/30 animate-pulse'
-                                : 'bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                              : isWaitingResult
+                                ? 'bg-blue-500 text-white ring-4 ring-blue-500/30 animate-pulse'
+                                : isActive
+                                  ? 'bg-amber-500 text-white ring-4 ring-amber-500/30 animate-pulse'
+                                  : 'bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
                         }`}
-                        title={`${exam.title} - ${isPassed ? '✅ نجح' : isFailed ? '❌ فشل' : isActive ? '⏳ ينتظر' : '🔒 مقفول'}`}
+                        title={`${exam.title} - ${isPassed ? '✅ نجح' : isFailed ? '❌ فشل' : isWaitingResult ? '⏳ جاري انتظار النتيجة' : isActive ? '⏳ ينتظر' : '🔒 مقفول'}`}
                       >
-                        {isPassed ? '✓' : isFailed ? '✗' : idx + 1}
+                        {isPassed ? '✓' : isFailed ? '✗' : isWaitingResult ? '⏳' : idx + 1}
                       </div>
                     );
                   })}
@@ -733,6 +534,7 @@ const LessonPage = () => {
               />
             )}
 
+            {/* ✅ الامتحانات */}
             {loadingExams ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
@@ -748,6 +550,7 @@ const LessonPage = () => {
                 const isLocked = status?.locked || false;
                 const isFailed = status?.failed || false;
                 const isHidden = status?.hidden || false;
+                const isWaitingResult = status?.waitingResult || false;
 
                 return (
                   <ExamCard
@@ -764,6 +567,7 @@ const LessonPage = () => {
                     isLocked={isLocked}
                     isFailed={isFailed}
                     isHidden={isHidden}
+                    isWaitingResult={isWaitingResult}
                     onStart={() => handleStartExam(exam.id)}
                     lang={lang}
                   />
@@ -771,12 +575,42 @@ const LessonPage = () => {
               })
             )}
 
-            {lesson.assignments && lesson.assignments.length > 0 && (
-              <AssignmentsList
-                assignments={lesson.assignments}
-                onStartAssignment={handleStartAssignment}
-                lang={lang}
-              />
+            {/* ✅ الواجبات بنفس نظام الامتحانات */}
+            {loadingAssignments ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                <span className="mr-2 text-sm text-gray-500">
+                  {lang === "ar" ? "جاري تحميل الواجبات..." : "Loading assignments..."}
+                </span>
+              </div>
+            ) : (
+              assignments.map((assignment: any, index: number) => {
+                const status = assignmentStatuses[assignment.id];
+                const isPassed = status?.passed || false;
+                const isLocked = status?.locked || false;
+                const isFailed = status?.failed || false;
+                const isHidden = status?.hidden || false;
+                const isWaitingResult = status?.waitingResult || false;
+
+                return (
+                  <AssignmentCard
+                    key={assignment.id}
+                    assignment={{
+                      ...assignment,
+                      total: status?.total || 0,
+                      total_must_pass_marks: status?.passMarks || assignment.total_must_pass_marks || 0
+                    }}
+                    assignmentIndex={index}
+                    isPassed={isPassed}
+                    isLocked={isLocked}
+                    isFailed={isFailed}
+                    isHidden={isHidden}
+                    isWaitingResult={isWaitingResult}
+                    onStart={() => handleStartAssignment(assignment.id)}
+                    lang={lang}
+                  />
+                );
+              })
             )}
 
             <div className="flex gap-3">
@@ -792,13 +626,14 @@ const LessonPage = () => {
         </div>
       </div>
 
-      {/* ✅ مودال التواصل مع المعلم - need_support */}
+      {/* ✅ مودال التواصل مع المعلم */}
       <ContactTeacherModal
         isOpen={showContactModal}
         onClose={() => setShowContactModal(false)}
         lang={lang}
-        teacherName={lesson?.teacher_id?.name || 'المعلم'}
-        phone={lesson?.teacher_id?.phone}
+        teacherName={teacher?.name || lesson?.teacher_id?.name || 'المعلم'}
+        phone={teacher?.phone || lesson?.teacher_id?.phone} 
+        messageType={contactModalType}
       />
 
       <style>{`

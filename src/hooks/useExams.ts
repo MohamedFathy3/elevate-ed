@@ -164,41 +164,51 @@ export const useSubmitExam = () => {
 
 // hooks/useExams.ts
 
+// hooks/useExams.ts
+
 export const useExamResult = (examId: number, studentId: number) => {
   const token = Cookies.get('student_token');
   
   return useQuery({
     queryKey: ['exam-result', examId, studentId],
     queryFn: async () => {
-      if (!examId || !studentId) return null;
+      if (!examId || !studentId) {
+        return { status: false, hasResult: false, data: [] };
+      }
       
       try {
         const response = await api.get(`/exam/result/${examId}/${studentId}`);
         console.log("📊 Exam result response:", response.data);
         
-        // ✅ التحقق من وجود بيانات حقيقية
+        // ✅ التحقق من وجود بيانات
         const data = response.data;
         
-        // لو مفيش data أو data.id مش موجود => مفيش نتيجة
-        if (!data || !data.data || !data.data.id) {
+        // ✅ إذا كان status true ووجد data
+        if (data?.status === true && data?.data && Array.isArray(data.data) && data.data.length > 0) {
           return {
-            status: false,
-            hasResult: false,
-            message: "No exam result found"
+            status: true,
+            hasResult: true,
+            data: data.data,
+            exam_id: data.exam_id,
+            exam_title: data.exam_title,
+            total: data.total,
+            passed: data.passed
           };
         }
         
+        // ✅ إذا كان status true ولكن data فاضي أو مش موجود
         return {
-          ...data,
-          hasResult: true
+          status: false,
+          hasResult: false,
+          data: []
         };
       } catch (error: any) {
-        // ✅ لو الـ API رجع 404 أو error => مفيش نتيجة
-        if (error.response?.status === 404) {
+        // ✅ لو الـ API رجع 404 أو أي error => مفيش نتيجة
+        if (error.response?.status === 404 || error.response?.status === 500) {
           return {
             status: false,
             hasResult: false,
-            message: "No exam result found"
+            data: []
           };
         }
         throw error;

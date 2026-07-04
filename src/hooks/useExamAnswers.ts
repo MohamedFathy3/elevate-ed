@@ -55,7 +55,10 @@ export const useExamAnswers = () => {
       return ans !== undefined && ans !== null && ans !== '';
     }).length;
   }, [answers]);
-
+  const clearAnswers = useCallback(() => {
+    setAnswers({});
+    setEssayImages({});
+  }, []);
   return {
     answers,
     essayImages,
@@ -63,5 +66,6 @@ export const useExamAnswers = () => {
     addEssayImage,
     removeEssayImage,
     getAnsweredCount,
+    clearAnswers,
   };
 };
