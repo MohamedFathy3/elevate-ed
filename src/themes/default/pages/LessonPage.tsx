@@ -199,18 +199,25 @@ const LessonPage = () => {
   }, [exams, loadingExams]);
 
   // ✅ هل يقدر يشوف الفيديو؟
-  const canWatch = useMemo(() => {
-    if (!lesson?.must_pass_to_unlock) return true;
-    if (exams.length === 0) return true;
-    if (loadingExams) return false;
-    
-    const allPassed = exams.every((exam: any) => {
-      const status = examStatuses[exam.id];
-      return status?.passed === true;
-    });
-    
-    return allPassed;
-  }, [lesson?.must_pass_to_unlock, exams, examStatuses, loadingExams]);
+// ✅ هل يقدر يشوف الفيديو؟
+const canWatch = useMemo(() => {
+  // ✅ لو must_pass_to_unlock = false، الفيديو مفتوح
+  if (!lesson?.must_pass_to_unlock) return true;
+  
+  // ✅ لو مفيش امتحانات، الفيديو مفتوح
+  if (exams.length === 0) return true;
+  
+  // ✅ لو لسه بيحمل، مقفول
+  if (loadingExams) return false;
+  
+  // ✅ كل الامتحانات لازم تكون نجحت
+  const allPassed = exams.every((exam: any) => {
+    const status = examStatuses[exam.id];
+    return status?.passed === true;
+  });
+  
+  return allPassed;
+}, [lesson?.must_pass_to_unlock, exams, examStatuses, loadingExams]);
 
   // ✅ عرض مودال التواصل مع المعلم
   useEffect(() => {
@@ -595,6 +602,7 @@ exams.map((exam: any, index: number) => {
               </div>
             ) : (
             // في LessonPage - عند عرض الواجبات
+// في LessonPage - عند عرض الواجبات
 assignments.map((assignment: any, index: number) => {
   const status = assignmentStatuses[assignment.id];
   const isPassed = status?.passed || false;
@@ -605,7 +613,12 @@ assignments.map((assignment: any, index: number) => {
   const isWaitingCorrection = status?.waitingCorrection || false;
   const studentPassedMessage = status?.studentPassedMessage || null;
   const showMessageOnly = status?.showMessageOnly || false;
-  const notSolved = status?.notSolved || false; // ✅ جلب الحالة
+  const notSolved = status?.notSolved || false;
+
+  console.log(`📋 [LessonPage] Assignment ${index + 1}: "${assignment.title}"`);
+  console.log(`   - studentPassedMessage: "${studentPassedMessage}"`);
+  console.log(`   - showMessageOnly: ${showMessageOnly}`);
+  console.log(`   - notSolved: ${notSolved}`);
 
   return (
     <AssignmentCard
@@ -624,7 +637,7 @@ assignments.map((assignment: any, index: number) => {
       isWaitingCorrection={isWaitingCorrection}
       studentPassedMessage={studentPassedMessage}
       showMessageOnly={showMessageOnly}
-      notSolved={notSolved} // ✅ تمرير الحالة
+      notSolved={notSolved}
       onStart={() => handleStartAssignment(assignment.id)}
       lang={lang}
     />
