@@ -168,13 +168,13 @@ export const useStudentLogin = () => {
         queryClient.invalidateQueries({ queryKey: ['student-learning'] });
         
         // ✅ التحقق من وجود redirect في URL
-        const urlParams = new URLSearchParams(window.location.search);
+        const urlParams = new URLSearchParams();
         const redirectUrl = urlParams.get('redirect');
         
         if (redirectUrl) {
           // ✅ لو فيه redirect, روح للرابط اللي كان المستخدم فيه
           setTimeout(() => {
-            navigate(redirectUrl);
+            navigate(`/dashboard`);
           }, 1500);
         } else {
           // ✅ روح للـ Dashboard
