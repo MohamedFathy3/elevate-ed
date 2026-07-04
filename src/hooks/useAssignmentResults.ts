@@ -8,9 +8,12 @@ interface AssignmentStatus {
   failed: boolean;
   hidden: boolean;
   waitingResult: boolean;
+  waitingCorrection: boolean;
   total: number;
   passMarks: number;
   message?: string | null;
+  studentPassedMessage?: string | null;
+  showMessageOnly?: boolean;
 }
 
 export const useAssignmentResults = (assignments: any[], studentId: number) => {
@@ -29,68 +32,61 @@ export const useAssignmentResults = (assignments: any[], studentId: number) => {
 
       for (const assignment of assignments) {
         try {
-          const response = await fetch(`/api/exam/result/${assignment.id}/${studentId}`);
-          const data = await response.json();
+          // ✅ استخدام بيانات الـ assignment من درس API مباشرة
+          const studentPassed = assignment.student_passed;
+          const studentPassedMessage = assignment.student_passed_message;
+          const studentMark = assignment.student_mark || 0;
+          const passMarks = assignment.total_must_pass_marks || 0;
           
-          const isHidden = data?.message?.includes("hidden") || data?.status === false;
+          const hasStudentPassedMessage = studentPassed === null && studentPassedMessage;
           
-          if (isHidden) {
-            statuses[assignment.id] = {
-              passed: false,
-              failed: false,
-              checked: true,
-              locked: true,
-              hidden: true,
-              waitingResult: true,
-              total: 0,
-              passMarks: assignment.total_must_pass_marks || 0,
-              message: data?.message || "النتيجة مخفية من قبل المعلم"
-            };
-          } else {
-            const total = data.total || 0;
-            const passMarks = assignment.total_must_pass_marks || 0;
-            const hasData = data.data && data.data.length > 0;
-            const passed = hasData && total >= passMarks;
-            
-            statuses[assignment.id] = {
-              passed: passed,
-              failed: hasData && !passed,
-              checked: hasData || false,
-              locked: false,
-              hidden: false,
-              waitingResult: false,
-              total: total,
-              passMarks: passMarks,
-              message: null
-            };
+          let passed = false;
+          let failed = false;
+          let waitingResult = false;
+          let waitingCorrection = false;
+          let showMessageOnly = false;
+          
+          if (hasStudentPassedMessage) {
+            waitingCorrection = studentPassedMessage?.includes("Waiting for essay correction") || false;
+            showMessageOnly = true;
+            waitingResult = true;
+          } else if (studentPassed === true) {
+            passed = true;
+          } else if (studentPassed === false) {
+            failed = true;
           }
+          
+          statuses[assignment.id] = {
+            passed: passed,
+            failed: failed,
+            checked: true,
+            locked: false,
+            hidden: false,
+            waitingResult: waitingResult,
+            waitingCorrection: waitingCorrection,
+            total: studentMark || 0,
+            passMarks: passMarks,
+            message: studentPassedMessage || null,
+            studentPassedMessage: studentPassedMessage || null,
+            showMessageOnly: showMessageOnly
+          };
           
         } catch (error: any) {
-          if (error.response?.status === 403) {
-            statuses[assignment.id] = {
-              passed: false,
-              failed: false,
-              checked: true,
-              locked: true,
-              hidden: true,
-              waitingResult: true,
-              total: 0,
-              passMarks: assignment.total_must_pass_marks || 0,
-              message: "النتيجة مخفية من قبل المعلم"
-            };
-          } else {
-            statuses[assignment.id] = {
-              passed: false,
-              failed: false,
-              checked: false,
-              locked: false,
-              hidden: false,
-              waitingResult: false,
-              total: 0,
-              passMarks: assignment.total_must_pass_marks || 0,
-              message: null
-            };
-          }
+          console.error(`❌ [useAssignmentResults] Error processing assignment ${assignment.id}:`, error);
+          statuses[assignment.id] = {
+            passed: false,
+            failed: false,
+            checked: false,
+            locked: false,
+            hidden: false,
+            waitingResult: false,
+            waitingCorrection: false,
+            total: 0,
+            passMarks: assignment.total_must_pass_marks || 0,
+            message: null,
+            studentPassedMessage: null,
+            showMessageOnly: false
+          };
         }
       }
 
