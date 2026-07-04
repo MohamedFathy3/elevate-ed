@@ -534,7 +534,6 @@ const LessonPage = () => {
               />
             )}
 
-            {/* ✅ الامتحانات */}
 {loadingExams ? (
   <div className="flex items-center justify-center py-8">
     <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
@@ -543,55 +542,47 @@ const LessonPage = () => {
     </span>
   </div>
 ) : (
-  exams.map((exam: any, index: number) => {
-    const status = examStatuses[exam.id];
-    const isActive = index === activeExamIndex;
-    const isPassed = status?.passed || false;
-    const isLocked = status?.locked || false;
-    const isFailed = status?.failed || false;
-    const isHidden = status?.hidden || false;
-    const isWaitingResult = status?.waitingResult || false;
-    const isWaitingCorrection = status?.waitingCorrection || false;
-    const studentPassedMessage = status?.studentPassedMessage || null;
-    const showMessageOnly = status?.showMessageOnly || false;
+exams.map((exam: any, index: number) => {
+  const status = examStatuses[exam.id];
+  const isActive = index === activeExamIndex;
+  const isPassed = status?.passed || false;
+  const isLocked = status?.locked || false;
+  const isFailed = status?.failed || false;
+  const isHidden = status?.hidden || false;
+  const isWaitingResult = status?.waitingResult || false;
+  const isWaitingCorrection = status?.waitingCorrection || false;
+  const studentPassedMessage = status?.studentPassedMessage || null;
+  const showMessageOnly = status?.showMessageOnly || false;
+  const notSolved = status?.notSolved || false; // ✅ جلب الحالة
 
-    // ✅ كونسول لعرض حالة كل امتحان
-    console.log(`📋 [LessonPage] Exam ${index + 1}: "${exam.title}"`);
-    console.log(`   - status:`, status);
-    console.log(`   - isActive: ${isActive}`);
-    console.log(`   - isPassed: ${isPassed}`);
-    console.log(`   - isFailed: ${isFailed}`);
-    console.log(`   - isLocked: ${isLocked}`);
-    console.log(`   - isHidden: ${isHidden}`);
-    console.log(`   - isWaitingResult: ${isWaitingResult}`);
-    console.log(`   - isWaitingCorrection: ${isWaitingCorrection}`);
-    console.log(`   - studentPassedMessage: "${studentPassedMessage}"`);
-    console.log(`   - showMessageOnly: ${showMessageOnly}`);
+  console.log(`📋 [LessonPage] Exam ${index + 1}: "${exam.title}"`);
+  console.log(`   - notSolved: ${notSolved}`);
 
-    return (
-      <ExamCard
-        key={exam.id}
-        exam={{
-          ...exam,
-          total: status?.total || 0,
-          total_must_pass_marks: status?.passMarks || exam.total_must_pass_marks || 0
-        }}
-        examIndex={index}
-        totalExams={exams.length}
-        isActive={isActive}
-        isPassed={isPassed}
-        isLocked={isLocked}
-        isFailed={isFailed}
-        isHidden={isHidden}
-        isWaitingResult={isWaitingResult}
-        isWaitingCorrection={isWaitingCorrection}
-        studentPassedMessage={studentPassedMessage}
-        showMessageOnly={showMessageOnly}
-        onStart={() => handleStartExam(exam.id)}
-        lang={lang}
-      />
-    );
-  })
+  return (
+    <ExamCard
+      key={exam.id}
+      exam={{
+        ...exam,
+        total: status?.total || 0,
+        total_must_pass_marks: status?.passMarks || exam.total_must_pass_marks || 0
+      }}
+      examIndex={index}
+      totalExams={exams.length}
+      isActive={isActive}
+      isPassed={isPassed}
+      isLocked={isLocked}
+      isFailed={isFailed}
+      isHidden={isHidden}
+      isWaitingResult={isWaitingResult}
+      isWaitingCorrection={isWaitingCorrection}
+      studentPassedMessage={studentPassedMessage}
+      showMessageOnly={showMessageOnly}
+      notSolved={notSolved} // ✅ تمرير الحالة
+      onStart={() => handleStartExam(exam.id)}
+      lang={lang}
+    />
+  );
+})
 )}
 
             {/* ✅ الواجبات بنفس نظام الامتحانات */}

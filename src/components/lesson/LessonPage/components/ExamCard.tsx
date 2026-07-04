@@ -16,6 +16,7 @@ interface ExamCardProps {
   isWaitingCorrection?: boolean;
   studentPassedMessage?: string | null;
   showMessageOnly?: boolean;
+  notSolved?: boolean; // ✅ إضافة
   onStart: () => void;
   lang: string;
 }
@@ -32,6 +33,7 @@ export const ExamCard = ({
   isWaitingCorrection = false,
   studentPassedMessage = null,
   showMessageOnly = false,
+  notSolved = false,
   onStart, 
   lang 
 }: ExamCardProps) => {
@@ -40,6 +42,7 @@ export const ExamCard = ({
   // ✅ كونسول لمعرفة الحالة الحالية
   useEffect(() => {
     console.log(`🎴 [ExamCard] Exam ${examIndex + 1}: "${exam.title}"`);
+    console.log(`   - notSolved: ${notSolved}`);
     console.log(`   - isActive: ${isActive}`);
     console.log(`   - isPassed: ${isPassed}`);
     console.log(`   - isFailed: ${isFailed}`);
@@ -49,9 +52,7 @@ export const ExamCard = ({
     console.log(`   - isWaitingCorrection: ${isWaitingCorrection}`);
     console.log(`   - showMessageOnly: ${showMessageOnly}`);
     console.log(`   - studentPassedMessage: "${studentPassedMessage}"`);
-    console.log(`   - total: ${exam.total}`);
-    console.log(`   - total_must_pass_marks: ${exam.total_must_pass_marks}`);
-  }, [exam, examIndex, isActive, isPassed, isFailed, isLocked, isHidden, isWaitingResult, isWaitingCorrection, showMessageOnly, studentPassedMessage]);
+  }, [exam, examIndex, isActive, isPassed, isFailed, isLocked, isHidden, isWaitingResult, isWaitingCorrection, showMessageOnly, studentPassedMessage, notSolved]);
   
   if (isHidden) return null;
   
@@ -59,12 +60,17 @@ export const ExamCard = ({
   let bgColor = '';
   let icon = null;
   
-  // ✅ تحديد الحالة
-  if (showMessageOnly && studentPassedMessage) {
+  // ✅ إذا كان الطالب لم يحل الامتحان بعد
+  if (notSolved) {
+    status = isRtl ? '📝 لم يحل بعد' : '📝 Not Solved Yet';
+    bgColor = 'bg-gray-50 dark:bg-gray-800/20 border-gray-200 dark:border-gray-700';
+    icon = <Clock className="w-5 h-5 text-gray-400" />;
+    console.log(`   ⚪ STATUS: NOT SOLVED`);
+  } else if (showMessageOnly && studentPassedMessage) {
     status = isRtl ? '⏳ جاري التصحيح' : '⏳ In Correction';
     bgColor = 'bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800 ring-2 ring-purple-500/50';
     icon = <Clock className="w-5 h-5 text-purple-600 dark:text-purple-400 animate-pulse" />;
-    console.log(`   🟣 STATUS: showMessageOnly = TRUE, displaying: "${studentPassedMessage}"`);
+    console.log(`   🟣 STATUS: showMessageOnly = TRUE`);
   } else if (isWaitingCorrection) {
     status = isRtl ? '⏳ جاري تصحيح المقالي' : '⏳ Essay Correction';
     bgColor = 'bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800 ring-2 ring-purple-500/50';
@@ -106,6 +112,7 @@ export const ExamCard = ({
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+            notSolved ? 'bg-gray-200 dark:bg-gray-700' :
             isPassed ? 'bg-green-500/20' : 
             isFailed ? 'bg-red-500/20' : 
             (showMessageOnly || isWaitingCorrection) ? 'bg-purple-500/20' :
@@ -126,6 +133,7 @@ export const ExamCard = ({
         </div>
         
         <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
+          notSolved ? 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400' :
           isPassed ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 
           isFailed ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' : 
           (showMessageOnly || isWaitingCorrection) ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 animate-pulse' :
@@ -137,8 +145,26 @@ export const ExamCard = ({
         </span>
       </div>
 
-      {/* ✅ إذا كان showMessageOnly = true، نعرض الرسالة فقط */}
-      {showMessageOnly && studentPassedMessage ? (
+      {/* ✅ إذا كان الطالب لم يحل الامتحان */}
+      {notSolved ? (
+        <>
+          <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400 mb-3">
+            <span>📝 {exam.total_marks} درجة</span>
+            <span>🎯 {exam.total_must_pass_marks} درجة للنجاح</span>
+            <span>⏱️ {exam.duration_minutes} دقيقة</span>
+          </div>
+
+          {/* ✅ زر "ابدأ الامتحان" */}
+          <button
+            onClick={onStart}
+            className="w-full py-2 rounded-xl font-semibold flex items-center justify-center gap-2 text-sm bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white shadow-lg shadow-blue-500/25 transition-all"
+          >
+            <Play className="w-4 h-4" />
+            {isRtl ? "ابدأ الامتحان" : "Start Exam"}
+          </button>
+        </>
+      ) : showMessageOnly && studentPassedMessage ? (
+        // ✅ عرض الرسالة فقط
         <>
           <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400 mb-3">
             <span>📝 {exam.total_marks} درجة</span>
@@ -156,8 +182,8 @@ export const ExamCard = ({
           </div>
         </>
       ) : (
+        // ✅ العرض العادي
         <>
-          {/* ✅ العرض العادي */}
           <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400 mb-3">
             <span>📝 {exam.total_marks} درجة</span>
             <span>🎯 {exam.total_must_pass_marks} درجة للنجاح</span>

@@ -14,6 +14,7 @@ interface ExamStatus {
   message?: string | null;
   studentPassedMessage?: string | null;
   showMessageOnly?: boolean;
+  notSolved?: boolean; // ✅ إضافة حالة "لم يحل"
 }
 
 export const useExamResults = (exams: any[], studentId: number) => {
@@ -39,13 +40,35 @@ export const useExamResults = (exams: any[], studentId: number) => {
 
       for (const exam of exams) {
         console.log(`📝 [useExamResults] Processing exam ID: ${exam.id} - "${exam.title}"`);
+        console.log(`   - student_solved: ${exam.student_solved}`);
         console.log(`   - student_passed: ${exam.student_passed}`);
         console.log(`   - student_passed_message: "${exam.student_passed_message}"`);
         console.log(`   - student_mark: ${exam.student_mark}`);
         console.log(`   - total_must_pass_marks: ${exam.total_must_pass_marks}`);
         
+        // ✅ التحقق: لو الطالب محلش الامتحان
+        if (exam.student_solved === false) {
+          console.log(`   ⏳ Exam ${exam.id} - NOT SOLVED YET`);
+          statuses[exam.id] = {
+            passed: false,
+            failed: false,
+            checked: false,
+            locked: false,
+            hidden: false,
+            waitingResult: false,
+            waitingCorrection: false,
+            total: 0,
+            passMarks: exam.total_must_pass_marks || 0,
+            message: null,
+            studentPassedMessage: null,
+            showMessageOnly: false,
+            notSolved: true // ✅ علم بأن الطالب لم يحل
+          };
+          continue; // ✅ تخطي باقي المعالجة
+        }
+        
         try {
-          // ✅ جلب نتيجة الامتحان من API
+          // ✅ جلب نتيجة الامتحان من API (لو الطالب حل)
           const response = await fetch(`/api/exam/result/${exam.id}/${studentId}`);
           const data = await response.json();
           
@@ -71,7 +94,8 @@ export const useExamResults = (exams: any[], studentId: number) => {
               passMarks: exam.total_must_pass_marks || 0,
               message: data?.message || "النتيجة مخفية من قبل المعلم",
               studentPassedMessage: null,
-              showMessageOnly: false
+              showMessageOnly: false,
+              notSolved: false
             };
           } else {
             // ✅ استخدام بيانات الـ exam من درس API
@@ -145,7 +169,8 @@ export const useExamResults = (exams: any[], studentId: number) => {
               passMarks: passMarks,
               message: studentPassedMessage || null,
               studentPassedMessage: studentPassedMessage || null,
-              showMessageOnly: showMessageOnly
+              showMessageOnly: showMessageOnly,
+              notSolved: false
             };
           }
           
@@ -188,7 +213,8 @@ export const useExamResults = (exams: any[], studentId: number) => {
             passMarks: passMarks,
             message: studentPassedMessage || null,
             studentPassedMessage: studentPassedMessage || null,
-            showMessageOnly: showMessageOnly
+            showMessageOnly: showMessageOnly,
+            notSolved: false
           };
         }
       }
