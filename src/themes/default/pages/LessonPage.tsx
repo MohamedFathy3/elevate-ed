@@ -291,42 +291,60 @@ const LessonPage = () => {
   // جلب الامتحانات من الدرس
   const exams = lesson?.exams || [];
 
-  // ✅ جلب نتيجة كل امتحان - من lesson.exams مباشرة
+  // جلب نتيجة كل امتحان
   useEffect(() => {
     if (!exams.length || !student?.id) {
       setLoadingExams(false);
       return;
     }
 
-    const statuses: Record<number, any> = {};
-    
-    exams.forEach((exam: any) => {
-      // ✅ استخدم student_passed من exam مباشرة (اللي جاي من الـ API في lesson)
-      const passed = exam.student_passed === true;
-      const total = exam.student_mark || 0;
-      const hasData = exam.student_solved === true;
-      
-      console.log(`📊 Exam ${exam.id} (${exam.title}):`, {
-        student_passed: exam.student_passed,
-        passed,
-        total,
-        hasData,
-        student_solved: exam.student_solved
-      });
-      
-      statuses[exam.id] = {
-        passed: passed,
-        failed: hasData && !passed,
-        checked: hasData || false,
-        locked: false,
-        hidden: false,
-        total: total,
-        passMarks: exam.total_must_pass_marks || 0
-      };
-    });
+    const fetchAllExamResults = async () => {
+      setLoadingExams(true);
+      const results: Record<number, any> = {};
+      const statuses: Record<number, any> = {};
 
-    setExamStatuses(statuses);
-    setLoadingExams(false);
+      for (const exam of exams) {
+        try {
+          const response = await fetch(`/api/exam/result/${exam.id}/${student.id}`);
+          const data = await response.json();
+          
+          results[exam.id] = data;
+          
+          const total = data.total || 0;
+          const passMarks = exam.total_must_pass_marks || 0;
+          const passed = total >= passMarks;
+          
+          const hasData = data.data && data.data.length > 0;
+          
+          statuses[exam.id] = {
+            passed: passed,
+            failed: hasData && !passed,
+            checked: hasData || false,
+            locked: false,
+            hidden: false,
+            total: total,
+            passMarks: passMarks
+          };
+          
+        } catch (error) {
+          statuses[exam.id] = {
+            passed: false,
+            failed: false,
+            checked: false,
+            locked: false,
+            hidden: false,
+            total: 0,
+            passMarks: exam.total_must_pass_marks || 0
+          };
+        }
+      }
+
+      setExamResults(results);
+      setExamStatuses(statuses);
+      setLoadingExams(false);
+    };
+
+    fetchAllExamResults();
   }, [exams, student?.id]);
 
   // ✅ المنطق: تحديد الامتحان النشط
@@ -336,15 +354,8 @@ const LessonPage = () => {
     }
 
     const visibility: Record<number, boolean> = {};
-    
-    // ✅ نخفي كل الامتحانات أولاً
-    exams.forEach((exam: any) => {
-      visibility[exam.id] = false;
-    });
-
     let firstFailedIndex = -1;
 
-    // ✅ دور على أول امتحان فشل
     for (let i = 0; i < exams.length; i++) {
       const exam = exams[i];
       const status = examStatuses[exam.id];
@@ -358,34 +369,28 @@ const LessonPage = () => {
     let activeIdx = -1;
     
     if (firstFailedIndex !== -1) {
-      // ✅ فيه امتحان فشل → يظهر
       activeIdx = firstFailedIndex;
     } else if (!examStatuses[exams[0]?.id]?.checked) {
-      // ✅ أول امتحان لسه مبدأش → يظهر
       activeIdx = 0;
     } else {
-      // ✅ كل الامتحانات نجحت (أو مفيش امتحانات فاشلة)
       const allPassed = exams.every((exam: any) => {
         const status = examStatuses[exam.id];
         return status?.passed === true;
       });
+      activeIdx = allPassed ? -2 : -1;
+    }
+
+    visibility[exams[0]?.id] = true;
+
+    for (let i = 1; i < exams.length; i++) {
+      const currentExam = exams[i];
+      const prevExam = exams[i - 1];
+      const prevStatus = examStatuses[prevExam?.id];
       
-      if (allPassed) {
-        activeIdx = -2; // ✅ كل الامتحانات نجحت - مفيش حاجة تظهر
-      } else {
-        // ✅ لو أول امتحان لسه مبدأش
-        activeIdx = 0;
-      }
+      const shouldShow = prevStatus?.failed === true;
+      
+      visibility[currentExam.id] = shouldShow;
     }
-
-    // ✅ الامتحان النشط فقط يظهر
-    if (activeIdx >= 0 && activeIdx < exams.length) {
-      const activeExam = exams[activeIdx];
-      visibility[activeExam.id] = true;
-    }
-
-    console.log('📌 Active Exam Index:', activeIdx);
-    console.log('📌 Exam Visibility:', visibility);
 
     return { activeExamIndex: activeIdx, examVisibility: visibility };
   }, [exams, examStatuses, loadingExams]);
@@ -397,30 +402,34 @@ const LessonPage = () => {
     const newStatuses = { ...examStatuses };
     
     exams.forEach((exam: any, index: number) => {
-      const currentStatus = newStatuses[exam.id];
+      if (index === 0) {
+        newStatuses[exam.id] = {
+          ...newStatuses[exam.id],
+          locked: false,
+          hidden: false,
+          checked: newStatuses[exam.id]?.checked || false
+        };
+        return;
+      }
+
+      const previousExam = exams[index - 1];
+      const previousStatus = examStatuses[previousExam?.id];
       
-      // ✅ الامتحان يختفي إذا نجح فيه الطالب (حتى لو امتحان واحد)
-      const shouldHide = currentStatus?.passed === true;
-      
-      // ✅ الامتحان مقفول إذا نجح (عشان يختفي)
-      const shouldLock = currentStatus?.passed === true;
-      
-      console.log(`🔒 Exam ${index + 1} (${exam.title}): passed = ${currentStatus?.passed}, hidden = ${shouldHide}`);
+      const shouldLock = previousStatus?.passed === true;
+      const shouldHide = previousStatus?.passed === true;
       
       newStatuses[exam.id] = {
-        ...currentStatus,
+        ...newStatuses[exam.id],
         locked: shouldLock,
         hidden: shouldHide,
-        checked: currentStatus?.checked || false
+        checked: newStatuses[exam.id]?.checked || false
       };
     });
 
-    setExamStatuses(newStatuses);
   }, [exams, examStatuses, loadingExams]);
 
   // ✅ هل يقدر يشوف الفيديو؟
   const canWatch = useMemo(() => {
-    // ✅ لو must_pass_to_unlock = false → الفيديو مفتوح
     if (!lesson?.must_pass_to_unlock) {
       return true;
     }
@@ -433,7 +442,6 @@ const LessonPage = () => {
       return false;
     }
     
-    // ✅ كل الامتحانات نجحت؟
     const allPassed = exams.every((exam: any) => {
       const status = examStatuses[exam.id];
       return status?.passed === true;
@@ -559,7 +567,7 @@ const LessonPage = () => {
       <div className="container-tight max-w-7xl mx-auto px-4">
         <LessonBreadcrumb slug={slug || ''} title={lesson.title} />
 
-        {/* تقدم الامتحانات - يظهر فقط لو must_pass_to_unlock = true */}
+        {/* تقدم الامتحانات */}
         {lesson?.must_pass_to_unlock && exams.length > 0 && (
           <div className="mb-6 p-4 rounded-xl border bg-white dark:bg-gray-900 shadow-sm">
             <div className="flex items-center justify-between flex-wrap gap-3">
