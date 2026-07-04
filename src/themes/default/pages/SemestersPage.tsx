@@ -210,7 +210,7 @@ export const SemestersPage = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className={`min-h-screen pt-32 pb-20 relative overflow-hidden `}
+      className={`min-h-screen pt-32 pb-20 relative overflow-hidden bg-white dark:bg-gray-950`}
     >
       {/* Background Decorations */}
       <div className="absolute inset-0 pointer-events-none">
@@ -233,8 +233,8 @@ export const SemestersPage = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="flex items-center gap-2 text-sm text-foreground/60 mb-4 flex-wrap">
-            <Link to={``} className={`hover:${textPrimary} transition-colors`}>
+          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-4 flex-wrap">
+            <Link to={`/`} className={`hover:${textPrimary} transition-colors`}>
               {lang === "ar" ? "الرئيسية" : "Home"}
             </Link>
             <ChevronRight className="w-4 h-4" />
@@ -259,10 +259,10 @@ export const SemestersPage = () => {
           
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className={`text-4xl md:text-5xl font-black ${textPrimary}`}>
+              <h1 className={`text-4xl md:text-5xl font-black text-gray-900 dark:text-white`}>
                 {pageTitle}
               </h1>
-              <p className={`${textSecondary} mt-2`}>
+              <p className={`text-gray-500 dark:text-gray-400 mt-2`}>
                 {lang === "ar" 
                   ? `اختر الترم المناسب أو الكورس المباشر لبدء التعلم (${totalResults} نتيجة)`
                   : `Choose the right semester or direct course to start learning (${totalResults} results)`}
@@ -271,21 +271,24 @@ export const SemestersPage = () => {
             
             {/* Search Bar */}
             <div className="relative min-w-[250px]">
-              <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isNature ? 'text-amber-400' : 'text-foreground/50'}`} />
+              <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isNature ? 'text-amber-400' : 'text-gray-400 dark:text-gray-500'}`} />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={lang === "ar" ? "بحث..." : "Search..."}
                 className={`w-full border rounded-xl pl-10 pr-10 py-2.5 text-sm focus:outline-none transition-colors
-                 focus:border-${primaryColor}/50`}
+                  bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 
+                  text-gray-900 dark:text-white
+                  focus:border-${primaryColor}/50 dark:focus:border-${primaryColor}/50
+                  placeholder:text-gray-400 dark:placeholder:text-gray-500`}
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
                   className="absolute right-3 top-1/2 -translate-y-1/2"
                 >
-                  <X className={`w-4 h-4 ${isNature ? 'text-amber-400 hover:text-amber-600' : 'text-foreground/50 hover:text-primary'}`} />
+                  <X className={`w-4 h-4 ${isNature ? 'text-amber-400 hover:text-amber-600' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'}`} />
                 </button>
               )}
             </div>
@@ -304,11 +307,11 @@ export const SemestersPage = () => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setShowFilters(!showFilters)}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${
-                showFilters 
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border transition-all 
+                ${showFilters 
                   ? (isNature ? 'bg-amber-600 text-white border-amber-500' : `bg-gradient-to-r ${primaryGradient} text-white border-transparent`)
-                  : ` hover:border-${primaryColor}/40`
-              }`}
+                  : `bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-${primaryColor}/40 dark:hover:border-${primaryColor}/40`
+                }`}
             >
               <SlidersHorizontal className="w-4 h-4" />
               <span className="text-sm font-medium">{lang === "ar" ? "فلترة متقدمة" : "Advanced Filters"}</span>
@@ -318,7 +321,10 @@ export const SemestersPage = () => {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className={`border rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-${primaryColor}/50`}
+              className={`border rounded-xl px-4 py-2 text-sm focus:outline-none 
+                bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 
+                text-gray-900 dark:text-white
+                focus:border-${primaryColor}/50 dark:focus:border-${primaryColor}/50`}
             >
               <option value="default">{lang === "ar" ? "ترتيب افتراضي" : "Default Sort"}</option>
               <option value="price_asc">{lang === "ar" ? "السعر: من الأقل للأعلى" : "Price: Low to High"}</option>
@@ -326,7 +332,9 @@ export const SemestersPage = () => {
               <option value="popularity">{lang === "ar" ? "الأكثر شهرة" : "Most Popular"}</option>
             </select>
             
-            <div className={`text-sm px-3 py-1.5 rounded-full ${isNature ? 'bg-amber-100 text-amber-700' : 'bg-secondary text-foreground/50'}`}>
+            <div className={`text-sm px-3 py-1.5 rounded-full 
+              ${isNature ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}
+            >
               {totalResults} {lang === "ar" ? "نتيجة" : "results"}
             </div>
           </div>
@@ -339,31 +347,40 @@ export const SemestersPage = () => {
                 exit={{ opacity: 0, height: 0 }}
                 className="overflow-hidden"
               >
-                <div className={`mt-4 p-5 rounded-xl border `}>
+                <div className={`mt-4 p-5 rounded-xl border 
+                  bg-white dark:bg-gray-900 
+                  border-gray-200 dark:border-gray-700`}
+                >
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium mb-3">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                         {lang === "ar" ? "نطاق السعر" : "Price Range"} (EGP)
                       </label>
                       <div className="flex items-center gap-4">
                         <div className="relative flex-1">
-                          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/50" />
+                          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
                           <input
                             type="number"
                             value={priceRange[0]}
                             onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
-                            className={`w-full border rounded-xl pl-9 pr-3 py-2 text-sm `}
+                            className={`w-full border rounded-xl pl-9 pr-3 py-2 text-sm 
+                              bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 
+                              text-gray-900 dark:text-white
+                              focus:border-${primaryColor}/50 dark:focus:border-${primaryColor}/50`}
                             placeholder="Min"
                           />
                         </div>
-                        <span className="text-foreground/50">-</span>
+                        <span className="text-gray-400 dark:text-gray-500">-</span>
                         <div className="relative flex-1">
-                          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/50" />
+                          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
                           <input
                             type="number"
                             value={priceRange[1]}
                             onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
-                            className={`w-full border rounded-xl pl-9 pr-3 py-2 text-sm ${inputBg} ${cardBorder}`}
+                            className={`w-full border rounded-xl pl-9 pr-3 py-2 text-sm 
+                              bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 
+                              text-gray-900 dark:text-white
+                              focus:border-${primaryColor}/50 dark:focus:border-${primaryColor}/50`}
                             placeholder="Max"
                           />
                         </div>
@@ -371,7 +388,7 @@ export const SemestersPage = () => {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium mb-3">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                         {lang === "ar" ? "نوع الحضور" : "Attendance Type"}
                       </label>
                       <div className="flex gap-3">
@@ -380,7 +397,7 @@ export const SemestersPage = () => {
                           className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
                             selectedType === "all"
                               ? (isNature ? 'bg-amber-600 text-white' : `bg-gradient-to-r ${primaryGradient} text-white`)
-                              : `bg-secondary hover:bg-secondary/80`
+                              : `bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300`
                           }`}
                         >
                           {lang === "ar" ? "الكل" : "All"}
@@ -390,7 +407,7 @@ export const SemestersPage = () => {
                           className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
                             selectedType === "online"
                               ? (isNature ? 'bg-amber-600 text-white' : `bg-gradient-to-r ${primaryGradient} text-white`)
-                              : `bg-secondary hover:bg-secondary/80`
+                              : `bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300`
                           }`}
                         >
                           💻 {lang === "ar" ? "أونلاين" : "Online"}
@@ -400,7 +417,7 @@ export const SemestersPage = () => {
                           className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
                             selectedType === "center"
                               ? (isNature ? 'bg-amber-600 text-white' : `bg-gradient-to-r ${primaryGradient} text-white`)
-                              : `bg-secondary hover:bg-secondary/80`
+                              : `bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300`
                           }`}
                         >
                           🏢 {lang === "ar" ? "سنتر" : "Center"}
@@ -409,10 +426,13 @@ export const SemestersPage = () => {
                     </div>
                   </div>
                   
-                  <div className="mt-5 pt-4 border-t border-border">
+                  <div className="mt-5 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <button
                       onClick={resetFilters}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm text-foreground/60 hover:text-primary transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm 
+                        text-gray-500 dark:text-gray-400 
+                        hover:text-primary dark:hover:text-primary 
+                        transition-colors"
                     >
                       <X className="w-4 h-4" />
                       {lang === "ar" ? "إعادة ضبط الفلترة" : "Reset Filters"}
@@ -435,10 +455,10 @@ export const SemestersPage = () => {
               <div className={`w-10 h-10 rounded-xl bg-gradient-to-r ${primaryGradient} flex items-center justify-center`}>
                 {isNature ? <Leaf className="w-5 h-5 text-white" /> : <Flame className="w-5 h-5 text-white" />}
               </div>
-              <h2 className={`text-2xl font-bold ${textPrimary}`}>
+              <h2 className={`text-2xl font-bold text-gray-900 dark:text-white`}>
                 {lang === "ar" ? "كورسات المراجعه النهائيه" : "Final revision courses "}
               </h2>
-              <span className={`text-sm px-2 py-0.5 rounded-full ${isNature ? 'bg-amber-100 text-amber-700' : 'bg-secondary text-foreground/50'}`}>
+              <span className={`text-sm px-2 py-0.5 rounded-full ${isNature ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}>
                 {filteredDirectCourses.length}
               </span>
             </div>
@@ -475,10 +495,10 @@ export const SemestersPage = () => {
               <div className={`w-10 h-10 rounded-xl bg-gradient-to-r ${primaryGradient} flex items-center justify-center`}>
                 <Layers className="w-5 h-5 text-white" />
               </div>
-              <h2 className={`text-2xl font-bold ${textPrimary}`}>
+              <h2 className={`text-2xl font-bold text-gray-900 dark:text-white`}>
                 {lang === "ar" ? "الترمات الدراسية" : "Semesters"}
               </h2>
-              <span className={`text-sm px-2 py-0.5 rounded-full ${isNature ? 'bg-amber-100 text-amber-700' : 'bg-secondary text-foreground/50'}`}>
+              <span className={`text-sm px-2 py-0.5 rounded-full ${isNature ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}>
                 {filteredSemesters.length}
               </span>
             </div>
@@ -516,21 +536,21 @@ export const SemestersPage = () => {
               animate={{ scale: [1, 1.1, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
               className={`w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center
-                ${isNature ? 'bg-amber-100' : 'bg-gray-100 dark:bg-gray-800'}`}
+                ${isNature ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-gray-100 dark:bg-gray-800'}`}
             >
-              {isNature ? <Leaf className="w-10 h-10 text-amber-400" /> : <Search className="w-10 h-10 text-foreground/30" />}
+              {isNature ? <Leaf className="w-10 h-10 text-amber-400" /> : <Search className="w-10 h-10 text-gray-400 dark:text-gray-500" />}
             </motion.div>
-            <h3 className="text-xl font-semibold mb-2">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
               {lang === "ar" ? "لا توجد نتائج" : "No results found"}
             </h3>
-            <p className={`${textSecondary} mb-4`}>
+            <p className={`text-gray-500 dark:text-gray-400 mb-4`}>
               {lang === "ar" 
                 ? "لم نجد أي نتائج تطابق معايير البحث الخاصة بك"
                 : "No results match your search criteria"}
             </p>
             <button
               onClick={resetFilters}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-white ${isNature ? 'bg-amber-600' : `bg-gradient-to-r ${primaryGradient}`}`}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-white ${isNature ? 'bg-amber-600 hover:bg-amber-700' : `bg-gradient-to-r ${primaryGradient}`}`}
             >
               <X className="w-4 h-4" />
               {lang === "ar" ? "إعادة ضبط الفلترة" : "Reset Filters"}
@@ -541,6 +561,7 @@ export const SemestersPage = () => {
     </motion.div>
   );
 };
+
 const DirectCourseCard = ({ course, index, slug, lang, pick, isNature }: any) => {
   const [showRedeemModal, setShowRedeemModal] = useState(false);
   
@@ -711,7 +732,7 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
     <>
       <motion.div
         whileHover={{ y: -5 }}
-        className={`group relative rounded-2xl border transition-all overflow-hidden bg-white dark:bg-gray-900 ${isNature ? 'border-amber-200 dark:border-amber-800' : 'border-border'} hover:border-${primaryColor}/30`}
+        className={`group relative rounded-2xl border transition-all overflow-hidden bg-white dark:bg-gray-900 ${isNature ? 'border-amber-200 dark:border-amber-800' : 'border-gray-200 dark:border-gray-700'} hover:border-${primaryColor}/30 dark:hover:border-${primaryColor}/50`}
       >
         <div className="relative h-56 md:h-60 lg:h-64 overflow-hidden bg-gradient-to-br from-amber-100/50 to-orange-100/50 dark:from-amber-900/30 dark:to-orange-900/30">
           <img 
@@ -741,7 +762,7 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
 
         <div className="p-5">
           <div className="flex items-start justify-between mb-3">
-            <div className={`w-8 h-8 rounded-lg ${isNature ? 'bg-amber-100 dark:bg-amber-900/40' : 'bg-secondary'} grid place-items-center`}>
+            <div className={`w-8 h-8 rounded-lg ${isNature ? 'bg-amber-100 dark:bg-amber-900/40' : 'bg-gray-100 dark:bg-gray-800'} grid place-items-center`}>
               {isNature ? (
                 <Leaf className="w-4 h-4 text-amber-600 dark:text-amber-400" />
               ) : (
@@ -750,12 +771,12 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
             </div>
           </div>
 
-          <h3 className={`text-xl font-bold mb-2 transition-colors line-clamp-1 ${isNature ? 'text-amber-800 dark:text-amber-200 group-hover:text-amber-600' : 'group-hover:text-primary'}`}>
+          <h3 className={`text-xl font-bold mb-2 transition-colors line-clamp-1 ${isNature ? 'text-amber-800 dark:text-amber-200 group-hover:text-amber-600' : 'text-gray-900 dark:text-white group-hover:text-primary'}`}>
             {pick(semester.name, semester.name_ar)}
           </h3>
           
           {semester.description && (
-            <p className="text-sm text-foreground/60 mb-3 line-clamp-2">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">
               {pick(semester.description, semester.description_ar)}
             </p>
           )}
@@ -763,22 +784,22 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
           <div className="mt-3">
             {hasDiscount ? (
               <div className="flex items-baseline gap-2 flex-wrap">
-                <span className={`text-2xl font-black text-amber-800`}>
+                <span className={`text-2xl font-black text-amber-800 dark:text-amber-400`}>
                   {finalPrice.toFixed(2)} EGP
                 </span>
-                <span className="text-sm text-amber-700 line-through">{originalPrice.toFixed(2)} EGP</span>
+                <span className="text-sm text-amber-700 dark:text-amber-500 line-through">{originalPrice.toFixed(2)} EGP</span>
                 <span className={`text-xs px-2 py-0.5 rounded-full ${isNature ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'}`}>
                   وفر {((originalPrice - finalPrice)).toFixed(2)} EGP
                 </span>
               </div>
             ) : (
-              <span className={`text-2xl font-black text-amber-800`}>
+              <span className={`text-2xl font-black text-amber-800 dark:text-amber-400`}>
                 {finalPrice.toFixed(2)} EGP
               </span>
             )}
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-4 text-xs text-foreground/60">
+          <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-500 dark:text-gray-400">
             <div className="flex items-center gap-1">
               <Clock className="w-3 h-3" />
               <span>{lang === "ar" ? "تعلّم بوتيرتك" : "Self-paced"}</span>
@@ -808,7 +829,7 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
             </motion.div>
           )}
 
-          <div className="mt-4 pt-4 border-t border-border">
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex gap-3">
               <button
                 onClick={handleBuyClick}
@@ -857,30 +878,30 @@ const SemesterCard = ({ semester, index, slug, lang, pick, refetchSemesters, isN
 // Skeleton Component
 const SemestersSkeleton = ({ isNature }: { isNature: boolean }) => {
   return (
-    <div className={`min-h-screen pt-32 pb-20 ${isNature ? 'bg-amber-50/30' : 'bg-background'}`}>
+    <div className={`min-h-screen pt-32 pb-20 bg-white dark:bg-gray-950`}>
       <div className="container-tight">
         <div className="mb-8">
-          <div className={`h-4 w-48 rounded mb-4 animate-pulse ${isNature ? 'bg-amber-200' : 'bg-gray-200 dark:bg-gray-700'}`} />
-          <div className={`h-12 w-64 rounded-lg animate-pulse ${isNature ? 'bg-amber-100' : 'bg-gray-200 dark:bg-gray-700'}`} />
-          <div className={`h-4 w-72 mt-2 rounded animate-pulse ${isNature ? 'bg-amber-50' : 'bg-gray-200 dark:bg-gray-700'}`} />
+          <div className={`h-4 w-48 rounded mb-4 animate-pulse ${isNature ? 'bg-amber-200 dark:bg-amber-800' : 'bg-gray-200 dark:bg-gray-700'}`} />
+          <div className={`h-12 w-64 rounded-lg animate-pulse ${isNature ? 'bg-amber-100 dark:bg-amber-900' : 'bg-gray-200 dark:bg-gray-700'}`} />
+          <div className={`h-4 w-72 mt-2 rounded animate-pulse ${isNature ? 'bg-amber-50 dark:bg-amber-950' : 'bg-gray-200 dark:bg-gray-700'}`} />
         </div>
         <div className="grid md:grid-cols-2 gap-6">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className={`rounded-2xl p-6 animate-pulse ${isNature ? 'bg-white border border-amber-200' : 'bg-card'}`}>
+            <div key={i} className={`rounded-2xl p-6 animate-pulse ${isNature ? 'bg-white dark:bg-gray-900 border border-amber-200 dark:border-amber-800' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700'}`}>
               <div className="flex justify-between items-start mb-4">
-                <div className={`w-12 h-12 rounded-xl animate-pulse ${isNature ? 'bg-amber-100' : 'bg-gray-200 dark:bg-gray-700'}`} />
-                <div className={`w-16 h-6 rounded-full animate-pulse ${isNature ? 'bg-amber-100' : 'bg-gray-200 dark:bg-gray-700'}`} />
+                <div className={`w-12 h-12 rounded-xl animate-pulse ${isNature ? 'bg-amber-100 dark:bg-amber-900' : 'bg-gray-200 dark:bg-gray-700'}`} />
+                <div className={`w-16 h-6 rounded-full animate-pulse ${isNature ? 'bg-amber-100 dark:bg-amber-900' : 'bg-gray-200 dark:bg-gray-700'}`} />
               </div>
-              <div className={`h-6 rounded-lg mb-2 w-3/4 animate-pulse ${isNature ? 'bg-amber-100' : 'bg-gray-200 dark:bg-gray-700'}`} />
-              <div className={`h-4 rounded-lg w-1/2 mb-4 animate-pulse ${isNature ? 'bg-amber-50' : 'bg-gray-200 dark:bg-gray-700'}`} />
-              <div className={`h-8 rounded-lg w-1/3 mb-4 animate-pulse ${isNature ? 'bg-amber-100' : 'bg-gray-200 dark:bg-gray-700'}`} />
+              <div className={`h-6 rounded-lg mb-2 w-3/4 animate-pulse ${isNature ? 'bg-amber-100 dark:bg-amber-900' : 'bg-gray-200 dark:bg-gray-700'}`} />
+              <div className={`h-4 rounded-lg w-1/2 mb-4 animate-pulse ${isNature ? 'bg-amber-50 dark:bg-amber-950' : 'bg-gray-200 dark:bg-gray-700'}`} />
+              <div className={`h-8 rounded-lg w-1/3 mb-4 animate-pulse ${isNature ? 'bg-amber-100 dark:bg-amber-900' : 'bg-gray-200 dark:bg-gray-700'}`} />
               <div className="flex gap-4 mb-4">
-                <div className={`h-4 rounded w-20 animate-pulse ${isNature ? 'bg-amber-50' : 'bg-gray-200 dark:bg-gray-700'}`} />
-                <div className={`h-4 rounded w-20 animate-pulse ${isNature ? 'bg-amber-50' : 'bg-gray-200 dark:bg-gray-700'}`} />
+                <div className={`h-4 rounded w-20 animate-pulse ${isNature ? 'bg-amber-50 dark:bg-amber-950' : 'bg-gray-200 dark:bg-gray-700'}`} />
+                <div className={`h-4 rounded w-20 animate-pulse ${isNature ? 'bg-amber-50 dark:bg-amber-950' : 'bg-gray-200 dark:bg-gray-700'}`} />
               </div>
               <div className="flex gap-3">
-                <div className={`h-10 flex-1 rounded-xl animate-pulse ${isNature ? 'bg-amber-100' : 'bg-gray-200 dark:bg-gray-700'}`} />
-                <div className={`h-10 w-28 rounded-xl animate-pulse ${isNature ? 'bg-amber-100' : 'bg-gray-200 dark:bg-gray-700'}`} />
+                <div className={`h-10 flex-1 rounded-xl animate-pulse ${isNature ? 'bg-amber-100 dark:bg-amber-900' : 'bg-gray-200 dark:bg-gray-700'}`} />
+                <div className={`h-10 w-28 rounded-xl animate-pulse ${isNature ? 'bg-amber-100 dark:bg-amber-900' : 'bg-gray-200 dark:bg-gray-700'}`} />
               </div>
             </div>
           ))}

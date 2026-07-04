@@ -141,7 +141,6 @@ export const useStudentRegister = () => {
   });
 };
 
-// 🟢 Hook لتسجيل الدخول
 export const useStudentLogin = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -154,7 +153,7 @@ export const useStudentLogin = () => {
       return response.data;
     },
     onSuccess: (data, variables) => {
-      if (data.status === true && data.token) {
+  if (data.status === true && data.token) {
         // ✅ حفظ التوكن في cookies
         Cookies.set('student_token', data.token, { expires: 7, secure: true, sameSite: 'Lax' });
         Cookies.set('student_data', JSON.stringify(data.data), { expires: 7 });
@@ -168,20 +167,17 @@ export const useStudentLogin = () => {
         queryClient.invalidateQueries({ queryKey: ['student-auth'] });
         queryClient.invalidateQueries({ queryKey: ['student-learning'] });
         
-        // ✅ التوجيه للـ Dashboard
-        const slug = window.location.pathname.split('/')[1];
-        
-        // التحقق من وجود redirect في URL
+        // ✅ التحقق من وجود redirect في URL
         const urlParams = new URLSearchParams(window.location.search);
         const redirectUrl = urlParams.get('redirect');
         
         if (redirectUrl) {
-          // لو فيه redirect, روح للرابط اللي كان المستخدم فيه
+          // ✅ لو فيه redirect, روح للرابط اللي كان المستخدم فيه
           setTimeout(() => {
             navigate(redirectUrl);
           }, 1500);
         } else {
-          // روح للـ Dashboard
+          // ✅ روح للـ Dashboard
           setTimeout(() => {
             navigate(`/dashboard`);
           }, 1500);

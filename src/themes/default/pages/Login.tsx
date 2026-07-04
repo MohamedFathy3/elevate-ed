@@ -1,7 +1,8 @@
 // src/pages/Login.tsx
+
 import { useState, useEffect } from "react";
 import { useLang } from "@/i18n/LanguageContext";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom"; // ✅ إضافة useSearchParams
 import { useTeacher } from "@/context/TeacherContext";
 import { useStudentLogin } from "@/hooks/useStudent";
 import { LogIn, Phone, Lock, Eye, EyeOff, ArrowLeft, ArrowRight, Loader2, GraduationCap } from "lucide-react";
@@ -12,10 +13,10 @@ interface LoginPayload {
   phone: string;
   password: string;
   type: "student" | "parent";
-  device_id: string;      // 🔥 من الفروند
-  fingerprint: string;    // 🔥 من الفروند
-  last_ip: string;        // 🔥 من الفروند
-  user_agent: string;     // 🔥 من الفروند
+  device_id: string;
+  fingerprint: string;
+  last_ip: string;
+  user_agent: string;
 }
 
 const Login = () => {
@@ -23,6 +24,7 @@ const Login = () => {
   const { slug } = useParams();
   const { teacher } = useTeacher();
   const { mutate: login, isPending } = useStudentLogin();
+  const [searchParams] = useSearchParams(); // ✅ جلب الـ query params
 
   const [showPassword, setShowPassword] = useState(false);
   const [deviceReady, setDeviceReady] = useState(false);
@@ -33,6 +35,9 @@ const Login = () => {
     password: "",
     type: "student",
   });
+
+  // ✅ الحصول على redirect URL
+  const redirectUrl = searchParams.get('redirect') || '/dashboard';
 
   const Arrow = dir === "rtl" ? ArrowRight : ArrowLeft;
   const iconPos = dir === "rtl" ? "right-3" : "left-3";
@@ -79,15 +84,18 @@ const Login = () => {
       phone: formData.phone,
       password: formData.password,
       type: formData.type as "student" | "parent",
-      device_id: deviceData.device_id,      // 🔥 من الفروند
-      fingerprint: deviceData.fingerprint,   // 🔥 من الفروند
-      last_ip: deviceData.last_ip,           // 🔥 من الفروند
-      user_agent: deviceData.user_agent,     // 🔥 من الفروند
+      device_id: deviceData.device_id,
+      fingerprint: deviceData.fingerprint,
+      last_ip: deviceData.last_ip,
+      user_agent: deviceData.user_agent,
     };
 
     console.log('📤 البيانات المرسلة:', payload);
     login(payload);
   };
+
+  // ✅ إذا كان فيه redirect، نضيفه كـ hidden input أو نحفظه في context
+  // لكن login mutation هيتعامل مع الـ redirect
 
   return (
     <section className="min-h-screen bg-[#eef1f6] dark:bg-[#0f1419] flex items-center px-4 py-28 sm:px-6 sm:py-32 lg:px-10 lg:py-24">
@@ -139,7 +147,7 @@ const Login = () => {
             }`}
           >
             <Link
-              to={``}
+              to={`/`}
               className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-[#3b5bdb] dark:text-slate-400 dark:hover:text-sky-400 mb-6 transition-colors w-fit"
             >
               <Arrow className="w-4 h-4" />
@@ -159,7 +167,14 @@ const Login = () => {
                   : `Welcome back to ${teacherName}'s platform`}
               </p>
               
-          
+              {/* ✅ عرض رسالة الـ redirect إن وجدت */}
+              {redirectUrl && redirectUrl !== '/dashboard' && (
+                <div className="mt-3 text-xs text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/30 px-3 py-2 rounded-lg">
+                  {lang === "ar" 
+                    ? `⏳ سيتم تحويلك إلى الصفحة المطلوبة بعد تسجيل الدخول`
+                    : `⏳ You will be redirected to the requested page after login`}
+                </div>
+              )}
             </div>
 
             <div className="flex p-1 mb-6 rounded-xl bg-slate-100 dark:bg-slate-800/80">
