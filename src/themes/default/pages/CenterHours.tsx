@@ -93,7 +93,7 @@ export const CenterHours = () => {
               : "Center hours will be added soon"}
           </p>
           <Link
-            to={``}
+            to={`/`}
             className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r ${primaryGradient} text-white font-semibold`}
           >
             <Arrow className="w-4 h-4" />
