@@ -288,64 +288,73 @@ const LessonPage = () => {
     }
   }, [attendanceSuccess, refetchLesson]);
 
-  // جلب الامتحانات من الدرس
   const exams = lesson?.exams || [];
 
-  // جلب نتيجة كل امتحان
-  useEffect(() => {
-    if (!exams.length || !student?.id) {
-      setLoadingExams(false);
-      return;
+useEffect(() => {
+  if (!exams.length || !student?.id) {
+    setLoadingExams(false);
+    return;
+  }
+
+  const fetchAllExamResults = async () => {
+    setLoadingExams(true);
+    const results: Record<number, any> = {};
+    const statuses: Record<number, any> = {};
+
+    for (const exam of exams) {
+      try {
+        const response = await fetch(`/api/exam/result/${exam.id}/${student.id}`);
+        const data = await response.json();
+        
+        results[exam.id] = data;
+        
+        // ✅ استخدام student_passed من الـ API مباشرة
+        const passed = data?.student_passed === true || data?.data?.student_passed === true;
+        const total = data?.total || data?.data?.total || 0;
+        const passMarks = exam.total_must_pass_marks || 0;
+        
+        // ✅ التحقق من وجود بيانات
+        const hasData = data?.data && data.data.length > 0;
+        
+        console.log(`📊 Exam ${exam.id} (${exam.title}):`, {
+          total,
+          passMarks,
+          passed,
+          student_passed: data?.student_passed,
+          data: data
+        });
+        
+        statuses[exam.id] = {
+          passed: passed,
+          failed: hasData && !passed,
+          checked: hasData || false,
+          locked: false,
+          hidden: false,
+          total: total,
+          passMarks: passMarks
+        };
+        
+      } catch (error) {
+        console.error(`Error fetching result for exam ${exam.id}:`, error);
+        statuses[exam.id] = {
+          passed: false,
+          failed: false,
+          checked: false,
+          locked: false,
+          hidden: false,
+          total: 0,
+          passMarks: exam.total_must_pass_marks || 0
+        };
+      }
     }
 
-    const fetchAllExamResults = async () => {
-      setLoadingExams(true);
-      const results: Record<number, any> = {};
-      const statuses: Record<number, any> = {};
+    setExamResults(results);
+    setExamStatuses(statuses);
+    setLoadingExams(false);
+  };
 
-      for (const exam of exams) {
-        try {
-          const response = await fetch(`/api/exam/result/${exam.id}/${student.id}`);
-          const data = await response.json();
-          
-          results[exam.id] = data;
-          
-          const total = data.total || 0;
-          const passMarks = exam.total_must_pass_marks || 0;
-          const passed = total >= passMarks;
-          
-          const hasData = data.data && data.data.length > 0;
-          
-          statuses[exam.id] = {
-            passed: passed,
-            failed: hasData && !passed,
-            checked: hasData || false,
-            locked: false,
-            hidden: false,
-            total: total,
-            passMarks: passMarks
-          };
-          
-        } catch (error) {
-          statuses[exam.id] = {
-            passed: false,
-            failed: false,
-            checked: false,
-            locked: false,
-            hidden: false,
-            total: 0,
-            passMarks: exam.total_must_pass_marks || 0
-          };
-        }
-      }
-
-      setExamResults(results);
-      setExamStatuses(statuses);
-      setLoadingExams(false);
-    };
-
-    fetchAllExamResults();
-  }, [exams, student?.id]);
+  fetchAllExamResults();
+}, [exams, student?.id]);
 
   // ✅ المنطق: تحديد الامتحان النشط
   const { activeExamIndex, examVisibility } = useMemo(() => {
