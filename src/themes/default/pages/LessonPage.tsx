@@ -354,8 +354,15 @@ const LessonPage = () => {
     }
 
     const visibility: Record<number, boolean> = {};
+    
+    // ✅ نخفي كل الامتحانات أولاً
+    exams.forEach((exam: any) => {
+      visibility[exam.id] = false;
+    });
+
     let firstFailedIndex = -1;
 
+    // ✅ دور على أول امتحان فشل
     for (let i = 0; i < exams.length; i++) {
       const exam = exams[i];
       const status = examStatuses[exam.id];
@@ -369,67 +376,69 @@ const LessonPage = () => {
     let activeIdx = -1;
     
     if (firstFailedIndex !== -1) {
+      // ✅ فيه امتحان فشل → يظهر
       activeIdx = firstFailedIndex;
     } else if (!examStatuses[exams[0]?.id]?.checked) {
+      // ✅ أول امتحان لسه مبدأش → يظهر
       activeIdx = 0;
     } else {
+      // ✅ كل الامتحانات نجحت (أو مفيش امتحانات فاشلة)
       const allPassed = exams.every((exam: any) => {
         const status = examStatuses[exam.id];
         return status?.passed === true;
       });
-      activeIdx = allPassed ? -2 : -1;
+      
+      if (allPassed) {
+        activeIdx = -2; // ✅ كل الامتحانات نجحت - مفيش حاجة تظهر
+      } else {
+        // ✅ لو أول امتحان لسه مبدأش
+        activeIdx = 0;
+      }
     }
 
-    visibility[exams[0]?.id] = true;
-
-    for (let i = 1; i < exams.length; i++) {
-      const currentExam = exams[i];
-      const prevExam = exams[i - 1];
-      const prevStatus = examStatuses[prevExam?.id];
-      
-      const shouldShow = prevStatus?.failed === true;
-      
-      visibility[currentExam.id] = shouldShow;
+    // ✅ الامتحان النشط فقط يظهر
+    if (activeIdx >= 0 && activeIdx < exams.length) {
+      const activeExam = exams[activeIdx];
+      visibility[activeExam.id] = true;
     }
+
+    console.log('📌 Active Exam Index:', activeIdx);
+    console.log('📌 Exam Visibility:', visibility);
 
     return { activeExamIndex: activeIdx, examVisibility: visibility };
   }, [exams, examStatuses, loadingExams]);
 
-  // ✅ تحديث حالة القفل والإخفاء لكل امتحان
+  // ✅ تحديث حالة القفل والإخفاء لكل امتحان (المعدل)
   useEffect(() => {
     if (Object.keys(examStatuses).length === 0 || loadingExams) return;
 
     const newStatuses = { ...examStatuses };
     
     exams.forEach((exam: any, index: number) => {
-      if (index === 0) {
-        newStatuses[exam.id] = {
-          ...newStatuses[exam.id],
-          locked: false,
-          hidden: false,
-          checked: newStatuses[exam.id]?.checked || false
-        };
-        return;
-      }
-
-      const previousExam = exams[index - 1];
-      const previousStatus = examStatuses[previousExam?.id];
+      const currentStatus = newStatuses[exam.id];
       
-      const shouldLock = previousStatus?.passed === true;
-      const shouldHide = previousStatus?.passed === true;
+      // ✅ الامتحان يختفي إذا نجح فيه الطالب (حتى لو امتحان واحد)
+      const shouldHide = currentStatus?.passed === true;
+      
+      // ✅ الامتحان مقفول إذا نجح (عشان يختفي)
+      const shouldLock = currentStatus?.passed === true;
+      
+      console.log(`🔒 Exam ${index + 1} (${exam.title}): passed = ${currentStatus?.passed}, hidden = ${shouldHide}`);
       
       newStatuses[exam.id] = {
-        ...newStatuses[exam.id],
+        ...currentStatus,
         locked: shouldLock,
         hidden: shouldHide,
-        checked: newStatuses[exam.id]?.checked || false
+        checked: currentStatus?.checked || false
       };
     });
 
+    setExamStatuses(newStatuses);
   }, [exams, examStatuses, loadingExams]);
 
   // ✅ هل يقدر يشوف الفيديو؟
   const canWatch = useMemo(() => {
+    // ✅ لو must_pass_to_unlock = false → الفيديو مفتوح
     if (!lesson?.must_pass_to_unlock) {
       return true;
     }
@@ -442,6 +451,7 @@ const LessonPage = () => {
       return false;
     }
     
+    // ✅ كل الامتحانات نجحت؟
     const allPassed = exams.every((exam: any) => {
       const status = examStatuses[exam.id];
       return status?.passed === true;
@@ -567,7 +577,7 @@ const LessonPage = () => {
       <div className="container-tight max-w-7xl mx-auto px-4">
         <LessonBreadcrumb slug={slug || ''} title={lesson.title} />
 
-        {/* تقدم الامتحانات */}
+        {/* تقدم الامتحانات - يظهر فقط لو must_pass_to_unlock = true */}
         {lesson?.must_pass_to_unlock && exams.length > 0 && (
           <div className="mb-6 p-4 rounded-xl border bg-white dark:bg-gray-900 shadow-sm">
             <div className="flex items-center justify-between flex-wrap gap-3">
