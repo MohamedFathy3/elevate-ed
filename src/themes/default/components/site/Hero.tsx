@@ -1,4 +1,5 @@
 // components/site/Hero.tsx
+
 import { motion } from "framer-motion";
 import { useLang } from "@/i18n/LanguageContext";
 import { useTeacher } from "@/context/TeacherContext";
@@ -42,8 +43,8 @@ export const Hero = () => {
   }
 
   return (
-    <section className="relative min-h-screen flex items-center pt-32 pb-20 overflow-hidden gradient-hero-bg">
-      {/* Background pattern */}
+    <section className="relative min-h-screen flex items-center pt-32 pb-20 overflow-hidden ">
+      {/* Background pattern - خفيف في الـ dark mode */}
       <div
         className="absolute inset-0 opacity-[0.4] pointer-events-none"
         style={{
@@ -54,18 +55,18 @@ export const Hero = () => {
         }}
       />
 
-      {/* Animated decorative elements */}
+      {/* Animated decorative elements - أخف في الـ dark mode */}
       <motion.div
         animate={{ y: [0, -20, 0], rotate: [0, 8, 0] }}
         transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-1/4 left-[5%] w-32 h-32 rounded-full border-2 border-primary/15 hidden md:block"
+        className="absolute top-1/4 left-[5%] w-32 h-32 rounded-full border-2 border-primary/10 dark:border-primary/5 hidden md:block"
       />
       <motion.div
         animate={{ rotate: 360 }}
         transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
         className="absolute top-[15%] right-[3%] w-24 h-24 hidden md:block"
       >
-        <Atom className="w-full h-full text-primary/15" strokeWidth={1} />
+        <Atom className="w-full h-full text-primary/10 dark:text-primary/5" strokeWidth={1} />
       </motion.div>
 
       <div className="container-tight relative grid lg:grid-cols-2 gap-12 items-center">
@@ -96,7 +97,7 @@ export const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.35 }}
-            className="mt-6 text-lg md:text-xl text-foreground/70 leading-relaxed max-w-xl"
+            className="mt-6 text-lg md:text-xl text-gray-600 dark:text-gray-300 leading-relaxed max-w-xl"
           >
             {heroSubTitle}
           </motion.p>
@@ -105,17 +106,16 @@ export const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
-            className="mt-8 p-5 md:p-6 rounded-3xl  border  shadow-soft max-w-xl bg-[#d5dbe273]"
+            className="mt-8 p-5 md:p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-soft max-w-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm"
           >
-           <div className="flex gap-4 py-5">
-  <div className="shrink-0 w-5 h-9 rounded-full  grid place-items-center shadow-soft">
-    <CheckCircle2 className="w-5 h-5 text-white" />
-  </div>
-
-  <p className="min-w-0 break-words text-sm  leading-relaxed">
-    {heroDescription}
-  </p>
-</div>
+            <div className="flex gap-4 py-5">
+              <div className="shrink-0 w-5 h-9 rounded-full grid place-items-center">
+                <CheckCircle2 className="w-5 h-5 text-primary dark:text-primary" />
+              </div>
+              <p className="min-w-0 break-words text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                {heroDescription}
+              </p>
+            </div>
           </motion.div>
 
           <motion.div
@@ -134,10 +134,9 @@ export const Hero = () => {
             </Link>
             <Link
               to={`/courses`}
-              className="group inline-flex items-center gap-3 px-6 shadow-glow  md:px-8 py-4 md:py-5 rounded-2xl  text-white font-bold text-base md:text-lg shadow-elegant hover:shadow-glow transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="group inline-flex items-center gap-3 px-6 md:px-8 py-4 md:py-5 rounded-2xl bg-primary/10 dark:bg-primary/20 hover:bg-primary/20 dark:hover:bg-primary/30 text-primary font-bold text-base md:text-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
-              <span className="shadow-glow ">              {lang === "ar" ? "تصفح الكورسات" : "Browse Courses"}
-</span>
+              <span>{lang === "ar" ? "تصفح الكورسات" : "Browse Courses"}</span>
             </Link>
           </motion.div>
         </div>
@@ -152,7 +151,7 @@ export const Hero = () => {
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-            className="absolute inset-0 rounded-full border-2 border-primary/25"
+            className="absolute inset-0 rounded-full border-2 border-primary/20 dark:border-primary/10"
           >
             <span className="absolute -top-2 left-1/2 w-4 h-4 rounded-full gradient-accent shadow-glow" />
             <span className="absolute top-1/2 -right-2 w-3 h-3 rounded-full bg-[hsl(var(--cyan))] shadow-glow" />
@@ -160,29 +159,28 @@ export const Hero = () => {
           <motion.div
             animate={{ rotate: -360 }}
             transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-            className="absolute inset-6 rounded-full border-2 border-[hsl(var(--pink))]/30"
+            className="absolute inset-6 rounded-full border-2 border-[hsl(var(--pink))]/20 dark:border-[hsl(var(--pink))]/10"
           >
             <span className="absolute -bottom-1.5 left-1/3 w-3 h-3 rounded-full bg-[hsl(var(--pink))] shadow-glow" />
           </motion.div>
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
-            className="absolute inset-12 rounded-full border border-primary/15"
+            className="absolute inset-12 rounded-full border border-primary/10 dark:border-primary/5"
           />
 
           <motion.div
-            animate={{ scale: [1, 1.08, 1], opacity: [0.5, 0.8, 0.5] }}
+            animate={{ scale: [1, 1.08, 1], opacity: [0.3, 0.5, 0.3] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute inset-16 rounded-full gradient-primary blur-2xl"
+            className="absolute inset-16 rounded-full gradient-primary blur-2xl opacity-50 dark:opacity-30"
           />
 
-          <div className="absolute inset-16 rounded-full  shadow-glow overflow-hidden">
+          <div className="absolute inset-16 rounded-full shadow-glow overflow-hidden border-2 border-gray-200 dark:border-gray-800">
             {heroImage ? (
               <img
                 src={heroImage}
                 alt={teacherName}
                 className="w-full h-full object-cover"
-              
               />
             ) : (
               <div className="w-full h-full gradient-primary grid place-items-center">
@@ -196,14 +194,14 @@ export const Hero = () => {
           <motion.div
             animate={{ y: [0, -12, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-6 right-2 md:right-0 w-16 h-16 rounded-2xl  shadow-card grid place-items-center"
+            className="absolute top-6 right-2 md:right-0 w-16 h-16 rounded-2xl shadow-card grid place-items-center bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200 dark:border-gray-700"
           >
             <Zap className="w-7 h-7 text-accent" fill="currentColor" />
           </motion.div>
           <motion.div
             animate={{ y: [0, 12, 0] }}
             transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-            className="absolute bottom-12 left-2 md:left-0 w-16 h-16 rounded-2xl  shadow-card grid place-items-center"
+            className="absolute bottom-12 left-2 md:left-0 w-16 h-16 rounded-2xl shadow-card grid place-items-center bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200 dark:border-gray-700"
           >
             <Lightbulb className="w-7 h-7 text-amber-400" fill="currentColor" />
           </motion.div>
@@ -225,7 +223,7 @@ const HeroSkeleton = () => {
   const { lang } = useLang();
   
   return (
-    <section className="relative min-h-screen flex items-center pt-32 pb-20 overflow-hidden gradient-hero-bg">
+    <section className="relative min-h-screen flex items-center pt-32 pb-20 overflow-hidden bg-white dark:bg-gray-950">
       <div className="container-tight relative grid lg:grid-cols-2 gap-12 items-center">
         <div className="animate-pulse">
           <div className="h-8 w-32 bg-gray-200 dark:bg-gray-700 rounded-lg mb-6" />

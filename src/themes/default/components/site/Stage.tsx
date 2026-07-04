@@ -25,9 +25,6 @@ import {
   Flower2,
   TreePine,
   Mountain,
-  Cloud,
-  Sun,
-  Wind,
   Compass,
   Globe2,
   Bird,
@@ -87,7 +84,7 @@ export const Stage = () => {
   }, [isAuthenticated, student]);
 
   const handleCardClick = (stageId: number, stageName: string) => {
-    navigate(`/semesters?stage_id=${stageId}&stage_name=${encodeURIComponent(stageName)}`);
+  navigate(`/subjects?stage_id=${stageId}&stage_name=${encodeURIComponent(stageName)}`);
   };
 
   if (isLoading) {
@@ -130,7 +127,7 @@ export const Stage = () => {
               className="absolute opacity-10 dark:opacity-5"
               style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%` }}
             >
-              <Leaf className="w-6 h-6 text-emerald-600" />
+              <Leaf className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
             </motion.div>
           ))}
         </div>
@@ -164,7 +161,7 @@ export const Stage = () => {
               className="text-emerald-700/70 dark:text-emerald-300/70 text-lg"
             >
               {lang === "ar"
-                ? " المنصه متاحه علي  موبايالك او  التابلت أو اللابتوب الخاص بيك. "
+                ? "المنصه متاحه علي موبايالك او التابلت أو اللابتوب الخاص بيك."
                 : "On your mobile, tablet or laptop. The platform is available on:"}
             </motion.p>
           </div>
@@ -192,7 +189,7 @@ export const Stage = () => {
                 >
                   <div
                     className={`relative rounded-2xl overflow-hidden bg-white dark:bg-gray-900 shadow-lg transition-all duration-300 h-full flex flex-col
-                      ${isDisabled ? 'opacity-80 grayscale-[0.1]' : 'hover:shadow-2xl'}`}
+                      ${isDisabled ? 'opacity-80 grayscale-[0.1]' : 'hover:shadow-2xl dark:hover:shadow-emerald-900/30'}`}
                   >
                     {/* صورة المرحلة */}
                     <div className="relative h-48 overflow-hidden">
@@ -235,7 +232,7 @@ export const Stage = () => {
                               key={subject.id}
                               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"
                             >
-                              <span className="w-1 h-1 rounded-full bg-emerald-500" />
+                              <span className="w-1 h-1 rounded-full bg-emerald-500 dark:bg-emerald-400" />
                               {pick(subject.name, subject.name_ar) || subject.name}
                             </span>
                           ))}
@@ -300,19 +297,19 @@ export const Stage = () => {
                   <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
                     <Smartphone className="w-6 h-6" />
                   </div>
-                  <span className="text-xs">Mobile</span>
+                  <span className="text-xs text-gray-600 dark:text-gray-400">Mobile</span>
                 </div>
                 <div className="flex flex-col items-center gap-1">
                   <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
                     <Tablet className="w-6 h-6" />
                   </div>
-                  <span className="text-xs">Tablet</span>
+                  <span className="text-xs text-gray-600 dark:text-gray-400">Tablet</span>
                 </div>
                 <div className="flex flex-col items-center gap-1">
                   <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
                     <Laptop className="w-6 h-6" />
                   </div>
-                  <span className="text-xs">Laptop</span>
+                  <span className="text-xs text-gray-600 dark:text-gray-400">Laptop</span>
                 </div>
               </div>
             </div>
@@ -324,7 +321,7 @@ export const Stage = () => {
 
   // ✅ الثيم العادي (default) - مع عرض المواد
   return (
-    <section id="stages" className="relative overflow-hidden py-28 md:py-36">
+    <section id="stages" className="relative overflow-hidden py-28 md:py-36 bg-white dark:bg-gray-950">
       <div className="container-tight relative z-10">
         {/* TOP SECTION */}
         <div className="mx-auto max-w-4xl text-center">
@@ -332,7 +329,7 @@ export const Stage = () => {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="inline-flex items-center gap-2 rounded-full border px-5 py-2 text-sm font-bold text-primary backdrop-blur-xl"
+            className="inline-flex items-center gap-2 rounded-full border border-gray-200 dark:border-gray-800 px-5 py-2 text-sm font-bold text-primary dark:text-primary backdrop-blur-xl bg-white/60 dark:bg-gray-900/60"
           >
             <Sparkles className="h-4 w-4" />
             {lang === "ar" ? "المراحل التعليمية" : "Educational Stages"}
@@ -343,7 +340,7 @@ export const Stage = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
             viewport={{ once: true }}
-            className="mt-8 text-5xl font-black leading-tight tracking-tight md:text-7xl"
+            className="mt-8 text-5xl font-black leading-tight tracking-tight md:text-7xl text-gray-900 dark:text-white"
           >
             {lang === "ar" ? "اختر مرحلتك" : "Choose Your"}{" "}
             <span className="bg-gradient-to-r from-primary to-fuchsia-500 bg-clip-text text-transparent">
@@ -356,7 +353,7 @@ export const Stage = () => {
             whileInView={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
             viewport={{ once: true }}
-            className="mx-auto mt-8 max-w-2xl text-lg leading-9 text-foreground/60"
+            className="mx-auto mt-8 max-w-2xl text-lg leading-9 text-gray-600 dark:text-gray-400"
           >
             {lang === "ar"
               ? "استكشف جميع المراحل الدراسية والكورسات التعليمية المصممة بأفضل تجربة منصة تعلمية في مصر حديثة للطلاب."
@@ -381,14 +378,14 @@ export const Stage = () => {
               <motion.div
                 key={i}
                 whileHover={{ y: -8 }}
-                className="group rounded-[32px] border p-7 backdrop-blur-2xl"
+                className="group rounded-[32px] border border-gray-200 dark:border-gray-800 p-7 backdrop-blur-2xl bg-white/60 dark:bg-gray-900/60"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-4xl font-black text-primary">{item.number}</h3>
-                    <p className="mt-2 text-sm text-foreground/60">{item.label}</p>
+                    <h3 className="text-4xl font-black text-primary dark:text-primary">{item.number}</h3>
+                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{item.label}</p>
                   </div>
-                  <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-primary/10 text-primary transition-all group-hover:scale-110 group-hover:bg-primary group-hover:text-white">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary transition-all group-hover:scale-110 group-hover:bg-primary group-hover:text-white">
                     <Icon className="h-7 w-7" />
                   </div>
                 </div>
@@ -401,13 +398,13 @@ export const Stage = () => {
         <div className="mt-20 relative">
           <button
             onClick={() => swiperRef.current?.slidePrev()}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border text-primary shadow-lg flex items-center justify-center transition-all -ml-6 hover:bg-primary hover:text-primary hidden lg:flex"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-primary shadow-lg flex items-center justify-center transition-all -ml-6 hover:bg-primary hover:text-white hidden lg:flex"
           >
             <PrevIcon className="w-5 h-5" />
           </button>
           <button
             onClick={() => swiperRef.current?.slideNext()}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border text-primary shadow-lg flex items-center justify-center transition-all -mr-6 hover:bg-primary hover:text-primary hidden lg:flex"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-primary shadow-lg flex items-center justify-center transition-all -mr-6 hover:bg-primary hover:text-white hidden lg:flex"
           >
             <NextIcon className="w-5 h-5" />
           </button>
@@ -451,10 +448,10 @@ export const Stage = () => {
                       }
                     }}
                   >
-                    <div className={`relative overflow-hidden rounded-[36px] border backdrop-blur-2xl transition-all duration-500 ${!isDisabled ? 'hover:border-primary/30 hover:shadow-2xl' : ''}`}>
+                    <div className={`relative overflow-hidden rounded-[36px] border border-gray-200 dark:border-gray-800 backdrop-blur-2xl bg-white/60 dark:bg-gray-900/60 transition-all duration-500 ${!isDisabled ? 'hover:border-primary/30 dark:hover:border-primary/50 hover:shadow-2xl' : ''}`}>
                       {/* Disabled Overlay */}
                       {isDisabled && (
-                        <div className="absolute inset-0 z-20 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center rounded-[36px] pointer-events-none">
+                        <div className="absolute inset-0 z-20 bg-black/70 dark:bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-[36px] pointer-events-none">
                           <Lock className="w-12 h-12 text-white/70 mb-2" />
                           <p className="text-white/80 text-sm font-semibold text-center px-4">
                             {lang === "ar" ? "هذه المرحلة غير متاحة لك" : "This stage is not available for you"}
@@ -484,7 +481,7 @@ export const Stage = () => {
                             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                           </>
                         ) : (
-                          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 via-primary/10 to-fuchsia-500/20">
+                          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 via-primary/10 to-fuchsia-500/20 dark:from-primary/10 dark:via-primary/5 dark:to-fuchsia-500/10">
                             <div className="flex h-28 w-28 items-center justify-center rounded-[30px] bg-primary text-white shadow-2xl">
                               <GraduationCap className="h-14 w-14" />
                             </div>
@@ -492,7 +489,7 @@ export const Stage = () => {
                         )}
 
                         <div className="absolute left-5 top-5">
-                          <div className="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-bold text-white backdrop-blur-xl">
+                          <div className="rounded-full border border-white/10 bg-white/10 dark:bg-black/30 px-4 py-2 text-xs font-bold text-white backdrop-blur-xl">
                             {lang === "ar" ? "مرحلة تعليمية" : "Educational Stage"}
                           </div>
                         </div>
@@ -500,7 +497,7 @@ export const Stage = () => {
                         <motion.div
                           animate={{ y: [0, -10, 0] }}
                           transition={{ duration: 4, repeat: Infinity }}
-                          className="absolute bottom-5 left-5 rounded-2xl border border-white/10 bg-white/10 px-4 py-3 backdrop-blur-2xl"
+                          className="absolute bottom-5 left-5 rounded-2xl border border-white/10 bg-white/10 dark:bg-black/30 px-4 py-3 backdrop-blur-2xl"
                         >
                           <div className="flex items-center gap-3 text-white">
                             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10">
@@ -518,7 +515,7 @@ export const Stage = () => {
                       <div className="p-7">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
-                            <h3 className={`text-3xl text-[#2266bf] dark:text-white transition-colors ${!isDisabled ? 'group-hover:text-primary' : ''}`}>
+                            <h3 className={`text-3xl text-[#2266bf] dark:text-white transition-colors ${!isDisabled ? 'group-hover:text-primary dark:group-hover:text-primary' : ''}`}>
                               {stageName}
                             </h3>
 
@@ -528,9 +525,9 @@ export const Stage = () => {
                                 {s.subjects.slice(0, 4).map((subject: any) => (
                                   <span
                                     key={subject.id}
-                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary dark:bg-primary/20"
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary"
                                   >
-                                    <span className="w-1.5 h-1.5 rounded-full bg-primary/60" />
+                                    <span className="w-1.5 h-1.5 rounded-full bg-primary/60 dark:bg-primary/60" />
                                     {pick(subject.name, subject.name_ar) || subject.name}
                                   </span>
                                 ))}
@@ -542,16 +539,16 @@ export const Stage = () => {
                               </div>
                             )}
                           </div>
-                          <div className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-all group-hover:scale-110 group-hover:bg-primary group-hover:text-white flex-shrink-0`}>
+                          <div className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 dark:bg-primary/20 text-primary transition-all group-hover:scale-110 group-hover:bg-primary group-hover:text-white flex-shrink-0`}>
                             <GraduationCap className="h-6 w-6" />
                           </div>
                         </div>
 
                         {/* BUTTON */}
                         <div className="mt-8">
-                          <div className={`group/button inline-flex items-center gap-3 text-lg font-bold ${!isDisabled ? 'text-primary' : 'text-foreground/30'}`}>
+                          <div className={`group/button inline-flex items-center gap-3 text-lg font-bold ${!isDisabled ? 'text-primary dark:text-primary' : 'text-gray-400 dark:text-gray-600'}`}>
                             {lang === "ar" ? "استكشف الترم" : "Explore Semesters"}
-                            <div className={`flex h-10 w-10 items-center justify-center rounded-full transition-all ${!isDisabled ? 'bg-primary/10 group-hover/button:bg-primary group-hover/button:text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>
+                            <div className={`flex h-10 w-10 items-center justify-center rounded-full transition-all ${!isDisabled ? 'bg-primary/10 dark:bg-primary/20 group-hover/button:bg-primary group-hover/button:text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>
                               <Arrow className="h-5 w-5 transition-transform group-hover/button:translate-x-1 rtl:group-hover/button:-translate-x-1" />
                             </div>
                           </div>
@@ -582,11 +579,11 @@ export const Stage = () => {
 
           <Link
             to={`/stages`}
-            className="group flex items-center gap-3 rounded-2xl border border-border bg-card/60 px-8 py-4 font-bold backdrop-blur-xl transition-all hover:border-primary/30 hover:bg-primary/5"
+            className="group flex items-center gap-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 px-8 py-4 font-bold text-gray-700 dark:text-gray-300 backdrop-blur-xl transition-all hover:border-primary/30 dark:hover:border-primary/50 hover:bg-primary/5 dark:hover:bg-primary/10"
           >
-            <PlayCircleIcon className="h-5 w-5 text-primary" />
+            <PlayCircleIcon className="h-5 w-5 text-primary dark:text-primary" />
             {lang === "ar" ? "استعراض جميع المراحل" : "Browse All Stages"}
-            <Arrow className="h-5 w-5 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1 text-primary" />
+            <Arrow className="h-5 w-5 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1 text-primary dark:text-primary" />
           </Link>
         </div>
       </div>
@@ -626,23 +623,23 @@ const StageSkeleton = ({ isNature }: { isNature: boolean }) => {
   }
 
   return (
-    <section className="py-32 bg-background">
+    <section className="py-32 bg-white dark:bg-gray-950">
       <div className="container-tight">
         <div className="mx-auto mb-20 max-w-3xl text-center">
-          <div className="mx-auto h-10 w-48 animate-pulse rounded-full bg-muted" />
-          <div className="mx-auto mt-6 h-20 w-full animate-pulse rounded-3xl bg-muted" />
-          <div className="mx-auto mt-6 h-8 w-2/3 animate-pulse rounded-2xl bg-muted" />
+          <div className="mx-auto h-10 w-48 animate-pulse rounded-full bg-gray-200 dark:bg-gray-800" />
+          <div className="mx-auto mt-6 h-20 w-full animate-pulse rounded-3xl bg-gray-200 dark:bg-gray-800" />
+          <div className="mx-auto mt-6 h-8 w-2/3 animate-pulse rounded-2xl bg-gray-200 dark:bg-gray-800" />
         </div>
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="overflow-hidden rounded-[36px] border border-border bg-card/60">
-              <div className="h-[320px] animate-pulse bg-muted" />
+            <div key={i} className="overflow-hidden rounded-[36px] border border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60">
+              <div className="h-[320px] animate-pulse bg-gray-200 dark:bg-gray-800" />
               <div className="p-7">
-                <div className="h-10 w-2/3 animate-pulse rounded-2xl bg-muted" />
-                <div className="mt-5 h-24 animate-pulse rounded-2xl bg-muted" />
+                <div className="h-10 w-2/3 animate-pulse rounded-2xl bg-gray-200 dark:bg-gray-800" />
+                <div className="mt-5 h-24 animate-pulse rounded-2xl bg-gray-200 dark:bg-gray-800" />
                 <div className="mt-7 flex gap-3">
-                  <div className="h-10 w-24 animate-pulse rounded-full bg-muted" />
-                  <div className="h-10 w-24 animate-pulse rounded-full bg-muted" />
+                  <div className="h-10 w-24 animate-pulse rounded-full bg-gray-200 dark:bg-gray-800" />
+                  <div className="h-10 w-24 animate-pulse rounded-full bg-gray-200 dark:bg-gray-800" />
                 </div>
               </div>
             </div>
