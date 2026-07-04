@@ -594,33 +594,42 @@ exams.map((exam: any, index: number) => {
                 </span>
               </div>
             ) : (
-              assignments.map((assignment: any, index: number) => {
-                const status = assignmentStatuses[assignment.id];
-                const isPassed = status?.passed || false;
-                const isLocked = status?.locked || false;
-                const isFailed = status?.failed || false;
-                const isHidden = status?.hidden || false;
-                const isWaitingResult = status?.waitingResult || false;
+            // في LessonPage - عند عرض الواجبات
+assignments.map((assignment: any, index: number) => {
+  const status = assignmentStatuses[assignment.id];
+  const isPassed = status?.passed || false;
+  const isLocked = status?.locked || false;
+  const isFailed = status?.failed || false;
+  const isHidden = status?.hidden || false;
+  const isWaitingResult = status?.waitingResult || false;
+  const isWaitingCorrection = status?.waitingCorrection || false;
+  const studentPassedMessage = status?.studentPassedMessage || null;
+  const showMessageOnly = status?.showMessageOnly || false;
+  const notSolved = status?.notSolved || false; // ✅ جلب الحالة
 
-                return (
-                  <AssignmentCard
-                    key={assignment.id}
-                    assignment={{
-                      ...assignment,
-                      total: status?.total || 0,
-                      total_must_pass_marks: status?.passMarks || assignment.total_must_pass_marks || 0
-                    }}
-                    assignmentIndex={index}
-                    isPassed={isPassed}
-                    isLocked={isLocked}
-                    isFailed={isFailed}
-                    isHidden={isHidden}
-                    isWaitingResult={isWaitingResult}
-                    onStart={() => handleStartAssignment(assignment.id)}
-                    lang={lang}
-                  />
-                );
-              })
+  return (
+    <AssignmentCard
+      key={assignment.id}
+      assignment={{
+        ...assignment,
+        total: status?.total || 0,
+        total_must_pass_marks: status?.passMarks || assignment.total_must_pass_marks || 0
+      }}
+      assignmentIndex={index}
+      isPassed={isPassed}
+      isLocked={isLocked}
+      isFailed={isFailed}
+      isHidden={isHidden}
+      isWaitingResult={isWaitingResult}
+      isWaitingCorrection={isWaitingCorrection}
+      studentPassedMessage={studentPassedMessage}
+      showMessageOnly={showMessageOnly}
+      notSolved={notSolved} // ✅ تمرير الحالة
+      onStart={() => handleStartAssignment(assignment.id)}
+      lang={lang}
+    />
+  );
+})
             )}
 
             <div className="flex gap-3">
