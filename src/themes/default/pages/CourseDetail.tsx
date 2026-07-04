@@ -13,11 +13,12 @@ import {
   Eye, Video, FileText, ExternalLink, Info, BookOpen,
   AlertTriangle, LogIn
 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { toast } from "@/hooks/use-toast";
 import { enableFullProtection } from "@/utils/protection";
 import Cookies from "js-cookie";
-import { RedeemModal } from "@/components/RedeemModal"; // ✅ إضافة الـ Modal
+import { RedeemModal } from "@/components/RedeemModal";
+import { Badge } from "@/components/ui/badge";
 
 const CourseDetail = () => {
   const { lang, dir } = useLang();
@@ -101,6 +102,12 @@ const CourseDetail = () => {
   const courseAbout = lang === "ar" ? courseFromApi?.about_ar : courseFromApi?.about;
   const courseImage = courseFromApi?.image?.fullUrl || courseFromApi?.imageUrl || "/default-course.jpg";
 
+  // ✅ استخراج فيديو الكورس التعريفي
+  const courseIntroVideo = courseFromApi?.link_video;
+
+  // ✅ التحقق من وجود فيديو تعريفي للكورس
+  const hasCourseIntroVideo = !!courseIntroVideo;
+
   const originalPrice = parseFloat(courseFromApi?.price) || 0;
   const discountPercent = parseFloat(courseFromApi?.discount) || 0;
   const finalPrice = courseFromApi?.price_before_discount || originalPrice;
@@ -133,12 +140,48 @@ const CourseDetail = () => {
       }
     }
   }, [studentCourses, courseIdNum, lessons]);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => {
-    if (hasPurchasedFullCourse && lessons.length > 0 && !selectedLesson) {
-      setSelectedLesson(lessons[0]);
+
+  // ✅ تحديد المحتوى الافتراضي للعرض (فيديو الكورس التعريفي أو أول درس)
+  const defaultContent = useMemo(() => {
+    // 1. ✅ إذا كان هناك فيديو تعريفي للكورس - استخدمه
+    if (hasCourseIntroVideo) {
+      return {
+        type: 'intro',
+        id: 'intro',
+        title: lang === 'ar' ? 'فيديو تعريفي للكورس' : 'Course Intro Video',
+        title_ar: 'فيديو تعريفي للكورس',
+        content_link: courseIntroVideo,
+        description: courseDescription,
+        description_ar: courseDescription,
+        isIntro: true,
+        lession_date: courseFromApi?.createdAt || new Date().toISOString(),
+        lession_time: '00:00:00',
+      };
     }
-  }, [hasPurchasedFullCourse, lessons]);
+    
+    // 2. ✅ إذا كان الكورس مشترى ولديه دروس - استخدم أول درس
+    if (hasPurchasedFullCourse && lessons.length > 0) {
+      return {
+        type: 'lesson',
+        ...lessons[0],
+        isIntro: false
+      };
+    }
+    
+    // 3. ✅ لا يوجد محتوى
+    return null;
+  }, [hasCourseIntroVideo, courseIntroVideo, hasPurchasedFullCourse, lessons, lang, courseDescription, courseFromApi]);
+
+  // ✅ تحديث selectedLesson الافتراضي
+  useEffect(() => {
+    if (defaultContent && !selectedLesson) {
+      setSelectedLesson(defaultContent);
+    }
+  }, [defaultContent]);
+
+  // ✅ دالة لتحديد ما إذا كان المحتوى المعروض هو فيديو تعريفي
+  const isPlayingIntroVideo = selectedLesson?.isIntro === true;
+
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (isAuthenticated) {
@@ -347,79 +390,122 @@ const CourseDetail = () => {
               transition={{ duration: 0.6 }}
               className="relative rounded-3xl overflow-hidden shadow-elegant bg-black"
             >
-              {hasPurchasedFullCourse && selectedLesson ? (
+              {selectedLesson ? (
                 <div className="relative">
-                  {selectedLesson.content_link?.includes('youtube.com') || selectedLesson.content_link?.includes('youtu.be') ? (
-                    <iframe
-                      src={getVideoUrl(selectedLesson.content_link)}
-                      className="w-full aspect-video"
-                      title={selectedLesson.title}
-                      allowFullScreen
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      onError={() => setVideoError(true)}
-                    />
-                  ) : selectedLesson.content_link?.endsWith('.mp4') ? (
-                    <video
-                      ref={videoRef}
-                      src={selectedLesson.content_link}
-                      className="w-full aspect-video"
-                      controls
-                      controlsList="nodownload nofullscreen noremoteplayback"
-                      disablePictureInPicture
-                      onContextMenu={(e) => e.preventDefault()}
-                      onError={() => setVideoError(true)}
-                    />
-                  ) : selectedLesson.content_link?.endsWith('.pdf') ? (
-                    <div className="aspect-video bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                      <div className="text-center p-8">
-                        <FileText className="w-16 h-16 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
-                        <p className="mb-4 text-gray-700 dark:text-gray-300">{lang === "ar" ? "ملف PDF" : "PDF File"}</p>
-                        <a
-                          href={selectedLesson.content_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-white ${isNature ? 'bg-amber-600 hover:bg-amber-700' : 'bg-blue-600 hover:bg-blue-700'}`}
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                          {lang === "ar" ? "فتح الملف" : "Open File"}
-                        </a>
+                  {/* ✅ عرض الفيديو التعريفي للكورس */}
+                  {selectedLesson.isIntro ? (
+                    <div className="relative">
+                      {selectedLesson.content_link?.includes('youtube.com') || selectedLesson.content_link?.includes('youtu.be') ? (
+                        <iframe
+                          src={getVideoUrl(selectedLesson.content_link)}
+                          className="w-full aspect-video"
+                          title={selectedLesson.title}
+                          allowFullScreen
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          onError={() => setVideoError(true)}
+                        />
+                      ) : (
+                        <div className="aspect-video bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
+                          <div className="text-center text-white">
+                            <Video className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                            <p>{lang === 'ar' ? 'فيديو تعريفي للكورس' : 'Course Intro Video'}</p>
+                            <a
+                              href={selectedLesson.content_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                              {lang === 'ar' ? 'فتح الرابط' : 'Open Link'}
+                            </a>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ✅ Badge فيديو تعريفي */}
+                      <div className="absolute top-4 left-4">
+                        <Badge className="gap-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-none shadow-lg">
+                          <PlayCircle className="h-3 w-3" />
+                          {lang === 'ar' ? '🎬 فيديو تعريفي' : '🎬 Intro Video'}
+                        </Badge>
                       </div>
                     </div>
                   ) : (
-                    <div className="aspect-video bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
-                      <div className="text-center">
-                        <ExternalLink className="w-16 h-16 text-blue-600 dark:text-blue-400 mx-auto mb-4 opacity-50" />
-                        <p className="text-gray-600 dark:text-gray-400">
-                          {lang === "ar" ? "جاري تجهيز المحتوى..." : "Preparing content..."}
-                        </p>
-                        <a
-                          href={selectedLesson.content_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={`mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-white ${isNature ? 'bg-amber-600 hover:bg-amber-700' : 'bg-blue-600 hover:bg-blue-700'}`}
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                          {lang === "ar" ? "فتح الرابط" : "Open Link"}
-                        </a>
-                      </div>
-                    </div>
-                  )}
+                    // ✅ عرض دروس الكورس العادية
+                    <>
+                      {selectedLesson.content_link?.includes('youtube.com') || selectedLesson.content_link?.includes('youtu.be') ? (
+                        <iframe
+                          src={getVideoUrl(selectedLesson.content_link)}
+                          className="w-full aspect-video"
+                          title={selectedLesson.title}
+                          allowFullScreen
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          onError={() => setVideoError(true)}
+                        />
+                      ) : selectedLesson.content_link?.endsWith('.mp4') ? (
+                        <video
+                          ref={videoRef}
+                          src={selectedLesson.content_link}
+                          className="w-full aspect-video"
+                          controls
+                          controlsList="nodownload nofullscreen noremoteplayback"
+                          disablePictureInPicture
+                          onContextMenu={(e) => e.preventDefault()}
+                          onError={() => setVideoError(true)}
+                        />
+                      ) : selectedLesson.content_link?.endsWith('.pdf') ? (
+                        <div className="aspect-video bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                          <div className="text-center p-8">
+                            <FileText className="w-16 h-16 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
+                            <p className="mb-4 text-gray-700 dark:text-gray-300">{lang === "ar" ? "ملف PDF" : "PDF File"}</p>
+                            <a
+                              href={selectedLesson.content_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-white ${isNature ? 'bg-amber-600 hover:bg-amber-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                              {lang === "ar" ? "فتح الملف" : "Open File"}
+                            </a>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="aspect-video bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
+                          <div className="text-center">
+                            <ExternalLink className="w-16 h-16 text-blue-600 dark:text-blue-400 mx-auto mb-4 opacity-50" />
+                            <p className="text-gray-600 dark:text-gray-400">
+                              {lang === "ar" ? "جاري تجهيز المحتوى..." : "Preparing content..."}
+                            </p>
+                            <a
+                              href={selectedLesson.content_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-white ${isNature ? 'bg-amber-600 hover:bg-amber-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                              {lang === "ar" ? "فتح الرابط" : "Open Link"}
+                            </a>
+                          </div>
+                        </div>
+                      )}
 
-                  {videoError && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/80">
-                      <div className="text-center text-white p-4">
-                        <AlertCircle className="w-12 h-12 mx-auto mb-2 text-red-500" />
-                        <p>{lang === "ar" ? "عذراً، لا يمكن تحميل المحتوى" : "Sorry, cannot load content"}</p>
-                        <a
-                          href={selectedLesson.content_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-3 inline-block px-4 py-2 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700"
-                        >
-                          {lang === "ar" ? "فتح الرابط مباشرة" : "Open Link Directly"}
-                        </a>
-                      </div>
-                    </div>
+                      {videoError && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+                          <div className="text-center text-white p-4">
+                            <AlertCircle className="w-12 h-12 mx-auto mb-2 text-red-500" />
+                            <p>{lang === "ar" ? "عذراً، لا يمكن تحميل المحتوى" : "Sorry, cannot load content"}</p>
+                            <a
+                              href={selectedLesson.content_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-3 inline-block px-4 py-2 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700"
+                            >
+                              {lang === "ar" ? "فتح الرابط مباشرة" : "Open Link Directly"}
+                            </a>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               ) : (
@@ -437,7 +523,7 @@ const CourseDetail = () => {
             </motion.div>
 
             {/* Selected Lesson Info */}
-            {selectedLesson && hasPurchasedFullCourse && (
+            {selectedLesson && hasPurchasedFullCourse && !selectedLesson.isIntro && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -485,14 +571,7 @@ const CourseDetail = () => {
                   <Clock className="w-3 h-3" />
                   {courseFromApi?.hour_time_course || (lang === "ar" ? "مرن" : "Flexible")}
                 </span>
-                {/* ✅ عدد الطلاب */}
-                <span className={`px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1
-                  ${isNature
-                    ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
-                    : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'}`}>
-                  <Users className="w-3 h-3" />
-                  {courseFromApi?.count_student || 0} {lang === "ar" ? "طالب" : "students"}
-                </span>
+                
               </div>
 
               <h1 className={`font-display font-black text-3xl md:text-5xl tracking-tight ${isNature ? 'text-amber-800 dark:text-amber-100' : 'text-gray-900 dark:text-white'}`}>
@@ -584,7 +663,7 @@ const CourseDetail = () => {
                       isFree={isFree}
                       hasPurchasedFullCourse={hasPurchasedFullCourse}
                       isAuthenticated={!!Cookies.get('student_token')}
-                      onBuy={() => handleOpenBuyLessonModal(lesson.id, parseFloat(lesson.price))} // ✅ فتح المودال
+                      onBuy={() => handleOpenBuyLessonModal(lesson.id, parseFloat(lesson.price))}
                       onWatch={() => goToLessonPage(lesson.id)}
                       onSelectPart={handleSelectPart}
                       isBuying={buyingLessonId === lesson.id}
@@ -663,7 +742,7 @@ const CourseDetail = () => {
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={handleOpenBuyCourseModal} // ✅ فتح المودال
+                    onClick={handleOpenBuyCourseModal}
                     disabled={buyingFullCourse}
                     className={`w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl text-white font-bold shadow-soft hover:shadow-glow transition-all disabled:opacity-50
                       ${isNature
@@ -844,7 +923,7 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={(e) => { e.stopPropagation(); onBuy(); }} // ✅ فتح المودال
+              onClick={(e) => { e.stopPropagation(); onBuy(); }}
               disabled={isBuying}
               className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-50 flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/25"
             >
@@ -939,7 +1018,7 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
                     {lang === "ar" ? "اشتر الدرس لمشاهدة الأجزاء" : "Buy the lesson to watch parts"}
                   </p>
                   <button
-                    onClick={onBuy} // ✅ فتح المودال
+                    onClick={onBuy}
                     className="mt-3 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-500/25"
                   >
                     {lang === "ar" ? "شراء الدرس" : "Buy Lesson"}

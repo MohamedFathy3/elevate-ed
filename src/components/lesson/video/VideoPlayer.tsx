@@ -1,12 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// components/video/VideoPlayer.tsx - النسخة النهائية
+// components/video/VideoPlayer.tsx
 import { forwardRef, useImperativeHandle, useRef, useState, useEffect } from 'react';
 import { useLang } from '@/i18n/LanguageContext';
 import { VideoProtection } from './VideoProtection';
 import { LocalVideoPlayer } from './LocalVideoPlayer';
 import { VideoLocked } from './VideoLocked';
 import { VideoError } from './VideoErrorBoundary';
-import { ExternalLink, AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { toast } from '@/hooks/use-toast';
 
 interface VideoPlayerProps {
   videoUrl?: string;
@@ -26,7 +28,7 @@ export interface VideoPlayerRef {
   seekTo: (time: number) => void;
 }
 
-// ✅ الدالة اللي شغالة - مع دعم Vimeo
+// ✅ دالة الحصول على الرابط مع منع الـ embed
 const getVideoUrl = (url: string) => {
   if (!url) return null;
   
@@ -48,18 +50,14 @@ const getVideoUrl = (url: string) => {
     return `https://www.youtube.com/embed/${videoId}?enablejsapi=1&rel=0`;
   }
   
-  // ✅ Vimeo - معالجة أفضل
+  // ✅ Vimeo
   if (url.includes('vimeo.com/')) {
-    // 🔥 رابط Vimeo العادي: https://vimeo.com/123456789
     const match = url.match(/vimeo\.com\/(\d+)/);
     if (match) {
       return `https://player.vimeo.com/video/${match[1]}?h=12345&autoplay=0&title=0&byline=0&portrait=0`;
     }
-    
-    // 🔥 رابط Vimeo مع shared: https://vimeo.com/1193597303/ed32e4e65c
     const numbers = url.match(/\d+/g);
     if (numbers && numbers.length > 0) {
-      // جلب أول رقم كبير (أكثر من 5 أرقام)
       const bigNumbers = numbers.filter(n => n.length >= 6);
       if (bigNumbers.length > 0) {
         return `https://player.vimeo.com/video/${bigNumbers[0]}?h=12345&autoplay=0&title=0&byline=0&portrait=0`;
@@ -121,12 +119,9 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     ? (lang === 'ar' ? parts[currentPart].title_ar : parts[currentPart].title)
     : title;
 
-  // ✅ تحويل الرابط
   const embedUrl = getVideoUrl(currentVideoUrl || '');
   const isEmbedVideo = isVideoLink(currentVideoUrl || '');
 
-
-  // ✅ إعادة تعيين حالة التحميل عند تغيير الرابط
   useEffect(() => {
     setIsLoading(true);
     setVideoError(false);
@@ -148,7 +143,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     );
   }
 
-  // ✅ إذا كان فيديو (YouTube أو Vimeo)
+  // ✅ إذا كان فيديو (YouTube أو Vimeo) - منع فتح الرابط نهائياً
   if (isEmbedVideo && embedUrl) {
     return (
       <VideoProtection>
@@ -177,7 +172,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
             }}
           />
           
-          {/* ✅ Error State */}
+          {/* ✅ Error State - منع فتح الرابط نهائياً */}
           {videoError && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/90 z-20">
               <div className="text-center text-white p-6 max-w-md">
@@ -189,34 +184,22 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
                 </p>
                 <p className="text-sm text-gray-400 mb-4">
                   {lang === "ar" 
-                    ? "يمكنك مشاهدة الفيديو على المنصة الأصلية"
-                    : "You can watch the video on the original platform"}
+                    ? "الرجاء التأكد من اتصالك بالإنترنت أو حاول مرة أخرى"
+                    : "Please check your internet connection or try again"}
                 </p>
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <a 
-                    href={currentVideoUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-white text-sm font-semibold hover:scale-105 transition-all shadow-lg shadow-primary/25"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    {lang === "ar" ? "فتح الفيديو" : "Open Video"}
-                  </a>
-                  <button
-                    onClick={() => {
-                      setVideoError(false);
-                      setIsLoading(true);
-                      // إعادة تحميل الـ iframe
-                      const iframe = document.querySelector('iframe');
-                      if (iframe) {
-                        iframe.src = embedUrl;
-                      }
-                    }}
-                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 text-white text-sm font-semibold hover:bg-white/20 transition-all"
-                  >
-                    {lang === "ar" ? "إعادة المحاولة" : "Retry"}
-                  </button>
-                </div>
+                <button
+                  onClick={() => {
+                    setVideoError(false);
+                    setIsLoading(true);
+                    const iframe = document.querySelector('iframe');
+                    if (iframe) {
+                      iframe.src = embedUrl;
+                    }
+                  }}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 text-white text-sm font-semibold hover:bg-white/20 transition-all"
+                >
+                  {lang === "ar" ? "إعادة المحاولة" : "Retry"}
+                </button>
               </div>
             </div>
           )}
@@ -240,21 +223,25 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     );
   }
 
-  // ✅ Fallback
+  // ✅ Fallback - منع فتح الرابط نهائياً
   return (
     <div className="aspect-video bg-gray-100 dark:bg-gray-800 rounded-2xl flex flex-col items-center justify-center p-8">
-      <p className="text-foreground/60 mb-4">
-        {lang === "ar" ? "لا يمكن عرض المحتوى" : "Cannot display content"}
+      <AlertCircle className="w-12 h-12 text-red-400 mb-4" />
+      <p className="text-foreground/60 mb-4 text-center">
+        {lang === "ar" ? "لا يمكن عرض هذا المحتوى" : "Cannot display this content"}
       </p>
-      <a 
-        href={currentVideoUrl} 
-        target="_blank" 
-        rel="noopener noreferrer"
-        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm"
+      <button
+        onClick={() => {
+          toast.error(
+            lang === "ar" 
+              ? "⚠️ لا يمكن فتح الروابط الخارجية لحماية المحتوى"
+              : "⚠️ Cannot open external links to protect content"
+          );
+        }}
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/20 text-red-400 text-sm hover:bg-red-500/30 transition-all cursor-not-allowed"
       >
-        <ExternalLink className="w-4 h-4" />
-        {lang === "ar" ? "فتح الرابط" : "Open Link"}
-      </a>
+        {lang === "ar" ? "🚫 رابط محمي" : "🚫 Protected Link"}
+      </button>
     </div>
   );
 });

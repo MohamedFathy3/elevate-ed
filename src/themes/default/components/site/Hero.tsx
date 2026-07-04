@@ -133,10 +133,10 @@ export const Hero = () => {
               <Arrow className="w-5 h-5 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
             </Link>
             <Link
-              to={`/courses`}
+              to={`/center-hours`}
               className="group inline-flex items-center gap-3 px-6 md:px-8 py-4 md:py-5 rounded-2xl bg-primary/10 dark:bg-primary/20 hover:bg-primary/20 dark:hover:bg-primary/30 text-primary font-bold text-base md:text-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
-              <span>{lang === "ar" ? "تصفح الكورسات" : "Browse Courses"}</span>
+              <span>{lang === "ar" ? " مواعيد السناتر" : "center "}</span>
             </Link>
           </motion.div>
         </div>

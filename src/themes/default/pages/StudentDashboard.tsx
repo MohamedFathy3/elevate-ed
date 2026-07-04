@@ -1188,6 +1188,7 @@ const AssignmentsTab = ({ assignmentsList, slug, lang, isNature, isDark, cardBg 
 // ==================== Shared Components المُعدلة ====================
 
 // Exam Result Card - المُعدل ✅
+// Exam Result Card - المُعدل ✅
 const ExamResultCard = ({ examItem, lang, slug, isNature, isDark, cardBg }: any) => {
   const [expanded, setExpanded] = useState(false);
   const exam = examItem.exam;
@@ -1205,6 +1206,9 @@ const ExamResultCard = ({ examItem, lang, slug, isNature, isDark, cardBg }: any)
   const getTextColor = () => isDark ? 'text-white' : 'text-gray-900';
   const getMutedColor = () => isDark ? 'text-gray-300' : 'text-gray-500';
   
+  // ✅ جلب course_detail_id من الامتحان (الدرس المرتبط)
+  const lessonId = exam?.course_detail_id;
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -1219,7 +1223,9 @@ const ExamResultCard = ({ examItem, lang, slug, isNature, isDark, cardBg }: any)
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${passed ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
               <FileQuestion className={`w-4 h-4 ${passed ? 'text-green-600' : 'text-red-600'}`} />
             </div>
-            <h3 className={`font-bold ${isNature ? 'text-amber-700 dark:text-amber-400' : getTextColor()}`}>{exam?.title}</h3>
+            <h3 className={`font-bold ${isNature ? 'text-amber-700 dark:text-amber-400' : getTextColor()}`}>
+              {exam?.title || (lang === "ar" ? "امتحان" : "Exam")}
+            </h3>
             <span className={`text-xs px-2 py-0.5 rounded-full ${passed ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
               {passed ? (lang === "ar" ? "ناجح" : "Passed") : (lang === "ar" ? "راسب" : "Failed")}
             </span>
@@ -1245,14 +1251,21 @@ const ExamResultCard = ({ examItem, lang, slug, isNature, isDark, cardBg }: any)
           </div>
         </div>
         
-        {/* <Link
-          to={`/exam/${exam?.id}`}
-          className={`px-4 py-2 rounded-lg bg-gradient-to-r ${gradientClass} text-white text-sm font-semibold flex items-center gap-1 whitespace-nowrap`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Eye className="w-4 h-4" />
-          {lang === "ar" ? "عرض النتيجة" : "View Result"}
-        </Link> */}
+        {/* ✅ زر يودي إلى صفحة الدرس المرتبط */}
+        {lessonId ? (
+          <Link
+            to={`/${slug}/lesson/${lessonId}`}
+            className={`px-4 py-2 rounded-lg bg-gradient-to-r ${gradientClass} text-white text-sm font-semibold flex items-center gap-1 whitespace-nowrap`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Eye className="w-4 h-4" />
+            {lang === "ar" ? "عرض الدرس" : "View Lesson"}
+          </Link>
+        ) : (
+          <span className={`px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm font-semibold`}>
+            {lang === "ar" ? "لا يوجد درس" : "No Lesson"}
+          </span>
+        )}
       </div>
       
       {expanded && (
@@ -1275,7 +1288,6 @@ const ExamResultCard = ({ examItem, lang, slug, isNature, isDark, cardBg }: any)
   );
 };
 
-// Assignment Result Card - المُعدل ✅
 const AssignmentResultCard = ({ assignmentItem, lang, slug, isNature, isDark, cardBg }: any) => {
   const [expanded, setExpanded] = useState(false);
   const assignment = assignmentItem.exam;

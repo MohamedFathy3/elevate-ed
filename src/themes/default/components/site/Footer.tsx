@@ -23,6 +23,9 @@ const TikTokIcon = ({ size = 22, className = "" }) => (
   </svg>
 );
 
+// ✅ رابط الفيسبوك
+const FACEBOOK_URL = "https://www.facebook.com/share/18pAJajUQF/?mibextid=wwXIfr";
+
 export const Footer = () => {
   const { lang } = useLang();
   const { theme, colorMode } = useTheme();
@@ -237,12 +240,21 @@ export const Footer = () => {
         {/* ✅ الصور السفلية - TeacherPlanet & Banana Agency */}
         <div className="flex flex-col items-center justify-center gap-4 py-4">
           <div className="flex items-center justify-center gap-4 flex-wrap">
-            <motion.img
+            {/* ✅ TeacherPlanet Logo - رابط فيسبوك */}
+            <motion.a
+              href={FACEBOOK_URL}
+              target="_blank"
+              rel="noreferrer"
               whileHover={{ scale: 1.05, rotate: 5 }}
-              src={logoImage}
-              alt="TeacherPlanet"
-              className="h-10 w-auto object-contain opacity-80 hover:opacity-100 transition-all duration-300"
-            />
+              className="cursor-pointer"
+              title="TeacherPlanet on Facebook"
+            >
+              <img
+                src={logoImage}
+                alt="TeacherPlanet"
+                className="h-10 w-auto object-contain opacity-80 hover:opacity-100 transition-all duration-300"
+              />
+            </motion.a>
             
             <span className={`text-xl font-bold ${getMutedColor()}`}>✧</span>
             
@@ -261,7 +273,16 @@ export const Footer = () => {
             className={`text-center text-sm ${getMutedColor()}`}
           >
             <span>{lang === "ar" ? "تم التطوير بواسطة" : "Developed by"}{" "}</span>
-            <span className={`font-bold ${isNature ? 'text-amber-600' : 'text-blue-600'}`}>TeacherPlanet</span>
+            {/* ✅ TeacherPlanet نص - رابط فيسبوك */}
+            <motion.a
+              href={FACEBOOK_URL}
+              target="_blank"
+              rel="noreferrer"
+              whileHover={{ scale: 1.05 }}
+              className={`font-bold ${isNature ? 'text-amber-600 hover:text-amber-700' : 'text-blue-600 hover:text-blue-700'} transition-colors cursor-pointer inline-block`}
+            >
+              TeacherPlanet
+            </motion.a>
             <span> {lang === "ar" ? "و" : "&"} </span>
             <span className={`font-bold ${isNature ? 'text-amber-600' : 'text-blue-600'}`}>Banana Agency</span>
           </motion.div>

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // hooks/useAdvancedProtection.ts
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { toast } from './use-toast';
 
 interface UseAdvancedProtectionProps {
   enabled?: boolean;
@@ -8,7 +9,10 @@ interface UseAdvancedProtectionProps {
   blurIntensity?: string;
   showBlueScreen?: boolean;
   videoRef?: React.RefObject<HTMLVideoElement | null>;
-  sensitivity?: 'low' | 'medium' | 'high'; // ✅ إضافة حساسية
+  sensitivity?: 'low' | 'medium' | 'high';
+  preventDevTools?: boolean;
+  preventExternalLinks?: boolean;
+  enabledOnMount?: boolean;
 }
 
 declare global {
@@ -23,10 +27,14 @@ export const useAdvancedProtection = ({
   blurIntensity = 'blur(40px)',
   showBlueScreen = true,
   videoRef,
-  sensitivity = 'medium', // ✅ افتراضي متوسط
+  sensitivity = 'medium',
+  preventDevTools = false,
+  preventExternalLinks = false,
+  enabledOnMount = false,
 }: UseAdvancedProtectionProps = {}) => {
   const [isRecording, setIsRecording] = useState(false);
   const [showBlocker, setShowBlocker] = useState(false);
+  const [isActive, setIsActive] = useState(enabledOnMount);
   const detectionCount = useRef(0);
   const intervalRef = useRef<NodeJS.Timeout>();
   const rafRef = useRef<number>();
@@ -35,7 +43,6 @@ export const useAdvancedProtection = ({
   const lastHeight = useRef(window.innerHeight);
   const screenshotPreventionRef = useRef<any>(null);
 
-  // ✅ قيم الحساسية
   const sensitivityValues = {
     low: { frameThreshold: 200, frameCount: 5, resizeThreshold: 150, resizeCount: 3, hiddenCount: 3 },
     medium: { frameThreshold: 150, frameCount: 3, resizeThreshold: 100, resizeCount: 2, hiddenCount: 2 },
@@ -44,11 +51,25 @@ export const useAdvancedProtection = ({
 
   const settings = sensitivityValues[sensitivity];
 
-  // ✅ دالة التنبيه عند الاكتشاف
+  // ✅ دالة تفعيل الحماية
+  const activate = useCallback(() => {
+    setIsActive(true);
+    console.log('🛡️ الحماية مفعلة');
+  }, []);
+
+  // ✅ دالة إلغاء الحماية
+  const deactivate = useCallback(() => {
+    setIsActive(false);
+    setIsRecording(false);
+    setShowBlocker(false);
+    detectionCount.current = 0;
+    console.log('🛡️ الحماية غير مفعلة');
+  }, []);
+
   const triggerDetection = useCallback(() => {
-    if (isRecording || showBlocker) return;
+    if (isRecording || showBlocker || !isActive) return;
     
-    console.warn('🚨 Screen recording detected!');
+    console.warn('🚨 محاولة اختراق detected!');
     setIsRecording(true);
     setShowBlocker(true);
     
@@ -57,149 +78,65 @@ export const useAdvancedProtection = ({
     }
     
     onDetect?.();
-  }, [isRecording, showBlocker, onDetect, videoRef]);
+  }, [isRecording, showBlocker, isActive, onDetect, videoRef]);
 
-  // ✅ 1. تفعيل مكتبة screenshot-prevention (بتقليل الحساسية)
-  const setupScreenshotPrevention = useCallback(() => {
-    if (!enabled || screenshotPreventionRef.current) return;
+  // ✅ 1. منع DevTools (يعمل بس لما الحماية مفعلة)
+  const setupDevToolsBlocker = useCallback(() => {
+    if (!enabled || !preventDevTools || !isActive) return;
 
-    try {
-      if (typeof window !== 'undefined' && window.ScreenshotPrevention) {
-        // ✅ نعطل المكتبة لأنها بتسبب false positives كتير
-        // screenshotPreventionRef.current = new window.ScreenshotPrevention({...});
-      }
-    } catch (error) {
-      console.warn('Screenshot Prevention failed:', error);
-    }
-  }, [enabled]);
-
-  // ✅ 2. كشف هبوط الفريمات (بحساسية أقل)
-  const setupFrameRateDetection = useCallback(() => {
-    if (!enabled) return;
-
-    const checkFrameRate = () => {
-      const now = performance.now();
-      const delta = now - lastFrameTime.current;
-      
-      if (delta > settings.frameThreshold) {
-        detectionCount.current++;
-        if (detectionCount.current >= settings.frameCount) {
-          triggerDetection();
-        }
-      } else {
-        detectionCount.current = Math.max(0, detectionCount.current - 1);
-      }
-      
-      lastFrameTime.current = now;
-      rafRef.current = requestAnimationFrame(checkFrameRate);
-    };
-
-    lastFrameTime.current = performance.now();
-    rafRef.current = requestAnimationFrame(checkFrameRate);
-
-    return () => {
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-      }
-    };
-  }, [enabled, triggerDetection, settings]);
-
-  // ✅ 3. كشف تغير حجم الشاشة (بحساسية أقل)
-  const setupResizeDetection = useCallback(() => {
-    if (!enabled) return;
-
-    let resizeCount = 0;
-    let lastResizeTime = 0;
-
-    const checkResize = () => {
-      const widthDiff = Math.abs(window.innerWidth - lastWidth.current);
-      const heightDiff = Math.abs(window.innerHeight - lastHeight.current);
-      const now = Date.now();
-      
-      if (widthDiff > settings.resizeThreshold || heightDiff > settings.resizeThreshold) {
-        if (now - lastResizeTime < 500) {
-          resizeCount++;
-          if (resizeCount >= settings.resizeCount) {
-            triggerDetection();
-          }
-        } else {
-          resizeCount = 1;
-        }
-        lastResizeTime = now;
-      } else {
-        resizeCount = Math.max(0, resizeCount - 1);
-      }
-      
-      lastWidth.current = window.innerWidth;
-      lastHeight.current = window.innerHeight;
-    };
-
-    intervalRef.current = setInterval(checkResize, 1000);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [enabled, triggerDetection, settings]);
-
-  // ✅ 4. كشف مغادرة الصفحة (بحساسية أقل)
-  const setupVisibilityDetection = useCallback(() => {
-    if (!enabled) return;
-
-    let hiddenCount = 0;
-    let lastHiddenTime = 0;
-
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        const now = Date.now();
-        if (now - lastHiddenTime < 1000) {
-          hiddenCount++;
-          if (hiddenCount >= settings.hiddenCount) {
-            triggerDetection();
-          }
-        } else {
-          hiddenCount = 1;
-        }
-        lastHiddenTime = now;
-      } else {
-        hiddenCount = 0;
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [enabled, triggerDetection, settings]);
-
-  // ✅ 5. منع الكيبورد
-  const setupKeyboardBlocker = useCallback(() => {
-    if (!enabled) return;
+    console.log('🛡️ DevTools Blocker Active');
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'PrintScreen') {
-        e.preventDefault();
-        triggerDetection();
-        return false;
-      }
+      // ✅ F12
       if (e.key === 'F12') {
         e.preventDefault();
+        e.stopPropagation();
+        console.warn('🚫 F12 blocked');
         triggerDetection();
         return false;
       }
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'I') {
+      
+      // ✅ Ctrl+Shift+I (Inspector)
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i')) {
         e.preventDefault();
+        e.stopPropagation();
+        console.warn('🚫 Ctrl+Shift+I blocked');
         triggerDetection();
         return false;
       }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+      
+      // ✅ Ctrl+Shift+J (Console)
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'J' || e.key === 'j')) {
         e.preventDefault();
+        e.stopPropagation();
+        console.warn('🚫 Ctrl+Shift+J blocked');
         triggerDetection();
         return false;
       }
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      
+      // ✅ Ctrl+U (View Source)
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'U' || e.key === 'u')) {
         e.preventDefault();
+        e.stopPropagation();
+        console.warn('🚫 Ctrl+U blocked');
         triggerDetection();
         return false;
       }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+      
+      // ✅ Ctrl+S (Save)
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'S' || e.key === 's')) {
         e.preventDefault();
+        e.stopPropagation();
+        console.warn('🚫 Ctrl+S blocked');
+        triggerDetection();
+        return false;
+      }
+      
+      // ✅ Ctrl+P (Print)
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'P' || e.key === 'p')) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.warn('🚫 Ctrl+P blocked');
         triggerDetection();
         return false;
       }
@@ -207,56 +144,135 @@ export const useAdvancedProtection = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [enabled, triggerDetection]);
+  }, [enabled, preventDevTools, isActive, triggerDetection]);
 
-  // ✅ 6. منع Context Menu
+  // ✅ 2. منع Context Menu
   const setupContextMenuBlocker = useCallback(() => {
-    if (!enabled) return;
+    if (!enabled || !isActive) return;
 
     const handleContextMenu = (e: MouseEvent) => {
       e.preventDefault();
+      e.stopPropagation();
+      console.warn('🚫 Context Menu blocked');
+      triggerDetection();
       return false;
     };
 
     document.addEventListener('contextmenu', handleContextMenu);
     return () => document.removeEventListener('contextmenu', handleContextMenu);
-  }, [enabled]);
+  }, [enabled, isActive, triggerDetection]);
 
-  // ✅ 7. تعطيل Screen Capture Detection (عشان بتطلب الإذن)
-  const setupScreenCaptureDetection = useCallback(() => {
-    // ❌ معطل تماماً عشان ما يطلبش الإذن
-    return () => {};
-  }, []);
+  // ✅ 3. كشف DevTools عن طريق تغيير الحجم
+  const setupDevToolsDetection = useCallback(() => {
+    if (!enabled || !preventDevTools || !isActive) return;
+
+    console.log('🛡️ DevTools Detection Active');
+
+    let devToolsOpen = false;
+    const threshold = 160;
+    let checkCount = 0;
+
+    const checkDevTools = () => {
+      const widthDiff = Math.abs(window.outerWidth - window.innerWidth);
+      const heightDiff = Math.abs(window.outerHeight - window.innerHeight);
+      
+      // ✅ إذا كان الفرق كبير => DevTools مفتوحة
+      if (widthDiff > threshold || heightDiff > threshold) {
+        checkCount++;
+        if (checkCount >= 2 && !devToolsOpen) {
+          devToolsOpen = true;
+          console.warn('🚨 DevTools detected via size!');
+          triggerDetection();
+        }
+      } else {
+        checkCount = 0;
+        devToolsOpen = false;
+      }
+    };
+
+    // ✅ كل ثانية نتحقق
+    const interval = setInterval(checkDevTools, 1000);
+    return () => clearInterval(interval);
+  }, [enabled, preventDevTools, isActive, triggerDetection]);
+
+  // ✅ 4. منع الروابط الخارجية
+  const setupExternalLinkBlocker = useCallback(() => {
+    if (!enabled || !preventExternalLinks || !isActive) return;
+
+    const handleLinkClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const link = target.closest('a');
+      
+      if (!link) return;
+      
+      const href = link.getAttribute('href');
+      if (!href) return;
+      
+      const isVideoLink = 
+        href.includes('youtube.com') ||
+        href.includes('youtu.be') ||
+        href.includes('vimeo.com') ||
+        href.includes('player.vimeo.com');
+      
+      if (isVideoLink) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.warn('🚫 Video link blocked:', href);
+        triggerDetection();
+        return false;
+      }
+    };
+
+    document.addEventListener('click', handleLinkClick, true);
+    return () => document.removeEventListener('click', handleLinkClick, true);
+  }, [enabled, preventExternalLinks, isActive, triggerDetection]);
+
+  // ✅ 5. منع Copy/Paste
+  const setupCopyPasteBlocker = useCallback(() => {
+    if (!enabled || !isActive) return;
+
+    const handleCopy = (e: ClipboardEvent) => {
+      e.preventDefault();
+      triggerDetection();
+      return false;
+    };
+
+    const handlePaste = (e: ClipboardEvent) => {
+      e.preventDefault();
+      triggerDetection();
+      return false;
+    };
+
+    document.addEventListener('copy', handleCopy);
+    document.addEventListener('paste', handlePaste);
+    
+    return () => {
+      document.removeEventListener('copy', handleCopy);
+      document.removeEventListener('paste', handlePaste);
+    };
+  }, [enabled, isActive, triggerDetection]);
 
   // ✅ تفعيل جميع طرق الكشف
   useEffect(() => {
     if (!enabled) return;
 
-    setupScreenshotPrevention();
-    
-    const cleanupFrameRate = setupFrameRateDetection();
-    const cleanupResize = setupResizeDetection();
-    const cleanupVisibility = setupVisibilityDetection();
-    const cleanupKeyboard = setupKeyboardBlocker();
+    const cleanupDevTools = setupDevToolsBlocker();
     const cleanupContextMenu = setupContextMenuBlocker();
-    const cleanupScreenCapture = setupScreenCaptureDetection();
+    const cleanupDevToolsDetection = setupDevToolsDetection();
+    const cleanupExternalLinks = setupExternalLinkBlocker();
+    const cleanupCopyPaste = setupCopyPasteBlocker();
     
     return () => {
-      if (screenshotPreventionRef.current?.destroy) {
-        screenshotPreventionRef.current.destroy();
-      }
-      
-      cleanupFrameRate?.();
-      cleanupResize?.();
-      cleanupVisibility?.();
-      cleanupKeyboard?.();
+      cleanupDevTools?.();
       cleanupContextMenu?.();
-      cleanupScreenCapture?.();
+      cleanupDevToolsDetection?.();
+      cleanupExternalLinks?.();
+      cleanupCopyPaste?.();
       
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [enabled, setupScreenshotPrevention, setupFrameRateDetection, setupResizeDetection, setupVisibilityDetection, setupKeyboardBlocker, setupContextMenuBlocker, setupScreenCaptureDetection]);
+  }, [enabled, isActive, setupDevToolsBlocker, setupContextMenuBlocker, setupDevToolsDetection, setupExternalLinkBlocker, setupCopyPasteBlocker]);
 
   // ✅ إعادة تعيين الحماية
   const resetProtection = useCallback(() => {
@@ -275,10 +291,10 @@ export const useAdvancedProtection = ({
           </svg>
         </div>
         <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
-          ⚠️ تم اكتشاف محاولة تسجيل أو تصوير
+          ⚠️ تم اكتشاف محاولة اختراق
         </h2>
         <p className="text-white/80 text-base mb-6">
-          لحماية المحتوى التعليمي، تم إيقاف عرض الفيديو. يرجى إغلاق أي برنامج تسجيل شاشة أو أدوات تطوير.
+          تم منع محاولة فتح أدوات المطور أو تسجيل الشاشة. لحماية المحتوى التعليمي، تم إيقاف العرض.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
@@ -301,25 +317,12 @@ export const useAdvancedProtection = ({
     </div>
   ) : null;
 
-  // ✅ مكون المحتوى المحمي
-  const ProtectedContent = ({ children }: { children: React.ReactNode }) => (
-    <div
-      className="transition-all duration-300"
-      style={{
-        filter: isRecording ? blurIntensity : 'none',
-        pointerEvents: isRecording ? 'none' : 'auto',
-        userSelect: isRecording ? 'none' : 'auto',
-      }}
-    >
-      {children}
-    </div>
-  );
-
   return {
     isRecording,
     BlueScreen,
     resetProtection,
-    ProtectedContent,
+    activate,
+    deactivate,
   };
 };
 
