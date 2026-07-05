@@ -1254,7 +1254,7 @@ const ExamResultCard = ({ examItem, lang, slug, isNature, isDark, cardBg }: any)
         {/* ✅ زر يودي إلى صفحة الدرس المرتبط */}
         {lessonId ? (
           <Link
-            to={`/${slug}/lesson/${lessonId}`}
+            to={`/lesson/${lessonId}`}
             className={`px-4 py-2 rounded-lg bg-gradient-to-r ${gradientClass} text-white text-sm font-semibold flex items-center gap-1 whitespace-nowrap`}
             onClick={(e) => e.stopPropagation()}
           >
