@@ -13,7 +13,6 @@ const logOnlyDev = (mode: string, ...args: any[]) => {
   }
 };
 
-
 // Get environment variables with defaults
 const getEnvVar = (key: string, defaultValue: string) => {
   return process.env[key] || defaultValue;
@@ -32,7 +31,7 @@ export default defineConfig(({ mode }) => {
   const devServerHost = getEnvVar('VITE_DEV_SERVER_HOST', '::');
   const devServerPort = parseInt(getEnvVar('VITE_DEV_SERVER_PORT', '7000'));
   const previewServerHost = getEnvVar('VITE_PREVIEW_SERVER_HOST', '::');
-  const previewServerPort = parseInt(getEnvVar('VITE_PREVIEW_SERVER_PORT', '7000'));
+  const previewServerPort = parseInt(getEnvVar('VITE_PREVIEW_SERVER_PORT', '9000'));
   
   const apiTarget = getEnvVar('VITE_API_TARGET', 'https://web-lec.com/');
   const apiRewritePath = getEnvVar('VITE_API_REWRITE_PATH', '/api');
@@ -46,7 +45,6 @@ export default defineConfig(({ mode }) => {
 
   return {
     server: {
-      
       host: devServerHost,
       port: devServerPort,
       proxy: {
@@ -94,13 +92,16 @@ export default defineConfig(({ mode }) => {
       port: previewServerPort,
       allowedHosts: allowedHosts,
     },
-    plugins: [react(), isDevelopment && componentTagger()].filter(Boolean),
+    plugins: [
+      react(), 
+      isDevelopment && componentTagger(),
+ 
+    ].filter(Boolean),
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
       },
     },
-    // ✅ إضافة تكوين CSS
     css: {
       modules: {
         localsConvention: 'camelCase'
@@ -111,22 +112,47 @@ export default defineConfig(({ mode }) => {
         }
       }
     },
-    // Define env variables that will be available in client code
     define: {
       'import.meta.env.VITE_APP_VERSION': JSON.stringify(process.env.npm_package_version),
       'import.meta.env.VITE_BUILD_TIME': JSON.stringify(new Date().toISOString()),
     },
-    // ✅ إضافة build options لضمان تحويل CSS بشكل صحيح
     build: {
       cssCodeSplit: true,
       sourcemap: false,
+      minify: 'terser',
+      terserOptions: {
+        compress: {
+          drop_console: true,
+          drop_debugger: true,
+          pure_funcs: ['console.log', 'console.info', 'console.debug'],
+        },
+      },
       rollupOptions: {
         output: {
           manualChunks: {
-            'vendor': ['react', 'react-dom', 'react-router-dom'],
-          }
-        }
-      }
-    }
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            'vendor-ui': ['lucide-react'],
+            'vendor-swiper': ['swiper'],
+            'vendor-query': ['@tanstack/react-query'],
+            'vendor-parser': ['html-react-parser'],
+            'vendor-framer': ['framer-motion'],
+          },
+          entryFileNames: 'assets/[name]-[hash].js',
+          chunkFileNames: 'assets/[name]-[hash].js',
+          assetFileNames: (assetInfo) => {
+            if (assetInfo.name?.match(/\.(png|jpg|jpeg|webp|svg|avif)$/)) {
+              return 'assets/[name]-[hash].[ext]';
+            }
+            return 'assets/[name]-[hash].[ext]';
+          },
+        },
+      },
+      chunkSizeWarningLimit: 1000,
+      target: 'es2015',
+      modulePreload: {
+        polyfill: true,
+      },
+      assetsInlineLimit: 4096,
+    },
   };
 });

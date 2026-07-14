@@ -5,8 +5,8 @@ import { useLang } from "@/i18n/LanguageContext";
 import { useTeacher } from "@/context/TeacherContext";
 import { Zap, ArrowRight, ArrowLeft, Lightbulb, Atom, Sparkles, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import parse from 'html-react-parser'; // ⬅️ استيراد المكتبة
 
-// ✅ تعريف الـ Type للـ Home data
 interface HomeData {
   title?: string;
   title_ar?: string;
@@ -25,26 +25,23 @@ export const Hero = () => {
   const { teacher, slug, pick, isLoading } = useTeacher();
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
 
-  // ✅ Safe access with proper typing
   const home = teacher?.website?.home as HomeData || {};
   
-  // ✅ Fallback values لو البيانات مش موجودة
   const heroTitle = pick(home.title, home.title_ar) || teacher?.name || (lang === "ar" ? "مرحباً بك" : "Welcome");
   const heroSubTitle = pick(home.sub_title, home.sub_title_ar) || (lang === "ar" ? "تعلم مع أفضل المعلمين" : "Learn with the best teachers");
-  const heroDescription = pick(home.description, home.description_ar) || (lang === "ar" 
+  const heroDescriptionHTML = pick(home.description, home.description_ar) || (lang === "ar" 
     ? "انضم إلينا اليوم وابدأ رحلتك التعليمية" 
     : "Join us today and start your learning journey");
   const heroImage = home.imageUrl || home.image?.fullUrl || teacher?.website?.home?.image?.fullUrl || "/default-hero.jpg";
   const teacherName = teacher?.name || (lang === "ar" ? "المعلم" : "Teacher");
 
-  // ✅ لو لسه بيجيب البيانات
   if (isLoading) {
     return <HeroSkeleton />;
   }
 
   return (
-    <section className="relative min-h-screen flex items-center pt-32 pb-20 overflow-hidden ">
-      {/* Background pattern - خفيف في الـ dark mode */}
+    <section className="relative min-h-screen flex items-center pt-32 pb-20 overflow-hidden">
+      {/* Background pattern */}
       <div
         className="absolute inset-0 opacity-[0.4] pointer-events-none"
         style={{
@@ -55,7 +52,7 @@ export const Hero = () => {
         }}
       />
 
-      {/* Animated decorative elements - أخف في الـ dark mode */}
+      {/* Animated decorative elements */}
       <motion.div
         animate={{ y: [0, -20, 0], rotate: [0, 8, 0] }}
         transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
@@ -112,9 +109,11 @@ export const Hero = () => {
               <div className="shrink-0 w-5 h-9 rounded-full grid place-items-center">
                 <CheckCircle2 className="w-5 h-5 text-primary dark:text-primary" />
               </div>
-              <p className="min-w-0 break-words text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-                {heroDescription}
-              </p>
+              
+              {/* ✅ استخدام html-react-parser لعرض HTML بتنسيقاته */}
+              <div className="html-content min-w-0 break-words text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                {parse(heroDescriptionHTML)}
+              </div>
             </div>
           </motion.div>
 
@@ -181,6 +180,10 @@ export const Hero = () => {
                 src={heroImage}
                 alt={teacherName}
                 className="w-full h-full object-cover"
+                 width={1155}
+        height={650}
+         loading="eager"
+        
               />
             ) : (
               <div className="w-full h-full gradient-primary grid place-items-center">

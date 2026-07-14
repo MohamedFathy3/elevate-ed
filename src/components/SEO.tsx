@@ -11,6 +11,7 @@ interface SEOProps {
   keywords?: string;
   twitterCard?: string;
   favicon?: string;
+  googleSiteVerification?: string; // ✅ إضافة الخاصية الجديدة
 }
 
 export const SEO = ({ 
@@ -23,6 +24,7 @@ export const SEO = ({
   keywords = 'تعليم أونلاين, كورسات, دروس, مدرسين, منصة تعليمية, learning, online courses, education',
   twitterCard = 'summary_large_image',
   favicon = '',
+  googleSiteVerification = '', // ✅ إضافة القيمة الافتراضية
 }: SEOProps) => {
   const currentUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
   
@@ -33,6 +35,11 @@ export const SEO = ({
       <meta name="description" content={description} />
       {keywords && <meta name="keywords" content={keywords} />}
       <link rel="canonical" href={currentUrl} />
+      
+      {/* ✅ Google Site Verification - مهم جداً لجوجل */}
+      {googleSiteVerification && (
+        <meta name="google-site-verification" content={googleSiteVerification} />
+      )}
       
       {/* ✅ Open Graph (Facebook, WhatsApp, LinkedIn) */}
       <meta property="og:title" content={title} />

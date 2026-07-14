@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // src/context/ThemeProvider.tsx
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useRef, useCallback } from 'react';
 import api from '@/lib/api';
 
 export type ThemeName = 'default' | 'nature';
@@ -159,70 +159,13 @@ const loadThemeCSS = (theme: ThemeName) => {
   
   document.body.setAttribute('data-theme', theme);
   localStorage.setItem('app-theme', theme);
+  
+  console.log(`✅ Loaded theme CSS: ${theme}`);
 };
 
 const themeImports = {
   default: () => import('@/themes/default/pages/index.tsx'),
   nature: () => import('@/themes/nature/pages/index.tsx'),
-};
-
-const fetchThemeSettings = async (teacherId: number): Promise<{ theme: ThemeName; bgColor: string; textColor: string }> => {
-  console.log("🔵 FETCHING THEME FROM API FOR TEACHER ID:", teacherId);
-  
-  try {
-    const response = await api.post('/teachers/theme', { teacher_id: teacherId });
-    console.log("✅ API RESPONSE:", response.data);
-    
-    if (response.data?.status === true) {
-      const activeTheme = response.data.active_theme;
-      let theme: ThemeName = 'default';
-      if (activeTheme === "theme2") {
-        theme = 'nature';
-      }
-      
-      return {
-        theme,
-        bgColor: response.data.active_backgroud_color || '#FFFFFF',
-        textColor: response.data.active_font_color || '#111827',
-      };
-    }
-    
-    return { theme: 'default', bgColor: '#FFFFFF', textColor: '#111827' };
-  } catch (error) {
-    console.error("❌ Error fetching theme settings:", error);
-    return { theme: 'default', bgColor: '#FFFFFF', textColor: '#111827' };
-  }
-};
-
-// ✅ Helper function to get teacherId from localStorage
-const getTeacherIdFromStorage = (): number | null => {
-  try {
-    // Try localStorage first
-    const saved = localStorage.getItem('teacher-data');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed?.id) {
-        console.log("✅ Found teacherId in localStorage:", parsed.id);
-        return parsed.id;
-      }
-    }
-    
-    // Try sessionStorage
-    const sessionSaved = sessionStorage.getItem('teacher-data');
-    if (sessionSaved) {
-      const parsed = JSON.parse(sessionSaved);
-      if (parsed?.id) {
-        console.log("✅ Found teacherId in sessionStorage:", parsed.id);
-        return parsed.id;
-      }
-    }
-    
-    console.log("⚠️ No teacherId found in storage");
-    return null;
-  } catch (e) {
-    console.error("Error getting teacherId from storage:", e);
-    return null;
-  }
 };
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -231,8 +174,12 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [pages, setPages] = useState<ThemePages | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [apiColors, setApiColors] = useState<{ background: string; text: string } | null>(null);
+  
+  const isInitialized = useRef(false);
+  const themeLoadedRef = useRef(false);
 
-  const loadTheme = async (newTheme: ThemeName, bgColor?: string, textColor?: string) => {
+  // ✅ دالة تحميل الثيم
+  const loadTheme = useCallback(async (newTheme: ThemeName, bgColor?: string, textColor?: string) => {
     console.log("📦 Loading theme:", newTheme);
     setIsLoading(true);
     
@@ -254,7 +201,6 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     
     try {
       let themePages;
-      
       if (newTheme === 'default') {
         const module = await themeImports.default();
         themePages = module;
@@ -280,39 +226,33 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       }
       
       setPages(themePages);
-      console.log(`✅ Loaded theme: ${newTheme}`);
+      console.log(`✅ Loaded theme pages: ${newTheme}`);
     } catch (error) {
       console.error(`❌ Error loading theme ${newTheme}:`, error);
       setPages(defaultPages);
     }
     
     setIsLoading(false);
-  };
+  }, []);
 
-  const setTheme = (newTheme: ThemeName) => {
+  const setTheme = useCallback((newTheme: ThemeName) => {
+    console.log("🔄 Setting theme to:", newTheme);
     setThemeState(newTheme);
-    const teacherId = getTeacherIdFromStorage();
-    if (teacherId) {
-      fetchThemeSettings(teacherId).then(({ theme, bgColor, textColor }) => {
-        loadTheme(theme, bgColor, textColor);
-      });
-    } else {
-      const savedBg = localStorage.getItem('api-bg-color');
-      const savedText = localStorage.getItem('api-text-color');
-      loadTheme(newTheme, savedBg || '#FFFFFF', savedText || '#111827');
-    }
-  };
+    const savedBg = localStorage.getItem('api-bg-color');
+    const savedText = localStorage.getItem('api-text-color');
+    loadTheme(newTheme, savedBg || '#FFFFFF', savedText || '#111827');
+  }, [loadTheme]);
 
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     const newTheme = theme === 'default' ? 'nature' : 'default';
     setTheme(newTheme);
-  };
+  }, [theme, setTheme]);
 
-  const toggleColorMode = () => {
+  const toggleColorMode = useCallback(() => {
     setColorMode(prev => prev === 'dark' ? 'light' : 'dark');
-  };
+  }, []);
 
-  // Load color mode
+  // ✅ Load color mode
   useEffect(() => {
     const savedColorMode = localStorage.getItem('color-mode') as ColorMode;
     if (savedColorMode === 'dark' || savedColorMode === 'light') {
@@ -320,7 +260,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   }, []);
 
-  // Apply color mode
+  // ✅ Apply color mode
   useEffect(() => {
     const root = document.documentElement;
     if (colorMode === 'dark') {
@@ -331,82 +271,93 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     localStorage.setItem('color-mode', colorMode);
   }, [colorMode]);
 
-  // ✅ MAIN INITIALIZATION - Runs once when component mounts
+  // ✅ ✅ ✅ MAIN INITIALIZATION
   useEffect(() => {
-    console.log("🚀 ThemeProvider initializing...");
+    if (isInitialized.current) {
+      return;
+    }
     
-    const initializeTheme = async () => {
-      console.log("🔍 Looking for teacherId...");
+    console.log("🚀 ThemeProvider: Starting initialization...");
+    isInitialized.current = true;
+    
+    const initialize = async () => {
+      setIsLoading(true);
       
-      // ✅ Get teacherId from storage
-      const teacherId = getTeacherIdFromStorage();
+      // ✅ استنى حدث theme-loaded من TeacherContext
+      const handleThemeLoaded = (e: Event) => {
+        const customEvent = e as CustomEvent;
+        console.log("🔄 Theme loaded event received:", customEvent.detail);
+        const { theme, bgColor, textColor } = customEvent.detail;
+        
+        if (theme && (theme === 'default' || theme === 'nature')) {
+          console.log("✅ Loading theme from TeacherContext API response!");
+          
+          // ✅ حفظ في localStorage
+          localStorage.setItem('app-theme', theme);
+          localStorage.setItem('api-bg-color', bgColor);
+          localStorage.setItem('api-text-color', textColor);
+          
+          setThemeState(theme);
+          themeLoadedRef.current = true;
+          loadTheme(theme, bgColor, textColor);
+        }
+      };
       
-      if (teacherId) {
-        console.log("🎯 Teacher found! Fetching theme from API with ID:", teacherId);
-        
-        try {
-          // ✅ Call API to get theme settings
-          const result = await fetchThemeSettings(teacherId);
-          console.log("📦 Theme settings from API:", result);
-          
-          // ✅ Apply the theme
-          setThemeState(result.theme);
-          await loadTheme(result.theme, result.bgColor, result.textColor);
-          
-          console.log("✅ Theme loaded successfully!");
-        } catch (error) {
-          console.error("❌ Error fetching theme from API:", error);
-          // Fallback to saved theme
-          const savedTheme = localStorage.getItem('app-theme') as ThemeName;
-          if (savedTheme && (savedTheme === 'default' || savedTheme === 'nature')) {
-            setThemeState(savedTheme);
-            await loadTheme(savedTheme);
-          } else {
-            await loadTheme('default');
-          }
-        }
-      } else {
-        console.log("ℹ️ No teacherId found, using saved/default theme");
-        
-        // Use saved theme or default
-        const savedTheme = localStorage.getItem('app-theme') as ThemeName;
-        if (savedTheme && (savedTheme === 'default' || savedTheme === 'nature')) {
-          setThemeState(savedTheme);
-          await loadTheme(savedTheme);
-        } else {
-          await loadTheme('default');
-        }
+      window.addEventListener('theme-loaded', handleThemeLoaded);
+      
+      // ✅ أولاً: التحقق من localStorage (سريع)
+      const savedTheme = localStorage.getItem('app-theme') as ThemeName;
+      const savedBg = localStorage.getItem('api-bg-color');
+      const savedText = localStorage.getItem('api-text-color');
+      
+      if (savedTheme && (savedTheme === 'default' || savedTheme === 'nature')) {
+        console.log("📦 Found saved theme in localStorage:", savedTheme);
+        setThemeState(savedTheme);
+        themeLoadedRef.current = true;
+        await loadTheme(savedTheme, savedBg || '#FFFFFF', savedText || '#111827');
+        console.log("✅ Theme loaded from localStorage!");
+        setIsLoading(false);
+        return;
       }
       
-      setIsLoading(false);
-      console.log("✅ ThemeProvider initialization complete!");
-    };
-    
-    initializeTheme();
-    
-    // ✅ Listen for changes in localStorage (for multi-tab support)
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'teacher-data' && e.newValue) {
-        console.log("🔄 Storage changed, re-initializing theme...");
-        try {
-          const parsed = JSON.parse(e.newValue);
-          if (parsed?.id) {
-            const reloadTheme = async () => {
-              const result = await fetchThemeSettings(parsed.id);
-              setThemeState(result.theme);
-              await loadTheme(result.theme, result.bgColor, result.textColor);
-            };
-            reloadTheme();
-          }
-        } catch (e) {
-          console.error("Error parsing storage change:", e);
+      // ✅ مفيش ثيم في localStorage → استنى TeacherContext
+      console.log("⏳ No theme in localStorage, waiting for TeacherContext to fetch from API...");
+      
+      let attempts = 0;
+      const maxAttempts = 2;
+      let themeFound = false;
+      
+      while (!themeFound && attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const checkTheme = localStorage.getItem('app-theme');
+        if (checkTheme && (checkTheme === 'default' || checkTheme === 'nature')) {
+          themeFound = true;
+          console.log("✅ Theme found in localStorage after wait:", checkTheme);
+          const bg = localStorage.getItem('api-bg-color') || '#FFFFFF';
+          const text = localStorage.getItem('api-text-color') || '#111827';
+          setThemeState(checkTheme as ThemeName);
+          themeLoadedRef.current = true;
+          await loadTheme(checkTheme as ThemeName, bg, text);
+          setIsLoading(false);
         }
+        attempts++;
       }
+      
+      // ✅ لو مفيش ثيم بعد الانتظار → استخدم default (حالة نادرة)
+      if (!themeFound && !themeLoadedRef.current) {
+        console.log("⚠️ No theme found after timeout, using default");
+        await loadTheme('default', '#FFFFFF', '#111827');
+        setIsLoading(false);
+      }
+      
+      // ✅ إزالة المستمع بعد 30 ثانية
+      setTimeout(() => {
+        window.removeEventListener('theme-loaded', handleThemeLoaded);
+      }, 3000);
     };
     
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []); // ✅ Empty dependency array - runs only once on mount
+    initialize();
+  }, [loadTheme]);
 
   return (
     <ThemeContext.Provider value={{ 

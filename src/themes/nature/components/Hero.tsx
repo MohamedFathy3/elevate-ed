@@ -1,23 +1,32 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // src/themes/nature/pages/TeacherHome.tsx - Hero Component
 
-import { useState, useEffect, useMemo, useRef } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
 import {
   UserPlus, MapPin, BookOpen, Sparkles, Calendar,
-  Star, ChevronRight, Users, Award, GraduationCap, Play
+  Star, ChevronRight, Users
 } from "lucide-react";
-import heroTeacher from "@/assets/hero-teacher.png";
 import { useTeacher } from "@/context/TeacherContext";
 import { useLang } from "@/i18n/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
 import { motion } from "framer-motion";
+import parse from 'html-react-parser';
+
+// ✅ Component لعرض HTML بأمان
+const RenderHTML = ({ html, className = '' }: { html: string; className?: string }) => {
+  if (!html) return null;
+  return (
+    <div className={className}>
+      {parse(html)}
+    </div>
+  );
+};
 
 const Hero = () => {
   const { teacher, home, pick } = useTeacher();
   const { lang } = useLang();
-  const { slug } = useParams();
-  const { apiColors, colorMode, theme } = useTheme();
+  const { apiColors, colorMode } = useTheme();
 
   // ✅ Force re-render عند تغيير colorMode
   const [key, setKey] = useState(0);
@@ -28,10 +37,14 @@ const Hero = () => {
   }, [colorMode]);
 
   const teacherName = teacher?.name || pick(teacher?.name, teacher?.name_ar) || "المعلم";
-  const title = pick(home?.title, home?.title_ar) || "";
-  const subTitle = pick(home?.sub_title, home?.sub_title_ar) || "";
-  const description = pick(home?.description, home?.description_ar) || "";
-  const imageUrl = home?.image?.fullUrl || home?.imageUrl || heroTeacher;
+  
+  // ✅ الحصول على البيانات مع HTML
+  const titleHTML = pick(home?.title, home?.title_ar) || "";
+  const subTitleHTML = pick(home?.sub_title, home?.sub_title_ar) || "";
+  const descriptionHTML = pick(home?.description, home?.description_ar) || "";
+  
+  // ✅ من غير أي صورة افتراضية - خالص
+  const imageUrl = home?.image?.fullUrl || home?.imageUrl;
 
   // كلمات متحركة
   const rotatingWords = lang === "ar"
@@ -47,41 +60,64 @@ const Hero = () => {
     return () => clearInterval(interval);
   }, [rotatingWords.length]);
 
-  // ✅ حساب الألوان بناءً على colorMode مع تحديث فوري
-const colors = useMemo(() => {
-  console.log("🎨 Calculating colors for mode:", colorMode);
-  const isDark = colorMode === 'dark';
-  
-  // ✅ لو في API Colors - استخدمها دايماً
-  if (apiColors) {
-    const bgColor = isDark 
-      ? adjustColorForDarkMode(apiColors.background) 
-      : apiColors.background;
+  // ✅ حساب الألوان
+  const colors = useMemo(() => {
+    const isDark = colorMode === 'dark';
     
-    // ✅ في Dark Mode، خلي النص أبيض أو فاتح
-    const textColor = isDark 
-      ? '#f1f5f9'  // ✅ أبيض فاتح
-      : apiColors.text;
-    
-    const textSecondary = isDark 
-      ? '#94a3b8'  // ✅ رمادي فاتح
-      : `${apiColors.text}cc`;
-    
-    const textMuted = isDark 
-      ? '#64748b'  // ✅ رمادي متوسط
-      : `${apiColors.text}80`;
+    if (apiColors) {
+      const bgColor = isDark 
+        ? adjustColorForDarkMode(apiColors.background) 
+        : apiColors.background;
+      
+      const textColor = isDark 
+        ? '#f1f5f9'
+        : apiColors.text;
+      
+      const textSecondary = isDark 
+        ? '#94a3b8'
+        : `${apiColors.text}cc`;
+      
+      const textMuted = isDark 
+        ? '#64748b'
+        : `${apiColors.text}80`;
 
+      return {
+        background: bgColor,
+        textPrimary: textColor,
+        textSecondary: textSecondary,
+        textMuted: textMuted,
+        cardBg: isDark ? '#1e293b' : '#ffffff',
+        cardBorder: isDark ? 'rgba(51, 65, 85, 0.5)' : 'rgba(229, 231, 235, 0.8)',
+        badgeBg: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.1)',
+        badgeBorder: isDark ? 'rgba(16, 185, 129, 0.3)' : 'rgba(16, 185, 129, 0.2)',
+        sectionBg: isDark 
+          ? `bg-[${adjustColorForDarkMode(apiColors.background)}]` 
+          : 'bg-gradient-to-br from-emerald-50/50 via-white to-teal-50/50',
+        floatCardBg: isDark ? 'bg-slate-800' : 'bg-white',
+        floatCardBorder: isDark ? 'border-emerald-800' : 'border-emerald-100',
+        badgeText: isDark ? 'text-emerald-400' : 'text-emerald-600',
+        badgeBgClass: isDark ? 'bg-emerald-500/10 border-emerald-800' : 'bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border-emerald-200',
+        secondaryBtnBg: isDark ? 'bg-slate-800 border-emerald-800 hover:border-emerald-600 text-slate-200' : 'bg-white border-emerald-200 hover:border-emerald-400 text-slate-800',
+        rotatingText: isDark ? 'text-emerald-400' : 'text-emerald-600',
+        sectionBgColor: bgColor,
+        sectionBgGradient: isDark 
+          ? `radial-gradient(circle at 20% 30%, ${bgColor} 0%, #0f172a 100%)`
+          : `radial-gradient(circle at 20% 30%, ${bgColor} 0%, #f8fafc 100%)`,
+      };
+    }
+
+    // ✅ الألوان الافتراضية (بدون API)
     return {
-      background: bgColor,
-      textPrimary: textColor,
-      textSecondary: textSecondary,
-      textMuted: textMuted,
+      background: isDark ? '#0f172a' : '#f8fafc',
+      textPrimary: isDark ? '#f1f5f9' : '#0f172a',
+      textSecondary: isDark ? '#94a3b8' : '#64748b',
+      textMuted: isDark ? '#64748b' : '#94a3b8',
       cardBg: isDark ? '#1e293b' : '#ffffff',
       cardBorder: isDark ? 'rgba(51, 65, 85, 0.5)' : 'rgba(229, 231, 235, 0.8)',
       badgeBg: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.1)',
       badgeBorder: isDark ? 'rgba(16, 185, 129, 0.3)' : 'rgba(16, 185, 129, 0.2)',
       sectionBg: isDark 
-        ? `bg-[${adjustColorForDarkMode(apiColors.background)}]` 
+        ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' 
         : 'bg-gradient-to-br from-emerald-50/50 via-white to-teal-50/50',
       floatCardBg: isDark ? 'bg-slate-800' : 'bg-white',
       floatCardBorder: isDark ? 'border-emerald-800' : 'border-emerald-100',
@@ -89,38 +125,12 @@ const colors = useMemo(() => {
       badgeBgClass: isDark ? 'bg-emerald-500/10 border-emerald-800' : 'bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border-emerald-200',
       secondaryBtnBg: isDark ? 'bg-slate-800 border-emerald-800 hover:border-emerald-600 text-slate-200' : 'bg-white border-emerald-200 hover:border-emerald-400 text-slate-800',
       rotatingText: isDark ? 'text-emerald-400' : 'text-emerald-600',
-      sectionBgColor: bgColor,
+      sectionBgColor: isDark ? '#0f172a' : '#f8fafc',
       sectionBgGradient: isDark 
-        ? `radial-gradient(circle at 20% 30%, ${bgColor} 0%, #0f172a 100%)`
-        : `radial-gradient(circle at 20% 30%, ${bgColor} 0%, #f8fafc 100%)`,
+        ? 'radial-gradient(circle at 20% 30%, #0f172a 0%, #0a0f1a 100%)'
+        : 'radial-gradient(circle at 20% 30%, #f8fafc 0%, #eef2f6 100%)',
     };
-  }
-
-  // ✅ الألوان الافتراضية (بدون API)
-  return {
-    background: isDark ? '#0f172a' : '#f8fafc',
-    textPrimary: isDark ? '#f1f5f9' : '#0f172a',  // ✅ أبيض في Dark Mode
-    textSecondary: isDark ? '#94a3b8' : '#64748b', // ✅ رمادي فاتح
-    textMuted: isDark ? '#64748b' : '#94a3b8',     // ✅ رمادي متوسط
-    cardBg: isDark ? '#1e293b' : '#ffffff',
-    cardBorder: isDark ? 'rgba(51, 65, 85, 0.5)' : 'rgba(229, 231, 235, 0.8)',
-    badgeBg: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.1)',
-    badgeBorder: isDark ? 'rgba(16, 185, 129, 0.3)' : 'rgba(16, 185, 129, 0.2)',
-    sectionBg: isDark 
-      ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' 
-      : 'bg-gradient-to-br from-emerald-50/50 via-white to-teal-50/50',
-    floatCardBg: isDark ? 'bg-slate-800' : 'bg-white',
-    floatCardBorder: isDark ? 'border-emerald-800' : 'border-emerald-100',
-    badgeText: isDark ? 'text-emerald-400' : 'text-emerald-600',
-    badgeBgClass: isDark ? 'bg-emerald-500/10 border-emerald-800' : 'bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border-emerald-200',
-    secondaryBtnBg: isDark ? 'bg-slate-800 border-emerald-800 hover:border-emerald-600 text-slate-200' : 'bg-white border-emerald-200 hover:border-emerald-400 text-slate-800',
-    rotatingText: isDark ? 'text-emerald-400' : 'text-emerald-600',
-    sectionBgColor: isDark ? '#0f172a' : '#f8fafc',
-    sectionBgGradient: isDark 
-      ? 'radial-gradient(circle at 20% 30%, #0f172a 0%, #0a0f1a 100%)'
-      : 'radial-gradient(circle at 20% 30%, #f8fafc 0%, #eef2f6 100%)',
-  };
-}, [colorMode, apiColors, key]);
+  }, [colorMode, apiColors, key]);
 
   return (
     <section
@@ -322,20 +332,18 @@ const colors = useMemo(() => {
             </span>
           </motion.div>
 
-          {/* Title */}
-          <h1 className="font-black leading-[1.05] tracking-tight">
-            {title && (
-              <motion.span
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="block text-5xl md:text-6xl transition-all duration-500"
-                style={{ color: colors.textPrimary }}
-              >
-                {title}
-              </motion.span>
-            )}
-          </h1>
+          {/* ✅ Title with HTML */}
+          {titleHTML && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="hero-title-content font-black text-5xl md:text-6xl leading-[1.05] tracking-tight"
+              style={{ color: colors.textPrimary }}
+            >
+              <RenderHTML html={titleHTML} />
+            </motion.div>
+          )}
 
           {/* Animated Rotating Text */}
           <motion.div
@@ -354,30 +362,30 @@ const colors = useMemo(() => {
             </div>
           </motion.div>
 
-          {/* Subtitle */}
-          {subTitle && (
-            <motion.p
+          {/* ✅ Subtitle with HTML */}
+          {subTitleHTML && (
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className="mt-6 text-lg md:text-xl max-w-xl mx-auto lg:mx-0 leading-relaxed transition-all duration-500"
+              className="hero-subtitle-content mt-6 text-lg md:text-xl max-w-xl mx-auto lg:mx-0 leading-relaxed"
               style={{ color: colors.textSecondary }}
             >
-              {subTitle}
-            </motion.p>
+              <RenderHTML html={subTitleHTML} />
+            </motion.div>
           )}
 
-          {/* Description */}
-          {description && (
-            <motion.p
+          {/* ✅ Description with HTML */}
+          {descriptionHTML && (
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
-              className="mt-6 text-lg md:text-xl max-w-xl mx-auto lg:mx-0 leading-relaxed transition-all duration-500"
+              className="hero-description-content mt-6 text-lg md:text-xl max-w-xl mx-auto lg:mx-0 leading-relaxed"
               style={{ color: colors.textMuted }}
             >
-              {description}
-            </motion.p>
+              <RenderHTML html={descriptionHTML} />
+            </motion.div>
           )}
 
           {/* Buttons */}
@@ -417,16 +425,26 @@ const colors = useMemo(() => {
           </motion.div>
         </div>
 
-        {/* Right Image */}
+        {/* ✅ Right Image - من غير أي صورة افتراضية خالص */}
         <div className="relative order-1 lg:order-2 flex justify-center">
           <div className="absolute inset-0 bg-sun blur-2xl animate-pulse-glow" aria-hidden />
-          <img
-            src={imageUrl}
-            alt={teacherName}
-            width={1024}
-            height={1024}
-            className="relative w-[88%] max-w-[520px] drop-shadow-2xl animate-float"
-          />
+          
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={teacherName}
+              width={1024}
+              height={1024}
+              loading="eager"
+              fetchpriority="high"
+              decoding="async"
+              className="relative w-[88%] max-w-[520px] drop-shadow-2xl animate-float rounded-full object-cover"
+              style={{ aspectRatio: '1/1' }}
+            />
+          ) : (
+            // ✅ لو مفيش صورة - ميظهرش حاجة خالص
+            <div className="w-[88%] max-w-[520px] aspect-square" />
+          )}
 
           {/* Floating Card 1 */}
           <motion.div
@@ -524,9 +542,8 @@ const colors = useMemo(() => {
   );
 };
 
-// ==================== دوال مساعدة لمعالجة الألوان ====================
+// ==================== دوال مساعدة ====================
 
-// ✅ تعديل اللون ليتناسب مع Dark Mode
 function adjustColorForDarkMode(hexColor: string): string {
   if (!hexColor || !hexColor.startsWith('#')) return '#0f172a';
 
@@ -537,12 +554,10 @@ function adjustColorForDarkMode(hexColor: string): string {
 
     const brightness = (r * 299 + g * 587 + b * 114) / 1000;
 
-    // ✅ لو اللون فاتح، استخدم dark mode
     if (brightness > 200) {
       return '#0f172a';
     }
 
-    // ✅ لو اللون غامق، استخدم نسخة داكنة منه
     r = Math.floor(r * 0.2);
     g = Math.floor(g * 0.2);
     b = Math.floor(b * 0.2);
@@ -551,21 +566,6 @@ function adjustColorForDarkMode(hexColor: string): string {
   } catch {
     return '#0f172a';
   }
-}
-
-// ✅ تفتيح اللون
-function lightenColor(hex: string, percent: number): string {
-  if (!hex || !hex.startsWith('#')) return hex;
-
-  let r = parseInt(hex.slice(1, 3), 16);
-  let g = parseInt(hex.slice(3, 5), 16);
-  let b = parseInt(hex.slice(5, 7), 16);
-
-  r = Math.min(255, Math.floor(r + (255 - r) * (1 - percent)));
-  g = Math.min(255, Math.floor(g + (255 - g) * (1 - percent)));
-  b = Math.min(255, Math.floor(b + (255 - b) * (1 - percent)));
-
-  return `rgb(${r}, ${g}, ${b})`;
 }
 
 export default Hero;

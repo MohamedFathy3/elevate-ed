@@ -1,16 +1,31 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// src/components/BackgroundSelector.tsx
-
+// BackgroundSelector.tsx - النسخة المحسنة
+import { lazy, Suspense } from "react";
 import { useTheme } from "@/context/ThemeContext";
-import { PlanetsBackground } from "@/components/PlanetsBackground";
-import { EducationBackground } from "@/components/EducationBackground";
+import { BackgroundFallback } from "./BackgroundFallback";
+
+// استخدم lazy عشان متتحملش غير لما تحتاجها
+const EducationBackground = lazy(() => 
+  import("@/components/EducationBackground").then(module => ({
+    default: module.EducationBackground
+  }))
+);
+
+const PlanetsBackground = lazy(() => 
+  import("@/components/PlanetsBackground").then(module => ({
+    default: module.PlanetsBackground
+  }))
+);
 
 export const BackgroundSelector = () => {
   const { theme } = useTheme();
   
-  if (theme === 'nature') {
-    return <EducationBackground />;
-  }
-  
-  return <PlanetsBackground />;
+  return (
+    <Suspense fallback={<BackgroundFallback />}>
+      {theme === 'nature' ? (
+        <EducationBackground />
+      ) : (
+        <PlanetsBackground />
+      )}
+    </Suspense>
+  );
 };

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // context/TeacherContext.tsx
 
-import { createContext, useContext, ReactNode, useState, useEffect } from "react";
+import { createContext, useContext, ReactNode, useState, useEffect, useRef } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useLang } from "@/i18n/LanguageContext";
@@ -86,7 +86,7 @@ const fetchTeacherByHost = async (host: string): Promise<TeacherWebsiteData> => 
 };
 
 // ✅ دالة جلب الثيم من الـ API
-const fetchThemeSettings = async (teacherId: number): Promise<{ theme: 'default' | 'nature'; bgColor: string; textColor: string }> => {
+const fetchThemeFromAPI = async (teacherId: number): Promise<{ theme: 'default' | 'nature'; bgColor: string; textColor: string }> => {
   console.log("🔵 FETCHING THEME FROM API FOR TEACHER ID:", teacherId);
   
   try {
@@ -100,10 +100,18 @@ const fetchThemeSettings = async (teacherId: number): Promise<{ theme: 'default'
         theme = 'nature';
       }
       
+      // ✅ معالجة null
+      const bgColor = response.data.active_backgroud_color && response.data.active_backgroud_color !== 'null' 
+        ? response.data.active_backgroud_color 
+        : '#FFFFFF';
+      const textColor = response.data.active_font_color && response.data.active_font_color !== 'null'
+        ? response.data.active_font_color 
+        : '#111827';
+      
       return {
         theme,
-        bgColor: response.data.active_backgroud_color || '#FFFFFF',
-        textColor: response.data.active_font_color || '#111827',
+        bgColor,
+        textColor,
       };
     }
     
@@ -114,6 +122,10 @@ const fetchThemeSettings = async (teacherId: number): Promise<{ theme: 'default'
   }
 };
 
+// ✅ متغير خارجي لمنع التكرار (خارج المكون)
+let _isTeacherSaved = false;
+let _savedTeacherId: number | null = null;
+
 export const TeacherProvider = ({ children }: { children: ReactNode }) => {
   const { slug } = useParams<{ slug: string }>();
   const { pathname } = useLocation();
@@ -121,7 +133,9 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
   
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [host, setHost] = useState<string>('');
-  const [themeLoaded, setThemeLoaded] = useState(false);
+  
+  // ✅ useRef داخل المكون
+  const teacherSavedRef = useRef(false);
 
   // ✅ جيب الـ host من المتصفح
   useEffect(() => {
@@ -168,45 +182,64 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
     featured_courses: teacher?.website?.featured_courses || [],
   };
 
-  // ✅ 🔥 MAIN LOGIC: After teacher is loaded, fetch theme
   useEffect(() => {
-    const loadTeacherTheme = async () => {
-      if (teacher?.id && !themeLoaded) {
-        console.log("🎯 Teacher loaded! Fetching theme for teacher ID:", teacher.id);
+    const loadTeacherAndTheme = async () => {
+      // ✅ إذا لم يوجد معلم
+      if (!teacher?.id) {
+        return;
+      }
+      
+      // ✅ منع التكرار
+      if (_isTeacherSaved && _savedTeacherId === teacher.id) {
+        console.log("⏳ Teacher already saved globally, skipping...");
+        return;
+      }
+      
+      if (teacherSavedRef.current) {
+        console.log("⏳ Teacher already saved locally, skipping...");
+        return;
+      }
+      
+      console.log("🎯 Teacher loaded! ID:", teacher.id);
+      
+      // ✅ منع التكرار
+      teacherSavedRef.current = true;
+      _isTeacherSaved = true;
+      _savedTeacherId = teacher.id;
+      
+      try {
+        // ✅ 1. حفظ teacherId في localStorage
+        localStorage.setItem('teacher-data', JSON.stringify({ id: teacher.id }));
+        console.log("✅ Teacher data saved!");
         
-        try {
-          // ✅ Save teacherId to localStorage for ThemeProvider
-          localStorage.setItem('teacher-data', JSON.stringify({ id: teacher.id }));
-          
-          // ✅ Fetch theme from API
-          const themeSettings = await fetchThemeSettings(teacher.id);
-          console.log("📦 Theme settings from API:", themeSettings);
-          
-          // ✅ Save theme settings to localStorage for ThemeProvider
-          localStorage.setItem('app-theme', themeSettings.theme);
-          localStorage.setItem('api-bg-color', themeSettings.bgColor);
-          localStorage.setItem('api-text-color', themeSettings.textColor);
-          
-          // ✅ Dispatch custom event to notify ThemeProvider
-          window.dispatchEvent(new CustomEvent('theme-updated', {
-            detail: {
-              theme: themeSettings.theme,
-              bgColor: themeSettings.bgColor,
-              textColor: themeSettings.textColor
-            }
-          }));
-          
-          setThemeLoaded(true);
-          console.log("✅ Theme loaded and saved for teacher!");
-        } catch (error) {
-          console.error("❌ Error loading theme for teacher:", error);
-          setThemeLoaded(true);
-        }
+        // ✅ 2. جلب الثيم من API مباشرة
+        console.log("📡 Fetching theme from API for teacher:", teacher.id);
+        const themeData = await fetchThemeFromAPI(teacher.id);
+        console.log("📦 Theme data from API:", themeData);
+        
+        // ✅ 3. حفظ الثيم في localStorage
+        localStorage.setItem('app-theme', themeData.theme);
+        localStorage.setItem('api-bg-color', themeData.bgColor);
+        localStorage.setItem('api-text-color', themeData.textColor);
+        console.log("✅ Theme saved to localStorage!");
+        
+        // ✅ 4. إرسال حدث لتحديث ThemeProvider
+        window.dispatchEvent(new CustomEvent('theme-loaded', {
+          detail: {
+            theme: themeData.theme,
+            bgColor: themeData.bgColor,
+            textColor: themeData.textColor
+          }
+        }));
+        
+        console.log("✅ Theme loaded and saved for teacher!");
+      } catch (error) {
+        console.error("❌ Error loading teacher theme:", error);
       }
     };
     
-    loadTeacherTheme();
-  }, [teacher?.id, themeLoaded]);
+    loadTeacherAndTheme();
+  }, [teacher?.id]); // ✅ يعتمد فقط على teacher.id
 
   // ✅ تحسين عملية التحميل
   useEffect(() => {

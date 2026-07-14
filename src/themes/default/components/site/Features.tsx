@@ -4,10 +4,24 @@ import { motion } from "framer-motion";
 import { useLang } from "@/i18n/LanguageContext";
 import { useSafeTeacherData } from "@/hooks/useSafeTeacherData";
 import { Rocket, Star } from "lucide-react";
+import parse from 'html-react-parser'; // ✅ استيراد html-react-parser
+
+// ✅ تعريف Types
+interface FutureItem {
+  id?: number;
+  title?: string;
+  title_ar?: string;
+  description?: string;
+  description_ar?: string;
+  imageUrl?: string;
+  image?: {
+    fullUrl?: string;
+  };
+}
 
 export const Future = () => {
   const { lang } = useLang();
-  const { future, pick, isLoading } = useSafeTeacherData();  // ✅ استخدم useSafeTeacherData
+  const { future, pick, isLoading } = useSafeTeacherData();
 
   console.log("🚀 Future component - future:", future);
   console.log("🚀 Future component - isLoading:", isLoading);
@@ -52,8 +66,14 @@ export const Future = () => {
           <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-primary/40 to-transparent hidden md:block" />
 
           <div className="space-y-10 md:space-y-16">
-            {future.map((f: any, i: number) => {
+            {future.map((f: FutureItem, i: number) => {
               const left = i % 2 === 0;
+              
+              // ✅ الحصول على البيانات مع HTML
+              const futureTitle = pick(f.title, f.title_ar) || "Coming Soon";
+              const futureDescription = pick(f.description, f.description_ar) || "New features and courses are on the way";
+              const futureImage = f.imageUrl || f.image?.fullUrl || null;
+              
               return (
                 <motion.div
                   key={f.id || i}
@@ -65,31 +85,52 @@ export const Future = () => {
                     left ? "" : "md:[direction:rtl]"
                   }`}
                 >
+                  {/* LEFT - Text Content */}
                   <div className={left ? "md:text-right rtl:md:text-left" : "md:text-left rtl:md:text-right [direction:ltr] rtl:[direction:rtl]"}>
                     <div className="inline-flex items-center gap-2 mb-3 text-accent font-semibold text-sm">
                       <Star className="w-4 h-4" fill="currentColor" />
                       {lang === "ar" ? `مرحلة ${i + 1}` : `Phase ${i + 1}`}
                     </div>
-                    <h3 className="font-display font-black text-2xl md:text-3xl mb-3">
-                      {pick(f.title, f.title_ar) || "Coming Soon"}
-                    </h3>
-                    <p className="text-foreground/65 leading-relaxed">
-                      {pick(f.description, f.description_ar) || "New features and courses are on the way"}
-                    </p>
+                    
+                    {/* ✅ Title with HTML */}
+                    <div className="future-title-content font-display font-black text-2xl md:text-3xl mb-3">
+                      {parse(futureTitle)}
+                    </div>
+                    
+                    {/* ✅ Description with HTML */}
+                    <div className="future-description-content text-foreground/65 leading-relaxed">
+                      {parse(futureDescription)}
+                    </div>
                   </div>
 
+                  {/* RIGHT - Image/Media */}
                   <div className="relative mt-6 md:mt-0 [direction:ltr]">
                     <motion.div
                       whileHover={{ scale: 1.04, rotate: left ? -1 : 1 }}
-                      className="relative aspect-video rounded-3xl bg-card border border-border shadow-card overflow-hidden p-8 grid place-items-center"
+                      className="relative aspect-video rounded-3xl bg-card border border-border shadow-card overflow-hidden"
                     >
+                      {/* Background gradient */}
                       <div className="absolute inset-0 gradient-primary opacity-10" />
-                      <Rocket className="w-20 h-20 text-primary relative z-10" strokeWidth={1.2} />
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                        className="absolute -right-8 -top-8 w-32 h-32 rounded-full border-2 border-primary/20"
-                      />
+                      
+                      {/* Content */}
+                      <div className="relative w-full h-full p-8 grid place-items-center">
+                        {futureImage ? (
+                          <img
+                            src={futureImage}
+                            alt={pick(f.title, f.title_ar) || "Future feature"}
+                            className="w-full h-full object-cover rounded-2xl"
+                          />
+                        ) : (
+                          <>
+                            <Rocket className="w-20 h-20 text-primary relative z-10" strokeWidth={1.2} />
+                            <motion.div
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                              className="absolute -right-8 -top-8 w-32 h-32 rounded-full border-2 border-primary/20"
+                            />
+                          </>
+                        )}
+                      </div>
                     </motion.div>
                   </div>
                 </motion.div>
@@ -125,3 +166,5 @@ const FutureSkeleton = () => {
     </section>
   );
 };
+
+export default Future;

@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { useLang } from "@/i18n/LanguageContext";
 import { useSafeTeacher } from "@/context/TeacherContext";
 import { useTheme } from "@/context/ThemeContext";
+import parse from 'html-react-parser'; // ✅ استيراد html-react-parser
 import logoImage from "@/assets/logo.png";
 import bananaImage from "@/assets/designed by @banana.png";
 
@@ -26,6 +27,16 @@ const TikTokIcon = ({ size = 22, className = "" }) => (
 // ✅ رابط الفيسبوك
 const FACEBOOK_URL = "https://www.facebook.com/share/18pAJajUQF/?mibextid=wwXIfr";
 
+// ✅ Component لعرض HTML بأمان
+const RenderHTML = ({ html, className = '' }: { html: string; className?: string }) => {
+  if (!html) return null;
+  return (
+    <div className={className}>
+      {parse(html)}
+    </div>
+  );
+};
+
 export const Footer = () => {
   const { lang } = useLang();
   const { theme, colorMode } = useTheme();
@@ -37,8 +48,19 @@ export const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   // ✅ صورة المعلم (Logo) - تحسين جلب الصورة
-  const teacherLogo = teacher?.image?.fullUrl || teacher?.imageUrl || teacher?.website?.home?.image?.fullUrl || teacher?.website?.home?.imageUrl || null;
+  const teacherLogo = teacher?.image?.fullUrl || 
+                      teacher?.imageUrl || 
+                      teacher?.website?.home?.image?.fullUrl || 
+                      teacher?.website?.home?.imageUrl || 
+                      null;
+  
   const teacherName = pick(teacher?.name, teacher?.name_ar) || (lang === "ar" ? "المعلم" : "Teacher");
+  
+  // ✅ الوصف مع HTML
+  const descriptionHTML = pick(footer.description, footer.description_ar) ||
+    (lang === "ar" 
+      ? "تم صنع هذه المنصة بهدف تهيئة الطالب لـ كامل جوانب اللغة العربية" 
+      : "This platform is designed to prepare students in all aspects of the Arabic language");
 
   // ✅ الألوان
   const getBgColor = () => {
@@ -76,7 +98,6 @@ export const Footer = () => {
     return isDark ? 'bg-slate-700' : 'bg-slate-200';
   };
 
-  // ✅ ألوان الـ primary
   const getPrimaryColor = () => {
     if (isNature) {
       return isDark ? 'bg-amber-600' : 'bg-amber-600';
@@ -90,12 +111,6 @@ export const Footer = () => {
     }
     return 'hover:bg-blue-700';
   };
-
-  // ✅ البيانات من API
-  const description = pick(footer.description, footer.description_ar) ||
-    (lang === "ar" 
-      ? "تم صنع هذه المنصة بهدف تهيئة الطالب لـ كامل جوانب اللغة العربية" 
-      : "This platform is designed to prepare students in all aspects of the Arabic language");
 
   // ✅ السوشيال ميديا
   const socials = [
@@ -148,6 +163,14 @@ export const Footer = () => {
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
+                    // Show fallback letter
+                    const parent = e.target.parentElement;
+                    if (parent) {
+                      const fallback = document.createElement('span');
+                      fallback.className = 'text-4xl font-bold text-white';
+                      fallback.textContent = teacherName.charAt(0).toUpperCase();
+                      parent.appendChild(fallback);
+                    }
                   }}
                 />
               </div>
@@ -165,15 +188,15 @@ export const Footer = () => {
             </div>
           )}
           
-          {/* ✅ اسم المعلم تحت الصورة */}
-          <motion.h2
+          {/* ✅ اسم المعلم تحت الصورة - مع HTML */}
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="mt-4 text-2xl md:text-3xl font-bold text-center"
+            className="mt-4 text-2xl md:text-3xl font-bold text-center footer-teacher-name"
           >
-            {teacherName}
-          </motion.h2>
+            <RenderHTML html={teacherName} />
+          </motion.div>
           
           <motion.p
             initial={{ opacity: 0 }}
@@ -226,11 +249,11 @@ export const Footer = () => {
             </div>
           </div>
 
-          {/* شمال - وصف المنصة */}
+          {/* شمال - وصف المنصة مع HTML */}
           <div className="text-center md:text-left order-1 md:order-2">
-            <p className="text-lg leading-relaxed font-medium">
-              {description}
-            </p>
+            <div className="footer-description-content text-lg leading-relaxed font-medium">
+              <RenderHTML html={descriptionHTML} />
+            </div>
           </div>
         </div>
 

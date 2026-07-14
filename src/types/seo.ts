@@ -9,6 +9,7 @@ export interface SeoSettings {
     favicon: string | null;
     favicon_svg: string | null;
     favicon_32: string | null;
+    google_site_verification: string | null;
     favicon_16: string | null;
     favicon_apple: string | null;
     favicon_android: string | null;
