@@ -12,6 +12,6 @@ export { default as ExamPage } from '@/themes/default/pages/ExamPage';
 export { default as LessonPage } from '@/themes/default/pages/LessonPage';
 export { default as SemesterDetails } from '@/themes/default/pages/semester-details';
 export { default as Login } from './Login';
-export { default as Register } from './Register/Register';
+export { default as Register } from './register/Register';
 export { default as NotFound } from './NotFound';
 export { default as CenterHours } from '@/themes/default/pages/CenterHours';
