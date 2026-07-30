@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // src/themes/nature/pages/TeacherHome.tsx - Hero Component
 
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, lazy, Suspense, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
   UserPlus, BookOpen, Sparkles, Calendar,
@@ -10,6 +10,7 @@ import {
 import { useTeacher } from "@/context/TeacherContext";
 import { useLang } from "@/i18n/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
+import { motion } from "framer-motion";
 
 // ✅ Lazy Loading للـ HTML Parser
 const RenderHTML = lazy(() => 
@@ -32,6 +33,7 @@ const Hero = () => {
   const { teacher, home, pick } = useTeacher();
   const { lang } = useLang();
   const { colorMode } = useTheme();
+  const heroRef = useRef<HTMLElement>(null);
 
   const teacherName = teacher?.name || pick(teacher?.name, teacher?.name_ar) || "المعلم";
   
@@ -61,6 +63,7 @@ const Hero = () => {
 
   return (
     <section 
+      ref={heroRef}
       className={`relative overflow-hidden pt-20 md:pt-24 pb-20 md:pb-28 transition-colors duration-300`}
     >
       <div className="container mx-auto px-4 grid lg:grid-cols-2 gap-6 md:gap-8 items-center relative z-10">
@@ -155,8 +158,18 @@ const Hero = () => {
           </div>
         </div>
 
-        {/* ✅ Right Image - محسّن جداً للـ LCP */}
-        <div className="relative order-1 lg:order-2 flex justify-center">
+        {/* ✅ Right Image - مع أنيميشن مستمر من فوق لتحت */}
+        <motion.div 
+          className="relative order-1 lg:order-2 flex justify-center"
+          animate={{
+            y: [0, -20, 0],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        >
           <div className="relative w-[80%] md:w-[88%] max-w-[400px] aspect-square">
             {imageUrl ? (
               // ✅ img مع تحسينات قصوى
@@ -177,7 +190,6 @@ const Hero = () => {
                 className="w-full h-full drop-shadow-2xl rounded-full object-cover"
                 style={{ 
                   aspectRatio: '1/1',
-                  backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
                 }}
               />
             ) : (
@@ -185,10 +197,21 @@ const Hero = () => {
             )}
           </div>
 
-          {/* Floating Cards - مبسطة */}
-          <div className={`absolute -bottom-6 md:-bottom-8 right-2 md:right-4 rounded-xl md:rounded-2xl p-1.5 md:p-2.5 shadow-lg border ${
-            isDark ? 'bg-slate-800 border-emerald-800' : 'bg-white border-emerald-100'
-          }`}>
+          {/* Floating Cards - مبسطة مع حركة خفيفة */}
+          <motion.div 
+            className={`absolute -bottom-6 md:-bottom-8 right-2 md:right-4 rounded-xl md:rounded-2xl p-1.5 md:p-2.5 shadow-lg border ${
+              isDark ? 'bg-slate-800 border-emerald-800' : 'bg-white border-emerald-100'
+            }`}
+            animate={{
+              y: [0, -10, 0],
+            }}
+            transition={{
+              duration: 5,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 0.5,
+            }}
+          >
             <div className="flex items-center gap-1 md:gap-1.5">
               <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center ${
                 isDark ? 'bg-emerald-900/50' : 'bg-emerald-100'
@@ -202,11 +225,22 @@ const Hero = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className={`absolute -top-6 md:-top-8 left-2 md:left-4 rounded-xl md:rounded-2xl p-1.5 md:p-2.5 shadow-lg border ${
-            isDark ? 'bg-slate-800 border-teal-800' : 'bg-white border-teal-100'
-          }`}>
+          <motion.div 
+            className={`absolute -top-6 md:-top-8 left-2 md:left-4 rounded-xl md:rounded-2xl p-1.5 md:p-2.5 shadow-lg border ${
+              isDark ? 'bg-slate-800 border-teal-800' : 'bg-white border-teal-100'
+            }`}
+            animate={{
+              y: [0, -12, 0],
+            }}
+            transition={{
+              duration: 4.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 1,
+            }}
+          >
             <div className="flex items-center gap-1 md:gap-1.5">
               <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center ${
                 isDark ? 'bg-teal-900/50' : 'bg-teal-100'
@@ -220,8 +254,8 @@ const Hero = () => {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
 
       {/* Wave */}

@@ -1,23 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // src/components/EducationBackground.tsx
 
-import { useEffect, useRef } from "react";
-import { motion, useMotionValue, useSpring, useScroll, useTransform } from "framer-motion";
+import { memo } from "react";
+import { motion } from "framer-motion";
 
-interface FloatingElement {
-  id: number;
-  type: "book" | "pen" | "certificate" | "star" | "lightbulb" | "target" | "compass" | "leaf";
-  top: string;
-  left: string;
-  size: number;
-  depth: number; // 1 = far (slow), 5 = close (fast)
-  rotation: number;
-  delay: number;
-  duration: number;
-  opacity: number;
-}
-
-// أيقونات SVG مبسطة
+// أيقونات SVG مبسطة وأنيقة - نفس التصميم القديم لكن بدون حركة
 const BookIcon = ({ size, color }: { size: number; color: string }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
@@ -69,69 +56,41 @@ const CompassIcon = ({ size, color }: { size: number; color: string }) => (
   </svg>
 );
 
-const LeafIcon = ({ size, color }: { size: number; color: string }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 2v4M12 22v-4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-    <circle cx="12" cy="12" r="4" />
-  </svg>
-);
-
-// تعريف العناصر العائمة
-const FLOATING_ELEMENTS: FloatingElement[] = [
+// عناصر ثابتة - نفس التصميم الأنيق لكن بدون حركة
+const FLOATING_ELEMENTS = [
   // كتب
-  { id: 1, type: "book", top: "5%", left: "3%", size: 32, depth: 1.5, rotation: -5, delay: 0, duration: 8, opacity: 0.4 },
-  { id: 2, type: "book", top: "70%", left: "85%", size: 28, depth: 2, rotation: 8, delay: 1, duration: 10, opacity: 0.35 },
-  { id: 3, type: "book", top: "85%", left: "10%", size: 24, depth: 2.5, rotation: -3, delay: 2, duration: 9, opacity: 0.3 },
+  { id: 1, type: "book", top: "5%", left: "3%", size: 32, rotation: -5, opacity: 0.4 },
+  { id: 2, type: "book", top: "70%", left: "85%", size: 28, rotation: 8, opacity: 0.35 },
+  { id: 3, type: "book", top: "85%", left: "10%", size: 24, rotation: -3, opacity: 0.3 },
   
   // أقلام
-  { id: 4, type: "pen", top: "15%", left: "88%", size: 30, depth: 2, rotation: 15, delay: 0.5, duration: 7, opacity: 0.45 },
-  { id: 5, type: "pen", top: "55%", left: "5%", size: 26, depth: 2.5, rotation: -10, delay: 1.5, duration: 8.5, opacity: 0.4 },
+  { id: 4, type: "pen", top: "15%", left: "88%", size: 30, rotation: 15, opacity: 0.45 },
+  { id: 5, type: "pen", top: "55%", left: "5%", size: 26, rotation: -10, opacity: 0.4 },
   
   // شهادات
-  { id: 6, type: "certificate", top: "25%", left: "92%", size: 35, depth: 1.8, rotation: 5, delay: 2, duration: 12, opacity: 0.3 },
-  { id: 7, type: "certificate", top: "60%", left: "2%", size: 30, depth: 2.2, rotation: -8, delay: 3, duration: 11, opacity: 0.35 },
+  { id: 6, type: "certificate", top: "25%", left: "92%", size: 35, rotation: 5, opacity: 0.3 },
+  { id: 7, type: "certificate", top: "60%", left: "2%", size: 30, rotation: -8, opacity: 0.35 },
   
   // نجوم
-  { id: 8, type: "star", top: "10%", left: "50%", size: 20, depth: 1.2, rotation: 0, delay: 0.3, duration: 6, opacity: 0.5 },
-  { id: 9, type: "star", top: "40%", left: "95%", size: 18, depth: 1.5, rotation: 0, delay: 1.2, duration: 7, opacity: 0.45 },
-  { id: 10, type: "star", top: "80%", left: "45%", size: 16, depth: 1.8, rotation: 0, delay: 2.5, duration: 8, opacity: 0.4 },
+  { id: 8, type: "star", top: "10%", left: "50%", size: 20, rotation: 0, opacity: 0.5 },
+  { id: 9, type: "star", top: "40%", left: "95%", size: 18, rotation: 0, opacity: 0.45 },
+  { id: 10, type: "star", top: "80%", left: "45%", size: 16, rotation: 0, opacity: 0.4 },
   
-  // لمبات (إبداع)
-  { id: 11, type: "lightbulb", top: "35%", left: "1%", size: 28, depth: 3, rotation: 0, delay: 0.8, duration: 9, opacity: 0.35 },
-  { id: 12, type: "lightbulb", top: "75%", left: "75%", size: 24, depth: 3.5, rotation: 0, delay: 1.8, duration: 10, opacity: 0.3 },
+  // لمبات
+  { id: 11, type: "lightbulb", top: "35%", left: "1%", size: 28, rotation: 0, opacity: 0.35 },
+  { id: 12, type: "lightbulb", top: "75%", left: "75%", size: 24, rotation: 0, opacity: 0.3 },
   
   // أهداف
-  { id: 13, type: "target", top: "20%", left: "20%", size: 30, depth: 2.8, rotation: 0, delay: 1, duration: 8, opacity: 0.35 },
-  { id: 14, type: "target", top: "50%", left: "80%", size: 26, depth: 3.2, rotation: 0, delay: 2, duration: 9, opacity: 0.3 },
+  { id: 13, type: "target", top: "20%", left: "20%", size: 30, rotation: 0, opacity: 0.35 },
+  { id: 14, type: "target", top: "50%", left: "80%", size: 26, rotation: 0, opacity: 0.3 },
   
   // بوصلة
-  { id: 15, type: "compass", top: "65%", left: "15%", size: 28, depth: 2.5, rotation: 0, delay: 1.5, duration: 11, opacity: 0.35 },
-  { id: 16, type: "compass", top: "30%", left: "70%", size: 24, depth: 3, rotation: 0, delay: 2.5, duration: 10, opacity: 0.3 },
-  
-  // أوراق (طبيعة للعلوم)
-  { id: 17, type: "leaf", top: "45%", left: "12%", size: 22, depth: 2, rotation: 0, delay: 0.6, duration: 7, opacity: 0.35 },
-  { id: 18, type: "leaf", top: "90%", left: "60%", size: 20, depth: 2.2, rotation: 0, delay: 1.2, duration: 8, opacity: 0.3 },
+  { id: 15, type: "compass", top: "65%", left: "15%", size: 28, rotation: 0, opacity: 0.35 },
+  { id: 16, type: "compass", top: "30%", left: "70%", size: 24, rotation: 0, opacity: 0.3 },
 ];
 
-// مكون العنصر العائم
-const FloatingElementEl = ({ 
-  element, 
-  mx, 
-  my, 
-  scrollY 
-}: { 
-  element: FloatingElement; 
-  mx: any; 
-  my: any; 
-  scrollY: any;
-}) => {
-  const mxT = useTransform(mx, (v: number) => v * element.depth * 15);
-  const myT = useTransform(my, (v: number) => v * element.depth * 15);
-  const scrollOffset = useTransform(scrollY, (v: number) => -v * (element.depth * 0.05));
-  const opacity = useTransform(scrollY, (v: number) => Math.max(0.2, element.opacity - v * 0.0005));
-  const ty = useTransform([myT, scrollOffset], ([m, s]: any) => m + s);
-  const rotate = useTransform(scrollY, (v: number) => element.rotation + v * 0.02);
-
+// مكون العنصر الثابت - بدون أي حركة نهائياً
+const StaticElement = memo(({ element }: { element: typeof FLOATING_ELEMENTS[0] }) => {
   const getIcon = () => {
     const color = element.type === "book" ? "#10b981" 
       : element.type === "pen" ? "#f59e0b"
@@ -150,121 +109,107 @@ const FloatingElementEl = ({
       case "lightbulb": return <LightbulbIcon size={element.size} color={color} />;
       case "target": return <TargetIcon size={element.size} color={color} />;
       case "compass": return <CompassIcon size={element.size} color={color} />;
-      case "leaf": return <LeafIcon size={element.size} color={color} />;
       default: return null;
     }
   };
 
   return (
-    <motion.div
+    <div
       style={{ 
-        x: mxT, 
-        y: ty, 
         top: element.top, 
-        left: element.left, 
-        opacity,
-        rotate,
-        filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.1))"
+        left: element.left,
+        opacity: element.opacity,
+        transform: `rotate(${element.rotation}deg)`,
+        filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.08))"
       }}
-      className="absolute pointer-events-none"
+      className="absolute pointer-events-none select-none transition-opacity duration-300"
     >
-      <motion.div
-        animate={{ y: [0, -15, 0] }}
-        transition={{ duration: element.duration, repeat: Infinity, ease: "easeInOut", delay: element.delay }}
-        className="relative"
-      >
-        {getIcon()}
-      </motion.div>
-    </motion.div>
+      {getIcon()}
+    </div>
   );
-};
+});
 
-// جزيئات متحركة خلفية
-const BackgroundParticle = ({ top, left, size, delay, duration }: any) => (
-  <motion.div
-    className="absolute rounded-full bg-gradient-to-r from-emerald-400/20 to-teal-400/20"
-    style={{ top, left, width: size, height: size }}
-    animate={{ 
-      y: [0, -50, 0],
-      x: [0, (Math.random() - 0.5) * 50, 0],
-      opacity: [0, 0.5, 0]
+StaticElement.displayName = 'StaticElement';
+
+// مربعات زخرفية أنيقة - نفس اللي كان موجود
+const DecorativeSquare = memo(({ 
+  top, 
+  left, 
+  size, 
+  rotation, 
+  opacity, 
+  borderColor 
+}: any) => (
+  <div
+    className="absolute pointer-events-none"
+    style={{
+      top,
+      left,
+      width: size,
+      height: size,
+      border: `1px solid ${borderColor}`,
+      transform: `rotate(${rotation}deg)`,
+      opacity,
+      borderRadius: '2px',
     }}
-    transition={{ duration, repeat: Infinity, delay, ease: "easeInOut" }}
   />
-);
+));
+
+DecorativeSquare.displayName = 'DecorativeSquare';
 
 export const EducationBackground = () => {
-  const ref = useRef<HTMLDivElement>(null);
-  const mxRaw = useMotionValue(0);
-  const myRaw = useMotionValue(0);
-  const mx = useSpring(mxRaw, { stiffness: 40, damping: 20, mass: 1 });
-  const my = useSpring(myRaw, { stiffness: 40, damping: 20, mass: 1 });
-  const { scrollY: scrollYRaw } = useScroll();
-  const scrollY = useSpring(scrollYRaw, { stiffness: 60, damping: 25, mass: 0.8 });
-
-  useEffect(() => {
-    const onMove = (e: MouseEvent) => {
-      const x = (e.clientX / window.innerWidth - 0.5) * 2;
-      const y = (e.clientY / window.innerHeight - 0.5) * 2;
-      mxRaw.set(x);
-      myRaw.set(y);
-    };
-    window.addEventListener("mousemove", onMove);
-    return () => window.removeEventListener("mousemove", onMove);
-  }, [mxRaw, myRaw]);
-
-  // جزيئات خلفية
-  const particles = Array.from({ length: 30 }).map((_, i) => ({
-    top: `${Math.random() * 100}%`,
-    left: `${Math.random() * 100}%`,
-    size: Math.random() * 4 + 2,
-    delay: Math.random() * 10,
-    duration: 5 + Math.random() * 8,
-    key: i,
-  }));
+  // مربعات زخرفية متناثرة - زي التصميم الأصلي
+  const squares = [
+    { top: "8%", left: "2%", size: 60, rotation: 15, opacity: 0.15, color: "#10b981" },
+    { top: "15%", left: "95%", size: 45, rotation: -20, opacity: 0.12, color: "#3b82f6" },
+    { top: "30%", left: "8%", size: 35, rotation: 30, opacity: 0.1, color: "#f59e0b" },
+    { top: "45%", left: "92%", size: 50, rotation: -10, opacity: 0.12, color: "#8b5cf6" },
+    { top: "60%", left: "3%", size: 40, rotation: 25, opacity: 0.1, color: "#ef4444" },
+    { top: "75%", left: "96%", size: 55, rotation: -15, opacity: 0.12, color: "#10b981" },
+    { top: "88%", left: "6%", size: 30, rotation: 40, opacity: 0.08, color: "#fbbf24" },
+    { top: "5%", left: "45%", size: 25, rotation: 10, opacity: 0.08, color: "#84cc16" },
+    { top: "50%", left: "50%", size: 70, rotation: 45, opacity: 0.06, color: "#10b981" },
+    { top: "92%", left: "50%", size: 35, rotation: -30, opacity: 0.08, color: "#3b82f6" },
+  ];
 
   return (
     <div
-      ref={ref}
       className="fixed inset-0 -z-10 overflow-hidden pointer-events-none"
       aria-hidden
     >
-      {/* Base gradient */}
-      <div className="absolute inset-0   to-teal-50/30  dark:via-slate-900 dark:to-teal-950/20" />
+      {/* خلفية gradient أنيقة */}
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/40 via-white/30 to-teal-50/30 dark:from-emerald-950/30 dark:via-slate-900/30 dark:to-teal-950/30" />
       
-      {/* Soft pattern */}
-      <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.03]"
+      {/* Pattern شبكي خفيف */}
+      <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.04]"
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fillRule='evenodd'%3E%3Cg fill='%23000000' fillOpacity='1'%3E%3Cpath d='M0 20 L20 0 L40 20 L20 40 Z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          backgroundRepeat: 'repeat'
+          backgroundImage: `
+            linear-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(16, 185, 129, 0.1) 1px, transparent 1px)
+          `,
+          backgroundSize: '60px 60px'
         }}
       />
 
-      {/* جزيئات خلفية */}
+      {/* المربعات الزخرفية */}
       <div className="absolute inset-0">
-        {particles.map((p) => (
-          <BackgroundParticle key={p.key} {...p} />
+        {squares.map((square, index) => (
+          <DecorativeSquare key={index} {...square} borderColor={square.color} />
         ))}
       </div>
 
-      {/* العناصر التعليمية العائمة */}
+      {/* العناصر التعليمية الثابتة */}
       <div className="absolute inset-0">
         {FLOATING_ELEMENTS.map((element) => (
-          <FloatingElementEl
-            key={element.id}
-            element={element}
-            mx={mx}
-            my={my}
-            scrollY={scrollY}
-          />
+          <StaticElement key={element.id} element={element} />
         ))}
       </div>
 
-      {/* Soft vignette */}
-      <div className="absolute inset-0 bg-gradient-to-t from-white/40 via-transparent to-white/20 dark:from-black/40 dark:via-transparent dark:to-black/20" />
+      {/* Soft glow في النص */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-r from-emerald-500/5 to-teal-500/5 blur-2xl" />
       
-      {/* Soft glow in center */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-r from-emerald-500/5 to-teal-500/5 blur-3xl" />
+      {/* Vignette أنيق */}
+      <div className="absolute inset-0 bg-gradient-to-t from-white/30 via-transparent to-white/10 dark:from-black/30 dark:via-transparent dark:to-black/10" />
     </div>
   );
 };

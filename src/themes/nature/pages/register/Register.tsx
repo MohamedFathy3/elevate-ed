@@ -15,18 +15,12 @@ import { StepIndicator } from './components/StepIndicator';
 import { Step1BasicInfo } from './components/Step1BasicInfo';
 import { Step2StudyInfo } from './components/Step2StudyInfo';
 import { Step3Photo } from './components/Step3Photo';
+import { InstructionsModal } from './components/InstructionsModal';
 
 // ✅ Hooks
 import { useRegisterForm } from '@/themes/nature/pages/register/components/hooks/useRegisterForm';
 // ✅ Types & Utils
 import { Step } from './Register.types';
-
-// ✅ Lazy Loading للمودال - بعد LCP
-const InstructionsModal = lazy(() => 
-  import('./components/InstructionsModal').then(module => ({
-    default: module.InstructionsModal || module.default || module
-  }))
-);
 
 // ✅ Skeleton للـ Header (خفيف جداً)
 const HeaderSkeleton = () => (
