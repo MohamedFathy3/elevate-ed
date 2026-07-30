@@ -11,15 +11,32 @@ import {
   PlayCircle, ShoppingCart, Lock, Calendar,
   Loader2, Shield, Leaf, Sparkles, Users, Award, Star,
   Eye, Video, FileText, ExternalLink, Info, BookOpen,
-  AlertTriangle, LogIn, GraduationCap, Trophy, Zap
+  AlertTriangle, LogIn
 } from "lucide-react";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
 import { toast } from "@/hooks/use-toast";
 import Cookies from "js-cookie";
 import { RedeemModal } from "@/components/RedeemModal";
 import { Badge } from "@/components/ui/badge";
 
-// ✅ مكون LessonCard محسن مع ألوان جميلة
+// ✅ Lazy Loading للمكونات الثقيلة
+const VideoPlayer = lazy(() => 
+  import("@/components/lesson/video/VideoPlayer").then(module => ({
+    default: module.VideoPlayer || module.default || module
+  }))
+);
+
+// ✅ Skeleton للتحميل
+const VideoSkeleton = () => (
+  <div className="aspect-video bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-3xl flex items-center justify-center animate-pulse">
+    <div className="text-center">
+      <PlayCircle className="w-20 h-20 mx-auto mb-4 opacity-30 text-gray-400" />
+      <p className="text-gray-400">جاري تحميل الفيديو...</p>
+    </div>
+  </div>
+);
+
+// ✅ مكون LessonCard محسن مع Lazy Loading للصور
 const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFullCourse, isAuthenticated, onBuy, onWatch, isBuying, isSelected, isNature, isDark, onSelectPart }: any) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -40,40 +57,6 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
   const hasSubParts = subParts.length > 0;
   const lessonImage = lesson.imageUrl;
 
-  // ✅ ألوان محسنة
-  const getCardColors = () => {
-    if (isSelected) {
-      return isNature
-        ? 'border-amber-400 dark:border-amber-500 ring-2 ring-amber-400/30 dark:ring-amber-500/30 shadow-lg shadow-amber-500/20 dark:shadow-amber-400/20'
-        : 'border-blue-400 dark:border-blue-500 ring-2 ring-blue-400/30 dark:ring-blue-500/30 shadow-lg shadow-blue-500/20 dark:shadow-blue-400/20';
-    }
-    return isNature
-      ? 'border-amber-200/50 dark:border-amber-800/30 hover:border-amber-300 dark:hover:border-amber-700'
-      : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700';
-  };
-
-  const getHoverBg = () => {
-    if (isSelected) {
-      return isNature
-        ? 'bg-amber-50/80 dark:bg-amber-950/30'
-        : 'bg-blue-50/80 dark:bg-blue-950/30';
-    }
-    return isNature
-      ? 'hover:bg-amber-50/50 dark:hover:bg-amber-950/20'
-      : 'hover:bg-blue-50/50 dark:hover:bg-blue-950/20';
-  };
-
-  const getButtonGradient = () => {
-    if (isNature) {
-      return 'from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-amber-500/25';
-    }
-    return 'from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-blue-500/25';
-  };
-
-  const getPriceColor = () => {
-    return isNature ? 'text-amber-600 dark:text-amber-400' : 'text-blue-600 dark:text-blue-400';
-  };
-
   const goToLessonWithPart = (lessonId: number, partIndex: number) => {
     navigate(`/lesson/${lessonId}?part=${partIndex}`);
   };
@@ -84,13 +67,12 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.03, 0.3) }}
       className={`
-        border rounded-2xl 
-        bg-white dark:bg-gray-900/50
-        backdrop-blur-sm
+        border border-gray-200 dark:border-gray-700 
+        rounded-2xl 
+        bg-white
         overflow-hidden 
         transition-all duration-300
-        ${getCardColors()}
-        ${getHoverBg()}
+        ${isSelected ? 'ring-2 ring-blue-500 dark:ring-blue-400 shadow-lg shadow-blue-500/20 dark:shadow-blue-400/20' : ''}
       `}
     >
       <div
@@ -99,7 +81,7 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
           flex items-center justify-between 
           cursor-pointer 
           transition-colors duration-300
-          ${isNature ? 'hover:bg-amber-50/30 dark:hover:bg-amber-950/20' : 'hover:bg-blue-50/30 dark:hover:bg-blue-950/20'}
+          hover:bg-blue-50 dark:hover:bg-blue-950/30
         `}
         onClick={() => setIsExpanded(!isExpanded)}
       >
@@ -118,7 +100,7 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
             />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className={`font-semibold text-sm sm:text-base ${isNature ? 'text-amber-900 dark:text-amber-100' : 'text-gray-900 dark:text-white'} truncate`}>
+            <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white truncate">
               {lessonTitle}
             </h3>
             <div className="flex items-center gap-2 sm:gap-3 text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex-wrap">
@@ -136,7 +118,7 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
 
         <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
           {!isFree && !isPurchased && (
-            <span className={`text-sm sm:text-lg font-bold ${getPriceColor()}`}>
+            <span className="text-sm sm:text-lg font-bold text-blue-600 dark:text-blue-400">
               {parseFloat(lesson.price).toFixed(2)}
             </span>
           )}
@@ -144,7 +126,7 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
           {isPurchased && (
             <Link
               to={`/lesson/${lesson.id}`}
-              className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-white text-xs sm:text-sm font-semibold flex items-center gap-1 sm:gap-2 bg-gradient-to-r ${getButtonGradient()} shadow-lg transition-all`}
+              className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-white text-xs sm:text-sm font-semibold flex items-center gap-1 sm:gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-500/25 transition-all"
               onClick={(e) => e.stopPropagation()}
             >
               <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -158,7 +140,7 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
               whileTap={{ scale: 0.95 }}
               onClick={(e) => { e.stopPropagation(); onBuy(); }}
               disabled={isBuying}
-              className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-white text-xs sm:text-sm font-semibold disabled:opacity-50 flex items-center gap-1 sm:gap-2 bg-gradient-to-r ${getButtonGradient()} shadow-lg transition-all`}
+              className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-white text-xs sm:text-sm font-semibold disabled:opacity-50 flex items-center gap-1 sm:gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/25"
             >
               {isBuying ? <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" /> : <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />}
             </motion.button>
@@ -186,16 +168,16 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
             exit={{ opacity: 0, height: 0 }}
             className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0"
           >
-            <div className={`pt-3 border-t ${isNature ? 'border-amber-200/50 dark:border-amber-800/30' : 'border-gray-200 dark:border-gray-700'}`}>
+            <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
               {lessonDesc && (
-                <p className={`text-sm mb-4 ${isNature ? 'text-amber-700/70 dark:text-amber-300/70' : 'text-gray-500 dark:text-gray-400'} line-clamp-3`}>
+                <p className="text-sm mb-4 text-gray-500 dark:text-gray-400 line-clamp-3">
                   {lessonDesc}
                 </p>
               )}
 
               {hasSubParts && isPurchased && (
                 <div className="mt-2">
-                  <h4 className={`text-sm font-semibold mb-3 ${isNature ? 'text-amber-800 dark:text-amber-200' : 'text-gray-700 dark:text-gray-300'}`}>
+                  <h4 className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">
                     {lang === "ar" ? "📚 أجزاء الدرس:" : "📚 Lesson parts:"}
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
@@ -206,9 +188,7 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: Math.min(idx * 0.02, 0.2) }}
                         onClick={() => goToLessonWithPart(lesson.id, idx)}
-                        className={`rounded-xl overflow-hidden border transition-all hover:shadow-lg cursor-pointer 
-                          ${isNature ? 'border-amber-200/50 dark:border-amber-800/30 hover:border-amber-400 dark:hover:border-amber-500' : 'border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500'}
-                          bg-white dark:bg-gray-900`}
+                        className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 transition-all hover:shadow-lg cursor-pointer bg-white dark:bg-gray-900 hover:border-blue-400 dark:hover:border-blue-500"
                       >
                         <div className="relative h-24 sm:h-32 overflow-hidden">
                           <img
@@ -225,16 +205,16 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
                         </div>
                         <div className="p-2 sm:p-3">
                           <div className="flex items-start gap-2">
-                            <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-gradient-to-r ${isNature ? 'from-amber-500 to-orange-500' : 'from-blue-600 to-indigo-600'} grid place-items-center text-white font-bold text-[10px] sm:text-xs flex-shrink-0`}>
+                            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 grid place-items-center text-white font-bold text-[10px] sm:text-xs flex-shrink-0">
                               {idx + 1}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h5 className={`font-semibold text-xs sm:text-sm truncate ${isNature ? 'text-amber-900 dark:text-amber-100' : 'text-gray-900 dark:text-white'}`}>
+                              <h5 className="font-semibold text-xs sm:text-sm truncate text-gray-900 dark:text-white">
                                 {lang === "ar" ? part.title_ar : part.title}
                               </h5>
                             </div>
                           </div>
-                          <div className={`mt-2 w-full py-1.5 sm:py-2 rounded-lg text-center text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-1 sm:gap-2 bg-gradient-to-r ${isNature ? 'from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600' : 'from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'} text-white shadow-lg ${isNature ? 'shadow-amber-500/25' : 'shadow-blue-500/25'}`}>
+                          <div className="mt-2 w-full py-1.5 sm:py-2 rounded-lg text-center text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-1 sm:gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-500/25">
                             <Eye className="w-3 h-3" />
                             {lang === "ar" ? "مشاهدة" : "Watch"}
                           </div>
@@ -242,8 +222,8 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
                       </motion.div>
                     ))}
                     {subParts.length > 6 && (
-                      <div className={`flex items-center justify-center p-4 rounded-xl border ${isNature ? 'bg-amber-50/50 dark:bg-amber-900/20 border-amber-200/50 dark:border-amber-800/30' : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'}`}>
-                        <span className={`text-sm ${isNature ? 'text-amber-600 dark:text-amber-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                      <div className="flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
                           +{subParts.length - 6} {lang === "ar" ? "أجزاء أخرى" : "more parts"}
                         </span>
                       </div>
@@ -253,14 +233,14 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
               )}
 
               {hasSubParts && !isPurchased && (
-                <div className={`mt-2 p-6 sm:p-8 rounded-xl text-center border ${isNature ? 'bg-amber-50/50 dark:bg-amber-900/20 border-amber-200/50 dark:border-amber-800/30' : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'}`}>
-                  <Lock className={`w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 ${isNature ? 'text-amber-400 dark:text-amber-500' : 'text-gray-400 dark:text-gray-500'}`} />
-                  <p className={`text-xs sm:text-sm ${isNature ? 'text-amber-700/70 dark:text-amber-300/70' : 'text-gray-500 dark:text-gray-400'}`}>
+                <div className="mt-2 p-6 sm:p-8 rounded-xl bg-gray-50 dark:bg-gray-800/50 text-center border border-gray-200 dark:border-gray-700">
+                  <Lock className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 text-gray-400 dark:text-gray-500" />
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                     {lang === "ar" ? "اشتر الدرس لمشاهدة الأجزاء" : "Buy the lesson to watch parts"}
                   </p>
                   <button
                     onClick={onBuy}
-                    className={`mt-3 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold text-white bg-gradient-to-r ${getButtonGradient()} shadow-lg`}
+                    className="mt-3 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-500/25"
                   >
                     {lang === "ar" ? "شراء الدرس" : "Buy Lesson"}
                   </button>
@@ -325,73 +305,16 @@ const CourseDetail = () => {
   const finalPrice = courseFromApi?.price_before_discount || originalPrice;
   const hasDiscount = discountPercent > 0;
 
-  // ✅ ألوان محسنة للـ Theme
-  const themeColors = {
-    // Nature Theme
-    nature: {
-      primary: 'from-amber-500 to-orange-600',
-      primaryHover: 'from-amber-600 to-orange-700',
-      secondary: 'from-amber-400 to-yellow-500',
-      bg: isDark ? 'bg-gray-950' : 'bg-gradient-to-b from-amber-50/30 to-white dark:from-gray-950 dark:to-gray-900',
-      card: isDark ? 'bg-gray-900/80 border-amber-800/30' : 'bg-white/80 border-amber-200/50 backdrop-blur-sm',
-      cardHover: isDark ? 'hover:bg-gray-800/80' : 'hover:bg-amber-50/80',
-      text: {
-        primary: isDark ? 'text-amber-100' : 'text-amber-900',
-        secondary: isDark ? 'text-amber-300/80' : 'text-amber-700/80',
-        muted: isDark ? 'text-amber-400/60' : 'text-amber-600/60',
-      },
-      border: isDark ? 'border-amber-800/30' : 'border-amber-200/50',
-      badge: isDark ? 'bg-amber-900/40 text-amber-300 border-amber-800/50' : 'bg-amber-100 text-amber-700 border-amber-200',
-      icon: isDark ? 'text-amber-400' : 'text-amber-600',
-      shadow: 'shadow-amber-500/20 dark:shadow-amber-400/20',
-      gradient: 'bg-gradient-to-r from-amber-500/20 to-orange-500/20',
-      button: 'from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-amber-500/25',
-    },
-    // Default Theme
-    default: {
-      primary: 'from-blue-500 to-indigo-600',
-      primaryHover: 'from-blue-600 to-indigo-700',
-      secondary: 'from-blue-400 to-purple-500',
-      bg: isDark ? 'bg-gray-950' : 'bg-gradient-to-b from-blue-50/30 to-white dark:from-gray-950 dark:to-gray-900',
-      card: isDark ? 'bg-gray-900/80 border-gray-700/50' : 'bg-white/80 border-gray-200/50 backdrop-blur-sm',
-      cardHover: isDark ? 'hover:bg-gray-800/80' : 'hover:bg-blue-50/80',
-      text: {
-        primary: isDark ? 'text-white' : 'text-gray-900',
-        secondary: isDark ? 'text-gray-300/80' : 'text-gray-700/80',
-        muted: isDark ? 'text-gray-400/60' : 'text-gray-500/60',
-      },
-      border: isDark ? 'border-gray-700/50' : 'border-gray-200/50',
-      badge: isDark ? 'bg-gray-800/60 text-gray-300 border-gray-700' : 'bg-gray-100 text-gray-700 border-gray-200',
-      icon: isDark ? 'text-blue-400' : 'text-blue-600',
-      shadow: 'shadow-blue-500/20 dark:shadow-blue-400/20',
-      gradient: 'bg-gradient-to-r from-blue-500/20 to-indigo-500/20',
-      button: 'from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-blue-500/25',
-    }
-  };
-
-  const colors = isNature ? themeColors.nature : themeColors.default;
-
-  // ✅ دالة مساعدة للحصول على ألوان البادج
-  const getBadgeColors = (type: string) => {
-    const badges = {
-      online: isNature 
-        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
-        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border-blue-200 dark:border-blue-800',
-      center: isNature
-        ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 border-purple-200 dark:border-purple-800'
-        : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800',
-      stage: isNature
-        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800'
-        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border-blue-200 dark:border-blue-800',
-      subject: isNature
-        ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300 border-orange-200 dark:border-orange-800'
-        : 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 border-purple-200 dark:border-purple-800',
-      semester: isNature
-        ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800'
-        : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800',
-    };
-    return badges[type as keyof typeof badges] || badges.stage;
-  };
+  const primaryGradient = isNature
+    ? "from-amber-500 to-orange-600"
+    : "from-primary to-accent";
+  const bgColor = isNature ? '' : '';
+  const cardBg = isNature
+    ? (isDark ? 'bg-amber-900/30' : 'bg-white')
+    : (isDark ? 'bg-gray-800/50' : 'bg-card');
+  const cardBorder = isNature
+    ? (isDark ? 'border-amber-700/50' : 'border-amber-200')
+    : (isDark ? 'border-gray-700' : 'border-border');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -621,22 +544,22 @@ const CourseDetail = () => {
 
   if (!authLoading && !isAuthenticated) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${colors.bg}`}>
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md p-8">
-          <div className={`w-24 h-24 mx-auto mb-6 rounded-full ${isNature ? 'bg-amber-100 dark:bg-amber-900/20' : 'bg-red-100 dark:bg-red-900/20'} flex items-center justify-center`}>
-            <LogIn className={`w-12 h-12 ${isNature ? 'text-amber-500' : 'text-red-500'}`} />
+          <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+            <LogIn className="w-12 h-12 text-red-500" />
           </div>
-          <h1 className={`text-2xl font-bold mb-3 ${colors.text.primary}`}>
+          <h1 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">
             {lang === "ar" ? "تسجيل الدخول مطلوب" : "Login Required"}
           </h1>
-          <p className={`${colors.text.secondary} mb-6`}>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
             {lang === "ar"
               ? "يجب تسجيل الدخول أولاً لمشاهدة محتوى هذا الكورس"
               : "You must login first to view this course content"}
           </p>
           <Link
             to={`/login?redirect=${encodeURIComponent(redirectPath || window.location.pathname)}`}
-            className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold transition-all shadow-lg bg-gradient-to-r ${colors.button}`}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold hover:shadow-lg transition-all"
           >
             <LogIn className="w-5 h-5" />
             {lang === "ar" ? "تسجيل الدخول" : "Login"}
@@ -647,7 +570,7 @@ const CourseDetail = () => {
   }
 
   if (isLoading) {
-    return <CourseDetailSkeleton isNature={isNature} colors={colors} />;
+    return <CourseDetailSkeleton isNature={isNature} />;
   }
 
   if (!courseFromApi && !isLoading) {
@@ -659,7 +582,7 @@ const CourseDetail = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className={`pt-28 md:pt-36 pb-20 min-h-screen ${colors.bg}`}
+      className={`pt-28 md:pt-36 pb-20 min-h-screen ${bgColor}`}
     >
       <div className="container-tight">
         <AnimatePresence>
@@ -679,7 +602,7 @@ const CourseDetail = () => {
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
           <Link
             to={`/courses`}
-            className={`inline-flex items-center gap-2 text-sm ${isNature ? 'text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300' : 'text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400'} mb-6 transition-colors`}
+            className={`inline-flex items-center gap-2 text-sm ${isNature ? 'text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300' : 'text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary-light'} mb-6 transition-colors`}
           >
             <Arrow className="w-4 h-4 rotate-180 rtl:rotate-0" />
             {lang === "ar" ? "كل الكورسات" : "All courses"}
@@ -694,29 +617,42 @@ const CourseDetail = () => {
               transition={{ duration: 0.4 }}
             >
               {selectedLesson ? (
-                <div className="relative">
-                  <div className={`aspect-video rounded-3xl overflow-hidden ${isNature ? 'shadow-amber-500/20' : 'shadow-blue-500/20'} shadow-lg`}>
-                    <video
-                      ref={videoRef}
-                      src={getVideoUrlForPlayer(selectedLesson) || undefined}
-                      poster={getVideoPoster(selectedLesson)}
-                      controls
-                      className="w-full h-full object-cover"
-                      controlsList="nodownload"
-                      onError={() => setVideoError(true)}
-                    />
-                  </div>
-                  <div className="absolute top-4 left-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${isNature ? 'bg-amber-500/90 text-white' : 'bg-blue-500/90 text-white'} backdrop-blur-sm`}>
-                      {selectedLesson.isIntro ? (lang === "ar" ? "🎬 تعريفي" : "🎬 Intro") : (lang === "ar" ? "📚 درس" : "📚 Lesson")}
-                    </span>
-                  </div>
-                </div>
+                <Suspense fallback={<VideoSkeleton />}>
+                  <VideoPlayer
+                    ref={videoPlayerRef}
+                    videoUrl={getVideoUrlForPlayer(selectedLesson) || undefined}
+                    title={getVideoTitle(selectedLesson)}
+                    poster={getVideoPoster(selectedLesson)}
+                    isLocked={!hasPurchasedFullCourse && !selectedLesson.isIntro && !selectedLesson.attended}
+                    requiredExam={selectedLesson?.must_pass_to_unlock}
+                    onStartExam={() => {
+                      toast.info(lang === "ar" ? "جاري التوجيه للامتحان..." : "Redirecting to exam...");
+                    }}
+                    parts={selectedLesson?.titles?.map((title: string, idx: number) => ({
+                      title: title,
+                      title_ar: selectedLesson.titles_ar?.[idx] || title,
+                      videoUrl: selectedLesson.link_video?.[idx] || selectedLesson.content_link,
+                    }))}
+                    selectedPartIndex={selectedPartIndex}
+                    onPartChange={(index: number) => {
+                      if (selectedLesson && selectedLesson.titles && selectedLesson.titles[index]) {
+                        const part = {
+                          title: selectedLesson.titles[index],
+                          title_ar: selectedLesson.titles_ar?.[index] || selectedLesson.titles[index],
+                          videoUrl: selectedLesson.link_video?.[index] || selectedLesson.content_link,
+                          imageUrl: selectedLesson.imageUrl,
+                        };
+                        setSelectedPart(part);
+                        setSelectedPartIndex(index);
+                      }
+                    }}
+                  />
+                </Suspense>
               ) : (
-                <div className={`aspect-video rounded-3xl flex items-center justify-center ${isNature ? 'bg-gradient-to-br from-amber-500/20 to-orange-500/20' : 'bg-gradient-to-br from-blue-500/20 to-purple-500/20'}`}>
+                <div className="aspect-video bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-3xl flex items-center justify-center">
                   <div className="text-center p-4">
                     <PlayCircle className={`w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 opacity-70 ${isNature ? 'text-amber-500' : 'text-blue-600 dark:text-blue-400'}`} />
-                    <p className={`text-sm sm:text-base ${colors.text.secondary}`}>
+                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
                       {hasPurchasedFullCourse
                         ? (lang === "ar" ? "اختر درساً للمشاهدة" : "Select a lesson to watch")
                         : (lang === "ar" ? "اشتر الكورس لمشاهدة الدروس" : "Buy the course to watch lessons")}
@@ -730,12 +666,12 @@ const CourseDetail = () => {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`mt-4 p-4 rounded-2xl ${isNature ? 'bg-amber-50/50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30' : 'bg-blue-50/50 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-800/30'}`}
+                className={`mt-4 p-4 rounded-2xl ${isNature ? (isDark ? 'bg-amber-900/20' : 'bg-amber-50') : 'bg-gray-100 dark:bg-gray-800/50'}`}
               >
-                <h3 className={`font-bold text-lg ${colors.text.primary}`}>
+                <h3 className={`font-bold text-lg ${isNature ? 'text-amber-800 dark:text-amber-200' : 'text-gray-900 dark:text-white'}`}>
                   {getVideoTitle(selectedLesson)}
                 </h3>
-                <p className={`mt-1 text-sm ${colors.text.secondary}`}>
+                <p className={`mt-1 text-sm ${isNature ? 'text-amber-700/70 dark:text-amber-300/70' : 'text-gray-700 dark:text-gray-300'}`}>
                   {lang === "ar" && selectedLesson.description_ar ? selectedLesson.description_ar : selectedLesson.description}
                 </p>
               </motion.div>
@@ -743,67 +679,68 @@ const CourseDetail = () => {
 
             <motion.div className="mt-6">
               <div className="flex flex-wrap gap-2 mb-3">
-                <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getBadgeColors(courseFromApi?.type === "online" ? 'online' : 'center')}`}>
-                  {courseFromApi?.type === "online" ? (lang === "ar" ? "🖥️ أونلاين" : "💻 Online") : (lang === "ar" ? "🏛️ سنتر" : "🏛️ Center")}
+                <span className={`px-2 py-0.5 rounded-full text-xs font-bold
+                  ${isNature
+                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-800/50 dark:text-amber-300'
+                    : 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'}`}>
+                  {courseFromApi?.type === "online" ? (lang === "ar" ? "أونلاين" : "Online") : (lang === "ar" ? "سنتر" : "Center")}
                 </span>
-                <span className={`px-3 py-1 rounded-full text-xs font-bold border inline-flex items-center gap-1 ${getBadgeColors('subject')}`}>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-bold inline-flex items-center gap-1
+                  ${isNature
+                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-800/50 dark:text-amber-300'
+                    : 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300'}`}>
                   {isNature ? <Leaf className="w-3 h-3" /> : <Atom className="w-3 h-3" />}
                   {lang === "ar" ? courseFromApi?.subject?.name_ar : courseFromApi?.subject?.name}
                 </span>
-                <span className={`px-3 py-1 rounded-full text-xs font-bold border inline-flex items-center gap-1 ${getBadgeColors('semester')}`}>
-                  <GraduationCap className="w-3 h-3" />
-                  {lang === "ar" ? courseFromApi?.semester?.name_ar : courseFromApi?.semester?.name}
-                </span>
-                <span className={`px-3 py-1 rounded-full text-xs font-bold border inline-flex items-center gap-1 ${getBadgeColors('stage')}`}>
-                  <Trophy className="w-3 h-3" />
-                  {lang === "ar" ? courseFromApi?.stage?.name_ar : courseFromApi?.stage?.name}
-                </span>
-                <span className={`px-3 py-1 rounded-full text-xs font-bold border inline-flex items-center gap-1 ${isNature ? 'bg-amber-50/50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-700'}`}>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-bold inline-flex items-center gap-1
+                  ${isNature
+                    ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
+                    : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'}`}>
                   <Clock className="w-3 h-3" />
                   {courseFromApi?.hour_time_course || (lang === "ar" ? "مرن" : "Flexible")}
                 </span>
               </div>
 
-              <h1 className={`font-display font-black text-2xl md:text-4xl tracking-tight ${colors.text.primary}`}>
+              <h1 className={`font-display font-black text-2xl md:text-4xl tracking-tight ${isNature ? 'text-amber-800 dark:text-amber-100' : 'text-gray-900 dark:text-white'}`}>
                 {courseTitle}
               </h1>
 
-              <div className={`mt-3 text-base leading-relaxed ${colors.text.secondary}`}
+              <div className={`mt-3 text-base leading-relaxed ${isNature ? 'text-amber-700/80 dark:text-amber-300/70' : 'text-gray-700 dark:text-gray-300'}`}
                 dangerouslySetInnerHTML={{ __html: courseDescription || '' }} />
 
               {courseAbout && (
-                <div className={`mt-4 p-4 rounded-2xl ${isNature ? 'bg-amber-50/50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30' : 'bg-blue-50/50 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-800/30'}`}>
-                  <h3 className={`font-bold text-base mb-1 flex items-center gap-2 ${colors.text.primary}`}>
-                    <Info className={`w-4 h-4 ${colors.icon}`} />
-                    {lang === "ar" ? "✨ نبذة عن الكورس" : "✨ About this course"}
+                <div className={`mt-4 p-4 rounded-2xl ${isNature ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-gray-100 dark:bg-gray-800/50'}`}>
+                  <h3 className={`font-bold text-base mb-1 flex items-center gap-2 ${isNature ? 'text-amber-800 dark:text-amber-200' : 'text-gray-900 dark:text-white'}`}>
+                    <Info className="w-4 h-4" />
+                    {lang === "ar" ? "نبذة عن الكورس" : "About this course"}
                   </h3>
-                  <div className={`text-sm leading-relaxed ${colors.text.secondary}`}
+                  <div className={`text-sm leading-relaxed ${isNature ? 'text-amber-700/70 dark:text-amber-300/70' : 'text-gray-700 dark:text-gray-300'}`}
                     dangerouslySetInnerHTML={{ __html: courseAbout }} />
                 </div>
               )}
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-                <div className={`p-3 rounded-xl text-center ${isNature ? 'bg-amber-50/50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30' : 'bg-blue-50/50 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-800/30'}`}>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400">{lang === "ar" ? "📚 المرحلة" : "📚 Stage"}</p>
-                  <p className={`font-semibold text-sm ${colors.text.primary}`}>
+                <div className={`p-2 rounded-xl text-center ${isNature ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-gray-100 dark:bg-gray-800/50'}`}>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">{lang === "ar" ? "المرحلة" : "Stage"}</p>
+                  <p className={`font-semibold text-sm ${isNature ? 'text-amber-700 dark:text-amber-300' : 'text-gray-900 dark:text-white'}`}>
                     {lang === "ar" ? courseFromApi?.stage?.name_ar : courseFromApi?.stage?.name}
                   </p>
                 </div>
-                <div className={`p-3 rounded-xl text-center ${isNature ? 'bg-amber-50/50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30' : 'bg-blue-50/50 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-800/30'}`}>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400">{lang === "ar" ? "📖 المادة" : "📖 Subject"}</p>
-                  <p className={`font-semibold text-sm ${colors.text.primary}`}>
+                <div className={`p-2 rounded-xl text-center ${isNature ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-gray-100 dark:bg-gray-800/50'}`}>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">{lang === "ar" ? "المادة" : "Subject"}</p>
+                  <p className={`font-semibold text-sm ${isNature ? 'text-amber-700 dark:text-amber-300' : 'text-gray-900 dark:text-white'}`}>
                     {lang === "ar" ? courseFromApi?.subject?.name_ar : courseFromApi?.subject?.name}
                   </p>
                 </div>
-                <div className={`p-3 rounded-xl text-center ${isNature ? 'bg-amber-50/50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30' : 'bg-blue-50/50 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-800/30'}`}>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400">{lang === "ar" ? "🗓️ الترم" : "🗓️ Semester"}</p>
-                  <p className={`font-semibold text-sm ${colors.text.primary}`}>
+                <div className={`p-2 rounded-xl text-center ${isNature ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-gray-100 dark:bg-gray-800/50'}`}>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">{lang === "ar" ? "الترم" : "Semester"}</p>
+                  <p className={`font-semibold text-sm ${isNature ? 'text-amber-700 dark:text-amber-300' : 'text-gray-900 dark:text-white'}`}>
                     {lang === "ar" ? courseFromApi?.semester?.name_ar : courseFromApi?.semester?.name}
                   </p>
                 </div>
-                <div className={`p-3 rounded-xl text-center ${isNature ? 'bg-amber-50/50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30' : 'bg-blue-50/50 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-800/30'}`}>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400">{lang === "ar" ? "📌 الدروس" : "📌 Lessons"}</p>
-                  <p className={`font-semibold text-sm ${colors.text.primary}`}>
+                <div className={`p-2 rounded-xl text-center ${isNature ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-gray-100 dark:bg-gray-800/50'}`}>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">{lang === "ar" ? "الدروس" : "Lessons"}</p>
+                  <p className={`font-semibold text-sm ${isNature ? 'text-amber-700 dark:text-amber-300' : 'text-gray-900 dark:text-white'}`}>
                     {lessons.length}
                   </p>
                 </div>
@@ -811,10 +748,10 @@ const CourseDetail = () => {
             </motion.div>
 
             <motion.div className="mt-8">
-              <h2 className={`text-xl font-bold mb-4 flex items-center gap-2 ${colors.text.primary}`}>
-                <BookOpen className={`w-5 h-5 ${colors.icon}`} />
-                {lang === "ar" ? "📚 محتويات الكورس" : "📚 Course Content"}
-                <span className={`text-xs ${colors.text.muted} ml-2`}>({lessons.length} {lang === "ar" ? "دروس" : "lessons"})</span>
+              <h2 className={`text-xl font-bold mb-4 flex items-center gap-2 ${isNature ? 'text-amber-800 dark:text-amber-100' : 'text-gray-900 dark:text-white'}`}>
+                <BookOpen className="w-5 h-5" />
+                {lang === "ar" ? "محتويات الكورس" : "Course Content"}
+                <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">({lessons.length} {lang === "ar" ? "دروس" : "lessons"})</span>
               </h2>
               <div className="space-y-2">
                 {lessons.slice(0, 20).map((lesson: any, index: number) => {
@@ -847,7 +784,7 @@ const CourseDetail = () => {
                   );
                 })}
                 {lessons.length > 20 && (
-                  <div className={`text-center py-4 text-sm ${colors.text.muted}`}>
+                  <div className="text-center py-4 text-sm text-gray-500 dark:text-gray-400">
                     +{lessons.length - 20} {lang === "ar" ? "درس إضافي" : "more lessons"}
                   </div>
                 )}
@@ -862,7 +799,7 @@ const CourseDetail = () => {
               transition={{ delay: 0.2 }}
               className="lg:col-span-1"
             >
-              <div className={`sticky top-24 rounded-3xl p-4 sm:p-6 shadow-xl border ${colors.card} ${colors.border} backdrop-blur-sm`}>
+              <div className={`sticky top-24 rounded-3xl p-4 sm:p-6 shadow-card border ${cardBg} ${cardBorder}`}>
                 <div className="mb-4">
                   {hasDiscount ? (
                     <div className="flex items-baseline gap-2 flex-wrap">
@@ -870,41 +807,35 @@ const CourseDetail = () => {
                         {finalPrice.toFixed(2)}
                       </span>
                       <span className="text-xs text-gray-500 dark:text-gray-400 line-through">{originalPrice.toFixed(2)}</span>
-                      <span className="text-xs text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full">-{discountPercent}%</span>
+                      <span className="text-xs text-red-500">-{discountPercent}%</span>
                     </div>
                   ) : (
                     <span className={`text-2xl sm:text-3xl font-black ${isNature ? 'text-amber-600 dark:text-amber-400' : 'text-blue-600 dark:text-blue-400'}`}>
                       {originalPrice.toFixed(2)}
                     </span>
                   )}
-                  <p className={`text-[10px] ${colors.text.muted} mt-1`}>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
                     {lang === "ar" ? "دفعة واحدة - وصول مدى الحياة" : "One-time payment - lifetime access"}
                   </p>
                 </div>
 
-                <div className={`space-y-2 text-xs pt-3 border-t ${isNature ? 'border-amber-200/50 dark:border-amber-800/30' : 'border-gray-200 dark:border-gray-700'}`}>
+                <div className="space-y-2 text-xs border-t pt-3" style={{ borderColor: isNature ? (isDark ? '#854d0e' : '#fde68a') : 'var(--border)' }}>
                   <div className="flex justify-between">
-                    <span className={colors.text.muted}>{lang === "ar" ? "المرحلة" : "Stage"}</span>
-                    <span className={`font-semibold ${colors.text.primary}`}>
+                    <span className="text-gray-500 dark:text-gray-400">{lang === "ar" ? "المرحلة" : "Stage"}</span>
+                    <span className={`font-semibold ${isNature ? 'text-amber-700 dark:text-amber-300' : 'text-gray-900 dark:text-white'}`}>
                       {lang === "ar" ? courseFromApi?.stage?.name_ar : courseFromApi?.stage?.name}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className={colors.text.muted}>{lang === "ar" ? "المادة" : "Subject"}</span>
-                    <span className={`font-semibold ${colors.text.primary}`}>
+                    <span className="text-gray-500 dark:text-gray-400">{lang === "ar" ? "المادة" : "Subject"}</span>
+                    <span className={`font-semibold ${isNature ? 'text-amber-700 dark:text-amber-300' : 'text-gray-900 dark:text-white'}`}>
                       {lang === "ar" ? courseFromApi?.subject?.name_ar : courseFromApi?.subject?.name}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className={colors.text.muted}>{lang === "ar" ? "الترم" : "Semester"}</span>
-                    <span className={`font-semibold ${colors.text.primary}`}>
+                    <span className="text-gray-500 dark:text-gray-400">{lang === "ar" ? "الترم" : "Semester"}</span>
+                    <span className={`font-semibold ${isNature ? 'text-amber-700 dark:text-amber-300' : 'text-gray-900 dark:text-white'}`}>
                       {lang === "ar" ? courseFromApi?.semester?.name_ar : courseFromApi?.semester?.name}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className={colors.text.muted}>{lang === "ar" ? "الدروس" : "Lessons"}</span>
-                    <span className={`font-semibold ${colors.text.primary}`}>
-                      {lessons.length}
                     </span>
                   </div>
                 </div>
@@ -915,21 +846,21 @@ const CourseDetail = () => {
                     whileTap={{ scale: 0.98 }}
                     onClick={handleOpenBuyCourseModal}
                     disabled={buyingFullCourse}
-                    className={`w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-white font-bold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 text-sm bg-gradient-to-r ${colors.button}`}
+                    className={`w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-white font-bold shadow-soft hover:shadow-glow transition-all disabled:opacity-50 text-sm
+                      ${isNature
+                        ? 'bg-gradient-to-r from-amber-600 to-orange-600'
+                        : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800'}`}
                   >
                     {buyingFullCourse ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
                     {lang === "ar" ? "شراء الكورس" : "Buy Course"}
                   </motion.button>
 
-                  <div className={`flex items-center gap-2 text-xs ${colors.text.muted} justify-center`}>
-                    <Shield className="w-3 h-3" />
-                    {lang === "ar" ? "دفع آمن 100%" : "100% Secure Payment"}
-                  </div>
-
                   {!Cookies.get('student_token') && (
                     <Link to={`/login?redirect=${encodeURIComponent(window.location.pathname)}`}
-                      className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-2xl text-xs font-semibold transition border ${isNature ? 'border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20' : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
-                      <LogIn className="w-3 h-3" />
+                      className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-2xl text-xs font-semibold transition
+                        ${isNature
+                          ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
                       {lang === "ar" ? "لديك حساب؟ سجل دخول" : "Already have an account? Login"}
                     </Link>
                   )}
@@ -946,31 +877,23 @@ const CourseDetail = () => {
             >
               <div className={`sticky top-24 rounded-3xl p-4 sm:p-6 border text-center
                 ${isNature
-                  ? 'bg-emerald-50/80 border-emerald-200/70 dark:bg-emerald-900/20 dark:border-emerald-800/50'
-                  : 'bg-green-50/80 border-green-200/70 dark:bg-green-900/20 dark:border-green-800/50'}`}>
+                  ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800'
+                  : 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800'}`}>
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", stiffness: 200 }}
                 >
-                  <CheckCircle2 className={`w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 ${isNature ? 'text-emerald-600 dark:text-emerald-400' : 'text-green-600 dark:text-green-400'}`} />
+                  <CheckCircle2 className={`w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 ${isNature ? 'text-green-600 dark:text-green-400' : 'text-green-600 dark:text-green-400'}`} />
                 </motion.div>
-                <h3 className={`text-lg sm:text-xl font-bold mb-1 ${isNature ? 'text-emerald-700 dark:text-emerald-400' : 'text-green-700 dark:text-green-400'}`}>
-                  {lang === "ar" ? "✅ تم الشراء" : "✅ Purchased"}
+                <h3 className={`text-lg sm:text-xl font-bold mb-1 ${isNature ? 'text-green-700 dark:text-green-400' : 'text-green-700 dark:text-green-400'}`}>
+                  {lang === "ar" ? "تم الشراء" : "Purchased"}
                 </h3>
-                <p className={`text-xs ${isNature ? 'text-emerald-600/70 dark:text-emerald-400/70' : 'text-green-600/70 dark:text-green-400/70'}`}>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
                   {lang === "ar"
                     ? "يمكنك مشاهدة جميع الدروس"
                     : "You can watch all lessons"}
                 </p>
-                <div className={`mt-3 pt-3 border-t ${isNature ? 'border-emerald-200/50 dark:border-emerald-800/30' : 'border-green-200/50 dark:border-green-800/30'}`}>
-                  <div className="flex items-center justify-center gap-1 text-xs">
-                    <Zap className={`w-3 h-3 ${isNature ? 'text-amber-500' : 'text-blue-500'}`} />
-                    <span className={colors.text.muted}>
-                      {lang === "ar" ? "وصول مدى الحياة" : "Lifetime access"}
-                    </span>
-                  </div>
-                </div>
               </div>
             </motion.aside>
           )}
@@ -997,21 +920,21 @@ const CourseDetail = () => {
   );
 };
 
-const CourseDetailSkeleton = ({ isNature, colors }: { isNature: boolean; colors: any }) => {
+const CourseDetailSkeleton = ({ isNature }: { isNature: boolean }) => {
   return (
-    <section className={`pt-28 md:pt-36 pb-20 ${colors.bg}`}>
+    <section className={`pt-28 md:pt-36 pb-20 ${isNature ? 'bg-amber-50 dark:bg-gray-950' : 'bg-gray-50 dark:bg-gray-950'}`}>
       <div className="container-tight">
         <div className="grid lg:grid-cols-3 gap-6 md:gap-10">
           <div className="lg:col-span-2">
-            <div className={`aspect-video rounded-3xl animate-pulse ${isNature ? 'bg-amber-200/50 dark:bg-amber-900/30' : 'bg-gray-200 dark:bg-gray-800'}`} />
+            <div className={`aspect-video rounded-3xl animate-pulse ${isNature ? 'bg-amber-200 dark:bg-amber-900/30' : 'bg-gray-200 dark:bg-gray-800'}`} />
             <div className="mt-6 space-y-3">
-              <div className={`h-6 rounded-lg w-3/4 animate-pulse ${isNature ? 'bg-amber-200/50 dark:bg-amber-900/30' : 'bg-gray-200 dark:bg-gray-800'}`} />
-              <div className={`h-4 rounded-lg w-full animate-pulse ${isNature ? 'bg-amber-100/50 dark:bg-amber-900/20' : 'bg-gray-200 dark:bg-gray-800'}`} />
-              <div className={`h-4 rounded-lg w-2/3 animate-pulse ${isNature ? 'bg-amber-100/50 dark:bg-amber-900/20' : 'bg-gray-200 dark:bg-gray-800'}`} />
+              <div className={`h-6 rounded-lg w-3/4 animate-pulse ${isNature ? 'bg-amber-200 dark:bg-amber-900/30' : 'bg-gray-200 dark:bg-gray-800'}`} />
+              <div className={`h-4 rounded-lg w-full animate-pulse ${isNature ? 'bg-amber-100 dark:bg-amber-900/20' : 'bg-gray-200 dark:bg-gray-800'}`} />
+              <div className={`h-4 rounded-lg w-2/3 animate-pulse ${isNature ? 'bg-amber-100 dark:bg-amber-900/20' : 'bg-gray-200 dark:bg-gray-800'}`} />
             </div>
           </div>
           <div className="lg:col-span-1">
-            <div className={`h-80 rounded-3xl animate-pulse ${isNature ? 'bg-amber-200/50 dark:bg-amber-900/30' : 'bg-gray-200 dark:bg-gray-800'}`} />
+            <div className={`h-80 rounded-3xl animate-pulse ${isNature ? 'bg-amber-200 dark:bg-amber-900/30' : 'bg-gray-200 dark:bg-gray-800'}`} />
           </div>
         </div>
       </div>
@@ -1019,4 +942,4 @@ const CourseDetailSkeleton = ({ isNature, colors }: { isNature: boolean; colors:
   );
 };
 
-export default CourseDetail;
+export default CourseDetail; 
