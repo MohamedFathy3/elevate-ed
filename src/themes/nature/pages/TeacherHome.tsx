@@ -1,11 +1,13 @@
 // src/themes/nature/pages/Landing.tsx (أو TeacherHome.tsx)
-import { useState, lazy, Suspense } from "react";
+
+import { useState, lazy, Suspense, useEffect } from "react";
 import { useTeacher } from "@/context/TeacherContext";
 import { useLang } from "@/i18n/LanguageContext";
 import { OfferPopup } from "@/themes/default/components/site/OfferPopup";
 
 // ✅ استيراد Hero (Default Export)
 import Hero from "@/themes/nature/components/Hero";
+import SocialCounters from "@/themes/default/components/site/SocialCounters";
 
 // ✅ Wrapper لتحويل Named Export لـ Default
 const About = lazy(() => 
@@ -38,16 +40,25 @@ const CenterHours = lazy(() =>
   }))
 );
 
-// ✅ Skeleton للـ Lazy Components
+// ✅ Skeleton خفيف جداً - بدون animate-pulse ثقيل
 const SectionSkeleton = () => (
-  <div className="py-16 px-4">
+  <div className="py-12 px-4">
     <div className="container mx-auto">
-      <div className="h-8 w-48 bg-gray-200 dark:bg-gray-800 rounded animate-pulse mx-auto mb-8" />
+      <div className="h-6 w-32 bg-gray-200/60 dark:bg-gray-800/60 rounded mx-auto mb-6" />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[1, 2, 3].map(i => (
-          <div key={i} className="h-64 bg-gray-200 dark:bg-gray-800 rounded-2xl animate-pulse" />
+          <div key={i} className="h-48 bg-gray-200/60 dark:bg-gray-800/60 rounded-2xl" />
         ))}
       </div>
+    </div>
+  </div>
+);
+
+// ✅ Skeleton للـ Hero (يظهر أثناء تحميل البيانات)
+const HeroSkeleton = () => (
+  <div className="min-h-[60vh] flex items-center justify-center bg-gray-100/50 dark:bg-gray-900/50">
+    <div className="text-center">
+      <div className="w-16 h-16 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mx-auto" />
     </div>
   </div>
 );
@@ -57,24 +68,24 @@ const TeacherHome = () => {
   const { isLoading, teacher } = useTeacher();
   const { lang } = useLang();
   const [showPopup, setShowPopup] = useState(true);
+  const [isHeroReady, setIsHeroReady] = useState(false);
 
-  // ✅ لو لسه بيحمل
+  // ✅ بعد تحميل البيانات، نعتبر Hero جاهز
+  useEffect(() => {
+    if (!isLoading) {
+      setIsHeroReady(true);
+    }
+  }, [isLoading]);
+
+  // ✅ أثناء التحميل - Skeleton خفيف
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mx-auto" />
-          <p className="mt-4 text-gray-500 dark:text-gray-400">
-            {lang === "ar" ? "جاري التحميل..." : "Loading..."}
-          </p>
-        </div>
-      </div>
-    );
+    return <HeroSkeleton />;
   }
 
   return (
     <div className="min-h-screen flex flex-col">
       <main className="flex-1">
+        {/* ✅ Popup يظهر بعد 3 ثواني (مش فوري) */}
         {showPopup && (
           <OfferPopup 
             lang={lang} 
@@ -82,9 +93,10 @@ const TeacherHome = () => {
           />
         )}
         
+        {/* ✅ Hero يظهر فوراً */}
         <Hero />
         
-        {/* ✅ Lazy Loading مع Suspense */}
+        {/* ✅ باقي الأقسام مع Lazy Loading */}
         <Suspense fallback={<SectionSkeleton />}>
           <Stage />
         </Suspense>
@@ -95,6 +107,10 @@ const TeacherHome = () => {
         
         <Suspense fallback={<SectionSkeleton />}>
           <CenterHours />
+        </Suspense>
+        
+        <Suspense fallback={<SectionSkeleton />}>
+          <SocialCounters />
         </Suspense>
         
         <Suspense fallback={<SectionSkeleton />}>

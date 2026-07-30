@@ -268,7 +268,7 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
           ar: 'جاري تحميل المنصة...',
           en: 'Loading platform...'
         }}
-        minDisplayTime={600}
+        minDisplayTime={100}
       />
     );
   }

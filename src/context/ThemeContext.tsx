@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/context/ThemeProvider.tsx
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { createContext, useContext, useState, useEffect, ReactNode, useRef, useCallback } from 'react';
 import api from '@/lib/api';
 
@@ -33,6 +33,7 @@ interface ThemeContextType {
   toggleColorMode: () => void;
   pages: ThemePages | null;
   isLoading: boolean;
+  isThemeReady: boolean;
   apiColors: { background: string; text: string } | null;
 }
 
@@ -40,8 +41,8 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 import * as defaultPages from '@/themes/default/pages/index';
 
-import defaultCss from '@/themes/default/index.css?inline';
 import natureCss from '@/themes/nature/index.css?inline';
+import defaultCss from '@/themes/default/index.css?inline';
 
 let currentStyleElement: HTMLStyleElement | null = null;
 
@@ -164,24 +165,26 @@ const loadThemeCSS = (theme: ThemeName) => {
 };
 
 const themeImports = {
-  default: () => import('@/themes/default/pages/index.tsx'),
   nature: () => import('@/themes/nature/pages/index.tsx'),
+  default: () => import('@/themes/default/pages/index.tsx'),
 };
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<ThemeName>('default');
+  const [theme, setThemeState] = useState<ThemeName>('nature');
   const [colorMode, setColorMode] = useState<ColorMode>('light');
   const [pages, setPages] = useState<ThemePages | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isThemeReady, setIsThemeReady] = useState(false);
   const [apiColors, setApiColors] = useState<{ background: string; text: string } | null>(null);
   
   const isInitialized = useRef(false);
   const themeLoadedRef = useRef(false);
 
-  // ✅ دالة تحميل الثيم
+  // ✅ دالة تحميل الثيم - تعديل لتحديث isThemeReady
   const loadTheme = useCallback(async (newTheme: ThemeName, bgColor?: string, textColor?: string) => {
     console.log("📦 Loading theme:", newTheme);
     setIsLoading(true);
+    setIsThemeReady(false);
     
     loadThemeCSS(newTheme);
     
@@ -233,6 +236,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
     
     setIsLoading(false);
+    setIsThemeReady(true);
   }, []);
 
   const setTheme = useCallback((newTheme: ThemeName) => {
@@ -282,6 +286,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     
     const initialize = async () => {
       setIsLoading(true);
+      setIsThemeReady(false);
       
       // ✅ استنى حدث theme-loaded من TeacherContext
       const handleThemeLoaded = (e: Event) => {
@@ -289,10 +294,9 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         console.log("🔄 Theme loaded event received:", customEvent.detail);
         const { theme, bgColor, textColor } = customEvent.detail;
         
-        if (theme && (theme === 'default' || theme === 'nature')) {
+        if (theme && (theme === 'nature' || theme === 'default')) {
           console.log("✅ Loading theme from TeacherContext API response!");
           
-          // ✅ حفظ في localStorage
           localStorage.setItem('app-theme', theme);
           localStorage.setItem('api-bg-color', bgColor);
           localStorage.setItem('api-text-color', textColor);
@@ -317,6 +321,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         await loadTheme(savedTheme, savedBg || '#FFFFFF', savedText || '#111827');
         console.log("✅ Theme loaded from localStorage!");
         setIsLoading(false);
+        setIsThemeReady(true);
         return;
       }
       
@@ -324,7 +329,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       console.log("⏳ No theme in localStorage, waiting for TeacherContext to fetch from API...");
       
       let attempts = 0;
-      const maxAttempts = 2;
+      const maxAttempts = 3;
       let themeFound = false;
       
       while (!themeFound && attempts < maxAttempts) {
@@ -339,6 +344,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           themeLoadedRef.current = true;
           await loadTheme(checkTheme as ThemeName, bg, text);
           setIsLoading(false);
+          setIsThemeReady(true);
         }
         attempts++;
       }
@@ -346,8 +352,9 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       // ✅ لو مفيش ثيم بعد الانتظار → استخدم default (حالة نادرة)
       if (!themeFound && !themeLoadedRef.current) {
         console.log("⚠️ No theme found after timeout, using default");
-        await loadTheme('default', '#FFFFFF', '#111827');
+        await loadTheme(null, '#FFFFFF', '#111827');
         setIsLoading(false);
+        setIsThemeReady(true);
       }
       
       // ✅ إزالة المستمع بعد 30 ثانية
@@ -368,6 +375,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       toggleColorMode, 
       pages, 
       isLoading,
+      isThemeReady,
       apiColors
     }}>
       {children}

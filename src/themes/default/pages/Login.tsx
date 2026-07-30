@@ -5,13 +5,18 @@ import { useLang } from "@/i18n/LanguageContext";
 import { useParams, Link, useSearchParams } from "react-router-dom";
 import { useTeacher } from "@/context/TeacherContext";
 import { useStudentLogin } from "@/hooks/useStudent";
-import { LogIn, Phone, Lock, Eye, EyeOff, ArrowLeft, ArrowRight, Loader2, GraduationCap } from "lucide-react";
+import { 
+  LogIn, Phone, Lock, Eye, EyeOff, 
+  ArrowLeft, ArrowRight, Loader2, ShieldCheck,
+  KeyRound, GraduationCap
+} from "lucide-react";
 import { getDeviceData } from "@/utils/deviceFingerprint";
-import { AccountBlockedModal } from "@/components/AccountBlockedModal"; // ✅ إضافة المودال
+import { AccountBlockedModal } from "@/components/AccountBlockedModal";
+import { toast } from "@/hooks/use-toast";
 
 // Interface للبيانات اللي هتتبعت
 interface LoginPayload {
-  phone: string;
+  phone?: string; // ✅ اختياري للـ Parent
   password: string;
   type: "student" | "parent";
   device_id: string;
@@ -24,14 +29,14 @@ const Login = () => {
   const { lang, dir } = useLang();
   const { slug } = useParams();
   const { teacher } = useTeacher();
-  const { mutate: login, isPending, error, reset } = useStudentLogin(); // ✅ إضافة error و reset
+  const { mutate: login, isPending, error, reset } = useStudentLogin();
   const [searchParams] = useSearchParams();
 
   const [showPassword, setShowPassword] = useState(false);
   const [deviceReady, setDeviceReady] = useState(false);
   const [deviceData, setDeviceData] = useState<Omit<LoginPayload, 'phone' | 'password' | 'type'> | null>(null);
-  const [showBlockedModal, setShowBlockedModal] = useState(false); // ✅ حالة المودال
-  const [blockedMessage, setBlockedMessage] = useState(""); // ✅ رسالة الإيقاف
+  const [showBlockedModal, setShowBlockedModal] = useState(false);
+  const [blockedMessage, setBlockedMessage] = useState("");
   
   const [formData, setFormData] = useState({
     phone: "",
@@ -50,7 +55,10 @@ const Login = () => {
   const teacherName = teacher?.name || (lang === "ar" ? "المعلم" : "Teacher");
   const home = teacher?.website?.home;
   const heroImage = home?.imageUrl || home?.image?.fullUrl;
-  const teacherPhone = teacher?.phone || ""; // ✅ جلب رقم المعلم
+  const teacherPhone = teacher?.phone || "";
+
+  // ✅ تحديد إذا كان الـ mode Parent
+  const isParent = formData.type === "parent";
 
   // ✅ جلب بيانات الجهاز عند تحميل الصفحة
   useEffect(() => {
@@ -76,14 +84,14 @@ const Login = () => {
       const errorData = error as any;
       const message = errorData?.response?.data?.message || "";
       
-      // ✅ التحقق من رسالة إيقاف الحساب
       if (message.includes("تم إيقاف الحساب") || 
           message.includes("تم إيقاف") || 
           message.includes("إعادة التفعيل") ||
-          message.includes("جهاز آخر")) {
+          message.includes("جهاز آخر") ||
+          message.includes("تم حظر")) {
         setBlockedMessage(message);
         setShowBlockedModal(true);
-        reset(); // ✅ إعادة تعيين الـ error
+        reset();
       }
     }
   }, [error, reset]);
@@ -95,23 +103,67 @@ const Login = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // ✅ التحقق حسب النوع (من الكود الأول)
+    if (isParent) {
+      if (!formData.password) {
+        toast.error(lang === "ar" ? "الرجاء إدخال كود ولي الأمر" : "Please enter parent code");
+        return;
+      }
+    } else {
+      if (!formData.phone) {
+        toast.error(lang === "ar" ? "الرجاء إدخال رقم الهاتف" : "Please enter phone number");
+        return;
+      }
+      if (!formData.password) {
+        toast.error(lang === "ar" ? "الرجاء إدخال كلمة المرور" : "Please enter password");
+        return;
+      }
+    }
+    
     if (!deviceReady || !deviceData) {
-      console.warn('⏳ انتظر حتى يتم جلب بيانات الجهاز');
+      toast.info(lang === "ar" ? "جاري تجهيز الجهاز..." : "Preparing device...");
       return;
     }
 
-    const payload = {
-      phone: formData.phone,
+    // ✅ تجهيز البيانات للإرسال (من الكود الأول)
+    const payload: LoginPayload = {
       password: formData.password,
-      type: formData.type as "student" | "parent",
+      type: formData.type as 'student' | 'parent',
       device_id: deviceData.device_id,
       fingerprint: deviceData.fingerprint,
       last_ip: deviceData.last_ip,
       user_agent: deviceData.user_agent,
     };
 
+    // ✅ إضافة phone فقط للـ Student
+    if (!isParent) {
+      payload.phone = formData.phone;
+    }
+
     console.log('📤 البيانات المرسلة:', payload);
     login(payload);
+  };
+
+  // ✅ تحديد الـ label والنص والـ placeholder حسب النوع (من الكود الأول)
+  const getPasswordLabel = () => {
+    if (isParent) {
+      return lang === "ar" ? "كود ولي الأمر" : "Parent Code";
+    }
+    return lang === "ar" ? "كلمة المرور" : "Password";
+  };
+
+  const getPasswordPlaceholder = () => {
+    if (isParent) {
+      return lang === "ar" ? "أدخل كود ولي الأمر" : "Enter parent code";
+    }
+    return "••••••••";
+  };
+
+  const getPasswordIcon = () => {
+    if (isParent) {
+      return <KeyRound className="size-4" />;
+    }
+    return <Lock className="size-4" />;
   };
 
   return (
@@ -177,7 +229,7 @@ const Login = () => {
                   <LogIn className="w-5 h-5 text-[#3b5bdb] dark:text-sky-400" />
                 </div>
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-                  {lang === "ar" ? "تسجيل دخول الطالب" : "Student Login"}
+                  {lang === "ar" ? "تسجيل دخول" : "Login"}
                 </h1>
                 <p className="text-slate-500 dark:text-slate-400 mt-1.5 text-sm sm:text-base">
                   {lang === "ar"
@@ -194,63 +246,101 @@ const Login = () => {
                 )}
               </div>
 
-              <div className="flex p-1 mb-6 rounded-xl bg-slate-100 dark:bg-slate-800/80">
+              {/* ✅ Type Selector - محسّن */}
+              <div className="grid grid-cols-2 gap-3 mb-6">
                 <button
                   type="button"
-                  onClick={() => setFormData({ ...formData, type: "student" })}
-                  className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  onClick={() => {
+                    setFormData({ ...formData, type: "student" });
+                  }}
+                  className={`px-4 py-3 rounded-xl text-sm font-bold transition-all ${
                     formData.type === "student"
-                      ? "bg-white dark:bg-slate-700 text-[#3b5bdb] dark:text-sky-400 shadow-sm"
-                      : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                      ? "bg-[#3b5bdb] text-white shadow-lg shadow-[#3b5bdb]/25"
+                      : "bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-[#3b5bdb] dark:hover:border-sky-400"
                   }`}
                 >
                   {lang === "ar" ? "طالب" : "Student"}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFormData({ ...formData, type: "parent" })}
-                  className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  onClick={() => {
+                    setFormData({ ...formData, type: "parent" });
+                  }}
+                  className={`px-4 py-3 rounded-xl text-sm font-bold transition-all ${
                     formData.type === "parent"
-                      ? "bg-white dark:bg-slate-700 text-[#3b5bdb] dark:text-sky-400 shadow-sm"
-                      : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                      ? "bg-[#3b5bdb] text-white shadow-lg shadow-[#3b5bdb]/25"
+                      : "bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-[#3b5bdb] dark:hover:border-sky-400"
                   }`}
                 >
                   {lang === "ar" ? "ولي أمر" : "Parent"}
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    {lang === "ar" ? "رقم الهاتف" : "Phone Number"}
-                  </label>
-                  <div className="relative">
-                    <Phone className={`absolute ${iconPos} top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400`} />
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      className={`w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl ${inputPad} py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#3b5bdb] focus:ring-2 focus:ring-[#3b5bdb]/15 transition-all`}
-                      placeholder="01000000000"
-                      required
-                    />
-                  </div>
+              {/* ✅ توضيح للـ Parent (من الكود الأول) */}
+              {isParent && (
+                <div className="mb-4 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+                  <p className="text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
+                    <ShieldCheck className="size-4" />
+                    {lang === "ar" 
+                      ? "🔑 أدخل كود ولي الأمر للدخول إلى لوحة التحكم"
+                      : "🔑 Enter the parent code to access the dashboard"}
+                  </p>
                 </div>
+              )}
 
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {/* ✅ Phone Field - يظهر للـ Student فقط (من الكود الأول) */}
+                {!isParent && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      {lang === "ar" ? "رقم الهاتف" : "Phone Number"}
+                    </label>
+                    <div className="relative">
+                      <Phone className={`absolute ${iconPos} top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400`} />
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        className={`w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl ${inputPad} py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#3b5bdb] focus:ring-2 focus:ring-[#3b5bdb]/15 transition-all`}
+                        placeholder="01000000000"
+                        required={!isParent}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* ✅ Password Field - محسّن مع أيقونات مختلفة (من الكود الأول) */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    {lang === "ar" ? "كلمة المرور" : "Password"}
+                    {getPasswordLabel()}
+                    {isParent && (
+                      <span className="text-emerald-500 text-xs font-normal mr-1">
+                        ({lang === "ar" ? "مطلوب" : "Required"})
+                      </span>
+                    )}
                   </label>
-                  <div className="relative">
-                    <Lock className={`absolute ${iconPos} top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400`} />
+                  <div className={`relative ${
+                    isParent 
+                      ? 'border-emerald-400 dark:border-emerald-600' 
+                      : 'border-slate-200 dark:border-slate-700'
+                  }`}>
+                    <span className={`absolute ${iconPos} top-1/2 -translate-y-1/2 ${
+                      isParent ? 'text-emerald-500' : 'text-slate-400'
+                    }`}>
+                      {getPasswordIcon()}
+                    </span>
                     <input
                       type={showPassword ? "text" : "password"}
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
-                      className={`w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl ${passwordPad} py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#3b5bdb] focus:ring-2 focus:ring-[#3b5bdb]/15 transition-all`}
-                      placeholder="••••••••"
+                      className={`w-full bg-slate-50 dark:bg-slate-800/60 border rounded-xl ${passwordPad} py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 transition-all ${
+                        isParent 
+                          ? 'border-emerald-400 dark:border-emerald-600 focus:border-emerald-500 focus:ring-emerald-400/30 placeholder:text-emerald-400/60 dark:placeholder:text-emerald-500/60' 
+                          : 'border-slate-200 dark:border-slate-700 focus:border-[#3b5bdb] focus:ring-[#3b5bdb]/15 placeholder:text-slate-400'
+                      }`}
+                      placeholder={getPasswordPlaceholder()}
                       required
                     />
                     <button
@@ -261,6 +351,14 @@ const Login = () => {
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
+                  {isParent && (
+                    <p className="text-[10px] text-emerald-500/70 dark:text-emerald-400/70 mt-1 flex items-center gap-1">
+                      <KeyRound className="size-3" />
+                      {lang === "ar" 
+                        ? "💡 أدخل الكود الخاص بك للوصول إلى لوحة ولي الأمر"
+                        : "💡 Enter your code to access the parent dashboard"}
+                    </p>
+                  )}
                 </div>
 
                 <button
@@ -271,7 +369,10 @@ const Login = () => {
                   {isPending ? (
                     <Loader2 className="w-5 h-5 animate-spin mx-auto" />
                   ) : !deviceReady ? (
-                    lang === "ar" ? "جاري تجهيز الجهاز..." : "Preparing device..."
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      {lang === "ar" ? "جاري تجهيز الجهاز..." : "Preparing device..."}
+                    </span>
                   ) : lang === "ar" ? (
                     "تسجيل الدخول"
                   ) : (

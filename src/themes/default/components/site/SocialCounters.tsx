@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { useLang } from "@/i18n/LanguageContext";
 import { useTeacher } from "@/context/TeacherContext";
-import { useCounter } from "@/hooks/useCounter"; // ✅ إضافة الـ Hook
+import { useCounter } from "@/hooks/useCounter";
 import { 
   Facebook, 
   Youtube, 
@@ -12,7 +12,8 @@ import {
   Globe2,
   Share2,
   Sparkles,
-  ArrowUpRight
+  ArrowUpRight,
+  Instagram
 } from "lucide-react";
 import { FaTiktok } from "react-icons/fa";
 
@@ -58,14 +59,14 @@ export const SocialCounters = () => {
 
   // استخراج البيانات (تحويل إلى أرقام)
   const facebookCount = parseInt(about?.facebook_count) || 0;
-  const googleCount = parseInt(about?.google_count) || 0;
+  const googleCount = parseInt(about?.google_count) || 0; // ✅ نفس الـ key في البيانات
   const tiktokCount = parseInt(about?.tiktok_count) || 0;
   const youtubeCount = parseInt(about?.you_tube_count) || 0;
 
   // حساب الإجمالي
   const total = facebookCount + googleCount + tiktokCount + youtubeCount;
 
-  // بيانات السوشيال ميديا
+  // بيانات السوشيال ميديا - google بقت Instagram ✅
   const socialData = [
     {
       id: 'facebook',
@@ -81,23 +82,23 @@ export const SocialCounters = () => {
       iconBg: "bg-[#1877F2]/10",
       border: "border-[#1877F2]/20",
       shadow: "shadow-[#1877F2]/20",
-      link: about?.facebook_meta || undefined,
+      link: undefined, // ❌ مفيش رابط
     },
     {
-      id: 'google',
-      label: "Google",
-      labelAr: "جوجل",
-      count: googleCount,
-      icon: Globe2,
-      color: "#4285F4",
-      gradient: "from-[#4285F4] to-[#34A853]",
-      bg: "bg-[#4285F4]/10",
-      hoverBg: "hover:bg-[#4285F4]/20",
-      textColor: "text-[#4285F4]",
-      iconBg: "bg-[#4285F4]/10",
-      border: "border-[#4285F4]/20",
-      shadow: "shadow-[#4285F4]/20",
-      link: about?.google_meta || undefined,
+      id: 'instagram', // ✅ id changed to instagram
+      label: "Instagram", // ✅ label changed
+      labelAr: "انستجرام", // ✅ labelAr changed
+      count: googleCount, // ✅ نفس القيمة من google_count
+      icon: Instagram, // ✅ أيقونة انستجرام
+      color: "#E4405F",
+      gradient: "from-[#E4405F] to-[#C13584]",
+      bg: "bg-[#E4405F]/10",
+      hoverBg: "hover:bg-[#E4405F]/20",
+      textColor: "text-[#E4405F]",
+      iconBg: "bg-[#E4405F]/10",
+      border: "border-[#E4405F]/20",
+      shadow: "shadow-[#E4405F]/20",
+      link: undefined, // ❌ مفيش رابط
     },
     {
       id: 'tiktok',
@@ -113,7 +114,7 @@ export const SocialCounters = () => {
       iconBg: "bg-gray-100 dark:bg-gray-800",
       border: "border-gray-200 dark:border-gray-700",
       shadow: "shadow-gray-500/20",
-      link: about?.tiktok_meta || undefined,
+      link: undefined, // ❌ مفيش رابط
     },
     {
       id: 'youtube',
@@ -129,7 +130,7 @@ export const SocialCounters = () => {
       iconBg: "bg-[#FF0000]/10",
       border: "border-[#FF0000]/20",
       shadow: "shadow-[#FF0000]/20",
-      link: about?.you_tube_meta || undefined,
+      link: undefined, // ❌ مفيش رابط
     },
   ];
 
@@ -217,11 +218,8 @@ export const SocialCounters = () => {
             const Icon = item.icon;
 
             return (
-              <motion.a
+              <motion.div // ❌ changed from motion.a to motion.div (no link)
                 key={item.id}
-                href={item.link || '#'}
-                target="_blank"
-                rel="noopener noreferrer"
                 initial={{ opacity: 0, y: 30, scale: 0.95 }}
                 whileInView={{ opacity: 1, y: 0, scale: 1 }}
                 viewport={{ once: true }}
@@ -236,7 +234,7 @@ export const SocialCounters = () => {
                   scale: 1.02,
                   transition: { duration: 0.2 }
                 }}
-                className="group relative"
+                className="group cursor-default" // ✅ cursor-default بدلاً من pointer
               >
                 <div className={`relative p-6 md:p-8 rounded-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border ${item.border} shadow-lg ${item.shadow} transition-all duration-300 hover:shadow-2xl`}>
                   
@@ -254,21 +252,20 @@ export const SocialCounters = () => {
                         <AnimatedCounter 
                           target={item.count} 
                           suffix="+"
-                          duration={2000 + index * 300} // كل كارد بسرعة مختلفة
+                          duration={2000 + index * 300}
                         />
                       </p>
                     </div>
 
-                    {/* ✅ الاسم والسهم */}
-                    <div className="mt-3 flex items-center justify-between">
+                    {/* ✅ الاسم فقط بدون سهم */}
+                    <div className="mt-3">
                       <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                         {lang === "ar" ? item.labelAr : item.label}
                       </p>
-                      <ArrowUpRight className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                   </div>
                 </div>
-              </motion.a>
+              </motion.div>
             );
           })}
         </div>

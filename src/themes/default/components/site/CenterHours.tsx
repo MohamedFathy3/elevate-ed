@@ -20,6 +20,8 @@ import {
   Leaf,
   Sun,
   Moon,
+  BookOpen,
+  GraduationCap,
 } from "lucide-react";
 
 export const CenterHours = () => {
@@ -53,7 +55,6 @@ export const CenterHours = () => {
   const getDateDisplay = (dateStr: string) => {
     if (!dateStr) return '';
     
-    // لو التاريخ جاي كـ اسم يوم
     const weekdaysAr = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
     const weekdaysEn = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     
@@ -61,7 +62,6 @@ export const CenterHours = () => {
       return dateStr;
     }
     
-    // لو التاريخ جاي كـ ISO date
     try {
       const date = new Date(dateStr);
       if (!isNaN(date.getTime())) {
@@ -124,7 +124,6 @@ export const CenterHours = () => {
   // ترتيب التواريخ
   const sortedDates = Object.keys(groupedHours);
 
-  // الألوان حسب الثيم
   const accentColor = isNature ? 'amber' : 'accent';
   const gradientFrom = isNature ? 'from-amber-500' : 'from-accent';
   const gradientTo = isNature ? 'to-orange-500' : 'to-pink-500';
@@ -309,41 +308,73 @@ export const CenterHours = () => {
                               ? 'bg-white/80 border-amber-100 hover:bg-amber-50' 
                               : 'bg-card/40 border-border hover:bg-accent/5'}`}
                         >
-                          <div className="flex items-center justify-between flex-wrap gap-4">
-                            <div className="flex items-center gap-4">
-                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center
-                                ${isNature 
-                                  ? 'bg-amber-100' 
-                                  : 'bg-accent/10'}`}>
-                                <Clock className={`w-5 h-5 ${isNature ? 'text-amber-600' : 'text-accent'}`} />
-                              </div>
-                              <div>
-                                <h4 className={`font-semibold ${isNature ? 'text-amber-800' : ''}`}>
-                                  {hour.title}
-                                </h4>
-                                <div className="flex flex-wrap items-center gap-3 text-sm text-foreground/50 mt-1">
-                                  <div className="flex items-center gap-1">
-                                    <Clock className="w-3 h-3" />
-                                    <span>{timeDisplay || hour.hours || 'وقت غير محدد'}</span>
+                          <div className="flex flex-col gap-3">
+                            {/* ✅ الصف الأول: العنوان والوقت */}
+                            <div className="flex items-center justify-between flex-wrap gap-4">
+                              <div className="flex items-center gap-4">
+                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center
+                                  ${isNature 
+                                    ? 'bg-amber-100' 
+                                    : 'bg-accent/10'}`}>
+                                  <Clock className={`w-5 h-5 ${isNature ? 'text-amber-600' : 'text-accent'}`} />
+                                </div>
+                                <div>
+                                  <h4 className={`font-semibold ${isNature ? 'text-amber-800' : ''}`}>
+                                    {hour.title}
+                                  </h4>
+                                  <div className="flex flex-wrap items-center gap-3 text-sm text-foreground/50 mt-1">
+                                    <div className="flex items-center gap-1">
+                                      <Clock className="w-3 h-3" />
+                                      <span>{timeDisplay || hour.hours || 'وقت غير محدد'}</span>
+                                    </div>
+                                    {address && (
+                                      <div className="flex items-center gap-1">
+                                        <MapPin className="w-3 h-3" />
+                                        <span className="truncate max-w-[150px]">{address}</span>
+                                      </div>
+                                    )}
+                                    {phone && (
+                                      <div className="flex items-center gap-1">
+                                        <span>📞</span>
+                                        <span>{phone}</span>
+                                      </div>
+                                    )}
                                   </div>
-                                  {address && (
-                                    <div className="flex items-center gap-1">
-                                      <MapPin className="w-3 h-3" />
-                                      <span>{address}</span>
-                                    </div>
-                                  )}
-                                  {phone && (
-                                    <div className="flex items-center gap-1">
-                                      <span>📞</span>
-                                      <span>{phone}</span>
-                                    </div>
-                                  )}
                                 </div>
                               </div>
+                              {hour.note && (
+                                <div className="px-3 py-1.5 rounded-full bg-yellow-500/10 text-yellow-600 text-xs">
+                                  📌 {hour.note}
+                                </div>
+                              )}
                             </div>
-                            {hour.note && (
-                              <div className="px-3 py-1.5 rounded-full bg-yellow-500/10 text-yellow-600 text-xs">
-                                📌 {hour.note}
+
+                            {/* ✅ الصف الثاني: المرحلة والمادة */}
+                            {(hour.stage || hour.subject) && (
+                              <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-border/50">
+                                {/* ✅ المرحلة */}
+                                {hour.stage && (
+                                  <div className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium
+                                    ${isNature 
+                                      ? 'bg-blue-100 text-blue-700' 
+                                      : 'bg-blue-500/10 text-blue-600'}`}>
+                                    <GraduationCap className="w-3.5 h-3.5" />
+                                    <span>{hour.stage}</span>
+                                  </div>
+                                )}
+                                
+                                {/* ✅ المادة */}
+                                {hour.subject && (
+                                  <div className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium
+                                    ${isNature 
+                                      ? 'bg-green-100 text-green-700' 
+                                      : 'bg-green-500/10 text-green-600'}`}>
+                                    <BookOpen className="w-3.5 h-3.5" />
+                                    <span>{hour.subject}</span>
+                                  </div>
+                                )}
+
+                              
                               </div>
                             )}
                           </div>

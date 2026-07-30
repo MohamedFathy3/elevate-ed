@@ -324,11 +324,16 @@ export const About = () => {
                 </div>
                 <div>
                   <h4 className="font-bold text-gray-900 dark:text-white">
-                    {lang === "ar" ? "أفضل منصة تعلمية" : "Best Platform"}
+                     {parse(about?.sub_title, about?.sub_title) || (
+                <>
+                  {lang === "ar" ? "تجربة تعليمية" : "Modern Learning"}{" "}
+                  <span className={isNature ? 'text-emerald-600 dark:text-emerald-400' : 'text-primary'}>
+                    {lang === "ar" ? "بمستوى جديد" : "Experience"}
+                  </span>
+                </>
+              )}
                   </h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {lang === "ar" ? "تقييم 4.9/5" : "Rating 4.9/5"}
-                  </p>
+                 
                 </div>
               </div>
             </div>

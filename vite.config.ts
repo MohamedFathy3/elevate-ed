@@ -23,7 +23,7 @@ const getAllowedHosts = (envHosts: string) => {
   return envHosts.split(',').map(host => host.trim());
 };
 
-// https://vitejs.dev/config/
+
 export default defineConfig(({ mode }) => {
   const isDevelopment = isDev(mode);
   
@@ -40,8 +40,8 @@ export default defineConfig(({ mode }) => {
   
   const sanctumTarget = getEnvVar('VITE_SANCTUM_TARGET', 'https://web-lec.com/');
   
-  const allowedHostsEnv = getEnvVar('VITE_ALLOWED_HOSTS', 'dentin.cloud,localhost,127.0.0.1,::1,.dentin.cloud');
-  const allowedHosts = getAllowedHosts(allowedHostsEnv);
+const allowedHostsEnv = getEnvVar('VITE_ALLOWED_HOSTS', 'web-lec.com,localhost,127.0.0.1,::1,.dentin.cloud');
+const allowedHosts = [...getAllowedHosts(allowedHostsEnv), 'mrteacherplanet.web-lec.com'];
 
   return {
     server: {

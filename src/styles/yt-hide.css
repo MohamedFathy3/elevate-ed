@@ -1,0 +1,108 @@
+/* src/styles/yt-hide.css */
+
+/* ✅ حماية في وضع ملء الشاشة */
+:fullscreen .fullscreen-protection,
+:-webkit-full-screen .fullscreen-protection,
+:-moz-full-screen .fullscreen-protection,
+:-ms-fullscreen .fullscreen-protection {
+  display: block !important;
+  pointer-events: auto !important;
+  z-index: 9999 !important;
+}
+
+/* ✅ إخفاء عناصر يوتيوب في وضع ملء الشاشة */
+:fullscreen .ytp-watermark,
+:fullscreen .ytp-share-button,
+:fullscreen .ytp-youtube-button,
+:fullscreen .ytp-chrome-top-buttons,
+:fullscreen .ytp-title-link,
+:fullscreen .ytp-title-channel,
+:fullscreen .ytp-watch-later-button,
+:fullscreen .ytp-subtitles-button,
+:fullscreen .ytp-settings-button,
+:fullscreen .ytp-fullscreen-button,
+:fullscreen .ytp-size-button,
+:fullscreen .ytp-pip-button,
+:fullscreen .ytp-report-button,
+:fullscreen .ytp-feedback-button,
+:fullscreen .ytp-cc-button,
+:fullscreen .ytp-speed-button,
+:fullscreen .ytp-quality-button,
+:fullscreen .ytp-loop-button,
+:fullscreen .ytp-chromecast-button,
+:fullscreen .ytp-playlist-menu-button,
+:fullscreen .ytp-prev-button,
+:fullscreen .ytp-next-button,
+:fullscreen .youtube-attribution,
+:fullscreen .ytp-gradient-top,
+:fullscreen .ytp-gradient-bottom,
+:fullscreen .ytp-progress-bar,
+:fullscreen .ytp-chapter-title,
+:fullscreen .ytp-time-display,
+:fullscreen .ytp-live-badge,
+:fullscreen .ytp-endscreen-content,
+:fullscreen .ytp-endscreen-paginate,
+:fullscreen .ytp-caption-window-container,
+:fullscreen .ytp-ad-overlay-container,
+:fullscreen .ytp-ad-image-overlay,
+:fullscreen .ytp-ad-text-overlay,
+:fullscreen .ytp-ad-player-overlay,
+:fullscreen .ytp-youtube-button,
+:fullscreen .ytp-button[data-tooltip-target-id="ytp-youtube-button"],
+:fullscreen a[href*="youtube.com"][target="_blank"],
+:fullscreen .ytp-cued-thumbnail-overlay,
+:fullscreen .ytp-share-panel-container,
+:fullscreen .ytp-share-panel-inner,
+:fullscreen .ytp-tooltip,
+:fullscreen .ytp-tooltip-text-wrapper,
+:fullscreen .ytp-tooltip-bg {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* ✅ منع تحديد النص في وضع ملء الشاشة */
+:fullscreen *,
+:-webkit-full-screen *,
+:-moz-full-screen *,
+:-ms-fullscreen * {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+
+/* ✅ منع سحب الصور في وضع ملء الشاشة */
+:fullscreen img,
+:fullscreen a,
+:fullscreen video,
+:fullscreen iframe,
+:-webkit-full-screen img,
+:-webkit-full-screen a,
+:-webkit-full-screen video,
+:-webkit-full-screen iframe {
+  -webkit-user-drag: none !important;
+  user-drag: none !important;
+}
+
+/* ✅ زر التكبير يظهر في وضع الملء */
+:fullscreen .fullscreen-button,
+:-webkit-full-screen .fullscreen-button,
+:-moz-full-screen .fullscreen-button,
+:-ms-fullscreen .fullscreen-button {
+  opacity: 1 !important;
+}
+
+/* ✅ منع النقر المزدوج في وضع الملء */
+:fullscreen video,
+:-webkit-full-screen video,
+:-moz-full-screen video,
+:-ms-fullscreen video {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}

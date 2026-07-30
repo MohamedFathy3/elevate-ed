@@ -1,5 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect, useRef, useMemo } from "react";
+import React, { 
+  useState, 
+  useEffect, 
+  useRef, 
+  useMemo, 
+  lazy, 
+  Suspense, 
+  memo, 
+  useCallback 
+} from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useLang } from "@/i18n/LanguageContext";
 import { useLessonDetails } from "@/hooks/useLessonDetails";
@@ -7,137 +16,224 @@ import { useCurrentStudent } from "@/hooks/useStudent";
 import { useAttendance } from "@/hooks/useAttendance";
 import { useWatermark } from '@/hooks/useWatermark';
 import { usePreventScreenshot } from '@/hooks/usePreventScreenshot';
-import {useAdvancedProtection}  from '@/hooks/useScreenRecorderProtection'; // ✅ إضافة
+import { useAdvancedProtection } from '@/hooks/useScreenRecorderProtection';
 import { motion } from "framer-motion";
-import { AlertCircle, ArrowRight, FileQuestion, Lock, Unlock, CheckCircle, Loader2, XCircle, Play } from "lucide-react";
+import { AlertCircle, ArrowRight, FileQuestion, Lock, Unlock, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { enableFullProtection } from "@/utils/protection";
 import Cookies from "js-cookie";
 import { useTeacher } from "@/context/TeacherContext";
 
-// ✅ Imports المكونات الموجودة
-import { VideoPlayer } from "@/components/lesson/video/VideoPlayer";
-import { LessonBreadcrumb } from "@/components/lesson/LessonBreadcrumb";
-import { LessonPartsList } from "@/components/lesson/LessonSidebar/LessonPartsList";
-import { AssignmentsList } from "@/components/lesson/LessonSidebar/AssignmentsList";
-import { LessonSkeleton } from "@/components/lesson/LessonSkeleton";
-import { useLessonParts } from "@/hooks/useLessonParts";
+// ✅ دالة مساعدة للـ Lazy Loading
+const lazyLoad = <T extends React.ComponentType<any>>(
+  importFn: () => Promise<{ default?: T } | { [key: string]: T }>
+) => {
+  return lazy(() =>
+    importFn().then((module) => {
+      if (module.default) {
+        return { default: module.default };
+      }
+      const namedExport = Object.values(module).find(
+        (value) => typeof value === 'function' || typeof value === 'object'
+      ) as T;
+      return { default: namedExport };
+    })
+  );
+};
 
-// ✅ Imports المكونات الجديدة
-import { ContactTeacherModal } from "@/components/lesson/LessonPage/components/ContactTeacherModal";
-import { ExamCard } from "@/components/lesson/LessonPage/components/ExamCard";
-import { AssignmentCard } from "@/components/lesson/LessonPage/components/AssignmentCard";
+// ✅ Lazy Loading
+const VideoPlayer = lazyLoad(() => import("@/components/lesson/video/VideoPlayer"));
+const LessonBreadcrumb = lazyLoad(() => import("@/components/lesson/LessonBreadcrumb"));
+const LessonPartsList = lazyLoad(() => import("@/components/lesson/LessonSidebar/LessonPartsList"));
+const LessonSkeleton = lazyLoad(() => import("@/components/lesson/LessonSkeleton"));
+const LessonFiles = lazyLoad(() => import("@/components/lesson/LessonPage/components/LessonFiles"));
+const ContactTeacherModal = lazyLoad(() => import("@/components/lesson/LessonPage/components/ContactTeacherModal"));
+const ExamCard = lazyLoad(() => import("@/components/lesson/LessonPage/components/ExamCard"));
+const AssignmentCard = lazyLoad(() => import("@/components/lesson/LessonPage/components/AssignmentCard"));
+
+// ✅ Hooks
+import { useLessonParts } from "@/hooks/useLessonParts";
 import { useExamResults } from "@/hooks/useExamResults";
 import { useAssignmentResults } from "@/hooks/useAssignmentResults";
 
-const LessonPage = () => {
+// ✅ Skeleton ثابت - بدون animate-pulse لتقليل CLS
+const LoadingSkeleton = memo(({ lang }: { lang: string }) => (
+  <div className="min-h-screen pt-32 pb-20 bg-gray-50 dark:bg-gray-950">
+    <div className="container-tight max-w-7xl mx-auto px-4">
+      {/* ✅ أبعاد ثابتة لمنع CLS */}
+      <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-6"></div>
+      <div className="grid lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <div className="bg-gray-200 dark:bg-gray-700 rounded-2xl aspect-video"></div>
+          <div className="mt-6 bg-gray-200 dark:bg-gray-700 rounded-2xl h-32"></div>
+        </div>
+        <div className="space-y-6">
+          <div className="bg-gray-200 dark:bg-gray-700 rounded-2xl h-64"></div>
+          <div className="bg-gray-200 dark:bg-gray-700 rounded-2xl h-48"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+));
+
+LoadingSkeleton.displayName = 'LoadingSkeleton';
+
+// ✅ المكون الرئيسي
+const LessonPage = memo(() => {
   const { lang, dir } = useLang();
   const { slug, lessonId } = useParams();
   const navigate = useNavigate();
   const { student } = useCurrentStudent();
   const { teacher } = useTeacher();
   
+  const initialPartIndexRef = useRef<number | null>(null);
+  const attendanceAttempted = useRef(false);
+  const isMounted = useRef(true);
+  
+  // ✅ قراءة query parameter
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const partParam = params.get('part');
+    if (partParam !== null) {
+      const index = parseInt(partParam);
+      if (!isNaN(index) && index >= 0) {
+        initialPartIndexRef.current = index;
+      }
+    }
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
   const lessonIdNum = parseInt(lessonId || '0');
+  
   const { data: lessonData, isLoading, refetch: refetchLesson } = useLessonDetails(
     lessonIdNum,
     student?.id
   );
   const lesson = lessonData?.data;
   
-  const { parts, currentPart, selectedPartIndex, selectPart, totalParts } = useLessonParts(lesson);
+  const memoizedLesson = useMemo(() => lesson, [lesson]);
+  
+  const { parts, currentPart, selectedPartIndex, selectPart, totalParts } = useLessonParts(memoizedLesson);
+  
+  // ✅ اختيار الجزء
+  useEffect(() => {
+    if (initialPartIndexRef.current !== null && parts.length > 0 && isMounted.current) {
+      const partIndex = initialPartIndexRef.current;
+      if (partIndex >= 0 && partIndex < parts.length) {
+        selectPart(partIndex);
+        toast.success(
+          lang === "ar"
+            ? `📺 تم فتح الجزء: ${parts[partIndex]?.title_ar || parts[partIndex]?.title}`
+            : `📺 Opened part: ${parts[partIndex]?.title}`
+        );
+      }
+    }
+  }, [parts, selectPart, lang]);
+
   const { mutate: markAttendance, isPending: attendancePending, isSuccess: attendanceSuccess } = useAttendance();
-  const attendanceAttempted = useRef(false);
 
   const [attended, setAttended] = useState(false);
-  const [videoError, setVideoError] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [contactModalType, setContactModalType] = useState<'default' | 'exam_hidden' | 'need_support'>('default');
-  const [failedExams, setFailedExams] = useState<any[]>([]);
 
-  const exams = lesson?.exams || [];
-  const assignments = lesson?.assignments || [];
+  const exams = memoizedLesson?.exams || [];
+  const assignments = memoizedLesson?.assignments || [];
   
   const { examStatuses, loadingExams, setExamStatuses } = useExamResults(exams, student?.id || 0);
   const { assignmentStatuses, loadingAssignments } = useAssignmentResults(assignments, student?.id || 0);
 
-  // ✅ تفعيل الحماية المتقدمة
-  const { BlueScreen, isRecording, resetProtection } = useAdvancedProtection({
+  // ✅ تفعيل الحماية (مؤجل)
+  const { BlueScreen } = useAdvancedProtection({
     enabled: true,
-     sensitivity: 'medium',
-  showBlueScreen: true,
-  preventDevTools: true, // ✅ منع أدوات المطور
-  preventExternalLinks: true,
-    onDetect: () => {
+    sensitivity: 'medium',
+    showBlueScreen: true,
+    preventDevTools: true,
+    preventExternalLinks: true,
+    onDetect: useCallback(() => {
       console.warn('⚠️ تم اكتشاف محاولة تصوير!');
       toast.error(
         lang === "ar" 
           ? "⚠️ تم اكتشاف محاولة تصوير الشاشة! تم إيقاف الفيديو."
           : "⚠️ Screen recording detected! Video paused."
       );
-    }
+    }, [lang])
   });
 
-  // Watermark
-  const watermarkText = student
-    ? `${student.name} | ID: ${student.id} | ${new Date().toLocaleDateString('ar-EG')}`
-    : 'زائر | يرجى تسجيل الدخول';
+  // ✅ Watermark - مع تأخير لتقليل LCP و CLS
+  const watermarkText = useMemo(() => {
+    if (!student) return 'زائر | يرجى تسجيل الدخول';
+    return `${student.name} | ID: ${student.id} | ${new Date().toLocaleDateString('ar-EG')}`;
+  }, [student]);
+
+  // ✅ تأخير تفعيل العلامة المائية
+  const [watermarkEnabled, setWatermarkEnabled] = useState(false);
+  
+  useEffect(() => {
+    // ✅ تفعيل بعد تحميل الصفحة بالكامل
+    const timer = setTimeout(() => {
+      setWatermarkEnabled(true);
+    }, 2000);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   usePreventScreenshot(true);
-  useWatermark(watermarkText, true);
+  
+  // ✅ تفعيل العلامة المائية فقط بعد التأخير
+  useWatermark(watermarkText, watermarkEnabled);
 
-  // Attendance cookie functions
-  const getAttendanceCookieKey = () => `attendance_${slug}_${lessonId}`;
-  const hasAttendanceCookie = () => Cookies.get(getAttendanceCookieKey()) === 'true';
-  const setAttendanceCookie = () => {
+  // ✅ Attendance
+  const getAttendanceCookieKey = useCallback(() => `attendance_${slug}_${lessonId}`, [slug, lessonId]);
+  const hasAttendanceCookie = useCallback(() => Cookies.get(getAttendanceCookieKey()) === 'true', [getAttendanceCookieKey]);
+  const setAttendanceCookie = useCallback(() => {
     Cookies.set(getAttendanceCookieKey(), 'true', { expires: 365, path: '/', sameSite: 'Lax' });
-  };
+  }, [getAttendanceCookieKey]);
 
-  // Sync attendance
   useEffect(() => {
-    if (lesson) {
+    if (memoizedLesson && isMounted.current) {
       const cookieAttended = hasAttendanceCookie();
-      setAttended(cookieAttended || lesson.attended || false);
+      setAttended(cookieAttended || memoizedLesson.attended || false);
     }
-  }, [lesson]);
+  }, [memoizedLesson, hasAttendanceCookie]);
 
-  // Record attendance
   useEffect(() => {
+    if (!isMounted.current) return;
+    
     const shouldRecordAttendance = 
       student?.id && 
       lessonIdNum && 
-      lesson && 
+      memoizedLesson && 
       !attendanceAttempted.current &&
       !hasAttendanceCookie() &&
-      !lesson.attended &&
+      !memoizedLesson.attended &&
       !!Cookies.get('student_token');
 
     if (shouldRecordAttendance) {
       attendanceAttempted.current = true;
-      markAttendance({ lesson_id: lessonIdNum, student_id: student.id, slug });
+      markAttendance({ lesson_id: lessonIdNum, student_id: student.id, slug: slug || '' });
     }
-  }, [student?.id, lessonIdNum, lesson, markAttendance, slug]);
+  }, [student?.id, lessonIdNum, memoizedLesson, markAttendance, slug, hasAttendanceCookie]);
 
   useEffect(() => {
-    if (attendanceSuccess) {
+    if (attendanceSuccess && isMounted.current) {
       setAttended(true);
       setAttendanceCookie();
       refetchLesson();
     }
-  }, [attendanceSuccess, refetchLesson]);
+  }, [attendanceSuccess, refetchLesson, setAttendanceCookie]);
 
-  // ✅ المنطق: تحديد الامتحان النشط
-  const { activeExamIndex, examVisibility } = useMemo(() => {
+  // ✅ منطق الامتحانات - محسن
+  const { activeExamIndex } = useMemo(() => {
     if (exams.length === 0 || loadingExams) {
-      return { activeExamIndex: -1, examVisibility: {} };
+      return { activeExamIndex: -1 };
     }
 
-    const visibility: Record<number, boolean> = {};
     let firstFailedIndex = -1;
-
     for (let i = 0; i < exams.length; i++) {
       const exam = exams[i];
       const status = examStatuses[exam.id];
-
       if (status?.failed === true) {
         firstFailedIndex = i;
         break;
@@ -145,7 +241,6 @@ const LessonPage = () => {
     }
 
     let activeIdx = -1;
-    
     if (firstFailedIndex !== -1) {
       activeIdx = firstFailedIndex;
     } else if (!examStatuses[exams[0]?.id]?.checked) {
@@ -158,24 +253,12 @@ const LessonPage = () => {
       activeIdx = allPassed ? -2 : -1;
     }
 
-    visibility[exams[0]?.id] = true;
-
-    for (let i = 1; i < exams.length; i++) {
-      const currentExam = exams[i];
-      const prevExam = exams[i - 1];
-      const prevStatus = examStatuses[prevExam?.id];
-      
-      const shouldShow = prevStatus?.failed === true;
-      
-      visibility[currentExam.id] = shouldShow;
-    }
-
-    return { activeExamIndex: activeIdx, examVisibility: visibility };
+    return { activeExamIndex: activeIdx };
   }, [exams, examStatuses, loadingExams]);
 
-  // ✅ تحديث حالة القفل والإخفاء لكل امتحان
+  // ✅ تحديث حالة القفل - محسن
   useEffect(() => {
-    if (Object.keys(examStatuses).length === 0 || loadingExams) return;
+    if (Object.keys(examStatuses).length === 0 || loadingExams || !isMounted.current) return;
 
     let hasChanges = false;
     const newStatuses = { ...examStatuses };
@@ -214,35 +297,40 @@ const LessonPage = () => {
     if (hasChanges) {
       setExamStatuses(newStatuses);
     }
-  }, [exams, loadingExams]);
+  }, [exams, examStatuses, loadingExams, setExamStatuses]);
 
-  // ✅ هل يقدر يشوف الفيديو؟
-const canWatch = useMemo(() => {
-  if (!lesson?.must_pass_to_unlock) return true;
-  if (exams.length === 0) return true;
-  if (loadingExams) return false;
-  
-  const allPassed = exams.every((exam: any) => {
-    const status = examStatuses[exam.id];
-    return status?.passed === true;
-  });
-  
-  return allPassed;
-}, [lesson?.must_pass_to_unlock, exams, examStatuses, loadingExams]);
+  const canWatch = useMemo(() => {
+    if (!memoizedLesson?.must_pass_to_unlock) return true;
+    if (exams.length === 0) return true;
+    if (loadingExams) return false;
+    
+    return exams.every((exam: any) => {
+      const status = examStatuses[exam.id];
+      return status?.passed === true;
+    });
+  }, [memoizedLesson?.must_pass_to_unlock, exams, examStatuses, loadingExams]);
 
-  // ✅ عرض مودال التواصل مع المعلم
+  // ✅ عرض المودال - محسن
   useEffect(() => {
-    if (lesson?.need_support === true) {
-      const timer = setTimeout(() => {
-        setContactModalType('need_support');
-        setShowContactModal(true);
+    if (!isMounted.current) return;
+
+    let timer: NodeJS.Timeout;
+
+    const showModal = (type: 'default' | 'exam_hidden' | 'need_support') => {
+      timer = setTimeout(() => {
+        if (isMounted.current) {
+          setContactModalType(type);
+          setShowContactModal(true);
+        }
       }, 500);
+    };
+
+    if (memoizedLesson?.need_support === true) {
+      showModal('need_support');
       return () => clearTimeout(timer);
     }
 
-    if (!lesson?.must_pass_to_unlock) return;
-    if (loadingExams) return;
-    if (exams.length === 0) return;
+    if (!memoizedLesson?.must_pass_to_unlock || loadingExams || exams.length === 0) return;
     
     const hiddenExams = exams.filter((exam: any) => {
       const status = examStatuses[exam.id];
@@ -250,10 +338,7 @@ const canWatch = useMemo(() => {
     });
     
     if (hiddenExams.length > 0) {
-      const timer = setTimeout(() => {
-        setContactModalType('exam_hidden');
-        setShowContactModal(true);
-      }, 500);
+      showModal('exam_hidden');
       return () => clearTimeout(timer);
     }
     
@@ -269,32 +354,37 @@ const canWatch = useMemo(() => {
       });
       
       if (allExamsDone) {
-        const timer = setTimeout(() => {
-          setContactModalType('default');
-          setShowContactModal(true);
-        }, 500);
+        showModal('default');
         return () => clearTimeout(timer);
       }
     }
-  }, [lesson?.need_support, lesson?.must_pass_to_unlock, exams, examStatuses, loadingExams]);
 
-  // Enable protection
+    return () => clearTimeout(timer);
+  }, [memoizedLesson?.need_support, memoizedLesson?.must_pass_to_unlock, exams, examStatuses, loadingExams]);
+
+  // ✅ Enable protection (مؤجل)
   useEffect(() => {
-    enableFullProtection();
+    const timer = setTimeout(() => {
+      enableFullProtection();
+    }, 1000);
+    return () => clearTimeout(timer);
   }, []);
 
-  // Handlers
-  const handlePartChange = (index: number) => {
+  // ✅ Handlers - محسنة مع useCallback
+  const handlePartChange = useCallback((index: number) => {
     selectPart(index);
-    setVideoError(false);
+    
+    const newUrl = `/lesson/${lessonId}?part=${index}`;
+    window.history.replaceState({}, '', newUrl);
+    
     toast.success(
       lang === "ar"
         ? `تم التبديل إلى: ${parts[index]?.title_ar || parts[index]?.title}`
         : `Switched to: ${parts[index]?.title}`
     );
-  };
+  }, [selectPart, lessonId, parts, lang]);
 
-  const handleStartExam = (examId: number) => {
+  const handleStartExam = useCallback((examId: number) => {
     const status = examStatuses[examId];
     
     if (status?.waitingResult) {
@@ -313,9 +403,9 @@ const canWatch = useMemo(() => {
     }
     
     navigate(`/exam/${examId}?redirect=${encodeURIComponent(window.location.pathname)}`);
-  };
+  }, [examStatuses, navigate, lang]);
 
-  const handleStartAssignment = (assignmentId: number) => {
+  const handleStartAssignment = useCallback((assignmentId: number) => {
     const status = assignmentStatuses[assignmentId];
     
     if (status?.waitingResult) {
@@ -334,33 +424,39 @@ const canWatch = useMemo(() => {
     }
     
     navigate(`/exam/${assignmentId}?redirect=${encodeURIComponent(window.location.pathname)}`);
-  };
+  }, [assignmentStatuses, navigate, lang]);
 
-  const getVideoUrlFromPart = (part: any) => {
+  const getVideoUrlFromPart = useCallback((part: any) => {
     if (!part) return null;
     return part.videoUrl || part.video_url || part.link_video || part.content_link || null;
-  };
+  }, []);
 
-  const getVideoUrl = (url: string) => {
+  const getVideoUrl = useCallback((url: string) => {
     if (!url) return null;
     if (url.includes('youtube.com/watch?v=')) {
       const videoId = url.split('v=')[1]?.split('&')[0];
-      return `https://www.youtube.com/embed/${videoId}?enablejsapi=1`;
+      return `https://www.youtube.com/embed/${videoId}?enablejsapi=1&rel=0&modestbranding=1`;
     }
     if (url.includes('youtu.be/')) {
       const videoId = url.split('youtu.be/')[1]?.split('?')[0];
-      return `https://www.youtube.com/embed/${videoId}?enablejsapi=1`;
+      return `https://www.youtube.com/embed/${videoId}?enablejsapi=1&rel=0&modestbranding=1`;
     }
     return url;
-  };
+  }, []);
 
-  const partVideoUrl = getVideoUrlFromPart(currentPart);
-  const lessonVideoUrl = lesson?.content_link || lesson?.video_url;
-  const finalVideoUrl = partVideoUrl || lessonVideoUrl;
+  const partVideoUrl = useMemo(() => getVideoUrlFromPart(currentPart), [currentPart, getVideoUrlFromPart]);
+  const lessonVideoUrl = useMemo(() => memoizedLesson?.content_link || memoizedLesson?.video_url, [memoizedLesson]);
+  const finalVideoUrl = useMemo(() => partVideoUrl || lessonVideoUrl, [partVideoUrl, lessonVideoUrl]);
 
-  if (isLoading) return <LessonSkeleton lang={lang} />;
+  if (isLoading) {
+    return (
+      <Suspense fallback={<LoadingSkeleton lang={lang} />}>
+        <LessonSkeleton lang={lang} />
+      </Suspense>
+    );
+  }
 
-  if (!lesson) {
+  if (!memoizedLesson) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-32">
         <div className="text-center">
@@ -380,15 +476,16 @@ const canWatch = useMemo(() => {
 
   return (
     <>
-      {/* ✅ شاشة الحماية الزرقاء */}
       {BlueScreen}
 
       <div className="min-h-screen pt-32 pb-20 bg-gray-50 dark:bg-gray-950" dir={dir}>
         <div className="container-tight max-w-7xl mx-auto px-4">
-          <LessonBreadcrumb slug={slug || ''} title={lesson.title} />
+          <Suspense fallback={<div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-6"></div>}>
+            <LessonBreadcrumb slug={slug || ''} title={memoizedLesson.title} />
+          </Suspense>
 
           {/* تقدم الامتحانات */}
-          {lesson?.must_pass_to_unlock && exams.length > 0 && (
+          {memoizedLesson?.must_pass_to_unlock && exams.length > 0 && (
             <div className="mb-6 p-4 rounded-xl border bg-white dark:bg-gray-900 shadow-sm">
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-3">
@@ -449,30 +546,38 @@ const canWatch = useMemo(() => {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
                 className="relative bg-black rounded-2xl overflow-hidden shadow-card"
               >
-                <VideoPlayer
-                  key={selectedPartIndex}
-                  videoUrl={finalVideoUrl ? getVideoUrl(finalVideoUrl) : null}
-                  title={currentPart?.title || lesson.title}
-                  poster={currentPart?.imageUrl || lesson.imageUrl}
-                  isLocked={!canWatch}
-                  requiredExam={activeExamIndex >= 0 ? exams[activeExamIndex] : null}
-                  onStartExam={() => {
-                    if (activeExamIndex >= 0 && activeExamIndex < exams.length) {
-                      handleStartExam(exams[activeExamIndex].id);
-                    }
-                  }}
-                  parts={parts}
-                  onPartChange={handlePartChange}
-                  selectedPartIndex={selectedPartIndex}
-                />
+                <Suspense fallback={
+                  <div className="aspect-video bg-gray-800 flex items-center justify-center">
+                    <Loader2 className="w-12 h-12 animate-spin text-white" />
+                  </div>
+                }>
+                  <VideoPlayer
+                    key={selectedPartIndex}
+                    videoUrl={finalVideoUrl ? getVideoUrl(finalVideoUrl) : null}
+                    title={currentPart?.title || memoizedLesson.title}
+                    poster={currentPart?.imageUrl || memoizedLesson.imageUrl}
+                    isLocked={!canWatch}
+                    requiredExam={activeExamIndex >= 0 ? exams[activeExamIndex] : null}
+                    onStartExam={() => {
+                      if (activeExamIndex >= 0 && activeExamIndex < exams.length) {
+                        handleStartExam(exams[activeExamIndex].id);
+                      }
+                    }}
+                    parts={parts}
+                    onPartChange={handlePartChange}
+                    selectedPartIndex={selectedPartIndex}
+                  />
+                </Suspense>
               </motion.div>
 
               {canWatch && currentPart && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
                   className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/30 rounded-xl border border-blue-200 dark:border-blue-800"
                 >
                   <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1">
@@ -485,26 +590,21 @@ const canWatch = useMemo(() => {
                 </motion.div>
               )}
 
-              {/* Lesson Info */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="mt-6 p-6 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700"
-              >
+              {/* Lesson Info - مع أبعاد ثابتة لمنع CLS */}
+              <div className="mt-6 p-6 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 min-h-[200px]">
                 <h1 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">
-                  {lang === "ar" && lesson.title_ar ? lesson.title_ar : lesson.title}
+                  {lang === "ar" && memoizedLesson.title_ar ? memoizedLesson.title_ar : memoizedLesson.title}
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  {lang === "ar" && lesson.description_ar ? lesson.description_ar : lesson.description}
+                  {lang === "ar" && memoizedLesson.description_ar ? memoizedLesson.description_ar : memoizedLesson.description}
                 </p>
 
                 <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400">
                   <div className="flex items-center gap-1">
-                    <span>{new Date(lesson.lession_date).toLocaleDateString()}</span>
+                    <span>{new Date(memoizedLesson.lession_date).toLocaleDateString()}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <span>{lesson.lession_time}</span>
+                    <span>{memoizedLesson.lession_time}</span>
                   </div>
                   {totalParts > 0 && (
                     <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 text-xs">
@@ -512,7 +612,7 @@ const canWatch = useMemo(() => {
                     </div>
                   )}
                   
-                  {lesson?.must_pass_to_unlock ? (
+                  {memoizedLesson?.must_pass_to_unlock ? (
                     !canWatch && exams.length > 0 ? (
                       <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 text-xs">
                         <Lock className="w-3 h-3" />
@@ -542,18 +642,30 @@ const canWatch = useMemo(() => {
                     </div>
                   )}
                 </div>
-              </motion.div>
+
+                {/* ✅ Lesson Files */}
+                <Suspense fallback={<div className="h-12 bg-gray-100 dark:bg-gray-800 rounded mt-4"></div>}>
+                  <LessonFiles
+                    driveLink={memoizedLesson?.link_drive}
+                    pdfUrl={memoizedLesson?.pdfUrl}
+                    lessonTitle={memoizedLesson?.title}
+                    lang={lang}
+                  />
+                </Suspense>
+              </div>
             </div>
 
             {/* Sidebar */}
             <div className="space-y-6">
               {parts.length > 0 && (
-                <LessonPartsList
-                  parts={parts}
-                  selectedIndex={selectedPartIndex}
-                  onSelect={handlePartChange}
-                  isLocked={!canWatch}
-                />
+                <Suspense fallback={<div className="h-64 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>}>
+                  <LessonPartsList
+                    parts={parts}
+                    selectedIndex={selectedPartIndex}
+                    onSelect={handlePartChange}
+                    isLocked={!canWatch}
+                  />
+                </Suspense>
               )}
 
               {loadingExams ? (
@@ -577,37 +689,35 @@ const canWatch = useMemo(() => {
                   const showMessageOnly = status?.showMessageOnly || false;
                   const notSolved = status?.notSolved || false;
 
-                  console.log(`📋 [LessonPage] Exam ${index + 1}: "${exam.title}"`);
-                  console.log(`   - notSolved: ${notSolved}`);
-
                   return (
-                    <ExamCard
-                      key={exam.id}
-                      exam={{
-                        ...exam,
-                        total: status?.total || 0,
-                        total_must_pass_marks: status?.passMarks || exam.total_must_pass_marks || 0
-                      }}
-                      examIndex={index}
-                      totalExams={exams.length}
-                      isActive={isActive}
-                      isPassed={isPassed}
-                      isLocked={isLocked}
-                      isFailed={isFailed}
-                      isHidden={isHidden}
-                      isWaitingResult={isWaitingResult}
-                      isWaitingCorrection={isWaitingCorrection}
-                      studentPassedMessage={studentPassedMessage}
-                      showMessageOnly={showMessageOnly}
-                      notSolved={notSolved}
-                      onStart={() => handleStartExam(exam.id)}
-                      lang={lang}
-                    />
+                    <Suspense key={exam.id} fallback={<div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>}>
+                      <ExamCard
+                        exam={{
+                          ...exam,
+                          total: status?.total || 0,
+                          total_must_pass_marks: status?.passMarks || exam.total_must_pass_marks || 0
+                        }}
+                        examIndex={index}
+                        totalExams={exams.length}
+                        isActive={isActive}
+                        isPassed={isPassed}
+                        isLocked={isLocked}
+                        isFailed={isFailed}
+                        isHidden={isHidden}
+                        isWaitingResult={isWaitingResult}
+                        isWaitingCorrection={isWaitingCorrection}
+                        studentPassedMessage={studentPassedMessage}
+                        showMessageOnly={showMessageOnly}
+                        notSolved={notSolved}
+                        onStart={() => handleStartExam(exam.id)}
+                        lang={lang}
+                      />
+                    </Suspense>
                   );
                 })
               )}
 
-              {/* ✅ الواجبات بنفس نظام الامتحانات */}
+              {/* ✅ الواجبات */}
               {loadingAssignments ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
@@ -628,39 +738,35 @@ const canWatch = useMemo(() => {
                   const showMessageOnly = status?.showMessageOnly || false;
                   const notSolved = status?.notSolved || false;
 
-                  console.log(`📋 [LessonPage] Assignment ${index + 1}: "${assignment.title}"`);
-                  console.log(`   - studentPassedMessage: "${studentPassedMessage}"`);
-                  console.log(`   - showMessageOnly: ${showMessageOnly}`);
-                  console.log(`   - notSolved: ${notSolved}`);
-
                   return (
-                    <AssignmentCard
-                      key={assignment.id}
-                      assignment={{
-                        ...assignment,
-                        total: status?.total || 0,
-                        total_must_pass_marks: status?.passMarks || assignment.total_must_pass_marks || 0
-                      }}
-                      assignmentIndex={index}
-                      isPassed={isPassed}
-                      isLocked={isLocked}
-                      isFailed={isFailed}
-                      isHidden={isHidden}
-                      isWaitingResult={isWaitingResult}
-                      isWaitingCorrection={isWaitingCorrection}
-                      studentPassedMessage={studentPassedMessage}
-                      showMessageOnly={showMessageOnly}
-                      notSolved={notSolved}
-                      onStart={() => handleStartAssignment(assignment.id)}
-                      lang={lang}
-                    />
+                    <Suspense key={assignment.id} fallback={<div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>}>
+                      <AssignmentCard
+                        assignment={{
+                          ...assignment,
+                          total: status?.total || 0,
+                          total_must_pass_marks: status?.passMarks || assignment.total_must_pass_marks || 0
+                        }}
+                        assignmentIndex={index}
+                        isPassed={isPassed}
+                        isLocked={isLocked}
+                        isFailed={isFailed}
+                        isHidden={isHidden}
+                        isWaitingResult={isWaitingResult}
+                        isWaitingCorrection={isWaitingCorrection}
+                        studentPassedMessage={studentPassedMessage}
+                        showMessageOnly={showMessageOnly}
+                        notSolved={notSolved}
+                        onStart={() => handleStartAssignment(assignment.id)}
+                        lang={lang}
+                      />
+                    </Suspense>
                   );
                 })
               )}
 
               <div className="flex gap-3">
                 <Link
-                  to={`/courses/${lesson.course_id}`}
+                  to={`/courses/${memoizedLesson.course_id}`}
                   className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all text-gray-700 dark:text-gray-300"
                 >
                   <ArrowRight className="w-4 h-4 rtl:rotate-180" />
@@ -671,24 +777,36 @@ const canWatch = useMemo(() => {
           </div>
         </div>
 
-        {/* ✅ مودال التواصل مع المعلم */}
-        <ContactTeacherModal
-          isOpen={showContactModal}
-          onClose={() => setShowContactModal(false)}
-          lang={lang}
-          teacherName={teacher?.name || lesson?.teacher_id?.name || 'المعلم'}
-          phone={teacher?.phone || lesson?.teacher_id?.phone} 
-          messageType={contactModalType}
-        />
+        {/* ✅ Contact Teacher Modal */}
+        <Suspense fallback={null}>
+          <ContactTeacherModal
+            isOpen={showContactModal}
+            onClose={() => setShowContactModal(false)}
+            lang={lang}
+            teacherName={teacher?.name || memoizedLesson?.teacher_id?.name || 'المعلم'}
+            phone={teacher?.phone || memoizedLesson?.teacher_id?.phone} 
+            messageType={contactModalType}
+          />
+        </Suspense>
 
         <style>{`
           .shadow-card {
             box-shadow: 0 20px 60px -12px rgba(0, 0, 0, 0.3);
           }
+          /* ✅ منع CLS من العلامة المائية */
+          #custom-watermark-center {
+            opacity: 0 !important;
+            transition: opacity 0.5s ease;
+          }
+          #custom-watermark-center.visible {
+            opacity: 1 !important;
+          }
         `}</style>
       </div>
     </>
   );
-};
+});
+
+LessonPage.displayName = 'LessonPage';
 
 export default LessonPage;

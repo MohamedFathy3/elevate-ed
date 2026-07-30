@@ -1,7 +1,5 @@
-// BackgroundSelector.tsx - النسخة المحسنة
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState, useEffect, memo } from "react";
 import { useTheme } from "@/context/ThemeContext";
-import { BackgroundFallback } from "./BackgroundFallback";
 
 // استخدم lazy عشان متتحملش غير لما تحتاجها
 const EducationBackground = lazy(() => 
@@ -10,22 +8,29 @@ const EducationBackground = lazy(() =>
   }))
 );
 
-const PlanetsBackground = lazy(() => 
-  import("@/components/PlanetsBackground").then(module => ({
-    default: module.PlanetsBackground
-  }))
-);
-
-export const BackgroundSelector = () => {
+export const BackgroundSelector = memo(() => {
   const { theme } = useTheme();
-  
+  const [showBackground, setShowBackground] = useState(false);
+
+  // ✅ تأخير تحميل الخلفية حتى بعد تحميل الصفحة
+  useEffect(() => {
+    // استنى 3 ثواني بعد تحميل الصفحة
+    const timer = setTimeout(() => {
+      setShowBackground(true);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // لو الثيم مش nature أو لسه بدري، متظهرش حاجة
+  if (theme !== 'nature' || !showBackground) {
+    return null;
+  }
+
   return (
-    <Suspense fallback={<BackgroundFallback />}>
-      {theme === 'nature' ? (
-        <EducationBackground />
-      ) : (
-        <PlanetsBackground />
-      )}
+    <Suspense fallback={null}>
+      <EducationBackground />
     </Suspense>
   );
-};
+});
+BackgroundSelector.displayName = 'BackgroundSelector';

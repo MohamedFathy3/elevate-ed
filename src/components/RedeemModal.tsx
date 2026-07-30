@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Loader2, AlertCircle, Info, CheckCircle, MessageCircle, Shield, User } from 'lucide-react';
+import { Loader2, AlertCircle, Info, CheckCircle, MessageCircle, Shield } from 'lucide-react';
 import { useWalletBalance } from '@/hooks/useWallet';
-import { usePurchaseItem } from '@/hooks/usePurchase';
+import { usePurchaseItem, EnrollRequest } from '@/hooks/usePurchase';
 import { useTheme } from '@/context/ThemeContext';
 import { useTeacher } from '@/context/TeacherContext';
 import { toast } from '@/hooks/use-toast';
@@ -33,12 +33,12 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'code'>('wallet');
   const [isPendingRequest, setIsPendingRequest] = useState(false);
   const [pendingMessage, setPendingMessage] = useState('');
-  const [showContactModal, setShowContactModal] = useState(false); // ✅ مودال التواصل
+  const [showContactModal, setShowContactModal] = useState(false);
   const [teacherName, setTeacherName] = useState('');
   const [teacherPhone, setTeacherPhone] = useState('');
   
   const { theme, colorMode } = useTheme();
-  const { teacher } = useTeacher(); // ✅ جلب بيانات المعلم
+  const { teacher } = useTeacher();
   const isNature = theme === 'nature';
   const isDark = colorMode === 'dark';
   
@@ -61,11 +61,9 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
   const balance = walletData?.data?.balance || 0;  
   const hasSufficientBalance = canPurchaseWithWallet(balance, price);
   
-  // ✅ بيانات المعلم
   const teacherNameFromContext = teacher?.name || (lang === "ar" ? "المعلم" : "Teacher");
   const teacherPhoneFromContext = teacher?.phone || "";
 
-  // ✅ دالة فتح مودال التواصل مع المعلم
   const handleOpenContactModal = (message?: string) => {
     setTeacherName(teacherNameFromContext);
     setTeacherPhone(teacherPhoneFromContext);
@@ -73,37 +71,63 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
     setShowContactModal(true);
   };
 
+  // ✅ دالة بناء بيانات الطلب للـ wallet
+  const buildRequestData = (): EnrollRequest => {
+    const data: EnrollRequest = {
+      type: itemType,
+      price: price,
+      course_id: null,
+      semester_id: null,
+      book_id: null,
+      course_detail_id: null,
+    };
+
+    switch (itemType) {
+      case 'course':
+        data.course_id = Number(itemId);
+        break;
+      case 'semester':
+        data.semester_id = Number(itemId);
+        break;
+      case 'book':
+        data.book_id = Number(itemId);
+        break;
+      case 'lesson':
+        data.course_detail_id = Number(itemId);
+        break;
+      case 'exam':
+        data.course_detail_id = Number(itemId);
+        break;
+      default:
+        break;
+    }
+
+    return data;
+  };
+
   // ✅ دالة معالجة الدفع
   const handlePayment = async () => {
     try {
       if (paymentMethod === 'wallet') {
-        // ✅ شراء بالرصيد - `/enroll/request`
-        enroll({
-          type: itemType,
-          course_id: itemType === 'course' ? Number(itemId) : null,
-          semester_id: itemType === 'semester' ? Number(itemId) : null,
-          book_id: itemType === 'book' ? Number(itemId) : null,
-          course_detail_id: itemType === 'lesson' ? Number(itemId) : null,
-          price: price,
-        }, {
+        const requestData = buildRequestData();
+        console.log('📤 [RedeemModal] Sending wallet request:', JSON.stringify(requestData, null, 2));
+
+        enroll(requestData, {
           onSuccess: (data) => {
-            // ✅ التحقق من رسالة "رصيد غير كافٍ"
+            console.log('✅ [RedeemModal] Wallet success:', data);
+            
             const isInsufficientBalance = data.message?.includes('رصيد المحفظة غير كاف') || 
                                            data.message?.includes('Insufficient balance') ||
                                            data.message?.includes('غير كاف');
             
             if (isInsufficientBalance) {
-              // ✅ رصيد غير كاف - فتح مودال التواصل مع المدرس
               setIsPendingRequest(true);
               setPendingMessage(data.message || "رصيد المحفظة غير كافٍ. تم إرسال طلب للمدرس");
               toast.info("📩 " + data.message);
               refetchWallet();
               onPending?.(data);
-              
-              // ✅ فتح مودال التواصل مع المدرس
               handleOpenContactModal(data.message);
             } else {
-              // ✅ نجاح حقيقي
               toast.success(data.message || "تم الدفع بنجاح!");
               refetchWallet();
               onSuccess?.(data);
@@ -111,13 +135,12 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
             }
           },
           onError: (error) => {
+            console.error('❌ [RedeemModal] Wallet error:', error);
             const errorMessage = error?.response?.data?.message || "فشل الدفع";
             
-            // ✅ التحقق من رسالة الخطأ
             if (errorMessage.includes('رصيد') || 
                 errorMessage.includes('balance') ||
                 errorMessage.includes('غير كاف')) {
-              // ✅ فتح مودال التواصل مع المدرس
               handleOpenContactModal(errorMessage);
             } else {
               toast.error(errorMessage);
@@ -127,35 +150,72 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
         });
         
       } else {
-        // ✅ استخدام كود خصم - `/enroll/redeem-code`
+        // ✅ ✅ ✅ استخدام كود خصم - مع إرسال البيانات كاملة
         if (!redeemCodeInput.trim()) {
           toast.error(lang === "ar" ? "الرجاء إدخال الكود" : "Please enter the code");
           return;
         }
         
-        redeemCode({
-          code: redeemCodeInput.trim().toUpperCase()
-        }, {
+        // ✅ بناء البيانات كاملة
+        const redeemData: any = {
+          code: redeemCodeInput.trim().toUpperCase(),
+        };
+
+        // ✅ إضافة type لو موجود
+        if (itemType) {
+          redeemData.type = itemType;
+        }
+
+        // ✅ إضافة الحقل المناسب حسب النوع
+        switch (itemType) {
+          case 'course':
+            redeemData.course_id = Number(itemId);
+            break;
+          case 'semester':
+            redeemData.semester_id = Number(itemId);
+            break;
+          case 'book':
+            redeemData.book_id = Number(itemId);
+            break;
+          case 'lesson':
+            redeemData.course_detail_id = Number(itemId);
+            break;
+          case 'exam':
+            redeemData.course_detail_id = Number(itemId);
+            break;
+          default:
+            break;
+        }
+
+        // ✅ إضافة السعر
+        if (price > 0) {
+          redeemData.price = price;
+        }
+
+        console.log('📤 [RedeemModal] Redeem code with data:', JSON.stringify(redeemData, null, 2));
+        
+        redeemCode(redeemData, {
           onSuccess: (data) => {
+            console.log('✅ [RedeemModal] Code success:', data);
             toast.success(lang === "ar" ? "تم تفعيل الكود بنجاح!" : "Code activated successfully!");
             refetchWallet();
             onSuccess?.(data);
             onClose();
           },
           onError: (error) => {
-            toast.error(error?.response?.data?.message || lang === "ar" ? "الكود غير صالح" : "Invalid code");
+            console.error('❌ [RedeemModal] Code error:', error);
+            toast.error(error?.response?.data?.message || (lang === "ar" ? "الكود غير صالح" : "Invalid code"));
             onError?.(error);
           }
         });
       }
     } catch (error: any) {
-      console.error('❌ Payment error:', error);
+      console.error('❌ [RedeemModal] Payment error:', error);
       toast.error(error?.response?.data?.message || "حدث خطأ أثناء الدفع");
       onError?.(error);
     }
   };
 
-  // ✅ دالة إغلاق مودال التواصل
   const handleCloseContactModal = () => {
     setShowContactModal(false);
     onClose();
@@ -165,7 +225,7 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
   
   return (
     <>
-      {/* ✅ المودال الرئيسي */}
+      {/* المودال الرئيسي */}
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
@@ -187,7 +247,6 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
             </button>
           </div>
           
-          {/* ✅ حالة الطلب المرسل */}
           {isPendingRequest ? (
             <div className="space-y-4">
               <div className={`p-4 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800`}>
@@ -216,7 +275,6 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
                 </div>
               </div>
               
-              {/* ✅ زر التواصل مع المدرس */}
               <button
                 onClick={() => handleOpenContactModal(pendingMessage)}
                 className={`w-full py-3 rounded-xl font-semibold text-white transition-all flex items-center justify-center gap-2
@@ -250,7 +308,6 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
                   </span>
                 </div>
                 
-                {/* ✅ تحذير الرصيد غير كافي */}
                 {!hasSufficientBalance && price > 0 && (
                   <div className="mt-2 p-2 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
                     <p className="text-xs text-red-700 dark:text-red-300 flex items-center gap-1">
@@ -379,7 +436,6 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({
                   : `📞 Contact teacher "${teacherNameFromContext}" via WhatsApp to follow up on the request`}
               </p>
 
-              {/* ✅ زر واتساب */}
               <motion.a
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}

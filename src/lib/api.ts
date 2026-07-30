@@ -14,11 +14,9 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    // جلب التوكن من cookies
     const studentToken = Cookies.get("student_token");
     const teacherToken = Cookies.get("token");
     
-    // إضافة التوكن في header Authorization
     if (studentToken) {
       config.headers.Authorization = `Bearer ${studentToken}`;
     } else if (teacherToken) {
