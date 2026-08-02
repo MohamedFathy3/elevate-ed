@@ -4,12 +4,15 @@ import { useLang } from "@/i18n/LanguageContext";
 import { OfferPopup } from "@/themes/default/components/site/OfferPopup";
 
 // ✅ Hero (مباشر)
-import {Hero} from "@/themes/default/components/site/Hero";
+import { Hero } from "@/themes/default/components/site/Hero";
 
-// ✅ Lazy Loading
+// ✅ Lazy Loading - المسارات الصحيحة
 const Stage = lazy(() => import("@/themes/default/components/site/Stage").then(m => ({ default: m.Stage })));
 const Future = lazy(() => import("@/themes/default/components/site/Future").then(m => ({ default: m.Future })));
-const Courses = lazy(() => import("@/themes/default/components/site/coursess").then(m => ({ default: m.Courses })));
+
+// ✅ التصحيح النهائي - استخدم المجلد الصحيح
+const Courses = lazy(() => import("@/themes/default/components/site/Courses/index").then(m => ({ default: m.default })));
+
 const SocialCounters = lazy(() => import("@/themes/default/components/site/SocialCounters").then(m => ({ default: m.SocialCounters })));
 const CenterHours = lazy(() => import("@/themes/default/components/site/CenterHours").then(m => ({ default: m.CenterHours })));
 const Books = lazy(() => import("@/themes/default/components/site/Books").then(m => ({ default: m.Books })));
