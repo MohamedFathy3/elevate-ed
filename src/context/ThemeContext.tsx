@@ -170,7 +170,7 @@ const themeImports = {
 };
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<ThemeName>('nature');
+  const [theme, setThemeState] = useState<ThemeName>('default');
   const [colorMode, setColorMode] = useState<ColorMode>('light');
   const [pages, setPages] = useState<ThemePages | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -352,7 +352,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       // ✅ لو مفيش ثيم بعد الانتظار → استخدم default (حالة نادرة)
       if (!themeFound && !themeLoadedRef.current) {
         console.log("⚠️ No theme found after timeout, using default");
-        await loadTheme(null, '#FFFFFF', '#111827');
+        await loadTheme('default', '#FFFFFF', '#111827');
         setIsLoading(false);
         setIsThemeReady(true);
       }
