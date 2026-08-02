@@ -11,7 +11,7 @@ const Stage = lazy(() => import("@/themes/default/components/site/Stage").then(m
 const Future = lazy(() => import("@/themes/default/components/site/Future").then(m => ({ default: m.Future })));
 
 // ✅ التصحيح النهائي - استخدم المجلد الصحيح
-const Courses = lazy(() => import("@/themes/default/components/site/Courses/index").then(m => ({ default: m.default })));
+const Courses = lazy(() => import("@/themes/default/components/site/courses/index").then(m => ({ default: m.default })));
 
 const SocialCounters = lazy(() => import("@/themes/default/components/site/SocialCounters").then(m => ({ default: m.SocialCounters })));
 const CenterHours = lazy(() => import("@/themes/default/components/site/CenterHours").then(m => ({ default: m.CenterHours })));
