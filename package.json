@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host osamaelmihy.web-lec.com --port 3100",
+    "dev": "vite --host passw0rdelmr.web-lec.com --port 3100",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",

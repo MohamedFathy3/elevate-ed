@@ -15,6 +15,8 @@ export const QualityControl = ({
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
+    if (!isOpen) return;
+
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (
         menuRef.current &&
@@ -26,13 +28,14 @@ export const QualityControl = ({
       }
     };
 
+    // ✅ مسجّل بس وهو مفتوح، وبعد الحدث اللي فتحه خلص (يمنع الإغلاق الفوري)
     document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('touchstart', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('touchstart', handleClickOutside);
     };
-  }, []);
+  }, [isOpen]);
 
   const getQualityLabel = (value: string) => {
     if (value === 'auto') return lang === 'ar' ? 'تلقائي' : 'Auto';
@@ -45,9 +48,9 @@ export const QualityControl = ({
   return (
     <div className="relative">
       <button
+        type="button"
         ref={buttonRef}
-        onClick={() => setIsOpen(!isOpen)}
-        onTouchStart={() => setIsOpen(!isOpen)}
+        onClick={() => setIsOpen((prev) => !prev)}
         className="p-2 rounded-lg text-white hover:bg-white/10 active:bg-white/20 transition-all flex items-center gap-1.5 min-h-[44px] min-w-[44px] touch-manipulation"
         title={lang === "ar" ? "جودة الفيديو" : "Video quality"}
       >
@@ -58,15 +61,16 @@ export const QualityControl = ({
       {isOpen && (
         <div
           ref={menuRef}
-          className="absolute bottom-full mb-2 right-0 bg-black/95 backdrop-blur-xl rounded-xl p-2 min-w-[170px] z-[100] border border-white/10 shadow-2xl max-h-[300px] overflow-y-auto"
+          dir={lang === 'ar' ? 'rtl' : 'ltr'}
+          className="video-dropdown-menu absolute bottom-full mb-2 right-0 bg-black/95 backdrop-blur-xl rounded-xl p-2 min-w-[170px] max-w-[calc(100vw-2rem)] z-[100] border border-white/10 shadow-2xl max-h-[300px] overflow-y-auto"
         >
           <div className="px-3 py-1.5 text-xs text-gray-400 font-medium border-b border-white/5 mb-1 sticky top-0 bg-black/95">
             {lang === "ar" ? "جودة الفيديو" : "Video Quality"}
           </div>
           
           <button
+            type="button"
             onClick={() => { onQualityChange('auto'); setIsOpen(false); }}
-            onTouchEnd={() => { onQualityChange('auto'); setIsOpen(false); }}
             className={`w-full px-3 py-3 text-sm text-right rounded-lg transition-all flex items-center justify-between gap-3 touch-manipulation
               ${currentQuality === 'auto' 
                 ? 'bg-blue-500/30 text-white' 
@@ -78,9 +82,9 @@ export const QualityControl = ({
 
           {sortedQualities.map((quality) => (
             <button
+              type="button"
               key={quality.value}
               onClick={() => { onQualityChange(quality.value); setIsOpen(false); }}
-              onTouchEnd={() => { onQualityChange(quality.value); setIsOpen(false); }}
               className={`w-full px-3 py-3 text-sm text-right rounded-lg transition-all flex items-center justify-between gap-3 touch-manipulation
                 ${currentQuality === quality.value 
                   ? 'bg-blue-500/30 text-white' 

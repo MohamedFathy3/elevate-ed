@@ -6,7 +6,7 @@ import { useLang } from "@/i18n/LanguageContext";
 import { useStudentProfile, useStudentLearning, useCurrentStudent } from "@/hooks/useStudent";
 import { useCreateRechargeCode, useRechargeWallet } from "@/hooks/useWallet";
 import { useTheme } from "@/context/ThemeContext";
-import { User, BookOpen, Clock, Award, Wallet, FileQuestion, ClipboardList, BookMarked } from "lucide-react";
+import { User, BookOpen, Clock, Award, Wallet, FileQuestion, ClipboardList, BookMarked, Menu } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
@@ -184,6 +184,25 @@ const StudentDashboard = () => {
 
           {/* Main Content */}
           <main className="flex-1 overflow-hidden">
+            <div className="lg:hidden flex items-center justify-between mb-4 px-4">
+    <button
+      onClick={() => setSidebarOpen(true)}
+      className={`p-2 rounded-lg ${
+        isNature 
+          ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' 
+          : 'bg-primary/10 text-primary'
+      }`}
+      aria-label="Open menu"
+    >
+      <Menu className="w-6 h-6" />
+    </button>
+    
+    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+      {tabs.find(t => t.id === activeTab)?.label}
+    </h2>
+    
+    <div className="w-10" /> {/* spacer */}
+  </div>
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}

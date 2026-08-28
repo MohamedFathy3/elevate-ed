@@ -43,8 +43,10 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
   const navigate = useNavigate();
   const { slug } = useParams();
 
-  const lessonTitle = lang === "ar" && lesson.title_ar ? lesson.title_ar : lesson.title;
-  const lessonDesc = lang === "ar" && lesson.description_ar ? lesson.description_ar : lesson.description;
+const lessonTitle = lang === "ar" 
+  ? (lesson.titles_ar?.[0] || lesson.title_ar || lesson.title || "بدون عنوان")
+  : (lesson.titles?.[0] || lesson.title || "Untitled");
+    const lessonDesc = lang === "ar" && lesson.description_ar ? lesson.description_ar : lesson.description;
 
   const subParts = (lesson.titles || []).map((title: string, idx: number) => ({
     id: idx,
