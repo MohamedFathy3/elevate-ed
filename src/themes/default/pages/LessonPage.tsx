@@ -431,18 +431,45 @@ const LessonPage = memo(() => {
     return part.videoUrl || part.video_url || part.link_video || part.content_link || null;
   }, []);
 
-  const getVideoUrl = useCallback((url: string) => {
-    if (!url) return null;
-    if (url.includes('youtube.com/watch?v=')) {
-      const videoId = url.split('v=')[1]?.split('&')[0];
-      return `https://www.youtube.com/embed/${videoId}?enablejsapi=1&rel=0&modestbranding=1`;
-    }
-    if (url.includes('youtu.be/')) {
-      const videoId = url.split('youtu.be/')[1]?.split('?')[0];
-      return `https://www.youtube.com/embed/${videoId}?enablejsapi=1&rel=0&modestbranding=1`;
-    }
+// ✅ في LessonPage.tsx
+
+const getVideoUrl = useCallback((url: string) => {
+  if (!url) return null;
+  
+  // تنظيف الرابط
+  let videoId = '';
+  
+  if (url.includes('youtube.com/watch?v=')) {
+    videoId = url.split('v=')[1]?.split('&')[0] || '';
+  } else if (url.includes('youtu.be/')) {
+    videoId = url.split('youtu.be/')[1]?.split('?')[0] || '';
+  } else if (url.includes('youtube.com/embed/')) {
+    videoId = url.split('embed/')[1]?.split('?')[0] || '';
+  } else {
+    // لو الرابط مباشر لـ YouTube
     return url;
-  }, []);
+  }
+  
+  if (!videoId) return url;
+  
+  // ✅ إضافة جميع المعاملات المطلوبة للموبايل
+  const params = new URLSearchParams({
+    enablejsapi: '1',
+    rel: '0',
+    modestbranding: '1',
+    playsinline: '1', // ✅ مهم للموبايل
+    origin: window.location.origin,
+    widget_referrer: window.location.origin,
+    autoplay: '0',
+    controls: '0',
+    disablekb: '1',
+    fs: '0',
+    iv_load_policy: '3',
+    cc_load_policy: '0',
+  });
+  
+  return `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
+}, []);
 
   const partVideoUrl = useMemo(() => getVideoUrlFromPart(currentPart), [currentPart, getVideoUrlFromPart]);
   const lessonVideoUrl = useMemo(() => memoizedLesson?.content_link || memoizedLesson?.video_url, [memoizedLesson]);
