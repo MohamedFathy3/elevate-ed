@@ -39,17 +39,11 @@ export const useAdvancedProtection = ({
   const intervalRef = useRef<NodeJS.Timeout>();
   const rafRef = useRef<number>();
   const lastFrameTime = useRef(performance.now());
-  const lastWidth = useRef(window.innerWidth);
-  const lastHeight = useRef(window.innerHeight);
   const screenshotPreventionRef = useRef<any>(null);
 
-  const sensitivityValues = {
-    low: { frameThreshold: 200, frameCount: 5, resizeThreshold: 150, resizeCount: 3, hiddenCount: 3 },
-    medium: { frameThreshold: 150, frameCount: 3, resizeThreshold: 100, resizeCount: 2, hiddenCount: 2 },
-    high: { frameThreshold: 100, frameCount: 2, resizeThreshold: 50, resizeCount: 1, hiddenCount: 1 },
-  };
-
-  const settings = sensitivityValues[sensitivity];
+  // ملاحظة: تم إزالة sensitivityValues الخاصة بكشف DevTools عن طريق فرق أبعاد
+  // الشاشة (outerWidth/innerWidth)، لأنها كانت بتدي نتايج غلط (false positives)
+  // على الموبايل بسبب اختلاف الأبعاد بين الأجهزة وظهور/اختفاء شريط العنوان.
 
   // ✅ دالة تفعيل الحماية
   const activate = useCallback(() => {
@@ -80,7 +74,9 @@ export const useAdvancedProtection = ({
     onDetect?.();
   }, [isRecording, showBlocker, isActive, onDetect, videoRef]);
 
-  // ✅ 1. منع DevTools (يعمل بس لما الحماية مفعلة)
+  // ✅ 1. منع DevTools عن طريق اختصارات الكيبورد فقط (F12, Ctrl+Shift+I...)
+  // ده بيشتغل بنفس الطريقة على كل الأجهزة وملوش أي علاقة بأبعاد الشاشة،
+  // فآمن يفضل شغال على الموبايل والديسك توب مع بعض.
   const setupDevToolsBlocker = useCallback(() => {
     if (!enabled || !preventDevTools || !isActive) return;
 
@@ -162,40 +158,12 @@ export const useAdvancedProtection = ({
     return () => document.removeEventListener('contextmenu', handleContextMenu);
   }, [enabled, isActive, triggerDetection]);
 
-  // ✅ 3. كشف DevTools عن طريق تغيير الحجم
-  const setupDevToolsDetection = useCallback(() => {
-    if (!enabled || !preventDevTools || !isActive) return;
+  // ❌ تم حذف setupDevToolsDetection بالكامل (كان بيعتمد على
+  // Math.abs(window.outerWidth - window.innerWidth) و outerHeight/innerHeight).
+  // ده كان بيسبب false positives على الموبايل ويشغّل triggerDetection() غلط
+  // مما كان بيوقف الفيديو أو يعلّق تحميله على أجهزة موبايل كتيرة.
 
-    console.log('🛡️ DevTools Detection Active');
-
-    let devToolsOpen = false;
-    const threshold = 160;
-    let checkCount = 0;
-
-    const checkDevTools = () => {
-      const widthDiff = Math.abs(window.outerWidth - window.innerWidth);
-      const heightDiff = Math.abs(window.outerHeight - window.innerHeight);
-      
-      // ✅ إذا كان الفرق كبير => DevTools مفتوحة
-      if (widthDiff > threshold || heightDiff > threshold) {
-        checkCount++;
-        if (checkCount >= 2 && !devToolsOpen) {
-          devToolsOpen = true;
-          console.warn('🚨 DevTools detected via size!');
-          triggerDetection();
-        }
-      } else {
-        checkCount = 0;
-        devToolsOpen = false;
-      }
-    };
-
-    // ✅ كل ثانية نتحقق
-    const interval = setInterval(checkDevTools, 1000);
-    return () => clearInterval(interval);
-  }, [enabled, preventDevTools, isActive, triggerDetection]);
-
-  // ✅ 4. منع الروابط الخارجية
+  // ✅ 3. منع الروابط الخارجية
   const setupExternalLinkBlocker = useCallback(() => {
     if (!enabled || !preventExternalLinks || !isActive) return;
 
@@ -227,7 +195,7 @@ export const useAdvancedProtection = ({
     return () => document.removeEventListener('click', handleLinkClick, true);
   }, [enabled, preventExternalLinks, isActive, triggerDetection]);
 
-  // ✅ 5. منع Copy/Paste
+  // ✅ 4. منع Copy/Paste
   const setupCopyPasteBlocker = useCallback(() => {
     if (!enabled || !isActive) return;
 
@@ -252,27 +220,25 @@ export const useAdvancedProtection = ({
     };
   }, [enabled, isActive, triggerDetection]);
 
-  // ✅ تفعيل جميع طرق الكشف
+  // ✅ تفعيل جميع طرق الكشف (بدون كشف الأبعاد)
   useEffect(() => {
     if (!enabled) return;
 
     const cleanupDevTools = setupDevToolsBlocker();
     const cleanupContextMenu = setupContextMenuBlocker();
-    const cleanupDevToolsDetection = setupDevToolsDetection();
     const cleanupExternalLinks = setupExternalLinkBlocker();
     const cleanupCopyPaste = setupCopyPasteBlocker();
     
     return () => {
       cleanupDevTools?.();
       cleanupContextMenu?.();
-      cleanupDevToolsDetection?.();
       cleanupExternalLinks?.();
       cleanupCopyPaste?.();
       
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [enabled, isActive, setupDevToolsBlocker, setupContextMenuBlocker, setupDevToolsDetection, setupExternalLinkBlocker, setupCopyPasteBlocker]);
+  }, [enabled, isActive, setupDevToolsBlocker, setupContextMenuBlocker, setupExternalLinkBlocker, setupCopyPasteBlocker]);
 
   // ✅ إعادة تعيين الحماية
   const resetProtection = useCallback(() => {
