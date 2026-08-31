@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/components/lesson/video/VideoPlayer.tsx
 
 import {
@@ -94,7 +95,6 @@ const loadYouTubeIframeApi = (): Promise<void> => {
       document.head.appendChild(newScript);
     }
 
-    // The global callback can be missed when the API script was already in the page.
     pollTimer = window.setInterval(checkReady, 100);
     timeoutTimer = window.setTimeout(() => {
       finish(new Error('انتهت مهلة تحميل YouTube Player API'));
@@ -130,11 +130,10 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   const isDraggingRef = useRef(false);
   const currentTimeRef = useRef(0);
   const durationRef = useRef(0);
-  const isMobileRef = useRef(false);
-  // ✅ لو المستخدم دوس Play قبل ما الـ player يخلص تحميل (شائع على نت الموبايل)
-  // بنسجل الرغبة دي، ولما الـ player يبقى جاهز بنشغّل الفيديو تلقائيًا.
   const pendingPlayRef = useRef(false);
   const readyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMobileRef = useRef(false);
+  const hasUserInteractedRef = useRef(false);
 
   const rawId = useId();
   const playerElId = `yt-player-${rawId.replace(/[^a-zA-Z0-9_-]/g, '')}`;
@@ -185,17 +184,20 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     }
   }, [clearControlsTimer]);
 
-  useEffect(() => {
-    const checkMobile = () => {
-      const mobile = window.innerWidth < 768;
-      isMobileRef.current = mobile;
-      setIsMobile(mobile);
-    };
+  // ✅ تحسين اكتشاف الموبايل
+  const checkMobile = useCallback(() => {
+    const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isSmallScreen = window.innerWidth < 768;
+    const mobile = isMobileDevice || isSmallScreen;
+    isMobileRef.current = mobile;
+    setIsMobile(mobile);
+  }, []);
 
+  useEffect(() => {
     checkMobile();
     window.addEventListener('resize', checkMobile, { passive: true });
     return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  }, [checkMobile]);
 
   useEffect(() => {
     setLang(localStorage.getItem('lang') || 'ar');
@@ -243,15 +245,31 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     }
   }, [captionsEnabled, isVideoReady, lang]);
 
+  // ✅ إنشاء مشغل YouTube - يعمل على جميع الأجهزة
   useEffect(() => {
-    if (!currentVideoId || isMobile) return;
+    if (!currentVideoId) return;
     let cancelled = false;
+
+    // ✅ تنظيف المشغل القديم
+    if (playerRef.current) {
+      try {
+        playerRef.current.destroy?.();
+      } catch {
+        // Ignore
+      }
+      playerRef.current = null;
+    }
 
     loadYouTubeIframeApi()
       .then(() => {
         if (cancelled || playerRef.current || !playerDivRef.current) return;
         const YT = (window as any).YT;
         if (!YT?.Player) throw new Error('YouTube Player API غير متاحة');
+
+        // ✅ إعادة تعيين حالة التحميل
+        setIsLoading(true);
+        setVideoError(false);
+        setIsVideoReady(false);
 
         playerRef.current = new YT.Player(playerElId, {
           videoId: currentVideoId,
@@ -265,10 +283,11 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
             fs: 0,
             iv_load_policy: 3,
             disablekb: 1,
-            playsinline: 1,
+            playsinline: 1, // ✅ مهم جداً للموبايل
             cc_load_policy: 0,
             cc_lang_pref: lang === 'ar' ? 'ar' : 'en',
             origin: window.location.origin,
+            widget_referrer: window.location.origin,
           },
           events: {
             onReady: (event: any) => {
@@ -277,6 +296,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
                 window.clearTimeout(readyTimeoutRef.current);
                 readyTimeoutRef.current = null;
               }
+              
               setIsVideoReady(true);
               setIsLoading(false);
 
@@ -298,12 +318,13 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
                 iframe.setAttribute('title', currentTitle || 'Lesson video');
               }
 
+              // ✅ إذا كان المستخدم طلب التشغيل قبل الجاهزية
               if (pendingPlayRef.current) {
                 pendingPlayRef.current = false;
                 try {
                   event.target.playVideo?.();
                 } catch {
-                  // Ignore — user can tap play again if this somehow fails.
+                  // Ignore
                 }
               }
 
@@ -317,6 +338,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
 
               if (event.data === states.PLAYING) {
                 setPlayingState(true);
+                hasUserInteractedRef.current = true;
                 const realDuration = event.target.getDuration?.() || 0;
                 if (realDuration > 0) {
                   durationRef.current = realDuration;
@@ -327,6 +349,9 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
                 setPlayingState(false);
                 setShowControls(true);
                 clearControlsTimer();
+              } else if (event.data === states.UNSTARTED) {
+                // ✅ الفيديو جاهز لكن لم يبدأ
+                setIsLoading(false);
               }
             },
             onPlaybackQualityChange: (event: any) => {
@@ -371,23 +396,18 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
         window.clearTimeout(readyTimeoutRef.current);
         readyTimeoutRef.current = null;
       }
-    };
-    // The player is created once. New parts are loaded with loadVideoById below.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playerElId, currentVideoId, isMobile]);
-
-  useEffect(() => {
-    return () => {
-      clearControlsTimer();
+      // ✅ تنظيف المشغل عند إزالة المكون
       try {
         playerRef.current?.destroy?.();
+        playerRef.current = null;
       } catch {
-        // Ignore cleanup errors from an already removed iframe.
+        // Ignore
       }
-      playerRef.current = null;
     };
-  }, [clearControlsTimer]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playerElId, currentVideoId, lang, cleanExtensions]);
 
+  // ✅ تحديث الفيديو عند تغيير الـ videoId (تغيير الجزء)
   useEffect(() => {
     if (isFirstVideoRef.current) {
       isFirstVideoRef.current = false;
@@ -404,15 +424,24 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     setDuration(0);
     setCaptionsEnabled(false);
     pendingPlayRef.current = false;
+    hasUserInteractedRef.current = false;
 
     try {
-      playerRef.current?.loadVideoById?.(currentVideoId);
+      const player = playerRef.current;
+      if (player && typeof player.loadVideoById === 'function') {
+        player.loadVideoById(currentVideoId);
+      } else {
+        // ✅ إذا لم يكن المشغل جاهزاً، سيتم إنشاؤه من جديد
+        setVideoError(true);
+        setIsLoading(false);
+      }
     } catch {
       setVideoError(true);
       setIsLoading(false);
     }
   }, [currentVideoId, setPlayingState, setTimeState]);
 
+  // ✅ تحديث الوقت
   useEffect(() => {
     if (!isVideoReady) return;
 
@@ -427,6 +456,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     return () => window.clearInterval(interval);
   }, [isVideoReady, isMobile, setTimeState]);
 
+  // ✅ تشغيل/إيقاف الفيديو - يعمل على جميع الأجهزة
   const togglePlay = useCallback(() => {
     if (isTogglingRef.current) return;
     isTogglingRef.current = true;
@@ -434,8 +464,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
 
     const player = playerRef.current;
 
-    // ✅ الـ player لسه مش جاهز (شائع على نت الموبايل البطيء):
-    // بدل ما نتجاهل الضغطة، نسجلها ونشغّل الفيديو أول ما يبقى جاهز في onReady.
+    // ✅ المشغل لسه مش جاهز
     if (!player || !isVideoReady) {
       pendingPlayRef.current = true;
       toast.info(lang === 'ar' ? 'جاري تجهيز الفيديو...' : 'Preparing video...');
@@ -443,10 +472,24 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     }
 
     try {
-      if (isPlayingRef.current) player.pauseVideo?.();
-      else player.playVideo?.();
+      if (isPlayingRef.current) {
+        player.pauseVideo?.();
+      } else {
+        player.playVideo?.();
+        hasUserInteractedRef.current = true;
+      }
     } catch (error) {
       console.warn('Player control failed:', error);
+      // ✅ محاولة بديلة للموبايل
+      try {
+        if (isPlayingRef.current) {
+          player.pauseVideo?.();
+        } else {
+          player.playVideo?.();
+        }
+      } catch {
+        // Ignore
+      }
     }
   }, [isVideoReady, lang]);
 
@@ -499,6 +542,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
   }, [cleanExtensions]);
 
+  // ✅ منع النقر بزر الماوس الأيمن والتحكم بالكيبورد
   useEffect(() => {
     const isTypingTarget = (element: EventTarget | null) => {
       if (!(element instanceof HTMLElement)) return false;
@@ -539,10 +583,12 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     toggleFullscreen,
   }), [seekTo, toggleFullscreen]);
 
+  // ✅ عرض شاشة القفل
   if (isLocked) {
     return <VideoLocked requiredExam={requiredExam} onStartExam={onStartExam} lang={lang} />;
   }
 
+  // ✅ عرض رسالة في حالة عدم وجود رابط فيديو
   if (!currentVideoUrl || !currentVideoId) {
     return (
       <div className="aspect-video rounded-2xl bg-gray-900 flex flex-col items-center justify-center p-8">
@@ -562,6 +608,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     );
   }
 
+  // ✅ المشغل الرئيسي - يعمل على جميع الأجهزة (ديسكتوب + موبايل)
   return (
     <div
       ref={containerRef}
@@ -586,35 +633,29 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
           controlsTimerRef.current = setTimeout(() => setShowControls(false), 5000);
         }
       }}
+      // ✅ للموبايل - تشغيل عند النقر على الفيديو
+      onClick={(e) => {
+        // منع التشغيل عند النقر على الأزرار
+        if ((e.target as HTMLElement).closest('button')) return;
+        togglePlay();
+      }}
     >
       {poster && !isVideoReady && (
         <img src={poster} alt="" className="absolute inset-0 z-[1] h-full w-full object-cover" draggable={false} />
       )}
 
-      {isMobile ? (
-        <iframe
-          title={currentTitle || 'Lesson video'}
-          className="absolute inset-0 z-[2] h-full w-full border-0"
-          src={`https://www.youtube.com/embed/${currentVideoId}?rel=0&modestbranding=1&playsinline=1&controls=1`}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowFullScreen
-          referrerPolicy="strict-origin-when-cross-origin"
-          onLoad={() => {
-            setIsLoading(false);
-            setIsVideoReady(true);
-          }}
-        />
-      ) : (
-        <div id={playerElId} ref={playerDivRef} className="absolute inset-0 h-full w-full" />
-      )}
+      {/* ✅ مشغل واحد للجميع - YouTube Iframe API */}
+      <div id={playerElId} ref={playerDivRef} className="absolute inset-0 h-full w-full z-[2]" />
 
-      {isLoading && !isMobile && (
+      {isLoading && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/35">
           <Loader2 className="h-10 w-10 animate-spin text-white" />
         </div>
       )}
 
-      {!isMobile && <div className={`absolute inset-0 z-30 transition-opacity duration-200 ${showControls || !isPlaying ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
+      {/* ✅ عناصر التحكم */}
+      <div className={`absolute inset-0 z-30 transition-opacity duration-200 ${showControls || !isPlaying ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
+        {/* زر التشغيل المركزي */}
         <button
           type="button"
           onClick={togglePlay}
@@ -629,6 +670,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
           )}
         </button>
 
+        {/* عنوان الفيديو */}
         {currentTitle && (
           <div className="absolute left-2 top-2 z-40 max-w-[70%] sm:left-4 sm:top-4">
             <h3 dir={lang === 'ar' ? 'rtl' : 'ltr'} className="truncate rounded-lg bg-black/50 px-3 py-1.5 text-sm font-semibold text-white drop-shadow-lg sm:px-4 sm:py-2 sm:text-lg">
@@ -637,6 +679,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
           </div>
         )}
 
+        {/* شريط التحكم السفلي */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-2 sm:p-4">
           <ProgressBar
             currentTime={currentTime}
@@ -650,44 +693,126 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
 
           <div className="flex items-center justify-between gap-1">
             <div className="flex flex-wrap items-center gap-0.5 sm:gap-1.5">
-              <button type="button" onClick={seekBackward} className="control-button" aria-label={lang === 'ar' ? 'رجوع 10 ثواني' : 'Back 10 seconds'}><SkipBack className="h-5 w-5" /></button>
-              <button type="button" onClick={togglePlay} className="control-button" aria-label={isPlaying ? 'Pause' : 'Play'}>{isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 fill-current" />}</button>
-              <button type="button" onClick={seekForward} className="control-button" aria-label={lang === 'ar' ? 'تقدم 10 ثواني' : 'Forward 10 seconds'}><SkipForward className="h-5 w-5" /></button>
-              <span className="ml-1 whitespace-nowrap font-mono text-[11px] text-white/70 sm:ml-2 sm:text-xs">{formatTime(currentTime)} / {formatTime(duration)}</span>
+              <button type="button" onClick={seekBackward} className="control-button" aria-label={lang === 'ar' ? 'رجوع 10 ثواني' : 'Back 10 seconds'}>
+                <SkipBack className="h-5 w-5" />
+              </button>
+              <button type="button" onClick={togglePlay} className="control-button" aria-label={isPlaying ? 'Pause' : 'Play'}>
+                {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 fill-current" />}
+              </button>
+              <button type="button" onClick={seekForward} className="control-button" aria-label={lang === 'ar' ? 'تقدم 10 ثواني' : 'Forward 10 seconds'}>
+                <SkipForward className="h-5 w-5" />
+              </button>
+              <span className="ml-1 whitespace-nowrap font-mono text-[11px] text-white/70 sm:ml-2 sm:text-xs">
+                {formatTime(currentTime)} / {formatTime(duration)}
+              </span>
             </div>
 
             <div className="flex items-center gap-0.5 sm:gap-1.5">
-              <QualityControl currentQuality={currentQuality} onQualityChange={changeQuality} availableQualities={DEFAULT_QUALITIES} lang={lang} />
+              <QualityControl 
+                currentQuality={currentQuality} 
+                onQualityChange={changeQuality} 
+                availableQualities={DEFAULT_QUALITIES} 
+                lang={lang} 
+              />
 
-              <button type="button" onClick={toggleCaptions} className={`control-button ${captionsEnabled ? 'bg-white/25 text-white' : ''}`} aria-label={lang === 'ar' ? 'تشغيل أو إيقاف الترجمة' : 'Toggle captions'} aria-pressed={captionsEnabled}>
+              <button 
+                type="button" 
+                onClick={toggleCaptions} 
+                className={`control-button ${captionsEnabled ? 'bg-white/25 text-white' : ''}`} 
+                aria-label={lang === 'ar' ? 'تشغيل أو إيقاف الترجمة' : 'Toggle captions'} 
+                aria-pressed={captionsEnabled}
+              >
                 <Captions className="h-5 w-5" />
               </button>
 
               <div className="relative">
-                <button type="button" onClick={() => setShowSpeedMenu((value) => !value)} className="control-button" aria-label={lang === 'ar' ? 'تغيير السرعة' : 'Change speed'}><span className="text-xs font-medium sm:text-sm">{playbackSpeed}x</span></button>
-                {showSpeedMenu && <SpeedControl speed={playbackSpeed} onSpeedChange={changeSpeed} onClose={() => setShowSpeedMenu(false)} lang={lang} />}
+                <button 
+                  type="button" 
+                  onClick={() => setShowSpeedMenu((value) => !value)} 
+                  className="control-button" 
+                  aria-label={lang === 'ar' ? 'تغيير السرعة' : 'Change speed'}
+                >
+                  <span className="text-xs font-medium sm:text-sm">{playbackSpeed}x</span>
+                </button>
+                {showSpeedMenu && (
+                  <SpeedControl 
+                    speed={playbackSpeed} 
+                    onSpeedChange={changeSpeed} 
+                    onClose={() => setShowSpeedMenu(false)} 
+                    lang={lang} 
+                  />
+                )}
               </div>
 
-              <button type="button" onClick={toggleFullscreen} className="control-button" aria-label={lang === 'ar' ? 'تكبير الشاشة' : 'Fullscreen'}>{isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}</button>
+              <button 
+                type="button" 
+                onClick={toggleFullscreen} 
+                className="control-button" 
+                aria-label={lang === 'ar' ? 'تكبير الشاشة' : 'Fullscreen'}
+              >
+                {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+              </button>
             </div>
           </div>
         </div>
-      </div>}
+      </div>
 
-      <div className="pointer-events-none absolute right-4 top-4 z-20 opacity-20"><Shield className="h-6 w-6 text-white" /></div>
+      {/* أيقونة الحماية */}
+      <div className="pointer-events-none absolute right-4 top-4 z-20 opacity-20">
+        <Shield className="h-6 w-6 text-white" />
+      </div>
+
+      {/* عرض الخطأ */}
       {videoError && <VideoError lang={lang} onRetry={() => window.location.reload()} />}
 
+      {/* ✅ ستايلات إضافية للموبايل */}
       <style>{`
         .video-protected * { -webkit-touch-callout: none; }
-        .video-protected iframe { display: block; border: 0; }
+        .video-protected iframe { 
+          display: block; 
+          border: 0;
+          width: 100%;
+          height: 100%;
+          position: absolute;
+          inset: 0;
+        }
         .control-button {
-          display: inline-flex; min-width: 44px; min-height: 44px; align-items: center; justify-content: center;
-          border-radius: 0.5rem; color: white; transition: background-color 150ms ease, transform 150ms ease;
+          display: inline-flex;
+          min-width: 44px;
+          min-height: 44px;
+          align-items: center;
+          justify-content: center;
+          border-radius: 0.5rem;
+          color: white;
+          transition: background-color 150ms ease, transform 150ms ease;
           touch-action: manipulation;
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          -webkit-tap-highlight-color: transparent;
         }
         .control-button:hover { background: rgba(255,255,255,.10); }
         .control-button:active { background: rgba(255,255,255,.20); transform: scale(.95); }
-        @media (max-width: 640px) { .video-protected button { min-width: 44px; min-height: 44px; } }
+        
+        /* ✅ تحسينات للموبايل */
+        @media (max-width: 768px) {
+          .video-protected button { 
+            min-width: 44px; 
+            min-height: 44px;
+          }
+          .video-protected .control-button {
+            min-width: 40px;
+            min-height: 40px;
+          }
+        }
+        
+        /* ✅ دعم iPhone */
+        @supports (-webkit-touch-callout: none) {
+          .video-protected iframe {
+            width: 100% !important;
+            height: 100% !important;
+          }
+        }
       `}</style>
     </div>
   );
