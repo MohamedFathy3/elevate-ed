@@ -50,6 +50,8 @@ let youtubeApiPromise: Promise<void> | null = null;
 
 const loadYouTubeIframeApi = (): Promise<void> => {
   if (typeof window === 'undefined') return Promise.resolve();
+  
+  // ✅ التحقق من وجود API
   if ((window as any).YT?.Player) return Promise.resolve();
   if (youtubeApiPromise) return youtubeApiPromise;
 
@@ -78,7 +80,8 @@ const loadYouTubeIframeApi = (): Promise<void> => {
     };
     (window as any).onYouTubeIframeAPIReady = handleReady;
 
-    const script = document.getElementById('youtube-iframe-api-script') as HTMLScriptElement | null;
+    // ✅ التحقق من وجود السكريبت بالفعل
+    let script = document.getElementById('youtube-iframe-api-script') as HTMLScriptElement | null;
     const handleScriptError = () => {
       finish(new Error('تعذر تحميل YouTube Player API'));
     };
@@ -86,13 +89,14 @@ const loadYouTubeIframeApi = (): Promise<void> => {
     if (script) {
       script.addEventListener('error', handleScriptError, { once: true });
     } else {
-      const newScript = document.createElement('script');
-      newScript.id = 'youtube-iframe-api-script';
-      newScript.src = 'https://www.youtube.com/iframe_api';
-      newScript.async = true;
-      newScript.addEventListener('load', checkReady, { once: true });
-      newScript.addEventListener('error', handleScriptError, { once: true });
-      document.head.appendChild(newScript);
+      script = document.createElement('script');
+      script.id = 'youtube-iframe-api-script';
+      script.src = 'https://www.youtube.com/iframe_api';
+      script.async = true;
+      script.defer = true; // ✅ إضافة defer للتحميل بشكل أفضل
+      script.addEventListener('load', checkReady, { once: true });
+      script.addEventListener('error', handleScriptError, { once: true });
+      document.head.appendChild(script);
     }
 
     pollTimer = window.setInterval(checkReady, 100);
@@ -134,6 +138,8 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   const readyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMobileRef = useRef(false);
   const hasUserInteractedRef = useRef(false);
+  const retryCountRef = useRef(0);
+  const maxRetries = 3;
 
   const rawId = useId();
   const playerElId = `yt-player-${rawId.replace(/[^a-zA-Z0-9_-]/g, '')}`;
@@ -245,12 +251,47 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     }
   }, [captionsEnabled, isVideoReady, lang]);
 
-  // ✅ إنشاء مشغل YouTube - يعمل على جميع الأجهزة
-  useEffect(() => {
-    if (!currentVideoId) return;
+  // ✅ دالة إعادة المحاولة
+  const retryInit = useCallback(() => {
+    if (retryCountRef.current >= maxRetries) {
+      setVideoError(true);
+      setIsLoading(false);
+      return;
+    }
+    
+    retryCountRef.current += 1;
+    console.log(`🔄 محاولة إعادة تحميل المشغل (${retryCountRef.current}/${maxRetries})...`);
+    
+    // ✅ إعادة تعيين الحالة
+    setIsLoading(true);
+    setVideoError(false);
+    setIsVideoReady(false);
+    
+    // ✅ تنظيف المشغل القديم
+    if (playerRef.current) {
+      try {
+        playerRef.current.destroy?.();
+      } catch {
+        // Ignore
+      }
+      playerRef.current = null;
+    }
+    
+    // ✅ إعادة تحميل API
+    youtubeApiPromise = null;
+    
+    // ✅ إعادة تشغيل التهيئة
+    setTimeout(() => {
+      initPlayer();
+    }, 1000);
+  }, []);
+
+  // ✅ دالة تهيئة المشغل
+  const initPlayer = useCallback(() => {
+    if (!currentVideoId || !playerDivRef.current) return;
+    
     let cancelled = false;
 
-    // ✅ تنظيف المشغل القديم
     if (playerRef.current) {
       try {
         playerRef.current.destroy?.();
@@ -266,10 +307,16 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
         const YT = (window as any).YT;
         if (!YT?.Player) throw new Error('YouTube Player API غير متاحة');
 
-        // ✅ إعادة تعيين حالة التحميل
         setIsLoading(true);
         setVideoError(false);
         setIsVideoReady(false);
+
+        // ✅ الحصول على origin آمن
+        let origin = window.location.origin;
+        // ✅ تنظيف origin من أي ports غير قياسية
+        if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+          origin = 'http://localhost';
+        }
 
         playerRef.current = new YT.Player(playerElId, {
           videoId: currentVideoId,
@@ -283,11 +330,12 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
             fs: 0,
             iv_load_policy: 3,
             disablekb: 1,
-            playsinline: 1, // ✅ مهم جداً للموبايل
+            playsinline: 1,
             cc_load_policy: 0,
             cc_lang_pref: lang === 'ar' ? 'ar' : 'en',
-            origin: window.location.origin,
-            widget_referrer: window.location.origin,
+            origin: origin,
+            widget_referrer: origin,
+            enablejsapi: 1,
           },
           events: {
             onReady: (event: any) => {
@@ -299,6 +347,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
               
               setIsVideoReady(true);
               setIsLoading(false);
+              retryCountRef.current = 0; // ✅ إعادة تعيين عدد المحاولات
 
               const realDuration = event.target.getDuration?.() || 0;
               if (realDuration > 0) {
@@ -316,9 +365,10 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
                 iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen');
                 iframe.setAttribute('allowfullscreen', 'true');
                 iframe.setAttribute('title', currentTitle || 'Lesson video');
+                // ✅ إضافة sandbox للسماح بكل شيء
+                iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts allow-popups allow-forms');
               }
 
-              // ✅ إذا كان المستخدم طلب التشغيل قبل الجاهزية
               if (pendingPlayRef.current) {
                 pendingPlayRef.current = false;
                 try {
@@ -350,8 +400,9 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
                 setShowControls(true);
                 clearControlsTimer();
               } else if (event.data === states.UNSTARTED) {
-                // ✅ الفيديو جاهز لكن لم يبدأ
                 setIsLoading(false);
+              } else if (event.data === states.BUFFERING) {
+                setIsLoading(true);
               }
             },
             onPlaybackQualityChange: (event: any) => {
@@ -364,9 +415,15 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
                   window.clearTimeout(readyTimeoutRef.current);
                   readyTimeoutRef.current = null;
                 }
-                setVideoError(true);
-                setIsLoading(false);
-                pendingPlayRef.current = false;
+                
+                // ✅ محاولة إعادة المحاولة
+                if (retryCountRef.current < maxRetries) {
+                  retryInit();
+                } else {
+                  setVideoError(true);
+                  setIsLoading(false);
+                  pendingPlayRef.current = false;
+                }
               }
             },
           },
@@ -375,18 +432,28 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
         readyTimeoutRef.current = window.setTimeout(() => {
           if (!cancelled && !isVideoReady) {
             console.error('YouTube player did not become ready in time');
-            setVideoError(true);
-            setIsLoading(false);
-            pendingPlayRef.current = false;
+            // ✅ محاولة إعادة المحاولة
+            if (retryCountRef.current < maxRetries) {
+              retryInit();
+            } else {
+              setVideoError(true);
+              setIsLoading(false);
+              pendingPlayRef.current = false;
+            }
           }
         }, 15000);
       })
       .catch((error) => {
         if (!cancelled) {
           console.error('YouTube Player API initialization failed:', error);
-          setVideoError(true);
-          setIsLoading(false);
-          pendingPlayRef.current = false;
+          // ✅ محاولة إعادة المحاولة
+          if (retryCountRef.current < maxRetries) {
+            retryInit();
+          } else {
+            setVideoError(true);
+            setIsLoading(false);
+            pendingPlayRef.current = false;
+          }
         }
       });
 
@@ -396,7 +463,6 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
         window.clearTimeout(readyTimeoutRef.current);
         readyTimeoutRef.current = null;
       }
-      // ✅ تنظيف المشغل عند إزالة المكون
       try {
         playerRef.current?.destroy?.();
         playerRef.current = null;
@@ -404,10 +470,17 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
         // Ignore
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playerElId, currentVideoId, lang, cleanExtensions]);
+  }, [playerElId, currentVideoId, currentTitle, lang, cleanExtensions, retryInit, maxRetries]);
 
-  // ✅ تحديث الفيديو عند تغيير الـ videoId (تغيير الجزء)
+  // ✅ تهيئة المشغل
+  useEffect(() => {
+    if (!currentVideoId) return;
+    retryCountRef.current = 0;
+    const cleanup = initPlayer();
+    return cleanup;
+  }, [initPlayer, currentVideoId]);
+
+  // ✅ تحديث الفيديو عند تغيير الـ videoId
   useEffect(() => {
     if (isFirstVideoRef.current) {
       isFirstVideoRef.current = false;
@@ -425,21 +498,20 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     setCaptionsEnabled(false);
     pendingPlayRef.current = false;
     hasUserInteractedRef.current = false;
+    retryCountRef.current = 0;
 
     try {
       const player = playerRef.current;
       if (player && typeof player.loadVideoById === 'function') {
         player.loadVideoById(currentVideoId);
       } else {
-        // ✅ إذا لم يكن المشغل جاهزاً، سيتم إنشاؤه من جديد
-        setVideoError(true);
-        setIsLoading(false);
+        // ✅ إعادة تهيئة المشغل
+        initPlayer();
       }
     } catch {
-      setVideoError(true);
-      setIsLoading(false);
+      initPlayer();
     }
-  }, [currentVideoId, setPlayingState, setTimeState]);
+  }, [currentVideoId, setPlayingState, setTimeState, initPlayer]);
 
   // ✅ تحديث الوقت
   useEffect(() => {
@@ -456,7 +528,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     return () => window.clearInterval(interval);
   }, [isVideoReady, isMobile, setTimeState]);
 
-  // ✅ تشغيل/إيقاف الفيديو - يعمل على جميع الأجهزة
+  // ✅ تشغيل/إيقاف الفيديو
   const togglePlay = useCallback(() => {
     if (isTogglingRef.current) return;
     isTogglingRef.current = true;
@@ -464,7 +536,6 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
 
     const player = playerRef.current;
 
-    // ✅ المشغل لسه مش جاهز
     if (!player || !isVideoReady) {
       pendingPlayRef.current = true;
       toast.info(lang === 'ar' ? 'جاري تجهيز الفيديو...' : 'Preparing video...');
@@ -480,7 +551,6 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
       }
     } catch (error) {
       console.warn('Player control failed:', error);
-      // ✅ محاولة بديلة للموبايل
       try {
         if (isPlayingRef.current) {
           player.pauseVideo?.();
@@ -608,7 +678,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     );
   }
 
-  // ✅ المشغل الرئيسي - يعمل على جميع الأجهزة (ديسكتوب + موبايل)
+  // ✅ المشغل الرئيسي
   return (
     <div
       ref={containerRef}
@@ -633,9 +703,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
           controlsTimerRef.current = setTimeout(() => setShowControls(false), 5000);
         }
       }}
-      // ✅ للموبايل - تشغيل عند النقر على الفيديو
       onClick={(e) => {
-        // منع التشغيل عند النقر على الأزرار
         if ((e.target as HTMLElement).closest('button')) return;
         togglePlay();
       }}
@@ -644,7 +712,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
         <img src={poster} alt="" className="absolute inset-0 z-[1] h-full w-full object-cover" draggable={false} />
       )}
 
-      {/* ✅ مشغل واحد للجميع - YouTube Iframe API */}
+      {/* ✅ مشغل YouTube */}
       <div id={playerElId} ref={playerDivRef} className="absolute inset-0 h-full w-full z-[2]" />
 
       {isLoading && (
@@ -655,7 +723,6 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
 
       {/* ✅ عناصر التحكم */}
       <div className={`absolute inset-0 z-30 transition-opacity duration-200 ${showControls || !isPlaying ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
-        {/* زر التشغيل المركزي */}
         <button
           type="button"
           onClick={togglePlay}
@@ -670,7 +737,6 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
           )}
         </button>
 
-        {/* عنوان الفيديو */}
         {currentTitle && (
           <div className="absolute left-2 top-2 z-40 max-w-[70%] sm:left-4 sm:top-4">
             <h3 dir={lang === 'ar' ? 'rtl' : 'ltr'} className="truncate rounded-lg bg-black/50 px-3 py-1.5 text-sm font-semibold text-white drop-shadow-lg sm:px-4 sm:py-2 sm:text-lg">
@@ -679,7 +745,6 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
           </div>
         )}
 
-        {/* شريط التحكم السفلي */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-2 sm:p-4">
           <ProgressBar
             currentTime={currentTime}
@@ -757,15 +822,20 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
         </div>
       </div>
 
-      {/* أيقونة الحماية */}
       <div className="pointer-events-none absolute right-4 top-4 z-20 opacity-20">
         <Shield className="h-6 w-6 text-white" />
       </div>
 
-      {/* عرض الخطأ */}
-      {videoError && <VideoError lang={lang} onRetry={() => window.location.reload()} />}
+      {videoError && (
+        <VideoError 
+          lang={lang} 
+          onRetry={() => {
+            retryCountRef.current = 0;
+            retryInit();
+          }} 
+        />
+      )}
 
-      {/* ✅ ستايلات إضافية للموبايل */}
       <style>{`
         .video-protected * { -webkit-touch-callout: none; }
         .video-protected iframe { 
@@ -794,7 +864,6 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
         .control-button:hover { background: rgba(255,255,255,.10); }
         .control-button:active { background: rgba(255,255,255,.20); transform: scale(.95); }
         
-        /* ✅ تحسينات للموبايل */
         @media (max-width: 768px) {
           .video-protected button { 
             min-width: 44px; 
@@ -806,7 +875,6 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
           }
         }
         
-        /* ✅ دعم iPhone */
         @supports (-webkit-touch-callout: none) {
           .video-protected iframe {
             width: 100% !important;
