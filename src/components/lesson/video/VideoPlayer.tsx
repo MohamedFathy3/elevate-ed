@@ -49,24 +49,62 @@ let youtubeApiPromise: Promise<void> | null = null;
 
 const loadYouTubeIframeApi = (): Promise<void> => {
   if (typeof window === 'undefined') return Promise.resolve();
-
   if ((window as any).YT?.Player) return Promise.resolve();
   if (youtubeApiPromise) return youtubeApiPromise;
 
-  youtubeApiPromise = new Promise((resolve) => {
-    const previousReady = (window as any).onYouTubeIframeAPIReady;
-    (window as any).onYouTubeIframeAPIReady = () => {
-      previousReady?.();
-      resolve();
+  const promise = new Promise<void>((resolve, reject) => {
+    let settled = false;
+    let pollTimer: ReturnType<typeof window.setInterval> | null = null;
+    let timeoutTimer: ReturnType<typeof window.setTimeout> | null = null;
+
+    const finish = (error?: Error) => {
+      if (settled) return;
+      settled = true;
+      if (pollTimer) window.clearInterval(pollTimer);
+      if (timeoutTimer) window.clearTimeout(timeoutTimer);
+      if (error) reject(error);
+      else resolve();
     };
 
-    if (!document.getElementById('youtube-iframe-api-script')) {
-      const script = document.createElement('script');
-      script.id = 'youtube-iframe-api-script';
-      script.src = 'https://www.youtube.com/iframe_api';
-      script.async = true;
-      document.head.appendChild(script);
+    const checkReady = () => {
+      if ((window as any).YT?.Player) finish();
+    };
+
+    const previousReady = (window as any).onYouTubeIframeAPIReady;
+    const handleReady = () => {
+      previousReady?.();
+      checkReady();
+    };
+    (window as any).onYouTubeIframeAPIReady = handleReady;
+
+    const script = document.getElementById('youtube-iframe-api-script') as HTMLScriptElement | null;
+    const handleScriptError = () => {
+      finish(new Error('تعذر تحميل YouTube Player API'));
+    };
+
+    if (script) {
+      script.addEventListener('error', handleScriptError, { once: true });
+    } else {
+      const newScript = document.createElement('script');
+      newScript.id = 'youtube-iframe-api-script';
+      newScript.src = 'https://www.youtube.com/iframe_api';
+      newScript.async = true;
+      newScript.addEventListener('load', checkReady, { once: true });
+      newScript.addEventListener('error', handleScriptError, { once: true });
+      document.head.appendChild(newScript);
     }
+
+    // The global callback can be missed when the API script was already in the page.
+    pollTimer = window.setInterval(checkReady, 100);
+    timeoutTimer = window.setTimeout(() => {
+      finish(new Error('انتهت مهلة تحميل YouTube Player API'));
+    }, 15000);
+    checkReady();
+  });
+
+  youtubeApiPromise = promise.catch((error) => {
+    youtubeApiPromise = null;
+    throw error;
   });
 
   return youtubeApiPromise;
@@ -96,6 +134,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   // ✅ لو المستخدم دوس Play قبل ما الـ player يخلص تحميل (شائع على نت الموبايل)
   // بنسجل الرغبة دي، ولما الـ player يبقى جاهز بنشغّل الفيديو تلقائيًا.
   const pendingPlayRef = useRef(false);
+  const readyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const rawId = useId();
   const playerElId = `yt-player-${rawId.replace(/[^a-zA-Z0-9_-]/g, '')}`;
@@ -208,101 +247,134 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     if (!currentVideoId) return;
     let cancelled = false;
 
-    loadYouTubeIframeApi().then(() => {
-      if (cancelled || playerRef.current || !playerDivRef.current) return;
-      const YT = (window as any).YT;
-      if (!YT?.Player) return;
+    loadYouTubeIframeApi()
+      .then(() => {
+        if (cancelled || playerRef.current || !playerDivRef.current) return;
+        const YT = (window as any).YT;
+        if (!YT?.Player) throw new Error('YouTube Player API غير متاحة');
 
-      playerRef.current = new YT.Player(playerElId, {
-        videoId: currentVideoId,
-        width: '100%',
-        height: '100%',
-        playerVars: {
-          autoplay: 0,
-          controls: 0,
-          modestbranding: 1,
-          rel: 0,
-          fs: 0,
-          iv_load_policy: 3,
-          disablekb: 1,
-          playsinline: 1,
-          cc_load_policy: 0,
-          cc_lang_pref: lang === 'ar' ? 'ar' : 'en',
-          origin: window.location.origin,
-        },
-        events: {
-          onReady: (event: any) => {
-            if (cancelled) return;
-            setIsVideoReady(true);
-            setIsLoading(false);
-
-            const realDuration = event.target.getDuration?.() || 0;
-            if (realDuration > 0) {
-              durationRef.current = realDuration;
-              setDuration(realDuration);
-            }
-
-            const iframe = event.target.getIframe?.();
-            if (iframe) {
-              iframe.style.width = '100%';
-              iframe.style.height = '100%';
-              iframe.style.position = 'absolute';
-              iframe.style.inset = '0';
-              iframe.style.border = '0';
-            }
-
-            // ✅ لو المستخدم كان دوس Play قبل الجاهزية، شغّل الفيديو فورًا الآن
-            if (pendingPlayRef.current) {
-              pendingPlayRef.current = false;
-              try {
-                event.target.playVideo?.();
-              } catch {
-                // Ignore — user can tap play again if this somehow fails.
-              }
-            }
-
-            window.setTimeout(cleanExtensions, 100);
-            window.setTimeout(cleanExtensions, 500);
+        playerRef.current = new YT.Player(playerElId, {
+          videoId: currentVideoId,
+          width: '100%',
+          height: '100%',
+          playerVars: {
+            autoplay: 0,
+            controls: 0,
+            modestbranding: 1,
+            rel: 0,
+            fs: 0,
+            iv_load_policy: 3,
+            disablekb: 1,
+            playsinline: 1,
+            cc_load_policy: 0,
+            cc_lang_pref: lang === 'ar' ? 'ar' : 'en',
+            origin: window.location.origin,
           },
-          onStateChange: (event: any) => {
-            if (cancelled) return;
-            const states = (window as any).YT?.PlayerState;
-            if (!states) return;
+          events: {
+            onReady: (event: any) => {
+              if (cancelled) return;
+              if (readyTimeoutRef.current) {
+                window.clearTimeout(readyTimeoutRef.current);
+                readyTimeoutRef.current = null;
+              }
+              setIsVideoReady(true);
+              setIsLoading(false);
 
-            if (event.data === states.PLAYING) {
-              setPlayingState(true);
               const realDuration = event.target.getDuration?.() || 0;
               if (realDuration > 0) {
                 durationRef.current = realDuration;
                 setDuration(realDuration);
               }
-              revealControls();
-            } else if (event.data === states.PAUSED || event.data === states.ENDED) {
-              setPlayingState(false);
-              setShowControls(true);
-              clearControlsTimer();
-            }
+
+              const iframe = event.target.getIframe?.();
+              if (iframe) {
+                iframe.style.width = '100%';
+                iframe.style.height = '100%';
+                iframe.style.position = 'absolute';
+                iframe.style.inset = '0';
+                iframe.style.border = '0';
+                iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen');
+                iframe.setAttribute('allowfullscreen', 'true');
+                iframe.setAttribute('title', currentTitle || 'Lesson video');
+              }
+
+              if (pendingPlayRef.current) {
+                pendingPlayRef.current = false;
+                try {
+                  event.target.playVideo?.();
+                } catch {
+                  // Ignore — user can tap play again if this somehow fails.
+                }
+              }
+
+              window.setTimeout(cleanExtensions, 100);
+              window.setTimeout(cleanExtensions, 500);
+            },
+            onStateChange: (event: any) => {
+              if (cancelled) return;
+              const states = (window as any).YT?.PlayerState;
+              if (!states) return;
+
+              if (event.data === states.PLAYING) {
+                setPlayingState(true);
+                const realDuration = event.target.getDuration?.() || 0;
+                if (realDuration > 0) {
+                  durationRef.current = realDuration;
+                  setDuration(realDuration);
+                }
+                revealControls();
+              } else if (event.data === states.PAUSED || event.data === states.ENDED) {
+                setPlayingState(false);
+                setShowControls(true);
+                clearControlsTimer();
+              }
+            },
+            onPlaybackQualityChange: (event: any) => {
+              if (!cancelled) setCurrentQuality(event.data || 'auto');
+            },
+            onError: (event: any) => {
+              if (!cancelled) {
+                console.error('YouTube player error:', event.data);
+                if (readyTimeoutRef.current) {
+                  window.clearTimeout(readyTimeoutRef.current);
+                  readyTimeoutRef.current = null;
+                }
+                setVideoError(true);
+                setIsLoading(false);
+                pendingPlayRef.current = false;
+              }
+            },
           },
-          onPlaybackQualityChange: (event: any) => {
-            if (!cancelled) setCurrentQuality(event.data || 'auto');
-          },
-          onError: () => {
-            if (!cancelled) {
-              setVideoError(true);
-              setIsLoading(false);
-              pendingPlayRef.current = false;
-            }
-          },
-        },
+        });
+
+        readyTimeoutRef.current = window.setTimeout(() => {
+          if (!cancelled && !isVideoReady) {
+            console.error('YouTube player did not become ready in time');
+            setVideoError(true);
+            setIsLoading(false);
+            pendingPlayRef.current = false;
+          }
+        }, 15000);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          console.error('YouTube Player API initialization failed:', error);
+          setVideoError(true);
+          setIsLoading(false);
+          pendingPlayRef.current = false;
+        }
       });
-    });
 
     return () => {
       cancelled = true;
+      if (readyTimeoutRef.current) {
+        window.clearTimeout(readyTimeoutRef.current);
+        readyTimeoutRef.current = null;
+      }
     };
     // The player is created once. New parts are loaded with loadVideoById below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playerElId]);
+  }, [playerElId, currentVideoId]);
 
   useEffect(() => {
     return () => {
