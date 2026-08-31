@@ -244,7 +244,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   }, [captionsEnabled, isVideoReady, lang]);
 
   useEffect(() => {
-    if (!currentVideoId) return;
+    if (!currentVideoId || isMobile) return;
     let cancelled = false;
 
     loadYouTubeIframeApi()
@@ -374,7 +374,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     };
     // The player is created once. New parts are loaded with loadVideoById below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playerElId, currentVideoId]);
+  }, [playerElId, currentVideoId, isMobile]);
 
   useEffect(() => {
     return () => {
@@ -591,15 +591,30 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
         <img src={poster} alt="" className="absolute inset-0 z-[1] h-full w-full object-cover" draggable={false} />
       )}
 
-      <div id={playerElId} ref={playerDivRef} className="absolute inset-0 h-full w-full" />
+      {isMobile ? (
+        <iframe
+          title={currentTitle || 'Lesson video'}
+          className="absolute inset-0 z-[2] h-full w-full border-0"
+          src={`https://www.youtube.com/embed/${currentVideoId}?rel=0&modestbranding=1&playsinline=1&controls=1`}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          referrerPolicy="strict-origin-when-cross-origin"
+          onLoad={() => {
+            setIsLoading(false);
+            setIsVideoReady(true);
+          }}
+        />
+      ) : (
+        <div id={playerElId} ref={playerDivRef} className="absolute inset-0 h-full w-full" />
+      )}
 
-      {isLoading && (
+      {isLoading && !isMobile && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/35">
           <Loader2 className="h-10 w-10 animate-spin text-white" />
         </div>
       )}
 
-      <div className={`absolute inset-0 z-30 transition-opacity duration-200 ${showControls || !isPlaying ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
+      {!isMobile && <div className={`absolute inset-0 z-30 transition-opacity duration-200 ${showControls || !isPlaying ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
         <button
           type="button"
           onClick={togglePlay}
@@ -657,7 +672,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
             </div>
           </div>
         </div>
-      </div>
+      </div>}
 
       <div className="pointer-events-none absolute right-4 top-4 z-20 opacity-20"><Shield className="h-6 w-6 text-white" /></div>
       {videoError && <VideoError lang={lang} onRetry={() => window.location.reload()} />}
