@@ -31,7 +31,7 @@ export default defineConfig(({ mode }) => {
   const devServerHost = getEnvVar('VITE_DEV_SERVER_HOST', '::');
   const devServerPort = parseInt(getEnvVar('VITE_DEV_SERVER_PORT', '7000'));
   const previewServerHost = getEnvVar('VITE_PREVIEW_SERVER_HOST', '::');
-  const previewServerPort = parseInt(getEnvVar('VITE_PREVIEW_SERVER_PORT', '9000'));
+  const previewServerPort = parseInt(getEnvVar('VITE_PREVIEW_SERVER_PORT', '4005'));
   
   const apiTarget = getEnvVar('VITE_API_TARGET', 'https://web-lec.com/');
   const apiRewritePath = getEnvVar('VITE_API_REWRITE_PATH', '/api');

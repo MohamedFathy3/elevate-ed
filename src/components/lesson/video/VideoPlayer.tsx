@@ -93,6 +93,9 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   const currentTimeRef = useRef(0);
   const durationRef = useRef(0);
   const isMobileRef = useRef(false);
+  // ✅ لو المستخدم دوس Play قبل ما الـ player يخلص تحميل (شائع على نت الموبايل)
+  // بنسجل الرغبة دي، ولما الـ player يبقى جاهز بنشغّل الفيديو تلقائيًا.
+  const pendingPlayRef = useRef(false);
 
   const rawId = useId();
   const playerElId = `yt-player-${rawId.replace(/[^a-zA-Z0-9_-]/g, '')}`;
@@ -248,6 +251,16 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
               iframe.style.border = '0';
             }
 
+            // ✅ لو المستخدم كان دوس Play قبل الجاهزية، شغّل الفيديو فورًا الآن
+            if (pendingPlayRef.current) {
+              pendingPlayRef.current = false;
+              try {
+                event.target.playVideo?.();
+              } catch {
+                // Ignore — user can tap play again if this somehow fails.
+              }
+            }
+
             window.setTimeout(cleanExtensions, 100);
             window.setTimeout(cleanExtensions, 500);
           },
@@ -277,6 +290,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
             if (!cancelled) {
               setVideoError(true);
               setIsLoading(false);
+              pendingPlayRef.current = false;
             }
           },
         },
@@ -317,6 +331,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     durationRef.current = 0;
     setDuration(0);
     setCaptionsEnabled(false);
+    pendingPlayRef.current = false;
 
     try {
       playerRef.current?.loadVideoById?.(currentVideoId);
@@ -346,7 +361,14 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     window.setTimeout(() => { isTogglingRef.current = false; }, 300);
 
     const player = playerRef.current;
-    if (!player || !isVideoReady) return;
+
+    // ✅ الـ player لسه مش جاهز (شائع على نت الموبايل البطيء):
+    // بدل ما نتجاهل الضغطة، نسجلها ونشغّل الفيديو أول ما يبقى جاهز في onReady.
+    if (!player || !isVideoReady) {
+      pendingPlayRef.current = true;
+      toast.info(lang === 'ar' ? 'جاري تجهيز الفيديو...' : 'Preparing video...');
+      return;
+    }
 
     try {
       if (isPlayingRef.current) player.pauseVideo?.();
@@ -354,7 +376,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     } catch (error) {
       console.warn('Player control failed:', error);
     }
-  }, [isVideoReady]);
+  }, [isVideoReady, lang]);
 
   const changeSpeed = useCallback((speed: number) => {
     setPlaybackSpeed(speed);
@@ -509,10 +531,15 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
         <button
           type="button"
           onClick={togglePlay}
-          className={`absolute left-1/2 top-1/2 z-40 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white/40 bg-white/15 text-white shadow-lg transition-transform hover:scale-105 hover:bg-white/25 active:scale-95 sm:h-20 sm:w-20 ${isPlaying ? 'pointer-events-none opacity-0' : 'opacity-100'}`}
+          aria-busy={isLoading}
+          className={`absolute left-1/2 top-1/2 z-40 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white/40 bg-white/15 text-white shadow-lg transition-transform hover:scale-105 hover:bg-white/25 active:scale-95 sm:h-20 sm:w-20 ${isPlaying ? 'pointer-events-none opacity-0' : 'opacity-100'} ${isLoading ? 'cursor-wait' : ''}`}
           aria-label={lang === 'ar' ? 'تشغيل الفيديو' : 'Play video'}
         >
-          <Play className="h-8 w-8 fill-current sm:h-10 sm:w-10" />
+          {isLoading ? (
+            <Loader2 className="h-8 w-8 animate-spin sm:h-10 sm:w-10" />
+          ) : (
+            <Play className="h-8 w-8 fill-current sm:h-10 sm:w-10" />
+          )}
         </button>
 
         {currentTitle && (
@@ -581,5 +608,3 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
 
 VideoPlayer.displayName = 'VideoPlayer';
 export default VideoPlayer;
-
-

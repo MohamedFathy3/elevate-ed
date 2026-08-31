@@ -210,7 +210,7 @@ export const ExamCard = ({
             
             {!isWaitingResult && !isWaitingCorrection && isPassed && (
               <span className="text-green-600 dark:text-green-400 font-semibold">
-                ✅ حصلت على {exam.total || 0} من {exam.total_must_pass_marks || 0}
+                ✅ حصلت على {exam.total || 0} من {exam.total_marks || 0}
               </span>
             )}
           </div>

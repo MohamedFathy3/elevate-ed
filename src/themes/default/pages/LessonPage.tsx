@@ -146,7 +146,7 @@ const LessonPage = memo(() => {
 
   // ✅ تفعيل الحماية (مؤجل)
   const { BlueScreen } = useAdvancedProtection({
-    enabled: true,
+    enabled: false,
     sensitivity: 'medium',
     showBlueScreen: true,
     preventDevTools: true,
