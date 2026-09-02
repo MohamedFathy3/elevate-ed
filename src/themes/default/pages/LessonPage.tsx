@@ -23,6 +23,7 @@ import { toast } from "@/hooks/use-toast";
 import { enableFullProtection } from "@/utils/protection";
 import Cookies from "js-cookie";
 import { useTeacher } from "@/context/TeacherContext";
+import { LessonNote } from "@/components/lesson/LessonPage/components/LessonNote";
 
 // ✅ دالة مساعدة للـ Lazy Loading
 const lazyLoad = <T extends React.ComponentType<any>>(
@@ -679,6 +680,14 @@ const getVideoUrl = useCallback((url: string) => {
                     lang={lang}
                   />
                 </Suspense>
+                <Suspense fallback={
+  <div className="h-20 bg-gray-100 dark:bg-gray-800 rounded-xl mt-4 animate-pulse"></div>
+}>
+  <LessonNote 
+    lessonId={lessonIdNum} 
+    className="mt-4" 
+  />
+</Suspense>
               </div>
             </div>
 

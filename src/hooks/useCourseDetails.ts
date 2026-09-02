@@ -8,6 +8,7 @@ import { useMemo, useState, useEffect } from "react";
 export interface CourseDetail {
   id: number;
   course_id: number;
+  is_purchased: boolean; // ✅ إضافة is_purchased
   title: string;
   title_ar: string;
   description: string;
@@ -30,6 +31,21 @@ export interface CourseDetail {
     discount: string;
     type: string;
   };
+  // ✅ حقول إضافية للدروس
+  titles?: string[];
+  titles_ar?: string[];
+  link_video?: string[];
+  imageUrl?: string;
+  image?: any;
+  pdfUrl?: string;
+  pdf?: any;
+  available_watch_count?: number | null;
+  usedWatchCount?: number;
+  remainingWatchCount?: number | null;
+  students?: any[];
+  exams?: any[];
+  assignments?: any[];
+  need_support?: boolean;
 }
 
 interface CourseDetailsResponse {
@@ -71,7 +87,11 @@ interface CourseDetailsResponse {
     count_student: number;
     start_date: string;
     end_date: string;
-    details: any[]; // الدروس
+    details: {
+      id: number;
+      is_purchased: boolean; // ✅ هنا is_purchased
+      // ... باقي الحقول
+    }[];
     students: any[];
     teacher: any;
   };
@@ -252,7 +272,7 @@ export const useCourseWithEnrollment = (courseId: number | undefined) => {
   // معلومات الكورس الكاملة من API
   const courseFromApi = courseDetailsData?.data || null;
   
-  // هل الطالب اشترى الكورس (أي درس من الدروس attended = true أو موجود في كورساته)
+  // ✅ هل الطالب اشترى الكورس كامل؟
   const hasPurchasedFullCourse = useMemo(() => {
     if (isEnrolled) return true;
     if (lessons.length > 0) {
@@ -261,10 +281,10 @@ export const useCourseWithEnrollment = (courseId: number | undefined) => {
     return false;
   }, [isEnrolled, lessons]);
   
-  // معلومات الكورس من بيانات الطالب المشترك (إذا وجد)
+  // ✅ معلومات الكورس من بيانات الطالب المشترك (إذا وجد)
   const courseInfo = enrolledCourse || courseFromApi;
   
-  // استخراج البيانات المفيدة للعرض
+  // ✅ استخراج البيانات المفيدة للعرض
   const courseTitle = (lang: string) => {
     return lang === "ar" ? courseFromApi?.title_ar : courseFromApi?.title;
   };
@@ -414,6 +434,75 @@ export const useLastWatchedLesson = (courseId: number | undefined) => {
   };
 };
 
+// ============================================
+// 🟢 Hook للتحقق من حالة شراء درس معين
+// ============================================
+
+export const useLessonPurchaseStatus = (courseId: number | undefined, lessonId: number | undefined) => {
+  const { lessons, hasPurchasedFullCourse, isLoading } = useCourseWithEnrollment(courseId);
+  
+  const lessonStatus = useMemo(() => {
+    if (!lessons.length || !lessonId) {
+      return { isPurchased: false, lesson: null };
+    }
+    
+    const lesson = lessons.find((l: any) => l.id === lessonId);
+    if (!lesson) {
+      return { isPurchased: false, lesson: null };
+    }
+    
+    // ✅ الدرس مشترى إذا:
+    // 1. الكورس كامل مشترى (hasPurchasedFullCourse)
+    // 2. أو الدرس مشترى فردياً (lesson.is_purchased === true)
+    const isPurchased = hasPurchasedFullCourse || lesson.is_purchased === true;
+    
+    return { isPurchased, lesson };
+  }, [lessons, lessonId, hasPurchasedFullCourse]);
+  
+  return {
+    ...lessonStatus,
+    isLoading,
+  };
+};
+
+// ============================================
+// 🟢 Hook لجلب الدروس المشتراة فردياً
+// ============================================
+
+export const usePurchasedLessons = (courseId: number | undefined) => {
+  const { lessons, hasPurchasedFullCourse, isLoading } = useCourseWithEnrollment(courseId);
+  
+  const purchasedLessons = useMemo(() => {
+    if (!lessons.length) return [];
+    
+    // ✅ إذا كان الكورس كامل مشترى، كل الدروس متاحة
+    if (hasPurchasedFullCourse) {
+      return lessons;
+    }
+    
+    // ✅ غير كده، فقط الدروس اللي is_purchased = true
+    return lessons.filter((lesson: any) => lesson.is_purchased === true);
+  }, [lessons, hasPurchasedFullCourse]);
+  
+  const availableLessons = useMemo(() => {
+    if (!lessons.length) return [];
+    
+    // ✅ الدروس المتاحة = المشتراة + المجانية (price = 0)
+    return lessons.filter((lesson: any) => {
+      const isFree = parseFloat(lesson.price) === 0;
+      return hasPurchasedFullCourse || lesson.is_purchased === true || isFree;
+    });
+  }, [lessons, hasPurchasedFullCourse]);
+  
+  return {
+    purchasedLessons,    // الدروس المشتراة
+    availableLessons,    // الدروس المتاحة (مشتراة + مجانية)
+    allLessons: lessons,
+    hasPurchasedFullCourse,
+    isLoading,
+  };
+};
+
 export default {
   useStudentCourses,
   useIsEnrolledInCourse,
@@ -425,4 +514,6 @@ export default {
   useLessonDetails,
   useCourseProgress,
   useLastWatchedLesson,
+  useLessonPurchaseStatus,
+  usePurchasedLessons,
 };

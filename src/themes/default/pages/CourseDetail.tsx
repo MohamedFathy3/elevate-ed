@@ -62,6 +62,7 @@ const lessonTitle = lang === "ar"
   const goToLessonWithPart = (lessonId: number, partIndex: number) => {
     navigate(`/lesson/${lessonId}?part=${partIndex}`);
   };
+  const isAvailable = hasPurchasedFullCourse || isPurchased || isFree;
 
   return (
     <motion.div
@@ -758,31 +759,38 @@ const CourseDetail = () => {
               <div className="space-y-2">
                 {lessons.slice(0, 20).map((lesson: any, index: number) => {
                   const isPurchased = hasPurchasedFullCourse || lesson.attended;
+                    const isLessonPurchased = lesson.is_purchased === true;
+
                   const isFree = parseFloat(lesson.price) === 0;
+  const isAvailable = hasPurchasedFullCourse || isLessonPurchased || isFree;
 
                   return (
                     <LessonCard
-                      key={lesson.id}
-                      lesson={lesson}
-                      index={index}
-                      lang={lang}
-                      isPurchased={isPurchased}
-                      isFree={isFree}
-                      hasPurchasedFullCourse={hasPurchasedFullCourse}
-                      isAuthenticated={!!Cookies.get('student_token')}
-                      onBuy={() => handleOpenBuyLessonModal(lesson.id, parseFloat(lesson.price))}
-                      onWatch={() => {
-                        setSelectedLesson(lesson);
-                        setSelectedPart(null);
-                        setSelectedPartIndex(-1);
-                        setVideoError(false);
-                      }}
-                      onSelectPart={handleSelectPart}
-                      isBuying={buyingLessonId === lesson.id}
-                      isSelected={selectedLesson?.id === lesson.id}
-                      isNature={isNature}
-                      isDark={isDark}
-                    />
+      key={lesson.id}
+      lesson={lesson}
+      index={index}
+      lang={lang}
+      isAvailable={isAvailable}
+      isPurchased={isLessonPurchased}
+      isFree={isFree}
+      hasPurchasedFullCourse={hasPurchasedFullCourse}
+      isAuthenticated={!!Cookies.get('student_token')}
+      onBuy={() => handleOpenBuyLessonModal(lesson.id, parseFloat(lesson.price))}
+      onWatch={() => {
+        // ✅ إذا كان متاح، يفتح مباشرة
+        if (isAvailable) {
+          setSelectedLesson(lesson);
+          setSelectedPart(null);
+          setSelectedPartIndex(-1);
+          setVideoError(false);
+        }
+      }}
+      onSelectPart={handleSelectPart}
+      isBuying={buyingLessonId === lesson.id}
+      isSelected={selectedLesson?.id === lesson.id}
+      isNature={isNature}
+      isDark={isDark}
+    />
                   );
                 })}
                 {lessons.length > 20 && (

@@ -388,6 +388,10 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
 
               if (event.data === states.PLAYING) {
                 setPlayingState(true);
+                // ✅ FIX: كان الفيديو بيفضل عليه loading spinner للأبد لو
+                // البلاير عدّى بحالة BUFFERING مرة وبعدين رجع PLAYING،
+                // لأن isLoading ما كانش بيترجع false غير في onReady بس.
+                setIsLoading(false);
                 hasUserInteractedRef.current = true;
                 const realDuration = event.target.getDuration?.() || 0;
                 if (realDuration > 0) {
