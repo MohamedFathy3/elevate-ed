@@ -1,5 +1,4 @@
 // utils/protection.ts
-import Beyck from 'beyck';
 
 // 🛡️ منع F12 و Developer Tools و Ctrl+U و Ctrl+S
 export const disableDevTools = () => {
@@ -98,8 +97,11 @@ export const detectScreenRecording = (callback?: (isRecording: boolean) => void)
 
 // 🛡️ حماية Beyck - كشف debugging
 export const enableBeyckProtection = () => {
-  if (typeof Beyck === 'function') {
-    Beyck((app: any) => {
+  if (typeof window === 'undefined') return;
+  void import('beyck').then((module) => {
+    const Beyck = (module as any).default || (module as any);
+    if (typeof Beyck === 'function') {
+      Beyck((app: any) => {
       // عند اكتشاف debugging، قفل الفيديو
       app.defend((state: boolean) => {
         if (state) {
@@ -117,8 +119,9 @@ export const enableBeyckProtection = () => {
           });
         }
       });
-    });
-  }
+      });
+    }
+  }).catch(() => undefined);
 };
 
 // 🛡️ حماية إضافية: تعطيل صورة في صورة (Picture in Picture)

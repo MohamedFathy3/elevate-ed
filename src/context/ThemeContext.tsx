@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { createContext, useContext, useState, useEffect, ReactNode, useRef, useCallback } from 'react';
 import api from '@/lib/api';
+import { getSsrPayload } from '@/ssr';
 
 export type ThemeName = 'default' | 'nature';
 export type ColorMode = 'light' | 'dark';
@@ -170,12 +171,13 @@ const themeImports = {
 };
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<ThemeName>('default');
+  const ssrPayload = getSsrPayload();
+  const [theme, setThemeState] = useState<ThemeName>(() => ssrPayload?.theme || 'default');
   const [colorMode, setColorMode] = useState<ColorMode>('light');
-  const [pages, setPages] = useState<ThemePages | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isThemeReady, setIsThemeReady] = useState(false);
-  const [apiColors, setApiColors] = useState<{ background: string; text: string } | null>(null);
+  const [pages, setPages] = useState<ThemePages | null>(() => ssrPayload?.theme === 'default' ? defaultPages as ThemePages : null);
+  const [isLoading, setIsLoading] = useState(() => !ssrPayload);
+  const [isThemeReady, setIsThemeReady] = useState(() => Boolean(ssrPayload));
+  const [apiColors, setApiColors] = useState<{ background: string; text: string } | null>(() => ssrPayload ? { background: ssrPayload.bgColor, text: ssrPayload.textColor } : null);
   
   const isInitialized = useRef(false);
   const themeLoadedRef = useRef(false);
@@ -277,6 +279,14 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   // ✅ ✅ ✅ MAIN INITIALIZATION
   useEffect(() => {
+    if (ssrPayload) {
+      setThemeState(ssrPayload.theme);
+      setApiColors({ background: ssrPayload.bgColor, text: ssrPayload.textColor });
+      if (ssrPayload.theme === 'default') {
+        setPages(defaultPages as ThemePages);
+      }
+      return;
+    }
     if (isInitialized.current) {
       return;
     }

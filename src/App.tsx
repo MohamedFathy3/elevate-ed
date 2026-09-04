@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import { getSsrPayload } from "@/ssr";
+import { BrowserRouter, MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -142,9 +143,9 @@ const SubdomainRoutes = () => {
 };
 
 // ✅ AppContent
-const AppContent = () => {
+const AppContent = ({ ssrLocation }: { ssrLocation?: string }) => {
   const { isLoading, pages, isThemeReady } = useTheme();
-  const [showLoader, setShowLoader] = useState(true);
+  const [showLoader, setShowLoader] = useState(() => !getSsrPayload());
   const loaderTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const lang = typeof window !== 'undefined' ? localStorage.getItem('lang') || 'ar' : 'ar';
@@ -178,18 +179,19 @@ const AppContent = () => {
     return <AppLoader lang={lang} />;
   }
   
-  return (
-    <BrowserRouter>
-      <StudentAuthProvider>
-        <BackgroundSelector />
-        <SubdomainRoutes />
-      </StudentAuthProvider>
-    </BrowserRouter>
+  const routedContent = (
+    <StudentAuthProvider>
+      <BackgroundSelector />
+      <SubdomainRoutes />
+    </StudentAuthProvider>
   );
+  return ssrLocation
+    ? <MemoryRouter initialEntries={[ssrLocation]}>{routedContent}</MemoryRouter>
+    : <BrowserRouter>{routedContent}</BrowserRouter>;
 };
 
 // ✅ Main App
-const App = () => {
+const App = ({ ssrLocation }: { ssrLocation?: string } = {}) => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -197,7 +199,7 @@ const App = () => {
         <Sonner />
         <LanguageProvider>
           <ThemeProvider>
-            <AppContent />
+            <AppContent ssrLocation={ssrLocation} />
           </ThemeProvider>
         </LanguageProvider>
       </TooltipProvider>

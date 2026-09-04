@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLang } from "@/i18n/LanguageContext";
 import api from "@/lib/api";
 import Loading from '@/themes/default/pages/Landing';
+import { getSsrPayload } from '@/ssr';
 import { SeoSettings } from "@/types/seo";
 
 // Types من الـ API
@@ -127,12 +128,13 @@ let _isTeacherSaved = false;
 let _savedTeacherId: number | null = null;
 
 export const TeacherProvider = ({ children }: { children: ReactNode }) => {
+  const ssrPayload = getSsrPayload();
   const { slug } = useParams<{ slug: string }>();
   const { pathname } = useLocation();
   const { lang } = useLang();
   
   const [isPageLoading, setIsPageLoading] = useState(true);
-  const [host, setHost] = useState<string>('');
+  const [host, setHost] = useState<string>(ssrPayload?.host || '');
   
   // ✅ useRef داخل المكون
   const teacherSavedRef = useRef(false);
@@ -159,6 +161,7 @@ export const TeacherProvider = ({ children }: { children: ReactNode }) => {
     queryKey: ['teacher', host],
     queryFn: () => fetchTeacherByHost(host!),
     enabled: shouldFetch,
+    initialData: ssrPayload?.teacher || undefined,
     retry: 1,
     staleTime: 5 * 60 * 1000,
   });

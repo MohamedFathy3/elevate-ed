@@ -24,8 +24,9 @@ const getAllowedHosts = (envHosts: string) => {
 };
 
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, ssrBuild }) => {
   const isDevelopment = isDev(mode);
+  const isSSRBuild = Boolean(ssrBuild || process.argv.includes('--ssr'));
   
   // Load environment variables
   const devServerHost = getEnvVar('VITE_DEV_SERVER_HOST', '::');
@@ -116,6 +117,7 @@ const allowedHosts = [...getAllowedHosts(allowedHostsEnv), 'mrteacherplanet.web-
       'import.meta.env.VITE_APP_VERSION': JSON.stringify(process.env.npm_package_version),
       'import.meta.env.VITE_BUILD_TIME': JSON.stringify(new Date().toISOString()),
     },
+    ssr: isSSRBuild ? { noExternal: true } : undefined,
     build: {
       cssCodeSplit: true,
       sourcemap: false,
@@ -129,16 +131,16 @@ const allowedHosts = [...getAllowedHosts(allowedHostsEnv), 'mrteacherplanet.web-
       },
       rollupOptions: {
         output: {
-          manualChunks: {
+          ...(isSSRBuild ? {} : { manualChunks: {
             'vendor-react': ['react', 'react-dom', 'react-router-dom'],
             'vendor-ui': ['lucide-react'],
             'vendor-swiper': ['swiper'],
             'vendor-query': ['@tanstack/react-query'],
             'vendor-parser': ['html-react-parser'],
             'vendor-framer': ['framer-motion'],
-          },
-          entryFileNames: 'assets/[name]-[hash].js',
-          chunkFileNames: 'assets/[name]-[hash].js',
+          } }),
+          entryFileNames: isSSRBuild ? 'entry-server.js' : 'assets/[name]-[hash].js',
+          chunkFileNames: isSSRBuild ? 'assets/[name]-[hash].js' : 'assets/[name]-[hash].js',
           assetFileNames: (assetInfo) => {
             if (assetInfo.name?.match(/\.(png|jpg|jpeg|webp|svg|avif)$/)) {
               return 'assets/[name]-[hash].[ext]';
