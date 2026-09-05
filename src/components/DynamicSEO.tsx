@@ -10,10 +10,19 @@ export function DynamicSEO({ seo, url }: Props) {
   const image = seo.og_image || "";
   const canonical = seo.canonical_url || seo.og_url || seo.site_url || url || "";
   const language = seo.language || seo.default_language || "ar";
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    name: seo.site_name || title,
+    description,
+    url: canonical,
+    ...(image ? { image, logo: image } : {}),
+  };
   return (
     <Helmet>
       <html lang={language} />
       <title>{title}</title>
+      <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
       <meta name="description" content={description} />
       {seo.seo_keywords || seo.site_keywords ? <meta name="keywords" content={seo.seo_keywords || seo.site_keywords || ""} /> : null}
       {seo.google_site_verification ? <meta name="google-site-verification" content={seo.google_site_verification} /> : null}
