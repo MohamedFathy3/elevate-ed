@@ -41,13 +41,14 @@ export default defineConfig(({ mode, ssrBuild }) => {
   
   const sanctumTarget = getEnvVar('VITE_SANCTUM_TARGET', 'https://api.web-lec.com/');
   
-const allowedHostsEnv = getEnvVar('VITE_ALLOWED_HOSTS', 'web-lec.com,localhost,127.0.0.1,::1,.dentin.cloud');
-const allowedHosts = [...getAllowedHosts(allowedHostsEnv), 'mrteacherplanet.web-lec.com'];
+const allowedHostsEnv = getEnvVar('VITE_ALLOWED_HOSTS', 'web-lec.com,.web-lec.com,localhost,127.0.0.1,::1,.dentin.cloud');
+const allowedHosts = [...getAllowedHosts(allowedHostsEnv), '.web-lec.com', 'mrteacherplanet.web-lec.com'];
 
   return {
     server: {
       host: devServerHost,
       port: devServerPort,
+      allowedHosts,
       proxy: {
         "/api": {
           target: apiTarget,
