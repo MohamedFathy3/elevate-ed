@@ -3,7 +3,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo } from "react";
-import { useSearchParams, Link, useParams, Navigate } from "react-router-dom";
+import { useSearchParams, Link, useParams, Navigate, useLocation } from "react-router-dom";
 import { 
   Search, Filter, Sparkles, Leaf, ArrowLeft, ArrowRight
 } from "lucide-react";
@@ -25,6 +25,7 @@ const CoursesPage = () => {
   const { lang, dir } = useLang();
   const { theme, colorMode } = useTheme();
   const { slug } = useParams();
+  const location = useLocation();
   const { teacher, pick, isLoading: teacherLoading } = useSafeTeacherData();
   const { isAuthenticated, isLoading: authLoading } = useStudentAuth(); // ✅ استخدم useStudentAuth
   
@@ -72,11 +73,8 @@ const CoursesPage = () => {
   
   const isLoading = teacherLoading || semesterLoading || subjectLoading || allCoursesLoading || authLoading;
   
-  // ✅ لو مش مسجل، حول للـ Login
-  if (!authLoading && !isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
-  }
-
+  const shouldRedirectToLogin = !authLoading && !isAuthenticated;
+  
   // ✅ مستويات وأنواع
   const levels = useMemo(() => {
     const set = new Set<string>();
@@ -185,6 +183,10 @@ const CoursesPage = () => {
       ? "تصفح جميع الكورسات المتاحة واختر ما يناسب احتياجاتك التعليمية"
       : "Browse all available courses and choose what suits your educational needs";
   };
+
+  if (shouldRedirectToLogin) {
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  }
 
   if (isLoading) {
     return <CoursesPageSkeleton isNature={isNature} />;
