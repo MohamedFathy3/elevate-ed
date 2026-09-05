@@ -34,12 +34,12 @@ export default defineConfig(({ mode, ssrBuild }) => {
   const previewServerHost = getEnvVar('VITE_PREVIEW_SERVER_HOST', '::');
   const previewServerPort = parseInt(getEnvVar('VITE_PREVIEW_SERVER_PORT', '4005'));
   
-  const apiTarget = getEnvVar('VITE_API_TARGET', 'https://web-lec.com/');
+  const apiTarget = getEnvVar('VITE_API_TARGET', 'https://api.web-lec.com/');
   const apiRewritePath = getEnvVar('VITE_API_REWRITE_PATH', '/api');
   const apiHeaderName = getEnvVar('VITE_API_HEADER_NAME', 'X-Requested-With');
   const apiHeaderValue = getEnvVar('VITE_API_HEADER_VALUE', 'XMLHttpRequest');
   
-  const sanctumTarget = getEnvVar('VITE_SANCTUM_TARGET', 'https://web-lec.com/');
+  const sanctumTarget = getEnvVar('VITE_SANCTUM_TARGET', 'https://api.web-lec.com/');
   
 const allowedHostsEnv = getEnvVar('VITE_ALLOWED_HOSTS', 'web-lec.com,localhost,127.0.0.1,::1,.dentin.cloud');
 const allowedHosts = [...getAllowedHosts(allowedHostsEnv), 'mrteacherplanet.web-lec.com'];
