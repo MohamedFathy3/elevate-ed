@@ -41,7 +41,7 @@ export const useSemesters = (teacherId?: number, stageId?: number) => {
     paginate: false,
     delete: false
   });
-      return data.data;
+      return Array.isArray(data?.data) ? data.data : [];
     },
     enabled: !!teacherId,
     staleTime: 5 * 60 * 1000,

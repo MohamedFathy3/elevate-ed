@@ -49,7 +49,7 @@ export const useSubjects = (stageId?: number, teacherId?: number) => {
         delete: false
       });
       
-      return data.data;
+      return Array.isArray(data?.data) ? data.data : [];
     },
     enabled: !!stageId || !!teacherId,
     staleTime: 5 * 60 * 1000,

@@ -85,7 +85,7 @@ export const useCourses = (semesterId?: number, teacherId?: number) => {
         delete: false
       });
       
-      return data.data;
+      return Array.isArray(data?.data) ? data.data : [];
     },
     enabled: !!semesterId || !!teacherId,
     staleTime: 5 * 60 * 1000,
@@ -97,7 +97,7 @@ export const useCourseDetails = (courseId?: number) => {
     queryKey: ['course', courseId],
     queryFn: async () => {
       const { data } = await api.get(`/course/${courseId}`);
-      return data.data;
+      return data?.data ?? null;
     },
     enabled: !!courseId,
     staleTime: 5 * 60 * 1000,
@@ -122,7 +122,7 @@ export const useSubjectCourses = (subjectId?: number, teacherId?: number) => {
         delete: false
       });
       
-      return data.data;
+      return Array.isArray(data?.data) ? data.data : [];
     },
     enabled: !!subjectId,
     staleTime: 5 * 60 * 1000,
