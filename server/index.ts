@@ -71,7 +71,8 @@ async function createApp() {
       if (!isProduction) {
         htmlTemplate = await fs.readFile(path.join(root, "index.html"), "utf8");
         htmlTemplate = await vite!.transformIndexHtml(url, htmlTemplate);
-        renderer = (await vite!.ssrLoadModule("/src/entry-server.tsx")) as RenderModule["render"];
+        const renderModule = await vite!.ssrLoadModule("/src/entry-server.tsx") as RenderModule;
+        renderer = renderModule.render;
       }
       const rendered = renderer(url, payload);
       const helmet = rendered.helmet || {};
