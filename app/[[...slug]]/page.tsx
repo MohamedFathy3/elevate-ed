@@ -25,6 +25,14 @@ function normalizeSeoType(value: unknown, allowed: Set<string>, fallback: string
   return allowed.has(normalized) ? normalized : fallback;
 }
 
+function normalizeGoogleVerification(value: unknown) {
+  const raw = String(value || "").trim();
+  if (!raw) return undefined;
+  const contentMatch = raw.match(/content\s*=\s*["']([^"']+)["']/i);
+  if (contentMatch?.[1]) return contentMatch[1].trim();
+  return raw.replace(/^['"]|['"]$/g, "").trim() || undefined;
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const { host, protocol, payload } = await requestContext();
   const teacherWebsite = payload.teacher?.website as any;
@@ -35,13 +43,14 @@ export async function generateMetadata(): Promise<Metadata> {
   const description = seo.seo_description || seo.site_description || undefined;
   const canonical = seo.canonical_url || seo.og_url || seo.site_url || `${protocol}://${host}`;
   const image = seo.og_image || undefined;
+  const googleVerification = normalizeGoogleVerification(seo.google_site_verification);
 
   return {
     title,
     description,
     keywords: seo.seo_keywords || seo.site_keywords || undefined,
     alternates: { canonical },
-    verification: seo.google_site_verification ? { google: seo.google_site_verification } : undefined,
+    verification: googleVerification ? { google: googleVerification } : undefined,
     openGraph: {
       type: normalizeSeoType(seo.og_type, VALID_OG_TYPES, "website") as "website" | "article",
       title: seo.og_title || title,
