@@ -17,9 +17,18 @@ async function requestContext() {
   return { host, protocol, payload };
 }
 
+const VALID_OG_TYPES = new Set(["website", "article", "book", "profile", "music.song", "music.album", "music.playlist", "music.radio_station", "video.movie", "video.episode", "video.tv_show", "video.other"]);
+const VALID_TWITTER_CARDS = new Set(["summary", "summary_large_image", "app", "player"]);
+
+function normalizeSeoType(value: unknown, allowed: Set<string>, fallback: string) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return allowed.has(normalized) ? normalized : fallback;
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const { host, protocol, payload } = await requestContext();
-  const seo = payload.teacher?.website?.seo;
+  const teacherWebsite = payload.teacher?.website as any;
+  const seo = teacherWebsite?.seo || teacherWebsite?.seo_setting || teacherWebsite?.about?.seo_setting;
   if (!seo) return {};
 
   const title = seo.seo_title || seo.site_title || seo.site_name || undefined;
@@ -34,7 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
     alternates: { canonical },
     verification: seo.google_site_verification ? { google: seo.google_site_verification } : undefined,
     openGraph: {
-      type: (seo.og_type as "website" | "article") || "website",
+      type: normalizeSeoType(seo.og_type, VALID_OG_TYPES, "website") as "website" | "article",
       title: seo.og_title || title,
       description: seo.og_description || description,
       url: seo.og_url || canonical,
@@ -43,7 +52,7 @@ export async function generateMetadata(): Promise<Metadata> {
       locale: seo.language || seo.default_language || "ar",
     },
     twitter: {
-      card: (seo.twitter_card as "summary" | "summary_large_image") || "summary_large_image",
+      card: normalizeSeoType(seo.twitter_card, VALID_TWITTER_CARDS, "summary_large_image") as "summary" | "summary_large_image",
       title: seo.og_title || title,
       description: seo.og_description || description,
       images: image ? [image] : undefined,
