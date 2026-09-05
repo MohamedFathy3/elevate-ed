@@ -2,27 +2,27 @@ import express from "express";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { createServer as createViteServer } from "vite";
+import { createServer as createViteServer, loadEnv } from "vite";
 import type { SsrPayload } from "../src/ssr";
 
 type RenderModule = { render: (url: string, payload: SsrPayload) => { html: string; helmet?: Record<string, { toString(): string }> } };
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const apiBase = (process.env.VITE_SSR_API_BASE || process.env.VITE_API_TARGET || "https://web-lec.com").replace(/\/$/, "");
+const getApiBase = () => (process.env.VITE_SSR_API_BASE || process.env.VITE_API_TARGET || "https://api.web-lec.com").replace(/\/$/, "");
 const defaultPayload = (host: string): SsrPayload => ({ host, teacher: null, theme: "default", bgColor: "#FFFFFF", textColor: "#111827" });
 
 async function fetchPayload(host: string, cookie?: string): Promise<SsrPayload> {
   const payload = defaultPayload(host);
   try {
-    const response = await fetch(`${apiBase}/api/${encodeURIComponent(host)}`, {
+    const response = await fetch(`${getApiBase()}/api/${encodeURIComponent(host)}`, {
       headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest", ...(cookie ? { cookie } : {}) },
       signal: AbortSignal.timeout(8000),
     });
     if (!response.ok) return payload;
-    const body = await response.json() as { status?: number; data?: SsrPayload["teacher"] };
-    payload.teacher = body.status === 200 ? body.data || null : null;
+    const body = await response.json() as { status?: number; result?: string; data?: SsrPayload["teacher"] };
+    payload.teacher = (body.status === 200 || body.result === "Success") ? body.data || null : null;
     if (payload.teacher?.id) {
-      const themeResponse = await fetch(`${apiBase}/api/teachers/theme`, {
+      const themeResponse = await fetch(`${getApiBase()}/api/teachers/theme`, {
         method: "POST",
         headers: { Accept: "application/json", "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest", ...(cookie ? { cookie } : {}) },
         body: JSON.stringify({ teacher_id: payload.teacher.id }),
@@ -48,6 +48,10 @@ function serializePayload(payload: SsrPayload) {
 async function createApp() {
   const app = express();
   const isProduction = process.env.NODE_ENV === "production";
+  const env = loadEnv(isProduction ? "production" : "development", root, "");
+  for (const [key, value] of Object.entries(env)) {
+    if (process.env[key] === undefined) process.env[key] = value;
+  }
   let vite: Awaited<ReturnType<typeof createViteServer>> | undefined;
   let template: string;
   let render: RenderModule["render"];
