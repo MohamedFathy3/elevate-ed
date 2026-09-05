@@ -58,6 +58,7 @@ async function createApp() {
 
   if (!isProduction) {
     vite = await createViteServer({ root, server: { middlewareMode: true }, appType: "custom" });
+    app.use(vite.middlewares);
   } else {
     template = await fs.readFile(path.join(root, "dist/client/index.html"), "utf8");
     const renderModule = await import(pathToFileURL(path.join(root, "dist/server/entry-server.js")).href) as RenderModule;
