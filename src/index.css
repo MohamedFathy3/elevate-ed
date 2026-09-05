@@ -1,3 +1,4 @@
 /* src/index.css - الملف الرئيسي */
-@import "tailwindcss";
-@import "tw-animate-css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

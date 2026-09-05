@@ -1,0 +1,24 @@
+@import "../src/index.css";
+@import "../src/themes/default/index.css";
+@import "../src/themes/nature/index.css";
+
+html, body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+#app-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: grid;
+  place-items: center;
+  background: hsl(var(--background, 0 0% 100%));
+}
+
+#app-loader.hidden {
+  display: none;
+}

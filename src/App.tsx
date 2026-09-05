@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { getSsrPayload } from "@/ssr";
+import { getSsrPayload, type SsrPayload } from "@/ssr";
 import { BrowserRouter, MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -48,7 +48,7 @@ const PageSkeleton = () => (
 );
 
 // ✅ SubdomainRoutes مع Suspense
-const SubdomainRoutes = () => {
+const SubdomainRoutes = ({ initialPayload }: { initialPayload?: SsrPayload }) => {
   const { pages, isLoading, isThemeReady } = useTheme();
   const location = useLocation();
   
@@ -91,7 +91,7 @@ const SubdomainRoutes = () => {
 
   if (isSubdomain) {
     return (
-      <TeacherProvider>
+      <TeacherProvider initialPayload={initialPayload}>
         <Suspense fallback={<PageSkeleton />}>
           <Routes>
             <Route path="/" element={<SiteLayout />}>
@@ -143,7 +143,7 @@ const SubdomainRoutes = () => {
 };
 
 // ✅ AppContent
-const AppContent = ({ ssrLocation }: { ssrLocation?: string }) => {
+const AppContent = ({ ssrLocation, initialPayload }: { ssrLocation?: string; initialPayload?: SsrPayload }) => {
   const { isLoading, pages, isThemeReady } = useTheme();
   const [showLoader, setShowLoader] = useState(() => !getSsrPayload());
   const loaderTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -182,24 +182,25 @@ const AppContent = ({ ssrLocation }: { ssrLocation?: string }) => {
   const routedContent = (
     <StudentAuthProvider>
       <BackgroundSelector />
-      <SubdomainRoutes />
+      <SubdomainRoutes initialPayload={initialPayload} />
     </StudentAuthProvider>
   );
-  return ssrLocation
+  const isServer = typeof window === "undefined";
+  return isServer && ssrLocation
     ? <MemoryRouter initialEntries={[ssrLocation]}>{routedContent}</MemoryRouter>
     : <BrowserRouter>{routedContent}</BrowserRouter>;
 };
 
 // ✅ Main App
-const App = ({ ssrLocation }: { ssrLocation?: string } = {}) => {
+const App = ({ ssrLocation, initialPayload }: { ssrLocation?: string; initialPayload?: SsrPayload } = {}) => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <LanguageProvider>
-          <ThemeProvider>
-            <AppContent ssrLocation={ssrLocation} />
+          <ThemeProvider initialPayload={initialPayload}>
+            <AppContent ssrLocation={ssrLocation} initialPayload={initialPayload} />
           </ThemeProvider>
         </LanguageProvider>
       </TooltipProvider>

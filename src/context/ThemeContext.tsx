@@ -4,6 +4,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useRef, useCallback } from 'react';
 import api from '@/lib/api';
 import { getSsrPayload } from '@/ssr';
+import type { SsrPayload } from '@/ssr';
 
 export type ThemeName = 'default' | 'nature';
 export type ColorMode = 'light' | 'dark';
@@ -41,9 +42,10 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 import * as defaultPages from '@/themes/default/pages/index';
+import * as naturePages from '@/themes/nature/pages/index';
 
-import natureCss from '@/themes/nature/index.css?inline';
-import defaultCss from '@/themes/default/index.css?inline';
+const natureCss = '';
+const defaultCss = '';
 
 let currentStyleElement: HTMLStyleElement | null = null;
 
@@ -172,11 +174,15 @@ const themeImports = {
   default: () => import('@/themes/default/pages/index.tsx'),
 };
 
-export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const ssrPayload = getSsrPayload();
+export const ThemeProvider: React.FC<{ children: ReactNode; initialPayload?: SsrPayload }> = ({ children, initialPayload }) => {
+  const ssrPayload = initialPayload || getSsrPayload();
   const [theme, setThemeState] = useState<ThemeName>(() => ssrPayload?.theme || 'default');
   const [colorMode, setColorMode] = useState<ColorMode>('light');
-  const [pages, setPages] = useState<ThemePages | null>(() => ssrPayload?.theme === 'default' ? defaultPages as ThemePages : null);
+  const [pages, setPages] = useState<ThemePages | null>(() => {
+    if (ssrPayload?.theme === 'nature') return naturePages as ThemePages;
+    if (ssrPayload?.theme === 'default') return defaultPages as ThemePages;
+    return null;
+  });
   const [isLoading, setIsLoading] = useState(() => !ssrPayload);
   const [isThemeReady, setIsThemeReady] = useState(() => Boolean(ssrPayload));
   const [apiColors, setApiColors] = useState<{ background: string; text: string } | null>(() => ssrPayload ? { background: ssrPayload.bgColor, text: ssrPayload.textColor } : null);
@@ -286,9 +292,9 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       setApiColors({ background: ssrPayload.bgColor, text: ssrPayload.textColor });
       loadThemeCSS(ssrPayload.theme);
       applyApiColors(ssrPayload.bgColor, ssrPayload.textColor);
-      if (ssrPayload.theme === 'default') {
-        setPages(defaultPages as ThemePages);
-      }
+      setPages(ssrPayload.theme === 'nature' ? naturePages as ThemePages : defaultPages as ThemePages);
+      setIsLoading(false);
+      setIsThemeReady(true);
       return;
     }
     if (isInitialized.current) {

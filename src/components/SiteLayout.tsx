@@ -20,7 +20,6 @@ const SiteLayoutContent = () => {
 
   const { teacher, isLoading } = useSafeTeacher();
   const [showPopup, setShowPopup] = useState(false);
-  // useDynamicSeo(teacher?.website?.seo); // ✅ تحديث الـ meta tags ديناميكيًا 
 
   console.log("🏠 SiteLayoutContent rendered with pathname:", pathname);
   console.log("🎁 Teacher data:", teacher?.id);

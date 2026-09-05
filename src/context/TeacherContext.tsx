@@ -9,6 +9,7 @@ import api from "@/lib/api";
 import Loading from '@/themes/default/pages/Landing';
 import { getSsrPayload } from '@/ssr';
 import { SeoSettings } from "@/types/seo";
+import type { SsrPayload } from "@/ssr";
 
 // Types من الـ API
 export interface TeacherWebsiteData {
@@ -127,8 +128,8 @@ const fetchThemeFromAPI = async (teacherId: number): Promise<{ theme: 'default' 
 let _isTeacherSaved = false;
 let _savedTeacherId: number | null = null;
 
-export const TeacherProvider = ({ children }: { children: ReactNode }) => {
-  const ssrPayload = getSsrPayload();
+export const TeacherProvider = ({ children, initialPayload }: { children: ReactNode; initialPayload?: SsrPayload }) => {
+  const ssrPayload = initialPayload || getSsrPayload();
   const { slug } = useParams<{ slug: string }>();
   const { pathname } = useLocation();
   const { lang } = useLang();

@@ -5,14 +5,10 @@ import { TeacherProvider, useTeacher } from "@/context/TeacherContext";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
 import { ScrollProgress } from "./ScrollProgress";
-import { useDynamicSeo } from "@/hooks/useDynamicSeo";
-import { DynamicSEO } from "@/components/DynamicSEO";
 const SiteLayoutContent = () => {
   const { pathname, hash } = useLocation();
   const { teacher } = useTeacher();
   console.log("🏠 SiteLayoutContent rendered with pathname:", pathname);
-  useDynamicSeo(teacher?.website?.seo);
-  const currentUrl = typeof window !== "undefined" ? window.location.href : undefined;
   useEffect(() => {
     console.log("📍 Location changed:", { pathname, hash });
 
@@ -29,7 +25,6 @@ const SiteLayoutContent = () => {
 
   return (
     <>
-      <DynamicSEO seo={teacher?.website?.seo} url={currentUrl} />
       <ScrollProgress />
       <Navbar />
       <main>
