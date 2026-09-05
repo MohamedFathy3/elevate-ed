@@ -150,10 +150,10 @@ const Register = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.image) {
-      toast.error(lang === "ar" ? "الرجاء رفع صورة شخصية" : "Please upload profile picture");
-      return;
-    }
+    // if (!formData.image) {
+    //   toast.error(lang === "ar" ? "الرجاء رفع صورة شخصية" : "Please upload profile picture");
+    //   return;
+    // }
 
     if (!teacher?.id) {
       toast.error(lang === "ar" ? "لم يتم العثور على المعلم" : "Teacher not found");
@@ -329,7 +329,7 @@ const Register = () => {
               ) : (
                 <button
                   type="submit"
-                  disabled={isPending || !hasStages || (isCenter && !hasHours) || !formData.image}
+                  disabled={isPending || !hasStages || (isCenter && !hasHours) }
                   className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-extrabold shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
                   {isPending ? (

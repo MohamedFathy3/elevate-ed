@@ -35,7 +35,7 @@ export const Step3Photo = ({ image, lang, onUpload, onRemove }: Step3PhotoProps)
         maxFiles={1}
         defaultImageId={image ? parseInt(image) : null}
         onRemoveImage={onRemove}
-        required={true}
+        // required={true}
       />
 
       {!image && (
