@@ -146,6 +146,8 @@ function darkenColor(hex: string, percent: number): string {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
+export const getThemeCss = (theme: ThemeName): string => theme === 'default' ? defaultCss : natureCss;
+
 const loadThemeCSS = (theme: ThemeName) => {
   if (currentStyleElement) {
     currentStyleElement.remove();
@@ -282,6 +284,8 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     if (ssrPayload) {
       setThemeState(ssrPayload.theme);
       setApiColors({ background: ssrPayload.bgColor, text: ssrPayload.textColor });
+      loadThemeCSS(ssrPayload.theme);
+      applyApiColors(ssrPayload.bgColor, ssrPayload.textColor);
       if (ssrPayload.theme === 'default') {
         setPages(defaultPages as ThemePages);
       }

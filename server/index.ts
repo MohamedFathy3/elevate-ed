@@ -5,7 +5,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { createServer as createViteServer, loadEnv } from "vite";
 import type { SsrPayload } from "../src/ssr";
 
-type RenderModule = { render: (url: string, payload: SsrPayload) => { html: string; helmet?: Record<string, { toString(): string }> } };
+type RenderedPage = { html: string; styles?: string; helmet?: Record<string, { toString(): string }> };
+type RenderModule = { render: (url: string, payload: SsrPayload) => Promise<RenderedPage> };
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const getApiBase = () => (process.env.VITE_SSR_API_BASE || process.env.VITE_API_TARGET || "https://api.web-lec.com").replace(/\/$/, "");
@@ -79,12 +80,12 @@ async function createApp() {
         const renderModule = await vite!.ssrLoadModule("/src/entry-server.tsx") as RenderModule;
         renderer = renderModule.render;
       }
-      const rendered = renderer(url, payload);
+      const rendered = await renderer(url, payload);
       const helmet = rendered.helmet || {};
       const head = Object.values(helmet).map((item) => item.toString()).join("\n");
       const html = htmlTemplate
-        .replace("<div id=\"root\"></div>", `<div id=\"root\">${rendered.html}</div>`)
-        .replace("</head>", `${head}<script>window.__SSR_DATA__=${serializePayload(payload)}</script></head>`);
+        .replace("<div id=\"root\"></div>", `<div id="root">${rendered.html}</div>`)
+        .replace("</head>", `${rendered.styles || ""}${head}<script>window.__SSR_DATA__=${serializePayload(payload)}</script></head>`);
       res.status(200).set({ "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache" }).end(html);
     } catch (error) {
       console.error("SSR render failed:", error instanceof Error ? error.stack : error);
