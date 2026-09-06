@@ -17,6 +17,23 @@ import { toast  } from "@/hooks/use-toast";
 import { enableFullProtection, preventVideoDownload, disablePictureInPicture } from "@/utils/protection";
 import Cookies from "js-cookie";
 
+const getYouTubeVideoId = (value: unknown) => {
+  const raw = String(value || '').trim();
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    if (url.hostname === 'youtu.be') return url.pathname.slice(1).split('/')[0] || null;
+    if (url.hostname.endsWith('youtube.com')) {
+      if (url.pathname === '/watch') return url.searchParams.get('v');
+      const match = url.pathname.match(/\/(?:embed|shorts|live)\/([^/?]+)/);
+      return match?.[1] || null;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+};
+
 const CourseDetail = () => {
   const { lang, dir } = useLang();
   const { teacher, slug, pick } = useTeacher();
@@ -33,6 +50,11 @@ const CourseDetail = () => {
   const [selectedLesson, setSelectedLesson] = useState<any>(null);
   const [showProtectionWarning, setShowProtectionWarning] = useState(false);
   const [hasPurchasedFullCourse, setHasPurchasedFullCourse] = useState(false);
+  const [videoError, setVideoError] = useState(false);
+
+  useEffect(() => {
+    setVideoError(false);
+  }, [selectedLesson?.id, selectedLesson?.content_link]);
 
   // التحقق من المصادقة وشراء الكورس
   useEffect(() => {
@@ -164,16 +186,47 @@ const CourseDetail = () => {
               className="relative rounded-3xl overflow-hidden shadow-elegant bg-black"
             >
               {selectedLesson ? (
-                <div className="relative">
-                  <video
-                    ref={videoRef}
-                    src={selectedLesson.content_link}
-                    className="w-full aspect-video"
-                    controls
-                    controlsList="nodownload nofullscreen noremoteplayback"
-                    disablePictureInPicture
-                    onContextMenu={(e) => e.preventDefault()}
-                  />
+                <div className="relative aspect-video bg-black">
+                  {(() => {
+                    const videoId = getYouTubeVideoId(selectedLesson.content_link);
+                    if (videoId) {
+                      return (
+                        <iframe
+                          src={`https://www.youtube-nocookie.com/embed/${videoId}?rel=0&playsinline=1&enablejsapi=1`}
+                          className="w-full h-full"
+                          title={selectedLesson.title || 'Course video'}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          onError={() => setVideoError(true)}
+                        />
+                      );
+                    }
+                    return (
+                      <video
+                        ref={videoRef}
+                        src={selectedLesson.content_link}
+                        className="w-full h-full object-contain"
+                        controls
+                        controlsList="nodownload noremoteplayback"
+                        disablePictureInPicture
+                        playsInline
+                        preload="metadata"
+                        onError={() => setVideoError(true)}
+                        onContextMenu={(e) => e.preventDefault()}
+                      />
+                    );
+                  })()}
+                  {videoError && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/90 z-20 text-center text-white p-6">
+                      <div>
+                        <XCircle className="w-12 h-12 mx-auto mb-3 text-red-400" />
+                        <p className="font-semibold mb-3">{lang === 'ar' ? 'تعذر تحميل الفيديو' : 'The video could not be loaded'}</p>
+                        <a href={selectedLesson.content_link} target="_blank" rel="noopener noreferrer" className="inline-flex px-4 py-2 rounded-lg bg-primary text-white text-sm">
+                          {lang === 'ar' ? 'فتح الفيديو' : 'Open video'}
+                        </a>
+                      </div>
+                    </div>
+                  )}
                   <div className="absolute inset-0 bg-black hidden items-center justify-center z-10 recording-overlay" style={{ display: 'none' }}>
                     <div className="text-center text-white p-8">
                       <EyeOff className="w-16 h-16 mx-auto mb-4 opacity-50" />
