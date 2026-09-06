@@ -91,9 +91,8 @@ const SubdomainRoutes = ({ initialPayload }: { initialPayload?: SsrPayload }) =>
 
   if (isSubdomain) {
     return (
-      <TeacherProvider initialPayload={initialPayload}>
-        <Suspense fallback={<PageSkeleton />}>
-          <Routes>
+      <Suspense fallback={<PageSkeleton />}>
+        <Routes>
             <Route path="/" element={<SiteLayout />}>
               <Route index element={<TeacherHome />} />
               <Route path="subjects" element={<SubjectsPage />} />
@@ -111,9 +110,8 @@ const SubdomainRoutes = ({ initialPayload }: { initialPayload?: SsrPayload }) =>
               <Route path="center-hours" element={<CenterHours />} />
               <Route path="*" element={<NotFound />} />
             </Route>
-          </Routes>
-        </Suspense>
-      </TeacherProvider>
+        </Routes>
+      </Suspense>
     );
   }
 
@@ -145,7 +143,7 @@ const SubdomainRoutes = ({ initialPayload }: { initialPayload?: SsrPayload }) =>
 // ✅ AppContent
 const AppContent = ({ ssrLocation, initialPayload }: { ssrLocation?: string; initialPayload?: SsrPayload }) => {
   const { isLoading, pages, isThemeReady } = useTheme();
-  const [showLoader, setShowLoader] = useState(() => !getSsrPayload());
+  const [showLoader, setShowLoader] = useState(() => !(initialPayload || getSsrPayload()));
   const loaderTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const lang = typeof window !== 'undefined' ? localStorage.getItem('lang') || 'ar' : 'ar';
@@ -181,8 +179,10 @@ const AppContent = ({ ssrLocation, initialPayload }: { ssrLocation?: string; ini
   
   const routedContent = (
     <StudentAuthProvider>
-      <BackgroundSelector />
-      <SubdomainRoutes initialPayload={initialPayload} />
+      <TeacherProvider initialPayload={initialPayload}>
+        <BackgroundSelector />
+        <SubdomainRoutes initialPayload={initialPayload} />
+      </TeacherProvider>
     </StudentAuthProvider>
   );
   const isServer = typeof window === "undefined";

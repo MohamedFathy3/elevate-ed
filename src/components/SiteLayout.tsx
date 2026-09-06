@@ -2,7 +2,7 @@
 
 import { Outlet, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { TeacherProvider, useSafeTeacher, useTeacher } from "@/context/TeacherContext";
+import { useSafeTeacher } from "@/context/TeacherContext";
 import { Navbar } from "./Navbar";
 import { ScrollProgress } from "@/themes/default/components/site/ScrollProgress";
 import { Footer } from "@/themes/default/components/site/Footer";
@@ -82,11 +82,5 @@ const SiteLayoutContent = () => {
 };
 
 export const SiteLayout = () => {
-  console.log("🎯 SiteLayout rendered - wrapping with TeacherProvider");
-
-  return (
-    <TeacherProvider>
-      <SiteLayoutContent />
-    </TeacherProvider>
-  );
+  return <SiteLayoutContent />;
 };

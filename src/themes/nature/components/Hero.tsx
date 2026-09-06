@@ -136,15 +136,15 @@ const Hero = () => {
             </Link>
 
             <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
-              <a
-                href="/center-hours"
+              <Link
+                to="/center-hours"
                 className={`inline-flex items-center gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-xl md:rounded-2xl font-bold text-[10px] md:text-xs transition-all duration-300 hover:shadow-md ${
                   isDark ? 'bg-slate-800 border border-emerald-800 hover:border-emerald-600 text-slate-200' : 'bg-white border border-emerald-200 hover:border-emerald-400 text-slate-800'
                 }`}
               >
                 <Calendar className="size-3 text-emerald-500" />
                 {lang === "ar" ? "السناتر" : "Centers"}
-              </a>
+              </Link>
               <a
                 href="#books"
                 className={`inline-flex items-center gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-xl md:rounded-2xl font-bold text-[10px] md:text-xs transition-all duration-300 hover:shadow-md ${
