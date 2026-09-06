@@ -682,7 +682,37 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     );
   }
 
-  // ✅ المشغل الرئيسي
+  // ✅ روابط الفيديو المباشرة لا تحتوي على YouTube ID؛ استخدم مشغل المتصفح
+  if (currentVideoUrl && !currentVideoId) {
+    return (
+      <div ref={containerRef} className="relative aspect-video overflow-hidden rounded-2xl bg-black shadow-2xl ring-1 ring-white/10">
+        <video
+          src={currentVideoUrl}
+          poster={poster}
+          className="h-full w-full object-contain"
+          controls
+          controlsList="nodownload noremoteplayback"
+          disablePictureInPicture
+          playsInline
+          preload="metadata"
+          onError={() => setVideoError(true)}
+          onContextMenu={(event) => event.preventDefault()}
+        />
+        {videoError && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/90 p-6 text-center text-white">
+            <div>
+              <p className="mb-3 font-semibold">{lang === 'ar' ? 'تعذر تحميل الفيديو' : 'The video could not be loaded'}</p>
+              <a href={currentVideoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex rounded-lg bg-primary px-4 py-2 text-sm text-white">
+                {lang === 'ar' ? 'فتح الفيديو مباشرة' : 'Open video directly'}
+              </a>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ✅ مشغل YouTube الرئيسي
   return (
     <div
       ref={containerRef}
