@@ -22,3 +22,39 @@ body {
 #app-loader.hidden {
   display: none;
 }
+
+/* Mobile stability: keep every rendered surface inside the viewport. */
+html,
+body,
+#__next {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img,
+video,
+iframe {
+  max-width: 100%;
+}
+
+@media (max-width: 639px) {
+  .container-tight {
+    width: 100%;
+    max-width: 100%;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  header.fixed {
+    left: 0;
+    right: 0;
+    width: 100%;
+  }
+}

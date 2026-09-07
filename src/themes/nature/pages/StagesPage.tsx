@@ -12,6 +12,7 @@ import {
   ChevronDown, ChevronUp, TrendingUp, Zap, Layers3, Eye, Lock, CheckCircle
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { imageSrc } from "@/lib/media";
 
 export const StagesPage = () => {
   const { lang, dir } = useLang();
@@ -327,8 +328,8 @@ export const StagesPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {filteredStages.map((stage: any, i: number) => {
               const stageName = pick(stage.name, stage.name_ar) || `Stage ${i + 1}`;
-              const stageImage = stage.image?.fullUrl || stage.image?.previewUrl || null;
-              const coursesCount = stage.courses_count || Math.floor(Math.random() * 30) + 10;
+              const stageImage = imageSrc(stage.image, stage.imageUrl);
+              const coursesCount = stage.courses_count || 0;
               const isStudentStage = isAuthenticated && stage.id === studentStageId;
               const isDisabled = isAuthenticated && !isStudentStage;
               
@@ -378,6 +379,12 @@ export const StagesPage = () => {
                             src={stageImage}
                             alt={stageName}
                             className={`w-full h-full object-cover transition-transform duration-700 ${!isDisabled ? 'group-hover:scale-110' : ''}`}
+                            loading="lazy"
+                            decoding="async"
+                            onError={(event) => {
+                              event.currentTarget.onerror = null;
+                              event.currentTarget.src = "/placeholder.svg";
+                            }}
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
                         </>

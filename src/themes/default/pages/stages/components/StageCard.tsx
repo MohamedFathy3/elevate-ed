@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { BookOpen, Users, Target, Rocket, Lock, CheckCircle, ArrowLeft, ArrowRight } from "lucide-react";
 import { StageCardProps } from "../StagesPage.types";
 import { useLang } from "@/i18n/LanguageContext";
+import { imageSrc } from "@/lib/media";
 
 export const StageCard = ({ 
   stage, 
@@ -19,7 +20,7 @@ export const StageCard = ({
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
   
   const stageName = pick(stage.name, stage.name_ar) || `Stage ${index + 1}`;
-  const stageImage = stage.image?.fullUrl || stage.image?.previewUrl || null;
+  const stageImage = imageSrc(stage.image, stage.imageUrl);
   const coursesCount = stage.courses_count || 0;
   const isStudentStage = isAuthenticated && stage.id === studentStageId;
   const isDisabled = isAuthenticated && !isStudentStage;
@@ -70,6 +71,11 @@ export const StageCard = ({
                 alt={stageName}
                 className={`w-full h-full object-cover transition-transform duration-700 ${!isDisabled ? 'group-hover:scale-110' : ''}`}
                 loading="lazy"
+                decoding="async"
+                onError={(event) => {
+                  event.currentTarget.onerror = null;
+                  event.currentTarget.src = "/placeholder.svg";
+                }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
             </>

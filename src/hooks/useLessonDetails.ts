@@ -46,9 +46,10 @@ export const useLessonDetails = (lessonId: number, studentId?: number) => {
       return response.data;
     },
     enabled: !!lessonId && !!token,
-    staleTime: 0, // ✅ مهم: ميحفظش البيانات القديمة
-    refetchOnMount: true, // ✅ يعيد الجلب عند تحميل الصفحة
-    refetchOnWindowFocus: true, // ✅ يعيد الجلب عند التركيز على الصفحة
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // ✅ تسجيل الحضور تلقائياً

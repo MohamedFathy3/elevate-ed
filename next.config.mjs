@@ -2,6 +2,7 @@
 const nextConfig = {
   reactStrictMode: false,
   poweredByHeader: false,
+  compress: true,
   // Keep dynamic metadata in the initial <head> for Google/Search Console and social crawlers.
   htmlLimitedBots: /Googlebot|Google-InspectionTool|AdsBot-Google|Mediapartners-Google|bingbot|facebookexternalhit|Twitterbot/i,
   eslint: { ignoreDuringBuilds: true },
