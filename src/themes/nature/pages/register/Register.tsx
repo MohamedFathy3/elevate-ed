@@ -150,10 +150,10 @@ const Register = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // if (!formData.image) {
-    //   toast.error(lang === "ar" ? "الرجاء رفع صورة شخصية" : "Please upload profile picture");
-    //   return;
-    // }
+    if (!formData.image) {
+      toast.error(lang === "ar" ? "الرجاء رفع صورة شخصية" : "Please upload profile picture");
+      return;
+    }
 
     if (!teacher?.id) {
       toast.error(lang === "ar" ? "لم يتم العثور على المعلم" : "Teacher not found");
