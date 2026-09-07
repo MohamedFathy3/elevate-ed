@@ -19,15 +19,25 @@ export const useLessonParts = (lesson: any | null) => {
   const parts = useMemo((): LessonPart[] => {
     if (!lesson) return [];
     
-    return (lesson.titles || []).map((title: string, idx: number) => ({
-      id: idx,
-      title: title,
-      title_ar: lesson.titles_ar?.[idx] || title,
-      videoUrl: lesson.link_video?.[idx] || lesson.content_link || '',
-      imageUrl: lesson.imageUrl,
-      description: lesson.description,
-      description_ar: lesson.description_ar,
-    }));
+    const titles = Array.isArray(lesson.titles) ? lesson.titles : [];
+    const titlesAr = Array.isArray(lesson.titles_ar) ? lesson.titles_ar : [];
+    const videoLinks = Array.isArray(lesson.link_video) ? lesson.link_video : [];
+    const partCount = Math.max(titles.length, videoLinks.length);
+
+    return Array.from({ length: partCount }, (_, idx) => {
+      const fallbackTitle = `Part ${idx + 1}`;
+      const title = titles[idx] || fallbackTitle;
+
+      return {
+        id: idx,
+        title,
+        title_ar: titlesAr[idx] || title,
+        videoUrl: videoLinks[idx] || videoLinks[0] || lesson.content_link || '',
+        imageUrl: lesson.imageUrl,
+        description: lesson.description,
+        description_ar: lesson.description_ar,
+      };
+    });
   }, [lesson]);
 
   // الجزء الحالي

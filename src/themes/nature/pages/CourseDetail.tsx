@@ -62,9 +62,11 @@ const CourseDetail = () => {
     console.log("🔐 CourseDetail - Token exists:", !!token);
     console.log("🔐 CourseDetail - isAuthenticated:", isAuthenticated);
     
-    // ✅ التحقق إذا كان المستخدم اشترى الكورس (أي درس من الدروس purchased)
-    if (courseData?.data && courseData.data.length > 0) {
-      const anyLessonPurchased = courseData.data.some((lesson: any) => lesson.attended === true);
+    // Prefer the course-level purchase flag; keep lesson attendance as a legacy fallback.
+    if (courseData?.data && !Array.isArray(courseData.data) && courseData.data.isPurchased === true) {
+      setHasPurchasedFullCourse(true);
+    } else if (courseData?.data?.details?.length > 0) {
+      const anyLessonPurchased = courseData.data.details.some((lesson: any) => lesson.attended === true);
       setHasPurchasedFullCourse(anyLessonPurchased);
     }
   }, [isAuthenticated, student, courseData]);

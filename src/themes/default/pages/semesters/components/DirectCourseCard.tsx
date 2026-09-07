@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { BookOpen, ShoppingCart, Percent } from "lucide-react";
+import { BookOpen, ShoppingCart, Percent, CheckCircle2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { OptimizedImage } from "@/components/OptimizedImage";
 import { RedeemModal } from "@/components/RedeemModal";
@@ -29,6 +29,9 @@ export const DirectCourseCard = ({
   const courseTitle = pick(course.title, course.title_ar) || "Course";
   const courseImage = course.image?.fullUrl || course.imageUrl || "/default-course.jpg";
   const lessonsCount = course.details?.length || 0;
+  
+  // ✅ هل الطالب مشتري الكورس؟
+  const isPurchased = course.isPurchased === true;
   
   const textPrimary = isNature ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400';
   
@@ -73,6 +76,14 @@ export const DirectCourseCard = ({
                 {discountPercent}%
               </div>
             )}
+
+            {/* ✅ لو مشتري الكورس */}
+            {isPurchased && (
+              <div className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-500/90 text-white text-[10px] font-bold">
+                <CheckCircle2 className="w-3 h-3" />
+                {lang === "ar" ? "مشترى" : "Purchased"}
+              </div>
+            )}
           </div>
           
           <div className="p-3">
@@ -107,28 +118,40 @@ export const DirectCourseCard = ({
                 )}
               </div>
               
-              <button
-                onClick={handleBuyClick}
-                className={`px-2.5 py-1 rounded-lg text-white text-[10px] font-semibold flex items-center gap-0.5
-                  ${isNature ? 'bg-amber-600 hover:bg-amber-700' : 'bg-gradient-to-r from-emerald-500 to-teal-600'}`}
-              >
-                <ShoppingCart className="w-3 h-3" />
-                {lang === "ar" ? "شراء" : "Buy"}
-              </button>
+              {/* ✅ لو مشتري يظهر "مشاهدة" بدل "شراء" */}
+              {isPurchased ? (
+                <div className={`px-2.5 py-1 rounded-lg text-white text-[10px] font-semibold flex items-center gap-0.5
+                  bg-emerald-500`}>
+                  <CheckCircle2 className="w-3 h-3" />
+                  {lang === "ar" ? "مشترى" : "Purchased"}
+                </div>
+              ) : (
+                <button
+                  onClick={handleBuyClick}
+                  className={`px-2.5 py-1 rounded-lg text-white text-[10px] font-semibold flex items-center gap-0.5
+                    ${isNature ? 'bg-amber-600 hover:bg-amber-700' : 'bg-gradient-to-r from-emerald-500 to-teal-600'}`}
+                >
+                  <ShoppingCart className="w-3 h-3" />
+                  {lang === "ar" ? "شراء" : "Buy"}
+                </button>
+              )}
             </div>
           </div>
         </Link>
       </div>
 
-      <RedeemModal
-        isOpen={showRedeemModal}
-        onClose={() => setShowRedeemModal(false)}
-        itemId={course.id}
-        itemType="course"
-        price={finalPrice}
-        onSuccess={handlePaymentSuccess}
-        onError={handlePaymentError}
-      />
+      {/* ✅ الـ Modal يظهر بس لو مش مشتري */}
+      {!isPurchased && (
+        <RedeemModal
+          isOpen={showRedeemModal}
+          onClose={() => setShowRedeemModal(false)}
+          itemId={course.id}
+          itemType="course"
+          price={finalPrice}
+          onSuccess={handlePaymentSuccess}
+          onError={handlePaymentError}
+        />
+      )}
     </>
   );
 };

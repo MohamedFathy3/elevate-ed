@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 import Cookies from "js-cookie";
+import { useStudentAuth } from '@/context/StudentAuthContext';
 
 export interface CourseDetail {
   id: number;
@@ -47,6 +48,7 @@ export interface Course {
   image: any;
   time_duration: string | null;
   createdAt: string;
+  isPurchased?: boolean;
   semester?: {
     id: number;
     name: string;
@@ -69,13 +71,21 @@ interface CoursesResponse {
 }
 
 export const useCourses = (semesterId?: number, teacherId?: number) => {
+  const { student, isAuthenticated } = useStudentAuth();
+  const stageId = student?.stage_id;
+
   return useQuery({
-    queryKey: ['courses', semesterId, teacherId],
+    queryKey: ['courses', semesterId, teacherId, stageId],
     queryFn: async () => {
       const filters: any = {};
       if (semesterId) filters.semester_id = semesterId;
       if (teacherId) filters.teacher_id = teacherId;
-       filters.active = true;
+      filters.active = true;
+      
+      if (stageId) {
+        filters.stage_id = stageId;
+      }
+      
       const { data } = await api.post<CoursesResponse>('/course/index', {
         filters,
         orderBy: "id",
@@ -85,9 +95,14 @@ export const useCourses = (semesterId?: number, teacherId?: number) => {
         delete: false
       });
       
-      return Array.isArray(data?.data) ? data.data : [];
+      const courses = Array.isArray(data?.data) ? data.data : [];
+      
+      return courses.map((course: any) => ({
+        ...course,
+        isPurchased: course?.isPurchased === true,
+      }));
     },
-    enabled: !!semesterId || !!teacherId,
+    enabled: (!!semesterId || !!teacherId) && isAuthenticated,
     staleTime: 5 * 60 * 1000,
   });
 };
@@ -105,13 +120,20 @@ export const useCourseDetails = (courseId?: number) => {
 };
 
 export const useSubjectCourses = (subjectId?: number, teacherId?: number) => {
+  const { student, isAuthenticated } = useStudentAuth();
+  const stageId = student?.stage_id;
+
   return useQuery({
-    queryKey: ['subject-courses', subjectId, teacherId],
+    queryKey: ['subject-courses', subjectId, teacherId, stageId],
     queryFn: async () => {
       const filters: any = {};
       if (subjectId) filters.subject_id = subjectId;
       if (teacherId) filters.teacher_id = teacherId;
-       filters.active = true;
+      filters.active = true;
+      
+      if (stageId) {
+        filters.stage_id = stageId;
+      }
       
       const { data } = await api.post<CoursesResponse>('/course/index', {
         filters,
@@ -122,38 +144,58 @@ export const useSubjectCourses = (subjectId?: number, teacherId?: number) => {
         delete: false
       });
       
-      return Array.isArray(data?.data) ? data.data : [];
+      const courses = Array.isArray(data?.data) ? data.data : [];
+      
+      return courses.map((course: any) => ({
+        ...course,
+        isPurchased: course?.isPurchased === true,
+      }));
     },
-    enabled: !!subjectId,
+    enabled: !!subjectId && isAuthenticated,
     staleTime: 5 * 60 * 1000,
   });
 };
 
 export const useSemesterCourses = (semesterId: number) => {
-  const token = Cookies.get('student_token');
-  
+  const { student, isAuthenticated } = useStudentAuth();
+  const stageId = student?.stage_id;
+
   return useQuery({
-    queryKey: ['semester-courses', semesterId],
+    queryKey: ['semester-courses', semesterId, stageId],
     queryFn: async () => {
+      const filters: any = {
+        semester_id: semesterId,
+        active: true,
+      };
+      
+      if (stageId) {
+        filters.stage_id = stageId;
+      }
+      
       const response = await api.post('/course/index', {
-        filters: {
-          semester_id: semesterId,
-           active:true
-        },
+        filters,
         orderBy: "id",
         orderByDirection: "asc",
         perPage: 100,
         paginate: false,
         delete: false
       });
-      return response.data;
+      
+      const courses = Array.isArray(response.data?.data) ? response.data.data : [];
+      
+      return {
+        ...response.data,
+        data: courses.map((course: any) => ({
+          ...course,
+          isPurchased: course?.isPurchased === true,
+        })),
+      };
     },
-    enabled: !!semesterId,
+    enabled: !!semesterId && isAuthenticated,
     staleTime: 5 * 60 * 1000,
   });
 };
 
-// جلب تفاصيل كورس معين
 export const useCourseDetailsById = (courseId: number) => {
   const token = Cookies.get('student_token');
   
@@ -164,6 +206,42 @@ export const useCourseDetailsById = (courseId: number) => {
       return response.data;
     },
     enabled: !!courseId,
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useStudentCourses = () => {
+  const { student, isAuthenticated } = useStudentAuth();
+  const stageId = student?.stage_id;
+
+  return useQuery({
+    queryKey: ['student-courses', stageId],
+    queryFn: async () => {
+      const filters: any = {
+        active: true,
+      };
+      
+      if (stageId) {
+        filters.stage_id = stageId;
+      }
+      
+      const { data } = await api.post<CoursesResponse>('/course/index', {
+        filters,
+        orderBy: "id",
+        orderByDirection: "asc",
+        perPage: 100,
+        paginate: false,
+        delete: false
+      });
+      
+      const courses = Array.isArray(data?.data) ? data.data : [];
+      
+      return courses.map((course: any) => ({
+        ...course,
+        isPurchased: course?.isPurchased === true,
+      }));
+    },
+    enabled: isAuthenticated && !!stageId,
     staleTime: 5 * 60 * 1000,
   });
 };

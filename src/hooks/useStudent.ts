@@ -369,7 +369,9 @@ export const useIsEnrolledInCourse = (courseId: number) => {
   
   const isEnrolled = useMemo(() => {
     if (!courses || !courseId) return false;
-    return courses.some((course: any) => course.id === courseId);
+    return courses.some((course: any) => (
+      course.id === courseId && (course.isPurchased === true || course.isPurchased === undefined)
+    ));
   }, [courses, courseId]);
   
   return { isEnrolled, isLoading };

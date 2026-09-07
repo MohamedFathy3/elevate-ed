@@ -18,6 +18,7 @@ export interface Course {
   };
   imageUrl?: string;
   details?: any[];
+    isPurchased?: boolean;
 }
 
 export interface Semester {

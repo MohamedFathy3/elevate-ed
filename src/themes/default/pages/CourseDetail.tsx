@@ -43,18 +43,28 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
   const navigate = useNavigate();
   const { slug } = useParams();
 
-const lessonTitle = lang === "ar" 
-  ? (lesson.titles_ar?.[0] || lesson.title_ar || lesson.title || "بدون عنوان")
-  : (lesson.titles?.[0] || lesson.title || "Untitled");
-    const lessonDesc = lang === "ar" && lesson.description_ar ? lesson.description_ar : lesson.description;
+  const lessonTitle = lang === "ar" 
+    ? (lesson.titles_ar?.[0] || lesson.title_ar || lesson.title || "بدون عنوان")
+    : (lesson.titles?.[0] || lesson.title || "Untitled");
+  const lessonDesc = lang === "ar" && lesson.description_ar ? lesson.description_ar : lesson.description;
 
-  const subParts = (lesson.titles || []).map((title: string, idx: number) => ({
-    id: idx,
-    title: title,
-    title_ar: lesson.titles_ar?.[idx] || title,
-    videoUrl: lesson.link_video?.[idx] || lesson.content_link,
-    imageUrl: lesson.imageUrl,
-  }));
+  // Build parts from both arrays because the API may return more videos than titles.
+  const titles = Array.isArray(lesson.titles) ? lesson.titles : [];
+  const titlesAr = Array.isArray(lesson.titles_ar) ? lesson.titles_ar : [];
+  const videoLinks = Array.isArray(lesson.link_video) ? lesson.link_video : [];
+  const partCount = Math.max(titles.length, videoLinks.length);
+  const subParts = Array.from({ length: partCount }, (_, idx) => {
+    const fallbackTitle = lang === "ar" ? `الجزء ${idx + 1}` : `Part ${idx + 1}`;
+    const title = titles[idx] || fallbackTitle;
+
+    return {
+      id: idx,
+      title,
+      title_ar: titlesAr[idx] || title,
+      videoUrl: videoLinks[idx] || videoLinks[0] || '',
+      imageUrl: lesson.imageUrl,
+    };
+  });
 
   const hasSubParts = subParts.length > 0;
   const lessonImage = lesson.imageUrl;
@@ -326,8 +336,15 @@ const CourseDetail = () => {
   }, []);
 
   useEffect(() => {
+    if (courseFromApi?.isPurchased === true) {
+      setHasPurchasedFullCourse(true);
+      return;
+    }
+
     if (studentCourses && studentCourses.length > 0 && courseIdNum) {
-      const isEnrolled = studentCourses.some((course: any) => course.id === courseIdNum);
+      const isEnrolled = studentCourses.some((course: any) => (
+        course.id === courseIdNum && (course.isPurchased === true || course.isPurchased === undefined)
+      ));
       setHasPurchasedFullCourse(isEnrolled);
     }
 
@@ -337,8 +354,9 @@ const CourseDetail = () => {
         setHasPurchasedFullCourse(true);
       }
     }
-  }, [studentCourses, courseIdNum, lessons, hasPurchasedFullCourse]);
+  }, [courseFromApi?.isPurchased, studentCourses, courseIdNum, lessons, hasPurchasedFullCourse]);
 
+  // ✅ تعديل: التعامل مع intro فيديو كـ array
   const defaultContent = useMemo(() => {
     if (hasCourseIntroVideo) {
       return {
@@ -346,7 +364,7 @@ const CourseDetail = () => {
         id: 'intro',
         title: lang === 'ar' ? 'فيديو تعريفي للكورس' : 'Course Intro Video',
         title_ar: 'فيديو تعريفي للكورس',
-        content_link: courseIntroVideo,
+        content_link: Array.isArray(courseIntroVideo) ? courseIntroVideo : [courseIntroVideo],
         description: courseDescription,
         description_ar: courseDescription,
         isIntro: true,
@@ -464,15 +482,22 @@ const CourseDetail = () => {
     }
   };
 
+  // ✅ تعديل: selectLesson يتعامل مع الـ array
   const selectLesson = (lesson: any, partIndex?: number) => {
     setSelectedLesson(lesson);
     setVideoError(false);
 
-    if (partIndex !== undefined && lesson.titles && lesson.titles[partIndex]) {
+    const titles = Array.isArray(lesson.titles) ? lesson.titles : [];
+    const titlesAr = Array.isArray(lesson.titles_ar) ? lesson.titles_ar : [];
+    const videoLinks = Array.isArray(lesson.link_video) ? lesson.link_video : [];
+    const partCount = Math.max(titles.length, videoLinks.length);
+
+    if (partIndex !== undefined && partIndex >= 0 && partIndex < partCount) {
+      const fallbackTitle = lang === "ar" ? `الجزء ${partIndex + 1}` : `Part ${partIndex + 1}`;
       const part = {
-        title: lesson.titles[partIndex],
-        title_ar: lesson.titles_ar?.[partIndex] || lesson.titles[partIndex],
-        videoUrl: lesson.link_video?.[partIndex] || lesson.content_link,
+        title: titles[partIndex] || fallbackTitle,
+        title_ar: titlesAr[partIndex] || titles[partIndex] || fallbackTitle,
+        videoUrl: videoLinks[partIndex] || videoLinks[0] || '',
         imageUrl: lesson.imageUrl,
       };
       setSelectedPart(part);
@@ -483,6 +508,7 @@ const CourseDetail = () => {
     }
   };
 
+  // ✅ تعديل: getVideoUrlForPlayer يتعامل مع الـ array
   const getVideoUrlForPlayer = (content: any) => {
     if (!content) return null;
     
@@ -491,11 +517,22 @@ const CourseDetail = () => {
     }
     
     if (content.isIntro && content.content_link) {
-      return content.content_link;
+      return Array.isArray(content.content_link) 
+        ? content.content_link[0] 
+        : content.content_link;
+    }
+    
+    if (content.link_video) {
+      if (Array.isArray(content.link_video) && content.link_video.length > 0) {
+        return content.link_video[0];
+      }
+      return content.link_video;
     }
     
     if (content.content_link) {
-      return content.content_link;
+      return Array.isArray(content.content_link) 
+        ? content.content_link[0] 
+        : content.content_link;
     }
     
     return null;
@@ -631,18 +668,39 @@ const CourseDetail = () => {
                     onStartExam={() => {
                       toast.info(lang === "ar" ? "جاري التوجيه للامتحان..." : "Redirecting to exam...");
                     }}
-                    parts={selectedLesson?.titles?.map((title: string, idx: number) => ({
-                      title: title,
-                      title_ar: selectedLesson.titles_ar?.[idx] || title,
-                      videoUrl: selectedLesson.link_video?.[idx] || selectedLesson.content_link,
-                    }))}
+                    // ✅ تعديل: الـ parts تتعامل مع الـ array
+                    parts={(() => {
+                      const titles = Array.isArray(selectedLesson?.titles) ? selectedLesson.titles : [];
+                      const titlesAr = Array.isArray(selectedLesson?.titles_ar) ? selectedLesson.titles_ar : [];
+                      const videoLinks = Array.isArray(selectedLesson?.link_video) ? selectedLesson.link_video : [];
+                      const partCount = Math.max(titles.length, videoLinks.length);
+
+                      return Array.from({ length: partCount }, (_, idx) => {
+                        const fallbackTitle = lang === "ar" ? `الجزء ${idx + 1}` : `Part ${idx + 1}`;
+                        const title = titles[idx] || fallbackTitle;
+
+                        return {
+                          title,
+                          title_ar: titlesAr[idx] || title,
+                          videoUrl: videoLinks[idx] || videoLinks[0] || '',
+                        };
+                      });
+                    })()}
                     selectedPartIndex={selectedPartIndex}
+                    // ✅ تعديل: onPartChange يتعامل مع الـ array
                     onPartChange={(index: number) => {
-                      if (selectedLesson && selectedLesson.titles && selectedLesson.titles[index]) {
+                      if (selectedLesson) {
+                        const titles = Array.isArray(selectedLesson.titles) ? selectedLesson.titles : [];
+                        const titlesAr = Array.isArray(selectedLesson.titles_ar) ? selectedLesson.titles_ar : [];
+                        const videoLinks = Array.isArray(selectedLesson.link_video) ? selectedLesson.link_video : [];
+                        const partCount = Math.max(titles.length, videoLinks.length);
+                        if (index < 0 || index >= partCount) return;
+                        const fallbackTitle = lang === "ar" ? `الجزء ${index + 1}` : `Part ${index + 1}`;
+
                         const part = {
-                          title: selectedLesson.titles[index],
-                          title_ar: selectedLesson.titles_ar?.[index] || selectedLesson.titles[index],
-                          videoUrl: selectedLesson.link_video?.[index] || selectedLesson.content_link,
+                          title: titles[index] || fallbackTitle,
+                          title_ar: titlesAr[index] || titles[index] || fallbackTitle,
+                          videoUrl: videoLinks[index] || videoLinks[0] || '',
                           imageUrl: selectedLesson.imageUrl,
                         };
                         setSelectedPart(part);
@@ -759,38 +817,36 @@ const CourseDetail = () => {
               <div className="space-y-2">
                 {lessons.slice(0, 20).map((lesson: any, index: number) => {
                   const isPurchased = hasPurchasedFullCourse || lesson.attended;
-                    const isLessonPurchased = lesson.is_purchased === true;
-
+                  const isLessonPurchased = lesson.is_purchased === true;
                   const isFree = parseFloat(lesson.price) === 0;
-  const isAvailable = hasPurchasedFullCourse || isLessonPurchased || isFree;
+                  const isAvailable = hasPurchasedFullCourse || isLessonPurchased || isFree;
 
                   return (
                     <LessonCard
-      key={lesson.id}
-      lesson={lesson}
-      index={index}
-      lang={lang}
-      isAvailable={isAvailable}
-      isPurchased={isLessonPurchased}
-      isFree={isFree}
-      hasPurchasedFullCourse={hasPurchasedFullCourse}
-      isAuthenticated={!!Cookies.get('student_token')}
-      onBuy={() => handleOpenBuyLessonModal(lesson.id, parseFloat(lesson.price))}
-      onWatch={() => {
-        // ✅ إذا كان متاح، يفتح مباشرة
-        if (isAvailable) {
-          setSelectedLesson(lesson);
-          setSelectedPart(null);
-          setSelectedPartIndex(-1);
-          setVideoError(false);
-        }
-      }}
-      onSelectPart={handleSelectPart}
-      isBuying={buyingLessonId === lesson.id}
-      isSelected={selectedLesson?.id === lesson.id}
-      isNature={isNature}
-      isDark={isDark}
-    />
+                      key={lesson.id}
+                      lesson={lesson}
+                      index={index}
+                      lang={lang}
+                      isAvailable={isAvailable}
+                      isPurchased={isLessonPurchased}
+                      isFree={isFree}
+                      hasPurchasedFullCourse={hasPurchasedFullCourse}
+                      isAuthenticated={!!Cookies.get('student_token')}
+                      onBuy={() => handleOpenBuyLessonModal(lesson.id, parseFloat(lesson.price))}
+                      onWatch={() => {
+                        if (isAvailable) {
+                          setSelectedLesson(lesson);
+                          setSelectedPart(null);
+                          setSelectedPartIndex(-1);
+                          setVideoError(false);
+                        }
+                      }}
+                      onSelectPart={handleSelectPart}
+                      isBuying={buyingLessonId === lesson.id}
+                      isSelected={selectedLesson?.id === lesson.id}
+                      isNature={isNature}
+                      isDark={isDark}
+                    />
                   );
                 })}
                 {lessons.length > 20 && (
@@ -952,4 +1008,4 @@ const CourseDetailSkeleton = ({ isNature }: { isNature: boolean }) => {
   );
 };
 
-export default CourseDetail; 
+export default CourseDetail;

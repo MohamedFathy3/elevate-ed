@@ -10,9 +10,9 @@ export const useSemesterData = (semesterId: number) => {
 
   const semester = teacher?.website?.semesters?.find((s: any) => s.id === semesterId);
   
-  // ✅ فلترة الكورسات: بس اللي semester_id = null
+  // The API already filters courses by the requested semester.
   const allCourses = coursesData?.data || [];
-  const filteredCourses = allCourses.filter((course: any) => course.semester_id === null);
+  const filteredCourses = allCourses;
   
   const totalStudents = filteredCourses.reduce((acc: number, c: any) => acc + (c.count_student || 0), 0);
   const semesterName = pick(semester?.name, semester?.name_ar) || "";
@@ -20,7 +20,7 @@ export const useSemesterData = (semesterId: number) => {
   return {
     semester,
     semesterName,
-    courses: filteredCourses, // ✅ بس اللي semester_id = null
+    courses: filteredCourses,
     totalStudents,
     isLoading,
     refetch,

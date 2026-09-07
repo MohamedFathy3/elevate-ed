@@ -32,14 +32,9 @@ export const SemesterDetails = () => {
   // ✅ جلب الكورسات
   const { data: coursesData, isLoading } = useSemesterCourses(parseInt(semesterId || '0'));
   
-  // ✅ ✅ ✅ فلترة في الـ Frontend: بس اللي semester_id = null
+  // The API already filters courses by the requested semester.
   const allCourses = coursesData?.data || [];
-  
-  // ✅ فلترة: بس اللي semester_id = null
-  const semesterCourses = allCourses.filter((course: any) => {
-    // ✅ أهم شرط: semester_id === null
-    return course.semester_id === null;
-  });
+  const semesterCourses = allCourses;
   
   // ✅ إحصائيات
   const totalStudents = semesterCourses.reduce((acc: number, c: any) => acc + (c.count_student || 0), 0);
@@ -97,7 +92,7 @@ export const SemesterDetails = () => {
         </div>
         
         {/* Courses List */}
-        {/* {semesterCourses.length === 0 ? (
+        {semesterCourses.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -135,7 +130,7 @@ export const SemesterDetails = () => {
               />
             ))}
           </div>
-        )} */}
+        )}
       </div>
     </div>
   );

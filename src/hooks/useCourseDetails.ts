@@ -54,6 +54,7 @@ interface CourseDetailsResponse {
   status: number;
   data: {
     id: number;
+    isPurchased?: boolean;
     title: string;
     title_ar: string;
     description: string;
@@ -99,6 +100,7 @@ interface CourseDetailsResponse {
 
 export interface StudentCourse {
   id: number;
+  isPurchased?: boolean;
   teacher_id: number;
   stage_id: number;
   subject_id: number;
@@ -183,7 +185,9 @@ export const useIsEnrolledInCourse = (courseId: number | undefined) => {
   
   const isEnrolled = useMemo(() => {
     if (!courses || !courseId || courses.length === 0) return false;
-    return courses.some((course: StudentCourse) => course.id === courseId);
+    return courses.some((course: StudentCourse) => (
+      course.id === courseId && (course.isPurchased === true || course.isPurchased === undefined)
+    ));
   }, [courses, courseId]);
   
   const enrolledCourse = useMemo(() => {
@@ -274,12 +278,13 @@ export const useCourseWithEnrollment = (courseId: number | undefined) => {
   
   // ✅ هل الطالب اشترى الكورس كامل؟
   const hasPurchasedFullCourse = useMemo(() => {
+    if (courseFromApi?.isPurchased === true) return true;
     if (isEnrolled) return true;
     if (lessons.length > 0) {
       return lessons.some((lesson: any) => lesson.attended === true);
     }
     return false;
-  }, [isEnrolled, lessons]);
+  }, [courseFromApi?.isPurchased, isEnrolled, lessons]);
   
   // ✅ معلومات الكورس من بيانات الطالب المشترك (إذا وجد)
   const courseInfo = enrolledCourse || courseFromApi;

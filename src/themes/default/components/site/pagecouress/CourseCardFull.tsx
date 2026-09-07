@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   BookOpen, Clock, GraduationCap, BookMarked, 
-  ShoppingCart, Loader2, Calendar, Percent 
+  ShoppingCart, Loader2, Calendar, Percent, CheckCircle2, Eye
 } from "lucide-react";
 import DOMPurify from "dompurify";
 import { useTheme } from "@/context/ThemeContext";
@@ -39,14 +39,14 @@ export const CourseCardFull = ({
 
   if (!course) return null;
 
+  // ✅ هل الطالب مشتري الكورس؟
+  const isPurchased = course?.isPurchased === true;
+console.log('isPurchased:', isPurchased, 'course:', course);
   const offerStartDate = course?.offer_start_date;
   const offerEndDate = course?.offer_end_date;
   const hasOfferDates = offerStartDate && offerEndDate;
 
   // ✅ الأسعار من الباك اند مباشرة
-  // price = السعر النهائي (بعد الخصم)
-  // original_price = السعر الأصلي (قبل الخصم)
-  // discount = قيمة الخصم
   const finalPrice = parseFloat(course?.price) || 0;
   const originalPrice = parseFloat(course?.original_price) || 0;
   const discountValue = parseFloat(course?.discount) || 0;
@@ -72,7 +72,7 @@ export const CourseCardFull = ({
   const semesterName = pick(course?.semester?.name, course?.semester?.name_ar) || "";
   const lessonsCount = course?.details?.length || 0;
 
-  // ✅ حساب نسبة الخصم للعرض (اختياري)
+  // ✅ حساب نسبة الخصم للعرض
   const discountPercent = hasDiscount 
     ? Math.round(((originalPrice - finalPrice) / originalPrice) * 100) 
     : 0;
@@ -121,6 +121,14 @@ export const CourseCardFull = ({
   const handleBuyClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // ✅ منع فتح المودال لو الكورس مشتري
+    if (isPurchased) {
+      // لو مشتري يودي لصفحة الكورس
+      navigate(`/courses/${course?.id}`);
+      return;
+    }
+    
     if (onBuyClick) {
       onBuyClick(course);
     }
@@ -138,9 +146,9 @@ export const CourseCardFull = ({
         ${cardBg} ${cardBorder} ${cardHoverBorder}`}
       animate={isHovered ? { scale: 1.02, y: -5 } : { scale: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      onClick={() => window.location.href = `/courses/${course?.id}`}
+      onClick={handleDetailsClick}
     >
-      <div onClick={handleDetailsClick}>
+      <div>
         {/* Shine effect */}
         <motion.div
           className={`absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 z-20 pointer-events-none
@@ -159,7 +167,7 @@ export const CourseCardFull = ({
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
           
-          {/* ✅ Discount Badge - يحسب النسبة المئوية للخصم */}
+          {/* ✅ Discount Badge */}
           {hasDiscount && discountPercent > 0 && (
             <motion.div 
               initial={{ x: -50, opacity: 0 }}
@@ -178,6 +186,20 @@ export const CourseCardFull = ({
               ? (lang === "ar" ? "💻 أونلاين" : "💻 Online")
               : (lang === "ar" ? "🏢 مركز" : "🏢 Center")}
           </div>
+
+          {/* ✅ Badge "مشترى" على الصورة */}
+          {isPurchased && (
+            <motion.div 
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute top-3 left-1/2 -translate-x-1/2 z-10"
+            >
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/95 backdrop-blur-sm text-white text-xs font-bold shadow-lg">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>{lang === "ar" ? "تم الشراء ✅" : "Purchased ✅"}</span>
+              </div>
+            </motion.div>
+          )}
           
           {/* ✅ عرض الأسعار */}
           <div className="absolute bottom-3 left-3 right-3 z-10">
@@ -283,21 +305,35 @@ export const CourseCardFull = ({
           {/* Buttons */}
           <div className="mt-auto pt-3 border-t border-border/50">
             <div className="flex items-center gap-2">
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={handleBuyClick}
-                disabled={isBuying}
-                className={`flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl font-semibold text-sm shadow-md transition-all disabled:opacity-50
-                  ${buttonBg} text-white`}
-              >
-                {isBuying ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <ShoppingCart className="w-4 h-4" />
-                )}
-                <span>{lang === "ar" ? "شراء" : "Buy"}</span>
-              </motion.button>
+              {/* ✅ لو مشتري يظهر "مشاهدة" بدل "شراء" */}
+              {isPurchased ? (
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handleBuyClick}
+                  className={`flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl font-semibold text-sm shadow-md transition-all
+                    bg-emerald-500 hover:bg-emerald-600 text-white`}
+                >
+                  <Eye className="w-4 h-4" />
+                  <span>{lang === "ar" ? "مشاهدة" : "Watch"}</span>
+                </motion.button>
+              ) : (
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handleBuyClick}
+                  disabled={isBuying}
+                  className={`flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl font-semibold text-sm shadow-md transition-all disabled:opacity-50
+                    ${buttonBg} text-white`}
+                >
+                  {isBuying ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <ShoppingCart className="w-4 h-4" />
+                  )}
+                  <span>{lang === "ar" ? "شراء" : "Buy"}</span>
+                </motion.button>
+              )}
               
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Link
