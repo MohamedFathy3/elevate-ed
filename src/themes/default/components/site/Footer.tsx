@@ -273,7 +273,7 @@ export const Footer = () => {
               title="TeacherPlanet on Facebook"
             >
               <img
-                src={logoImage}
+                src='/logo.png'
                 alt="TeacherPlanet"
                 className="h-10 w-auto object-contain opacity-80 hover:opacity-100 transition-all duration-300"
               />
@@ -283,7 +283,7 @@ export const Footer = () => {
             
             <motion.img
               whileHover={{ scale: 1.05, rotate: -5 }}
-              src={bananaImage}
+              src='/designed by @banana.png'
               alt="Banana Agency"
               className="h-10 w-auto object-contain opacity-80 hover:opacity-100 transition-all duration-300"
             />
