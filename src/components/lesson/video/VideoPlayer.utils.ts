@@ -3,8 +3,8 @@
 import { Quality } from './VideoPlayer.types';
 
 // ✅ استخراج Video ID
-export const extractVideoId = (url: string): string | null => {
-  if (!url) return null;
+export const extractVideoId = (url: unknown): string | null => {
+  if (typeof url !== 'string' || !url) return null;
   
   const patterns = [
     /youtu\.be\/([a-zA-Z0-9_-]{11})/,

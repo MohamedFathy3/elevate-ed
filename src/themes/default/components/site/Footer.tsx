@@ -280,7 +280,7 @@ export const Footer = () => {
             </motion.a>
             
             <span className={`text-xl font-bold ${getMutedColor()}`}>✧</span>
-            
+          
             <motion.img
               whileHover={{ scale: 1.05, rotate: -5 }}
               src='/designed by @banana.png'
