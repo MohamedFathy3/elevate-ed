@@ -50,7 +50,7 @@ let youtubeApiPromise: Promise<void> | null = null;
 
 const loadYouTubeIframeApi = (): Promise<void> => {
   if (typeof window === 'undefined') return Promise.resolve();
-  
+
   // ✅ التحقق من وجود API
   if ((window as any).YT?.Player) return Promise.resolve();
   if (youtubeApiPromise) return youtubeApiPromise;
@@ -258,15 +258,15 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
       setIsLoading(false);
       return;
     }
-    
+
     retryCountRef.current += 1;
     console.log(`🔄 محاولة إعادة تحميل المشغل (${retryCountRef.current}/${maxRetries})...`);
-    
+
     // ✅ إعادة تعيين الحالة
     setIsLoading(true);
     setVideoError(false);
     setIsVideoReady(false);
-    
+
     // ✅ تنظيف المشغل القديم
     if (playerRef.current) {
       try {
@@ -276,10 +276,10 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
       }
       playerRef.current = null;
     }
-    
+
     // ✅ إعادة تحميل API
     youtubeApiPromise = null;
-    
+
     // ✅ إعادة تشغيل التهيئة
     setTimeout(() => {
       initPlayer();
@@ -289,7 +289,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   // ✅ دالة تهيئة المشغل
   const initPlayer = useCallback(() => {
     if (!currentVideoId || !playerDivRef.current) return;
-    
+
     let cancelled = false;
 
     if (playerRef.current) {
@@ -344,7 +344,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
                 window.clearTimeout(readyTimeoutRef.current);
                 readyTimeoutRef.current = null;
               }
-              
+
               setIsVideoReady(true);
               setIsLoading(false);
               retryCountRef.current = 0; // ✅ إعادة تعيين عدد المحاولات
@@ -362,11 +362,18 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
                 iframe.style.position = 'absolute';
                 iframe.style.inset = '0';
                 iframe.style.border = '0';
-                iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen');
-                iframe.setAttribute('allowfullscreen', 'true');
+                // 🔒 FIX: ما فيش "fullscreen" هنا ولا allowfullscreen تحت.
+                // ده اللي كان بيسمح لليوتيوب يعمل Fullscreen خاص بيه جوه
+                // الـ iframe نفسه (مثلاً بدبل-كليك)، وساعتها كل طبقة الحماية
+                // بتاعتنا (الكنترولز، منع الرايت كليك، الووترمارك) بتختفي
+                // لأنها مش جوه العنصر اللي بقى fullscreen. الفل سكرين بتاعنا
+                // إحنا بيشتغل على الـ container كله فمش متأثر بالتغيير ده.
+                iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture');
+                iframe.removeAttribute('allowfullscreen');
                 iframe.setAttribute('title', currentTitle || 'Lesson video');
-                // ✅ إضافة sandbox للسماح بكل شيء
-                iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts allow-popups allow-forms');
+                // 🔒 FIX: شلنا الـ sandbox القديم لأنه كان فاتح كل حاجة
+                // (allow-same-origin + allow-scripts سوا بيلغوا فايدة الـ sandbox
+                // أصلاً)، فمكنش بيحمي حاجة وكان ممكن يعطل الـ API.
               }
 
               if (pendingPlayRef.current) {
@@ -419,7 +426,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
                   window.clearTimeout(readyTimeoutRef.current);
                   readyTimeoutRef.current = null;
                 }
-                
+
                 // ✅ محاولة إعادة المحاولة
                 if (retryCountRef.current < maxRetries) {
                   retryInit();
@@ -749,6 +756,19 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
       {/* ✅ مشغل YouTube */}
       <div id={playerElId} ref={playerDivRef} className="absolute inset-0 h-full w-full z-[2]" />
 
+      {/* 🔒 FIX: طبقة اعتراض ثابتة فوق الـ iframe — موجودة طول الوقت (مش
+          بتختفي زي طبقة الكنترولز). قبل كده لما الكنترولز تختفي أثناء
+          التشغيل كان الماوس بيوصل لجوه الـ iframe على طول (لأنه cross-origin
+          ومش بيعمل bubble للصفحة)، فاليوزر كان بيتفاعل مباشرة مع يوتيوب:
+          رايت كليك بيطلع منيو يوتيوب، ودبل كليك ممكن يفتح فُل سكرين يوتيوب.
+          دلوقتي أي كليك أو دبل كليك أو رايت كليك بيتقفل هنا الأول، فمفيش
+          حاجة توصل للـ iframe نفسه. */}
+      <div
+        className="absolute inset-0 z-[6]"
+        onDoubleClick={(event) => event.preventDefault()}
+        aria-hidden="true"
+      />
+
       {isLoading && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/35">
           <Loader2 className="h-10 w-10 animate-spin text-white" />
@@ -807,46 +827,46 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
             </div>
 
             <div className="flex items-center gap-0.5 sm:gap-1.5">
-              <QualityControl 
-                currentQuality={currentQuality} 
-                onQualityChange={changeQuality} 
-                availableQualities={DEFAULT_QUALITIES} 
-                lang={lang} 
+              <QualityControl
+                currentQuality={currentQuality}
+                onQualityChange={changeQuality}
+                availableQualities={DEFAULT_QUALITIES}
+                lang={lang}
               />
 
-              <button 
-                type="button" 
-                onClick={toggleCaptions} 
-                className={`control-button ${captionsEnabled ? 'bg-white/25 text-white' : ''}`} 
-                aria-label={lang === 'ar' ? 'تشغيل أو إيقاف الترجمة' : 'Toggle captions'} 
+              <button
+                type="button"
+                onClick={toggleCaptions}
+                className={`control-button ${captionsEnabled ? 'bg-white/25 text-white' : ''}`}
+                aria-label={lang === 'ar' ? 'تشغيل أو إيقاف الترجمة' : 'Toggle captions'}
                 aria-pressed={captionsEnabled}
               >
                 <Captions className="h-5 w-5" />
               </button>
 
               <div className="relative">
-                <button 
-                  type="button" 
-                  onClick={() => setShowSpeedMenu((value) => !value)} 
-                  className="control-button" 
+                <button
+                  type="button"
+                  onClick={() => setShowSpeedMenu((value) => !value)}
+                  className="control-button"
                   aria-label={lang === 'ar' ? 'تغيير السرعة' : 'Change speed'}
                 >
                   <span className="text-xs font-medium sm:text-sm">{playbackSpeed}x</span>
                 </button>
                 {showSpeedMenu && (
-                  <SpeedControl 
-                    speed={playbackSpeed} 
-                    onSpeedChange={changeSpeed} 
-                    onClose={() => setShowSpeedMenu(false)} 
-                    lang={lang} 
+                  <SpeedControl
+                    speed={playbackSpeed}
+                    onSpeedChange={changeSpeed}
+                    onClose={() => setShowSpeedMenu(false)}
+                    lang={lang}
                   />
                 )}
               </div>
 
-              <button 
-                type="button" 
-                onClick={toggleFullscreen} 
-                className="control-button" 
+              <button
+                type="button"
+                onClick={toggleFullscreen}
+                className="control-button"
                 aria-label={lang === 'ar' ? 'تكبير الشاشة' : 'Fullscreen'}
               >
                 {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
@@ -861,12 +881,12 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
       </div>
 
       {videoError && (
-        <VideoError 
-          lang={lang} 
+        <VideoError
+          lang={lang}
           onRetry={() => {
             retryCountRef.current = 0;
             retryInit();
-          }} 
+          }}
         />
       )}
 
