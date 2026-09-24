@@ -206,6 +206,7 @@ const LessonPage = memo(() => {
       student?.id && 
       lessonIdNum && 
       memoizedLesson && 
+      memoizedLesson.is_purchased === true &&
       !attendanceAttempted.current &&
       !hasAttendanceCookie() &&
       !memoizedLesson.attended &&
@@ -496,6 +497,27 @@ const getVideoUrl = useCallback((url: string) => {
           </h2>
           <Link to={`/dashboard`} className="text-blue-600 dark:text-blue-400 hover:underline">
             {lang === "ar" ? "العودة للوحة التحكم" : "Back to Dashboard"}
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (memoizedLesson.is_purchased !== true) {
+    return (
+      <div className="min-h-screen flex items-center justify-center pt-32" dir={dir}>
+        <div className="text-center">
+          <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-amber-100 dark:bg-amber-900/20 grid place-items-center">
+            <Lock className="w-12 h-12 text-amber-500" />
+          </div>
+          <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">
+            {lang === "ar" ? "هذا الدرس غير متاح" : "This lesson is unavailable"}
+          </h2>
+          <p className="mb-6 text-gray-600 dark:text-gray-400">
+            {lang === "ar" ? "يجب شراء الدرس أولاً لمشاهدة محتواه." : "Purchase the lesson first to watch its content."}
+          </p>
+          <Link to={`/courses/${memoizedLesson.course_id}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+            {lang === "ar" ? "العودة للكورس" : "Back to course"}
           </Link>
         </div>
       </div>

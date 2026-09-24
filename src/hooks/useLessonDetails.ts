@@ -9,6 +9,7 @@ import { useAttendance } from "./useAttendance";
 export interface LessonDetail {
   id: number;
   course_id: number;
+  is_purchased: boolean;
   title: string;
   title_ar: string;
   description: string;
@@ -56,7 +57,13 @@ export const useLessonDetails = (lessonId: number, studentId?: number) => {
   useEffect(() => {
     const lessonData = query.data?.data;
     
-    if (lessonId && studentId && lessonData?.attended === false && token) {
+    if (
+      lessonId &&
+      studentId &&
+      lessonData?.is_purchased === true &&
+      lessonData?.attended === false &&
+      token
+    ) {
       console.log("✅ Recording attendance for lesson:", lessonId);
       recordAttendance({
         lesson_id: lessonId,
