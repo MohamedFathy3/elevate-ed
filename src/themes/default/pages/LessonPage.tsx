@@ -108,11 +108,12 @@ const LessonPage = memo(() => {
 
   const lessonIdNum = parseInt(lessonId || '0');
   
-  const { data: lessonData, isLoading, refetch: refetchLesson } = useLessonDetails(
+  const { data: lessonData, isLoading, error: lessonError, refetch: refetchLesson } = useLessonDetails(
     lessonIdNum,
     student?.id
   );
   const lesson = lessonData?.data;
+  const lessonErrorMessage = (lessonError as any)?.response?.data?.message;
   
   const memoizedLesson = useMemo(() => lesson, [lesson]);
   
@@ -493,7 +494,7 @@ const getVideoUrl = useCallback((url: string) => {
             <AlertCircle className="w-12 h-12 text-red-500" />
           </div>
           <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">
-            {lang === "ar" ? "الدرس غير موجود" : "Lesson not found"}
+            {lessonErrorMessage || (lang === "ar" ? "الدرس غير موجود" : "Lesson not found")}
           </h2>
           <Link to={`/dashboard`} className="text-blue-600 dark:text-blue-400 hover:underline">
             {lang === "ar" ? "العودة للوحة التحكم" : "Back to Dashboard"}
