@@ -17,6 +17,33 @@ interface ExamStatus {
   notSolved?: boolean;
 }
 
+export const normalizeBooleanValue = (value: unknown): boolean | null => {
+  if (typeof value === 'boolean') return value;
+
+  if (typeof value === 'number') {
+    if (Number.isNaN(value)) return null;
+    return value === 1;
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+
+    if (!normalized || ['null', 'undefined', 'none', 'na'].includes(normalized)) {
+      return null;
+    }
+
+    if (['true', '1', 'yes', 'y', 'passed', 'success', 'successful', 'succeeded'].includes(normalized)) {
+      return true;
+    }
+
+    if (['false', '0', 'no', 'n', 'failed', 'fail', 'not_passed', 'notpassed'].includes(normalized)) {
+      return false;
+    }
+  }
+
+  return null;
+};
+
 export const useExamResults = (exams: any[], studentId: number) => {
   const [examResults, setExamResults] = useState<Record<number, any>>({});
   const [examStatuses, setExamStatuses] = useState<Record<number, ExamStatus>>({});
@@ -38,14 +65,19 @@ export const useExamResults = (exams: any[], studentId: number) => {
       const statuses: Record<number, any> = {};
 
       for (const exam of exams) {
+        const studentSolved = normalizeBooleanValue(exam.student_solved);
+        const studentPassed = normalizeBooleanValue(exam.student_passed);
+        const apiPassed = normalizeBooleanValue(exam?.result?.passed ?? exam?.passed ?? null);
+
         console.log(`📝 Processing exam ${exam.id}: "${exam.title}"`);
-        console.log(`   - student_solved: ${exam.student_solved}`);
-        console.log(`   - student_passed: ${exam.student_passed}`);
+        console.log(`   - student_solved: ${exam.student_solved} => ${studentSolved}`);
+        console.log(`   - student_passed: ${exam.student_passed} => ${studentPassed}`);
+        console.log(`   - apiPassed: ${exam?.result?.passed ?? exam?.passed ?? null} => ${apiPassed}`);
         console.log(`   - student_passed_message: "${exam.student_passed_message}"`);
         console.log(`   - student_mark: ${exam.student_mark}`);
         
         // ✅ 1️⃣ لو الطالب محلش الامتحان
-        if (exam.student_solved === false) {
+        if (studentSolved === false) {
           console.log(`   ⏳ NOT SOLVED YET`);
           statuses[exam.id] = {
             passed: false,
@@ -80,7 +112,7 @@ export const useExamResults = (exams: any[], studentId: number) => {
             console.log(`🔒 Exam ${exam.id} - Result is HIDDEN`);
             
             // ✅ نستخدم بيانات الـ exam من lesson API
-            const studentPassed = exam.student_passed;
+            const studentPassed = normalizeBooleanValue(exam.student_passed);
             const studentPassedMessage = exam.student_passed_message;
             const studentMark = exam.student_mark || 0;
             const passMarks = exam.total_must_pass_marks || 0;
@@ -136,12 +168,13 @@ export const useExamResults = (exams: any[], studentId: number) => {
             const hasData = data.data && data.data.length > 0;
             
             // ✅ استخدام student_passed من lesson API إذا كان موجود
-            const studentPassed = exam.student_passed;
+            const studentPassed = normalizeBooleanValue(exam.student_passed);
             const studentPassedMessage = exam.student_passed_message;
+            const normalizedApiPassed = normalizeBooleanValue(data?.passed);
             
             console.log(`📊 Exam ${exam.id}:`);
             console.log(`   - studentPassed from lesson: ${studentPassed}`);
-            console.log(`   - data.passed: ${data.passed}`);
+            console.log(`   - data.passed: ${data.passed} => ${normalizedApiPassed}`);
             console.log(`   - total: ${total}`);
             console.log(`   - passMarks: ${passMarks}`);
             
@@ -165,12 +198,12 @@ export const useExamResults = (exams: any[], studentId: number) => {
               waitingResult = true;
               passed = false;
               failed = false;
-            } else if (studentPassed === true || data.passed === true) {
+            } else if (studentPassed === true || normalizedApiPassed === true) {
               // ✅ نجح
               console.log(`   ✅ PASSED`);
               passed = true;
               failed = false;
-            } else if (studentPassed === false || data.passed === false) {
+            } else if (studentPassed === false || normalizedApiPassed === false) {
               // ✅ فشل
               console.log(`   ❌ FAILED`);
               passed = false;
@@ -203,7 +236,7 @@ export const useExamResults = (exams: any[], studentId: number) => {
           console.error(`❌ Error fetching exam ${exam.id}:`, error);
           
           // ✅ في حالة أي خطأ، نستخدم بيانات الـ lesson
-          const studentPassed = exam.student_passed;
+          const studentPassed = normalizeBooleanValue(exam.student_passed);
           const studentPassedMessage = exam.student_passed_message;
           const studentMark = exam.student_mark || 0;
           const passMarks = exam.total_must_pass_marks || 0;
