@@ -106,7 +106,9 @@ export const useExamResults = (exams: any[], studentId: number) => {
           results[exam.id] = data;
           
           // ✅ التحقق من النتيجة مخفية
-          const isHidden = data?.message?.includes("hidden") || data?.status === false;
+          const isHidden =
+            (typeof data?.message === 'string' && data.message.toLowerCase().includes('hidden')) ||
+            normalizeBooleanValue(data?.status) === false;
           
           if (isHidden) {
             console.log(`🔒 Exam ${exam.id} - Result is HIDDEN`);

@@ -19,6 +19,7 @@ export interface LessonDetail {
   lession_time: string;
   price: string;
   must_pass_to_unlock: boolean;
+  must_solve_assignment_to_unlock?: boolean;
   discount: string;
   attended: boolean;
   createdAt: string;
@@ -49,7 +50,7 @@ export const useLessonDetails = (lessonId: number, studentId?: number) => {
     enabled: !!lessonId && !!token,
     staleTime: 60_000,
     gcTime: 5 * 60_000,
-    refetchOnMount: false,
+    refetchOnMount: true,
     refetchOnWindowFocus: false,
   });
 

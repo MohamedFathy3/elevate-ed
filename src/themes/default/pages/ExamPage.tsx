@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useLang } from "@/i18n/LanguageContext";
 import { useExamQuestions, useExamDetails, useExamResult } from "@/hooks/useExams";
 import { useCurrentStudent } from "@/hooks/useStudent";
@@ -25,6 +26,7 @@ const ExamPage = () => {
   const { lang } = useLang();
   const { slug, examId, lessonId } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { student } = useCurrentStudent();
   const examIdNum = parseInt(examId || '0');
   
@@ -55,9 +57,16 @@ const ExamPage = () => {
   const hasResult = resultData?.status === true && resultData?.data?.length > 0;
   const currentLessonId = lessonId || exam?.course_detail_id?.id;
   const token = Cookies.get('student_token');
+  const refreshLessonDetails = useCallback(() => {
+    const targetLessonId = Number(currentLessonId);
+    if (Number.isInteger(targetLessonId) && targetLessonId > 0) {
+      void queryClient.invalidateQueries({ queryKey: ['lesson-details', targetLessonId] });
+    }
+  }, [currentLessonId, queryClient]);
 
   useEffect(() => {
     if (hasResult && !submitted) {
+      refreshLessonDetails();
       toast.info(
         lang === "ar" 
           ? "📝 لقد قمت بحل هذا الامتحان مسبقاً" 
@@ -74,7 +83,7 @@ const ExamPage = () => {
         }
       }, 1500);
     }
-  }, [hasResult, submitted, lessonId, exam, navigate, lang]);
+  }, [hasResult, submitted, lessonId, exam, navigate, lang, refreshLessonDetails]);
   
   // ✅ دالة الإرسال الرئيسية
   const performSubmit = (isAuto: boolean = false) => {
@@ -133,6 +142,7 @@ const ExamPage = () => {
           response.data?.status === 201;
         
         if (isSuccess) {
+          refreshLessonDetails();
           setSubmitted(true);
           setIsAutoSubmitting(false);
           setIsSubmitting(false);

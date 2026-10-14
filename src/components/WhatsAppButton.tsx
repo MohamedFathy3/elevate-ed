@@ -14,7 +14,7 @@ interface WhatsAppButtonProps {
 export const WhatsAppButton = ({ 
   message = "السلام عليكم، أحتاج إلى مساعدة",
   position = "bottom-left",
-  fallbackPhone = "201154853195"
+  fallbackPhone = "000000"
 }: WhatsAppButtonProps) => {
   const { teacher, isLoading: teacherLoading } = useSafeTeacher();
   

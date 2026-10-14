@@ -140,11 +140,20 @@ const LessonPage = memo(() => {
   const [showContactModal, setShowContactModal] = useState(false);
   const [contactModalType, setContactModalType] = useState<'default' | 'exam_hidden' | 'need_support'>('default');
 
-  const exams = memoizedLesson?.exams || [];
-  const assignments = memoizedLesson?.assignments || [];
+  const exams = useMemo(() => memoizedLesson?.exams || [], [memoizedLesson?.exams]);
+  const assignments = useMemo(() => memoizedLesson?.assignments || [], [memoizedLesson?.assignments]);
   
   const { examStatuses, loadingExams, setExamStatuses } = useExamResults(exams, student?.id || 0);
   const { assignmentStatuses, loadingAssignments } = useAssignmentResults(assignments, student?.id || 0);
+  const mustPassToUnlock = memoizedLesson?.must_pass_to_unlock === true;
+  const mustSolveAssignmentToUnlock = memoizedLesson?.must_solve_assignment_to_unlock === true;
+  const requiresExamToUnlock = mustPassToUnlock || !mustSolveAssignmentToUnlock;
+  const allExamsPassed = exams.length > 0 && exams.every(
+    (exam: any) => examStatuses[exam.id]?.passed === true
+  );
+  const allAssignmentsPassed = assignments.every(
+    (assignment: any) => assignmentStatuses[assignment.id]?.passed === true
+  );
 
   // ✅ تفعيل الحماية (مؤجل)
   const { BlueScreen } = useAdvancedProtection({
@@ -302,16 +311,13 @@ const LessonPage = memo(() => {
     }
   }, [exams, examStatuses, loadingExams, setExamStatuses]);
 
-  const canWatch = useMemo(() => {
-    if (!memoizedLesson?.must_pass_to_unlock) return true;
-    if (exams.length === 0) return true;
-    if (loadingExams) return false;
-    
-    return exams.every((exam: any) => {
-      const status = examStatuses[exam.id];
-      return status?.passed === true;
-    });
-  }, [memoizedLesson?.must_pass_to_unlock, exams, examStatuses, loadingExams]);
+  const examRequirementMet = !requiresExamToUnlock || (
+    exams.length > 0 && !loadingExams && allExamsPassed
+  );
+  const assignmentRequirementMet = !mustSolveAssignmentToUnlock || (
+    !loadingAssignments && allAssignmentsPassed
+  );
+  const canWatch = examRequirementMet && assignmentRequirementMet;
 
   // ✅ عرض المودال - محسن
   useEffect(() => {
@@ -333,7 +339,7 @@ const LessonPage = memo(() => {
       return () => clearTimeout(timer);
     }
 
-    if (!memoizedLesson?.must_pass_to_unlock || loadingExams || exams.length === 0) return;
+    if (!requiresExamToUnlock || loadingExams || exams.length === 0) return;
     
     const hiddenExams = exams.filter((exam: any) => {
       const status = examStatuses[exam.id];
@@ -363,7 +369,7 @@ const LessonPage = memo(() => {
     }
 
     return () => clearTimeout(timer);
-  }, [memoizedLesson?.need_support, memoizedLesson?.must_pass_to_unlock, exams, examStatuses, loadingExams]);
+  }, [memoizedLesson?.need_support, requiresExamToUnlock, exams, examStatuses, loadingExams]);
 
   // ✅ Enable protection (مؤجل)
   useEffect(() => {
@@ -536,7 +542,7 @@ const getVideoUrl = useCallback((url: string) => {
           </Suspense>
 
           {/* تقدم الامتحانات */}
-          {memoizedLesson?.must_pass_to_unlock && exams.length > 0 && (
+          {requiresExamToUnlock && exams.length > 0 && (
             <div className="mb-6 p-4 rounded-xl border bg-white dark:bg-gray-900 shadow-sm">
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-3">
@@ -611,11 +617,26 @@ const getVideoUrl = useCallback((url: string) => {
                     title={currentPart?.title || memoizedLesson.title}
                     poster={currentPart?.imageUrl || memoizedLesson.imageUrl}
                     isLocked={!canWatch}
-                    requiredExam={activeExamIndex >= 0 ? exams[activeExamIndex] : null}
+                    requiredExam={
+                      requiresExamToUnlock && activeExamIndex >= 0
+                        ? exams[activeExamIndex]
+                        : null
+                    }
                     onStartExam={() => {
                       if (activeExamIndex >= 0 && activeExamIndex < exams.length) {
                         handleStartExam(exams[activeExamIndex].id);
                       }
+                    }}
+                    requiredAssignment={
+                      mustSolveAssignmentToUnlock
+                        ? assignments.find((assignment: any) => assignmentStatuses[assignment.id]?.passed !== true)
+                        : null
+                    }
+                    onStartAssignment={() => {
+                      const assignment = assignments.find(
+                        (item: any) => assignmentStatuses[item.id]?.passed !== true
+                      );
+                      if (assignment) handleStartAssignment(assignment.id);
                     }}
                     parts={parts}
                     onPartChange={handlePartChange}
@@ -663,18 +684,30 @@ const getVideoUrl = useCallback((url: string) => {
                     </div>
                   )}
                   
-                  {memoizedLesson?.must_pass_to_unlock ? (
-                    !canWatch && exams.length > 0 ? (
+                  {!canWatch ? (
+                    mustSolveAssignmentToUnlock &&
+                    !allAssignmentsPassed &&
+                    (!requiresExamToUnlock || allExamsPassed) ? (
+                      <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 text-xs">
+                        <Lock className="w-3 h-3" />
+                        {lang === "ar" ? "يتطلب اجتياز الواجبات" : "Requires passing assignments"}
+                      </div>
+                    ) : (
                       <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 text-xs">
                         <Lock className="w-3 h-3" />
                         {lang === "ar" ? "يتطلب اجتياز الامتحانات" : "Requires passing exams"}
                       </div>
-                    ) : canWatch && exams.length > 0 ? (
+                    )
+                  ) : requiresExamToUnlock && exams.length > 0 ? (
                       <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400 text-xs">
                         <Unlock className="w-3 h-3" />
                         {lang === "ar" ? "تم اجتياز جميع الامتحانات ✓" : "All exams passed ✓"}
                       </div>
-                    ) : null
+                  ) : mustSolveAssignmentToUnlock && assignments.length > 0 ? (
+                    <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400 text-xs">
+                      <Unlock className="w-3 h-3" />
+                      {lang === "ar" ? "تم اجتياز جميع الواجبات ✓" : "All assignments passed ✓"}
+                    </div>
                   ) : (
                     <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400 text-xs">
                       <Unlock className="w-3 h-3" />

@@ -194,7 +194,7 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
                     {lang === "ar" ? "📚 أجزاء الدرس:" : "📚 Lesson parts:"}
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                    {subParts.slice(0, 6).map((part: any, idx: number) => (
+                    {subParts.map((part: any, idx: number) => (
                       <motion.div
                         key={idx}
                         initial={{ opacity: 0, scale: 0.95 }}
@@ -234,13 +234,6 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
                         </div>
                       </motion.div>
                     ))}
-                    {subParts.length > 6 && (
-                      <div className="flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          +{subParts.length - 6} {lang === "ar" ? "أجزاء أخرى" : "more parts"}
-                        </span>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
@@ -815,7 +808,7 @@ const CourseDetail = () => {
                 <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">({lessons.length} {lang === "ar" ? "دروس" : "lessons"})</span>
               </h2>
               <div className="space-y-2">
-                {lessons.slice(0, 20).map((lesson: any, index: number) => {
+                {lessons.map((lesson: any, index: number) => {
                   const isPurchased = hasPurchasedFullCourse || lesson.attended;
                   const isLessonPurchased = lesson.is_purchased === true;
                   const isFree = parseFloat(lesson.price) === 0;
@@ -849,11 +842,6 @@ const CourseDetail = () => {
                     />
                   );
                 })}
-                {lessons.length > 20 && (
-                  <div className="text-center py-4 text-sm text-gray-500 dark:text-gray-400">
-                    +{lessons.length - 20} {lang === "ar" ? "درس إضافي" : "more lessons"}
-                  </div>
-                )}
               </div>
             </motion.div>
           </div>

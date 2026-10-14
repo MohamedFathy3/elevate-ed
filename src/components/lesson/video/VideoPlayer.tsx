@@ -120,7 +120,9 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   poster,
   isLocked = false,
   requiredExam,
+  requiredAssignment,
   onStartExam,
+  onStartAssignment,
   parts = [],
   selectedPartIndex = 0,
 }, ref) => {
@@ -159,6 +161,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   const [isDragging, setIsDragging] = useState(false);
   const [currentQuality, setCurrentQuality] = useState('auto');
   const [captionsEnabled, setCaptionsEnabled] = useState(false);
+  const [useFallbackEmbed, setUseFallbackEmbed] = useState(false);
 
   const { cleanExtensions } = useVideoProtection(containerRef);
 
@@ -254,6 +257,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   // ✅ دالة إعادة المحاولة
   const retryInit = useCallback(() => {
     if (retryCountRef.current >= maxRetries) {
+      setUseFallbackEmbed(true);
       setVideoError(true);
       setIsLoading(false);
       return;
@@ -431,6 +435,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
                 if (retryCountRef.current < maxRetries) {
                   retryInit();
                 } else {
+                  setUseFallbackEmbed(true);
                   setVideoError(true);
                   setIsLoading(false);
                   pendingPlayRef.current = false;
@@ -461,6 +466,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
           if (retryCountRef.current < maxRetries) {
             retryInit();
           } else {
+            setUseFallbackEmbed(true);
             setVideoError(true);
             setIsLoading(false);
             pendingPlayRef.current = false;
@@ -485,11 +491,12 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
 
   // ✅ تهيئة المشغل
   useEffect(() => {
-    if (!currentVideoId) return;
+    if (isLocked || !currentVideoId) return;
     retryCountRef.current = 0;
+    setUseFallbackEmbed(false);
     const cleanup = initPlayer();
     return cleanup;
-  }, [initPlayer, currentVideoId]);
+  }, [initPlayer, currentVideoId, isLocked]);
 
   // ✅ تحديث الفيديو عند تغيير الـ videoId
   useEffect(() => {
@@ -666,7 +673,15 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
 
   // ✅ عرض شاشة القفل
   if (isLocked) {
-    return <VideoLocked requiredExam={requiredExam} onStartExam={onStartExam} lang={lang} />;
+    return (
+      <VideoLocked
+        requiredExam={requiredExam}
+        requiredAssignment={requiredAssignment}
+        onStartExam={onStartExam}
+        onStartAssignment={onStartAssignment}
+        lang={lang}
+      />
+    );
   }
 
   // ✅ عرض رسالة في حالة عدم وجود رابط فيديو
@@ -715,6 +730,27 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
             </div>
           </div>
         )}
+      </div>
+    );
+  }
+
+  if (useFallbackEmbed && currentVideoId) {
+    return (
+      <div
+        ref={containerRef}
+        dir="ltr"
+        className="video-protected group relative aspect-video overflow-hidden rounded-2xl bg-black shadow-2xl ring-1 ring-white/10"
+        style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
+      >
+        <iframe
+          title={currentTitle || 'Lesson video'}
+          className="absolute inset-0 h-full w-full"
+          src={buildYouTubeEmbedUrl(currentVideoId)}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          referrerPolicy="strict-origin-when-cross-origin"
+          sandbox="allow-scripts allow-same-origin allow-presentation allow-pictures"
+        />
       </div>
     );
   }

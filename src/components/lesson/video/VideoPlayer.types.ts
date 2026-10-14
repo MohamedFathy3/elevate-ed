@@ -20,7 +20,9 @@ export interface VideoPlayerProps {
   poster?: string;
   isLocked?: boolean;
   requiredExam?: any;
+  requiredAssignment?: any;
   onStartExam?: () => void;
+  onStartAssignment?: () => void;
   parts?: Part[];
   onPartChange?: (index: number) => void;
   selectedPartIndex?: number;
