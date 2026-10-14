@@ -147,7 +147,7 @@ const LessonPage = memo(() => {
   const { assignmentStatuses, loadingAssignments } = useAssignmentResults(assignments, student?.id || 0);
   const mustPassToUnlock = memoizedLesson?.must_pass_to_unlock === true;
   const mustSolveAssignmentToUnlock = memoizedLesson?.must_solve_assignment_to_unlock === true;
-  const requiresExamToUnlock = mustPassToUnlock || !mustSolveAssignmentToUnlock;
+  const requiresExamToUnlock = mustPassToUnlock;
   const allExamsPassed = exams.length > 0 && exams.every(
     (exam: any) => examStatuses[exam.id]?.passed === true
   );
@@ -315,7 +315,7 @@ const LessonPage = memo(() => {
     exams.length > 0 && !loadingExams && allExamsPassed
   );
   const assignmentRequirementMet = !mustSolveAssignmentToUnlock || (
-    !loadingAssignments && allAssignmentsPassed
+    assignments.length > 0 && !loadingAssignments && allAssignmentsPassed
   );
   const canWatch = examRequirementMet && assignmentRequirementMet;
 
