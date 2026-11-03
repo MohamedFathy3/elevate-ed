@@ -40,6 +40,7 @@ export interface QualityControlProps {
   onQualityChange: (q: string) => void;
   availableQualities: Quality[];
   lang: string;
+  lockedQuality?: string;
 }
 
 export interface SpeedControlProps {

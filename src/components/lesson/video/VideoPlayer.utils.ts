@@ -32,7 +32,7 @@ export const formatTime = (seconds: number): string => {
 
 // ✅ بناء رابط YouTube
 export const buildYouTubeEmbedUrl = (videoId: string): string => {
-  return `https://www.youtube-nocookie.com/embed/${videoId}?enablejsapi=1&rel=0&modestbranding=1&showinfo=0&controls=0&autohide=2&fs=0&iv_load_policy=3&playsinline=1&cc_load_policy=0&disablekb=1&origin=${window.location.origin}`;
+  return `https://www.youtube-nocookie.com/embed/${videoId}?enablejsapi=1&rel=0&modestbranding=1&showinfo=0&controls=0&autohide=2&fs=0&iv_load_policy=3&playsinline=1&cc_load_policy=0&disablekb=1&vq=hd720&origin=${window.location.origin}`;
 };
 
 // ✅ إعدادات الجودة الافتراضية

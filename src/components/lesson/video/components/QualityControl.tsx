@@ -8,7 +8,8 @@ export const QualityControl = ({
   currentQuality, 
   onQualityChange, 
   availableQualities, 
-  lang 
+  lang,
+  lockedQuality,
 }: QualityControlProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -44,6 +45,20 @@ export const QualityControl = ({
   };
 
   const sortedQualities = [...availableQualities].sort((a, b) => b.height - a.height);
+
+  if (lockedQuality) {
+    return (
+      <div
+        role="status"
+        aria-label={lang === 'ar' ? `جودة الفيديو ${lockedQuality}p` : `Video quality ${lockedQuality}p`}
+        title={lang === 'ar' ? `الجودة ثابتة على ${lockedQuality}p` : `Quality fixed at ${lockedQuality}p`}
+        className="flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 rounded-lg p-2 text-white"
+      >
+        <Settings className="h-4 w-4" />
+        <span className="hidden text-xs font-medium sm:inline">{lockedQuality}p</span>
+      </div>
+    );
+  }
 
   return (
     <div className="relative">

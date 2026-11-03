@@ -46,6 +46,17 @@ const mapToYouTubeQuality = (quality: string): string => {
   }
 };
 
+const FIXED_QUALITY = '720';
+const YOUTUBE_FIXED_QUALITY = mapToYouTubeQuality(FIXED_QUALITY);
+
+const applyFixedYouTubeQuality = (player: any) => {
+  try {
+    player?.setPlaybackQuality?.(YOUTUBE_FIXED_QUALITY);
+  } catch {
+    // YouTube may ignore manual quality requests for adaptive streams.
+  }
+};
+
 let youtubeApiPromise: Promise<void> | null = null;
 
 const loadYouTubeIframeApi = (): Promise<void> => {
@@ -159,7 +170,6 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const [currentQuality, setCurrentQuality] = useState('auto');
   const [captionsEnabled, setCaptionsEnabled] = useState(false);
   const [useFallbackEmbed, setUseFallbackEmbed] = useState(false);
 
@@ -217,24 +227,6 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   const currentTitle = parts[selectedPartIndex]
     ? (lang === 'ar' ? parts[selectedPartIndex].title_ar : parts[selectedPartIndex].title)
     : title;
-
-  const changeQuality = useCallback((quality: string) => {
-    const finalQuality = quality;
-    setCurrentQuality(finalQuality);
-
-    const qualityLabel = DEFAULT_QUALITIES.find((item) => item.value === finalQuality)?.label || finalQuality;
-    const player = playerRef.current;
-
-    if (player && typeof player.setPlaybackQuality === 'function') {
-      try {
-        player.setPlaybackQuality(mapToYouTubeQuality(finalQuality));
-      } catch {
-        // YouTube may ignore manual quality requests for adaptive streams.
-      }
-    }
-
-    toast.info(`${lang === 'ar' ? 'الجودة' : 'Quality'}: ${qualityLabel}`);
-  }, [lang]);
 
   const toggleCaptions = useCallback(() => {
     const player = playerRef.current;
@@ -337,6 +329,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
             playsinline: 1,
             cc_load_policy: 0,
             cc_lang_pref: lang === 'ar' ? 'ar' : 'en',
+            vq: YOUTUBE_FIXED_QUALITY,
             origin: origin,
             widget_referrer: origin,
             enablejsapi: 1,
@@ -352,6 +345,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
               setIsVideoReady(true);
               setIsLoading(false);
               retryCountRef.current = 0; // ✅ إعادة تعيين عدد المحاولات
+              applyFixedYouTubeQuality(event.target);
 
               const realDuration = event.target.getDuration?.() || 0;
               if (realDuration > 0) {
@@ -399,6 +393,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
 
               if (event.data === states.PLAYING) {
                 setPlayingState(true);
+                applyFixedYouTubeQuality(event.target);
                 // ✅ FIX: كان الفيديو بيفضل عليه loading spinner للأبد لو
                 // البلاير عدّى بحالة BUFFERING مرة وبعدين رجع PLAYING،
                 // لأن isLoading ما كانش بيترجع false غير في onReady بس.
@@ -421,7 +416,9 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
               }
             },
             onPlaybackQualityChange: (event: any) => {
-              if (!cancelled) setCurrentQuality(event.data || 'auto');
+              if (!cancelled && event.data !== YOUTUBE_FIXED_QUALITY) {
+                applyFixedYouTubeQuality(event.target);
+              }
             },
             onError: (event: any) => {
               if (!cancelled) {
@@ -521,7 +518,8 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     try {
       const player = playerRef.current;
       if (player && typeof player.loadVideoById === 'function') {
-        player.loadVideoById(currentVideoId);
+        player.loadVideoById(currentVideoId, 0, YOUTUBE_FIXED_QUALITY);
+        applyFixedYouTubeQuality(player);
       } else {
         // ✅ إعادة تهيئة المشغل
         initPlayer();
@@ -864,10 +862,11 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
 
             <div className="flex items-center gap-0.5 sm:gap-1.5">
               <QualityControl
-                currentQuality={currentQuality}
-                onQualityChange={changeQuality}
+                currentQuality={FIXED_QUALITY}
                 availableQualities={DEFAULT_QUALITIES}
                 lang={lang}
+                lockedQuality={FIXED_QUALITY}
+                onQualityChange={() => applyFixedYouTubeQuality(playerRef.current)}
               />
 
               <button
