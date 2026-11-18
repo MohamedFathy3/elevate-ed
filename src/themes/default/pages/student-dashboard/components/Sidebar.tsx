@@ -47,8 +47,8 @@ export const Sidebar = ({
 
       <aside className={`
         fixed lg:sticky top-24 lg:top-28 left-0 h-[calc(100vh-6rem)] w-72 lg:w-80
-        bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl
-        border-r border-gray-200 dark:border-gray-800
+        bg-card/95 backdrop-blur-xl
+        border-r border-border
         transform transition-transform duration-300 ease-in-out z-40
         overflow-y-auto custom-scrollbar
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}

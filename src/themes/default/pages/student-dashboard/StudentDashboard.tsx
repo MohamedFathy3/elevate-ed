@@ -57,8 +57,8 @@ const StudentDashboard = () => {
   const primaryGradient = isNature 
     ? "from-amber-500 to-orange-600" 
     : "from-primary to-accent";
-  const bgColor = 'bg-white dark:bg-gray-950';
-  const cardBg = 'bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800';
+  const bgColor = 'bg-background';
+  const cardBg = 'bg-card text-card-foreground border border-border shadow-soft';
 
   // Tabs
   const tabs: TabItem[] = [

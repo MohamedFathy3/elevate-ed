@@ -601,9 +601,7 @@ const SemesterCard = ({ semester, slug, lang }: any) => (
           <h3 className="font-bold">
             {lang === "ar" && semester.name_ar ? semester.name_ar : semester.name}
           </h3>
-          <p className="text-xs text-foreground/50 mt-1">
-            {semester.courses?.length || 0} {lang === "ar" ? "كورسات" : "courses"}
-          </p>
+       
         </div>
         <ChevronRight className="w-5 h-5 text-foreground/30" />
       </div>
@@ -629,41 +627,46 @@ const CourseCard = ({ course, slug, lang }: any) => (
       <h3 className="font-bold line-clamp-1">
         {lang === "ar" && course.title_ar ? course.title_ar : course.title}
       </h3>
-      <p className="text-xs text-foreground/50 mt-1">
-        {course.details?.length || 0} {lang === "ar" ? "دروس" : "lessons"}
-      </p>
     </motion.div>
   </Link>
 );
 
 // 🟢 Lesson Card Component
-const LessonCard = ({ lesson, slug, lang }: any) => (
-  <motion.div
-    whileHover={{ x: 5 }}
-    className="bg-card rounded-xl border border-border p-4 hover:border-primary/40 transition-all"
-  >
-    <div className="flex items-center justify-between">
-      <div className="flex-1">
-        <h3 className="font-semibold">
-          {lang === "ar" && lesson.title_ar ? lesson.title_ar : lesson.title}
-        </h3>
-        <p className="text-xs text-foreground/50">
-          {lesson.course?.title}
-        </p>
-        <div className="flex items-center gap-3 mt-2 text-xs text-foreground/40">
-          <span>{new Date(lesson.lession_date).toLocaleDateString()}</span>
-          <span>{lesson.lession_time}</span>
+const LessonCard = ({ lesson, slug, lang }: any) => {
+  const lessonPartTitle = lang === "ar"
+    ? lesson.titles_ar?.[0] || lesson.titles?.[0]
+    : lesson.titles?.[0] || lesson.titles_ar?.[0];
+
+  return (
+    <motion.div
+      whileHover={{ x: 5 }}
+      className="bg-card rounded-xl border border-border p-4 hover:border-primary/40 transition-all"
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex-1">
+          <h3 className="font-semibold">
+            {lessonPartTitle || (lang === "ar" ? lesson.title_ar : lesson.title)}
+          </h3>
+          {lesson.course?.title && (
+            <p className="text-xs text-foreground/50">
+              {lesson.course.title}
+            </p>
+          )}
+          <div className="flex items-center gap-3 mt-2 text-xs text-foreground/40">
+            <span>{new Date(lesson.lession_date).toLocaleDateString()}</span>
+            <span>{lesson.lession_time}</span>
+          </div>
         </div>
+        <Link
+          to={`/lesson/${lesson.id}`}
+          className="px-4 py-2 rounded-lg gradient-primary text-white text-sm ml-3"
+        >
+          {lang === "ar" ? "مشاهدة" : "Watch"}
+        </Link>
       </div>
-      <Link
-        to={`/lesson/${lesson.id}`}
-        className="px-4 py-2 rounded-lg gradient-primary text-white text-sm ml-3"
-      >
-        {lang === "ar" ? "مشاهدة" : "Watch"}
-      </Link>
-    </div>
-  </motion.div>
-);
+    </motion.div>
+  );
+};
 
 // 🟢 Dashboard Skeleton
 const DashboardSkeleton = () => (

@@ -2,12 +2,11 @@
 
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { BookOpen, Clock } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import { EmptyState } from "./EmptyState";
 
 export const CoursesTab = ({ courses, slug, lang, isNature, isDark, cardBg }: any) => {
   const getTextColor = () => isDark ? 'text-white' : 'text-gray-900';
-  const getMutedColor = () => isDark ? 'text-gray-300' : 'text-gray-500';
   
   if (courses.length === 0) {
     return (
@@ -54,10 +53,6 @@ export const CoursesTab = ({ courses, slug, lang, isNature, isDark, cardBg }: an
                 <h3 className={`font-bold line-clamp-1 ${isNature ? 'text-amber-700 dark:text-amber-400' : getTextColor()}`}>
                   {lang === "ar" && course.title_ar ? course.title_ar : course.title}
                 </h3>
-                <p className={`text-xs ${getMutedColor()} mt-1 flex items-center gap-2`}>
-                  <Clock className="w-3 h-3" />
-                  {course.details?.length || 0} {lang === "ar" ? "دروس" : "lessons"}
-                </p>
               </div>
             </Link>
           </motion.div>

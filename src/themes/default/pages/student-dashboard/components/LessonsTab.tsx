@@ -40,16 +40,18 @@ export const LessonsTab = ({ lessons, slug, lang, isNature, isDark, cardBg }: an
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: idx * 0.03 }}
             whileHover={{ x: 5 }}
-            className={`rounded-xl p-4 transition-all ${cardBg}`}
+            className={`rounded-xl p-4 transition-all border-primary/20 hover:border-primary/50 ${cardBg}`}
           >
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="flex-1">
                 <h3 className={`font-semibold ${isNature ? 'text-amber-700 dark:text-amber-400' : getTextColor()}`}>
-                  {lang === "ar" && lesson.title_ar ? lesson.title_ar : lesson.title}
+                  {lang === "ar"
+                    ? lesson.titles_ar?.[0] || lesson.title_ar || lesson.titles?.[0] || lesson.title
+                    : lesson.titles?.[0] || lesson.title || lesson.titles_ar?.[0] || lesson.title_ar}
                 </h3>
-                <p className={`text-xs ${getMutedColor()}`}>
-                  {lesson.course?.title || (lang === "ar" ? "بدون كورس" : "No course")}
-                </p>
+                {lesson.course?.title && (
+                  <p className={`text-xs ${getMutedColor()}`}>{lesson.course.title}</p>
+                )}
                 <div className={`flex items-center gap-3 mt-2 text-xs ${getMutedColor()}`}>
                   <span>{lesson.lession_date ? new Date(lesson.lession_date).toLocaleDateString() : '-'}</span>
                   <span>{lesson.lession_time || '-'}</span>

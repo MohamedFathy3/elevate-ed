@@ -9,12 +9,12 @@ import { useStudentAuth } from "@/context/StudentAuthContext";
 import { 
   Clock, Atom, ArrowLeft, ArrowRight, CheckCircle2, 
   PlayCircle, ShoppingCart, Lock, Calendar, 
-  Loader2, Video, ExternalLink, Shield, EyeOff,
+  Loader2, Video, ExternalLink, EyeOff,
   XCircle
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { toast  } from "@/hooks/use-toast";
-import { enableFullProtection, preventVideoDownload, disablePictureInPicture } from "@/utils/protection";
+import { preventVideoDownload, disablePictureInPicture } from "@/utils/protection";
 import Cookies from "js-cookie";
 
 const getYouTubeVideoId = (value: unknown) => {
@@ -48,7 +48,6 @@ const CourseDetail = () => {
   const [buyingLessonId, setBuyingLessonId] = useState<number | null>(null);
   const [buyingFullCourse, setBuyingFullCourse] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<any>(null);
-  const [showProtectionWarning, setShowProtectionWarning] = useState(false);
   const [hasPurchasedFullCourse, setHasPurchasedFullCourse] = useState(false);
   const [videoError, setVideoError] = useState(false);
 
@@ -70,13 +69,6 @@ const CourseDetail = () => {
       setHasPurchasedFullCourse(anyLessonPurchased);
     }
   }, [isAuthenticated, student, courseData]);
-
-  // تفعيل الحماية عند تحميل الصفحة
-  useEffect(() => {
-    enableFullProtection();
-    setShowProtectionWarning(true);
-    setTimeout(() => setShowProtectionWarning(false), 5000);
-  }, []);
 
   // جلب بيانات الكورس الرئيسية من teacher context
   const course = teacher?.website?.courses?.find((c: any) => String(c.id) === courseId);
@@ -155,19 +147,6 @@ const CourseDetail = () => {
   return (
     <section className="pt-36 md:pt-40 pb-24">
       <div className="container-tight">
-        {/* تحذير الحماية */}
-        {showProtectionWarning && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-red-500 text-white px-4 py-2 rounded-full text-sm flex items-center gap-2 shadow-lg"
-          >
-            <Shield className="w-4 h-4" />
-            {lang === "ar" ? "🔒 هذه الصفحة محمية ضد التصوير والاختراق" : "🔒 This page is protected against recording and hacking"}
-          </motion.div>
-        )}
-
         {/* Back Link */}
         <Link
           to={`/courses`}

@@ -11,47 +11,52 @@ export const usePreventScreenshot = (enabled: boolean = true) => {
       return false;
     };
 
-    // منع Print Screen (على قد ما يمكن)
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'PrintScreen') {
+      const key = e.key.toLowerCase();
+      const control = e.ctrlKey || e.metaKey;
+      const devToolsShortcut =
+        e.key === 'F12' ||
+        (control && e.shiftKey && ['i', 'j', 'c', 'k'].includes(key)) ||
+        (control && ['u', 's', 'p'].includes(key));
+
+      if (devToolsShortcut) {
         e.preventDefault();
-        alert('❌ تم منع تصوير الشاشة حفاظاً على حقوق الملكية الفكرية');
-        return false;
-      }
-      
-      // منع Ctrl+P (طباعة)
-      if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
-        e.preventDefault();
-        alert('❌ تم منع طباعة الصفحة');
-        return false;
-      }
-      
-      // منع Ctrl+S (حفظ)
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        alert('❌ تم منع حفظ الصفحة');
-        return false;
-      }
-      
-      // منع Ctrl+Shift+I (developer tools)
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'I') {
-        e.preventDefault();
-        return false;
-      }
-      
-      // منع F12 (developer tools)
-      if (e.key === 'F12') {
-        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
         return false;
       }
     };
 
+    const handleDragStart = (e: DragEvent) => e.preventDefault();
+    const handleSelectStart = (e: Event) => e.preventDefault();
+    const handleCopy = (e: ClipboardEvent) => e.preventDefault();
+
+    const style = document.createElement('style');
+    style.id = 'lesson-content-protection';
+    style.textContent = `
+      .lesson-content-protection,
+      .lesson-content-protection * {
+        user-select: none !important;
+        -webkit-user-select: none !important;
+      }
+    `;
+    document.head.appendChild(style);
+    document.body.classList.add('lesson-content-protection');
+
     document.addEventListener('contextmenu', handleContextMenu);
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown, true);
+    document.addEventListener('dragstart', handleDragStart);
+    document.addEventListener('selectstart', handleSelectStart);
+    document.addEventListener('copy', handleCopy);
     
     return () => {
       document.removeEventListener('contextmenu', handleContextMenu);
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keydown', handleKeyDown, true);
+      document.removeEventListener('dragstart', handleDragStart);
+      document.removeEventListener('selectstart', handleSelectStart);
+      document.removeEventListener('copy', handleCopy);
+      document.body.classList.remove('lesson-content-protection');
+      document.getElementById('lesson-content-protection')?.remove();
     };
   }, [enabled]);
 };

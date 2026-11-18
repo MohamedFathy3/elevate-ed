@@ -11,6 +11,7 @@ import { SiteLayout } from "@/components/SiteLayout";
 import { StudentAuthProvider } from "@/context/StudentAuthContext";
 import { TeacherProvider } from "@/context/TeacherContext";
 import { useEffect, useState, useMemo, useRef, Suspense, lazy } from "react";
+import { usePreventScreenshot } from "@/hooks/usePreventScreenshot";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -145,6 +146,7 @@ const SubdomainRoutes = ({ initialPayload }: { initialPayload?: SsrPayload }) =>
 
 // ✅ AppContent
 const AppContent = ({ ssrLocation, initialPayload }: { ssrLocation?: string; initialPayload?: SsrPayload }) => {
+  usePreventScreenshot(true);
   const { isLoading, pages, isThemeReady } = useTheme();
   const [showLoader, setShowLoader] = useState(() => !(initialPayload || getSsrPayload()));
   const loaderTimeoutRef = useRef<NodeJS.Timeout | null>(null);

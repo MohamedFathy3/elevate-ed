@@ -70,12 +70,12 @@ const StudentDashboard = () => {
     ? "from-amber-500 to-orange-600" 
     : "from-primary to-accent";
   
-  const bgColor = 'bg-white dark:bg-gray-950';
+  const bgColor = 'bg-background';
   
   // ✅ Sidebar bg زي ما هي من غير تغيير
-  const sidebarBg = 'bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl';
+  const sidebarBg = 'bg-card/95 backdrop-blur-xl';
   
-  const cardBg = 'bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800';
+  const cardBg = 'bg-card text-card-foreground border border-border shadow-soft';
   
   // ✅ ألوان الـ Sidebar - تتحسن للـ White Mode
   const getSidebarTextColor = () => {
@@ -868,10 +868,7 @@ const CoursesTab = ({ courses, slug, lang, isNature, isDark, cardBg }: any) => {
                 <h3 className={`font-bold line-clamp-1 ${isNature ? 'text-amber-700 dark:text-amber-400' : getTextColor()}`}>
                   {lang === "ar" && course.title_ar ? course.title_ar : course.title}
                 </h3>
-                <p className={`text-xs ${getMutedColor()} mt-1 flex items-center gap-2`}>
-                  <Clock className="w-3 h-3" />
-                  {course.details?.length || 0} {lang === "ar" ? "دروس" : "lessons"}
-                </p>
+               
               </div>
             </Link>
           </motion.div>
@@ -922,11 +919,13 @@ const LessonsTab = ({ lessons, slug, lang, isNature, isDark, cardBg }: any) => {
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="flex-1">
                 <h3 className={`font-semibold ${isNature ? 'text-amber-700 dark:text-amber-400' : getTextColor()}`}>
-                  {lang === "ar" && lesson.title_ar ? lesson.title_ar : lesson.title}
+                  {lang === "ar"
+                    ? lesson.titles_ar?.[0] || lesson.title_ar || lesson.titles?.[0] || lesson.title
+                    : lesson.titles?.[0] || lesson.title || lesson.titles_ar?.[0] || lesson.title_ar}
                 </h3>
-                <p className={`text-xs ${getMutedColor()}`}>
-                  {lesson.course?.title || (lang === "ar" ? "بدون كورس" : "No course")}
-                </p>
+                {lesson.course?.title && (
+                  <p className={`text-xs ${getMutedColor()}`}>{lesson.course.title}</p>
+                )}
                 <div className={`flex items-center gap-3 mt-2 text-xs ${getMutedColor()}`}>
                   <span>{lesson.lession_date ? new Date(lesson.lession_date).toLocaleDateString() : '-'}</span>
                   <span>{lesson.lession_time || '-'}</span>
@@ -992,9 +991,7 @@ const SemestersTab = ({ semesters, slug, lang, isNature, isDark, cardBg }: any) 
                     <h3 className={`font-bold ${isNature ? 'text-amber-700 dark:text-amber-400' : getTextColor()}`}>
                       {lang === "ar" && semester.name_ar ? semester.name_ar : semester.name}
                     </h3>
-                    <p className={`text-xs ${getMutedColor()} mt-1`}>
-                      {semester.courses?.length || 0} {lang === "ar" ? "كورسات" : "courses"}
-                    </p>
+                  
                   </div>
                   <ChevronRight className={`w-5 h-5 ${isNature ? 'text-amber-400' : 'text-gray-400'}`} />
                 </div>

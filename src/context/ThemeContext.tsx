@@ -54,6 +54,14 @@ const applyApiColors = (bgColor: string, textColor: string) => {
   
   root.style.setProperty('--api-bg', bgColor);
   root.style.setProperty('--api-text', textColor);
+
+  if (root.classList.contains('dark')) {
+    document.body.style.removeProperty('background-color');
+    document.body.style.removeProperty('color');
+    document.body.removeAttribute('data-api-colors');
+    document.getElementById('api-color-styles')?.remove();
+    return;
+  }
   
   document.body.style.backgroundColor = bgColor;
   document.body.style.color = textColor;
@@ -279,8 +287,17 @@ export const ThemeProvider: React.FC<{ children: ReactNode; initialPayload?: Ssr
     const root = document.documentElement;
     if (colorMode === 'dark') {
       root.classList.add('dark');
+      document.body.style.removeProperty('background-color');
+      document.body.style.removeProperty('color');
+      document.body.removeAttribute('data-api-colors');
+      document.getElementById('api-color-styles')?.remove();
     } else {
       root.classList.remove('dark');
+      const savedBg = localStorage.getItem('api-bg-color');
+      const savedText = localStorage.getItem('api-text-color');
+      if (savedBg && savedText) {
+        applyApiColors(savedBg, savedText);
+      }
     }
     localStorage.setItem('color-mode', colorMode);
   }, [colorMode]);

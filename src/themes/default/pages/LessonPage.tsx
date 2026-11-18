@@ -15,12 +15,9 @@ import { useLessonDetails } from "@/hooks/useLessonDetails";
 import { useCurrentStudent } from "@/hooks/useStudent";
 import { useAttendance } from "@/hooks/useAttendance";
 import { useWatermark } from '@/hooks/useWatermark';
-import { usePreventScreenshot } from '@/hooks/usePreventScreenshot';
-import { useAdvancedProtection } from '@/hooks/useScreenRecorderProtection';
 import { motion } from "framer-motion";
 import { AlertCircle, ArrowRight, FileQuestion, Lock, Unlock, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { enableFullProtection } from "@/utils/protection";
 import Cookies from "js-cookie";
 import { useTeacher } from "@/context/TeacherContext";
 import { LessonNote } from "@/components/lesson/LessonPage/components/LessonNote";
@@ -155,23 +152,6 @@ const LessonPage = memo(() => {
     (assignment: any) => assignmentStatuses[assignment.id]?.passed === true
   );
 
-  // ✅ تفعيل الحماية (مؤجل)
-  const { BlueScreen } = useAdvancedProtection({
-    enabled: true,
-    sensitivity: 'medium',
-    showBlueScreen: true,
-    preventDevTools: true,
-    preventExternalLinks: true,
-    onDetect: useCallback(() => {
-      console.warn('⚠️ تم اكتشاف محاولة تصوير!');
-      toast.error(
-        lang === "ar" 
-          ? "⚠️ تم اكتشاف محاولة تصوير الشاشة! تم إيقاف الفيديو."
-          : "⚠️ Screen recording detected! Video paused."
-      );
-    }, [lang])
-  });
-
   // ✅ Watermark - مع تأخير لتقليل LCP و CLS
   const watermarkText = useMemo(() => {
     if (!student) return 'زائر | يرجى تسجيل الدخول';
@@ -190,8 +170,6 @@ const LessonPage = memo(() => {
     return () => clearTimeout(timer);
   }, []);
 
-  usePreventScreenshot(true);
-  
   // ✅ تفعيل العلامة المائية فقط بعد التأخير
   useWatermark(watermarkText, watermarkEnabled);
 
@@ -371,14 +349,6 @@ const LessonPage = memo(() => {
     return () => clearTimeout(timer);
   }, [memoizedLesson?.need_support, requiresExamToUnlock, exams, examStatuses, loadingExams]);
 
-  // ✅ Enable protection (مؤجل)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      enableFullProtection();
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
-
   // ✅ Handlers - محسنة مع useCallback
   const handlePartChange = useCallback((index: number) => {
     selectPart(index);
@@ -533,9 +503,8 @@ const getVideoUrl = useCallback((url: string) => {
 
   return (
     <>
-      {BlueScreen}
 
-      <div className="min-h-screen pt-32 pb-20 bg-gray-50 dark:bg-gray-950" dir={dir}>
+      <div className="min-h-screen pt-32 pb-20 bg-background text-foreground" dir={dir}>
         <div className="container-tight max-w-7xl mx-auto px-4">
           <Suspense fallback={<div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-6"></div>}>
             <LessonBreadcrumb slug={slug || ''} title={memoizedLesson.title} />
@@ -543,7 +512,7 @@ const getVideoUrl = useCallback((url: string) => {
 
           {/* تقدم الامتحانات */}
           {requiresExamToUnlock && exams.length > 0 && (
-            <div className="mb-6 p-4 rounded-xl border bg-white dark:bg-gray-900 shadow-sm">
+            <div className="mb-6 p-4 rounded-xl border border-border bg-card text-card-foreground shadow-sm">
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-3">
                   <FileQuestion className="w-5 h-5 text-blue-500" />
@@ -663,7 +632,7 @@ const getVideoUrl = useCallback((url: string) => {
               )}
 
               {/* Lesson Info - مع أبعاد ثابتة لمنع CLS */}
-              <div className="mt-6 p-6 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 min-h-[200px]">
+              <div className="mt-6 p-6 bg-card text-card-foreground rounded-2xl border border-border min-h-[200px]">
                 <h1 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">
                   {lang === "ar" && memoizedLesson.title_ar ? memoizedLesson.title_ar : memoizedLesson.title}
                 </h1>
@@ -859,7 +828,7 @@ const getVideoUrl = useCallback((url: string) => {
               <div className="flex gap-3">
                 <Link
                   to={`/courses/${memoizedLesson.course_id}`}
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all text-gray-700 dark:text-gray-300"
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-card border border-border hover:border-primary hover:bg-muted transition-all text-foreground"
                 >
                   <ArrowRight className="w-4 h-4 rtl:rotate-180" />
                   {lang === "ar" ? "العودة للكورس" : "Back to Course"}

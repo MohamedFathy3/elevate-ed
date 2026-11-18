@@ -7,7 +7,6 @@ import { EmptyState } from "./EmptyState";
 
 export const SemestersTab = ({ semesters, slug, lang, isNature, isDark, cardBg }: any) => {
   const getTextColor = () => isDark ? 'text-white' : 'text-gray-900';
-  const getMutedColor = () => isDark ? 'text-gray-300' : 'text-gray-500';
   
   if (semesters.length === 0) {
     return (
@@ -47,9 +46,6 @@ export const SemestersTab = ({ semesters, slug, lang, isNature, isDark, cardBg }
                     <h3 className={`font-bold ${isNature ? 'text-amber-700 dark:text-amber-400' : getTextColor()}`}>
                       {lang === "ar" && semester.name_ar ? semester.name_ar : semester.name}
                     </h3>
-                    <p className={`text-xs ${getMutedColor()} mt-1`}>
-                      {semester.courses?.length || 0} {lang === "ar" ? "كورسات" : "courses"}
-                    </p>
                   </div>
                   <ChevronRight className={`w-5 h-5 ${isNature ? 'text-amber-400' : 'text-gray-400'}`} />
                 </div>

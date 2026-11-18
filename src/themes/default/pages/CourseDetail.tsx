@@ -80,12 +80,12 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.03, 0.3) }}
       className={`
-        border border-gray-200 dark:border-gray-700 
+        border border-border
         rounded-2xl 
-        bg-white
+        bg-card text-card-foreground
         overflow-hidden 
         transition-all duration-300
-        ${isSelected ? 'ring-2 ring-blue-500 dark:ring-blue-400 shadow-lg shadow-blue-500/20 dark:shadow-blue-400/20' : ''}
+        ${isSelected ? 'ring-2 ring-primary shadow-lg shadow-primary/20' : ''}
       `}
     >
       <div
@@ -113,10 +113,10 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
             />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white truncate">
+            <h3 className="font-semibold text-sm sm:text-base text-foreground truncate">
               {lessonTitle}
             </h3>
-            <div className="flex items-center gap-2 sm:gap-3 text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex-wrap">
+            <div className="flex items-center gap-2 sm:gap-3 text-xs text-muted-foreground mt-0.5 flex-wrap">
               <span className="flex items-center gap-1">
                 <Calendar className="w-3 h-3" />
                 {new Date(lesson.lession_date).toLocaleDateString()}
@@ -160,7 +160,7 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
           )}
 
           {!isAuthenticated && !hasPurchasedFullCourse && (
-            <div className="px-2 py-1 sm:px-4 sm:py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 text-xs sm:text-sm font-semibold flex items-center gap-1">
+            <div className="px-2 py-1 sm:px-4 sm:py-2 rounded-xl bg-muted text-muted-foreground text-xs sm:text-sm font-semibold flex items-center gap-1">
               <Lock className="w-3 h-3" />
             </div>
           )}
@@ -181,9 +181,9 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
             exit={{ opacity: 0, height: 0 }}
             className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0"
           >
-            <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+            <div className="pt-3 border-t border-border">
               {lessonDesc && (
-                <p className="text-sm mb-4 text-gray-500 dark:text-gray-400 line-clamp-3">
+                <p className="text-sm mb-4 text-muted-foreground line-clamp-3">
                   {lessonDesc}
                 </p>
               )}
@@ -201,7 +201,7 @@ const LessonCard = ({ lesson, index, lang, isPurchased, isFree, hasPurchasedFull
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: Math.min(idx * 0.02, 0.2) }}
                         onClick={() => goToLessonWithPart(lesson.id, idx)}
-                        className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 transition-all hover:shadow-lg cursor-pointer bg-white dark:bg-gray-900 hover:border-blue-400 dark:hover:border-blue-500"
+                                className="rounded-xl overflow-hidden border border-border transition-all hover:shadow-lg cursor-pointer bg-card text-card-foreground hover:border-primary"
                       >
                         <div className="relative h-24 sm:h-32 overflow-hidden">
                           <img
@@ -317,7 +317,7 @@ const CourseDetail = () => {
   const bgColor = isNature ? '' : '';
   const cardBg = isNature
     ? (isDark ? 'bg-amber-900/30' : 'bg-white')
-    : (isDark ? 'bg-gray-800/50' : 'bg-card');
+    : 'bg-card';
   const cardBorder = isNature
     ? (isDark ? 'border-amber-700/50' : 'border-amber-200')
     : (isDark ? 'border-gray-700' : 'border-border');
