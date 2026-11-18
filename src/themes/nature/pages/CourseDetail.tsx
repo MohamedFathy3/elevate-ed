@@ -70,23 +70,37 @@ const CourseDetail = () => {
     }
   }, [isAuthenticated, student, courseData]);
 
-  // جلب بيانات الكورس الرئيسية من teacher context
-  const course = teacher?.website?.courses?.find((c: any) => String(c.id) === courseId);
+  // Use the front-end course response as the source of truth, with teacher data as fallback.
+  const contextCourse = teacher?.website?.courses?.find((c: any) => String(c.id) === courseId);
+  const courseDetails = courseData?.data;
+  const course = courseDetails
+    ? {
+        ...contextCourse,
+        ...courseDetails,
+        image: courseDetails.image || contextCourse?.image,
+        imageUrl: courseDetails.imageUrl || contextCourse?.imageUrl,
+      }
+    : contextCourse;
   
   if (!course && !detailsLoading) {
     return <Navigate to={`/courses`} replace />;
   }
 
-  const lessons = courseData?.data || [];
+  const lessons = courseDetails?.details || [];
   const courseImage = course?.image?.fullUrl || course?.imageUrl || "/default-course.jpg";
   const courseTitle = pick(course?.title, course?.title_ar) || "Course";
   const courseDescription = pick(course?.description, course?.description_ar) || "";
   
   // حساب الخصم
-  const originalPrice = parseFloat(course?.price) || 0;
-  const discountPercent = parseFloat(course?.discount) || 0;
-  const finalPrice = originalPrice - (originalPrice * discountPercent / 100);
-  const hasDiscount = discountPercent > 0;
+  const originalPrice = Number(course?.original_price ?? course?.price) || 0;
+  const discountPercent = Number(course?.offer_discount || course?.discount) || 0;
+  const responsePrice = Number(course?.price);
+  const finalPrice = Number.isFinite(responsePrice)
+    ? responsePrice === originalPrice && discountPercent > 0
+      ? originalPrice - (originalPrice * discountPercent / 100)
+      : responsePrice
+    : originalPrice;
+  const hasDiscount = discountPercent > 0 || finalPrice < originalPrice;
 
   // شراء الكورس كاملاً
   const handleBuyFullCourse = async () => {
@@ -218,12 +232,19 @@ const CourseDetail = () => {
                 </div>
               ) : (
                 <div 
-                  className="aspect-video bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center cursor-pointer"
+                  className="relative aspect-video overflow-hidden bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center cursor-pointer"
                   onClick={() => lessons[0] && hasPurchasedFullCourse && goToLesson(lessons[0].id)}
                 >
                   <div className="text-center">
-                    <PlayCircle className="w-20 h-20 text-primary mx-auto mb-4 opacity-70" />
-                    <p className="text-foreground/60">
+                    <img
+                      src={courseImage}
+                      alt={courseTitle}
+                      className="absolute inset-0 w-full h-full object-cover opacity-50"
+                    />
+                    <div className="relative z-10 rounded-full bg-background/80 p-4">
+                      <PlayCircle className="w-12 h-12 text-primary" />
+                    </div>
+                    <p className="relative z-10 mt-3 rounded-lg bg-background/80 px-3 py-2 text-foreground/80">
                       {hasPurchasedFullCourse 
                         ? (lang === "ar" ? "اختر درساً للمشاهدة" : "Select a lesson to watch")
                         : (lang === "ar" ? "اشتر الكورس لمشاهدة الدروس" : "Buy the course to watch lessons")}
@@ -260,8 +281,59 @@ const CourseDetail = () => {
                   {course?.hour_time_course || (lang === "ar" ? "مرن" : "Flexible")}
                 </span>
               </div>
-              <h1 className="font-display font-black text-3xl md:text-5xl tracking-tight">{courseTitle}</h1>
-              <div className="mt-4 text-lg text-foreground/70 leading-relaxed" dangerouslySetInnerHTML={{ __html: courseDescription }} />
+              <div className="flex flex-col sm:flex-row gap-5 items-start">
+                <img
+                  src={courseImage}
+                  alt={courseTitle}
+                  className="w-full sm:w-48 h-36 object-cover rounded-2xl border border-border"
+                />
+                <div className="flex-1 min-w-0">
+                  <h1 className="font-display font-black text-3xl md:text-5xl tracking-tight">{courseTitle}</h1>
+                  {courseDescription && (
+                    <div className="mt-4 text-lg text-foreground/70 leading-relaxed" dangerouslySetInnerHTML={{ __html: courseDescription }} />
+                  )}
+                  <div className="flex flex-wrap items-center gap-2 mt-4 text-sm">
+                    <span className="rounded-full bg-primary/10 px-3 py-1 text-primary font-semibold">
+                      {finalPrice.toFixed(2)} EGP
+                    </span>
+                    {hasDiscount && (
+                      <span className="text-foreground/50 line-through">{originalPrice.toFixed(2)} EGP</span>
+                    )}
+                    {discountPercent > 0 && (
+                      <span className="rounded-full bg-red-500/10 px-3 py-1 text-red-500 font-semibold">
+                        {lang === "ar" ? `خصم ${discountPercent}%` : `${discountPercent}% off`}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
+                {[
+                  [lang === "ar" ? "المرحلة" : "Stage", pick(course?.stage?.name, course?.stage?.name_ar)],
+                  [lang === "ar" ? "المادة" : "Subject", pick(course?.subject?.name, course?.subject?.name_ar)],
+                  [lang === "ar" ? "الترم" : "Semester", pick(course?.semester?.name, course?.semester?.name_ar)],
+                  [lang === "ar" ? "عدد الدروس" : "Lessons", String(lessons.length)],
+                  ...(course?.start_date ? [[lang === "ar" ? "تاريخ البداية" : "Starts", new Date(course.start_date).toLocaleDateString()]] : []),
+                  ...(course?.end_date ? [[lang === "ar" ? "تاريخ النهاية" : "Ends", new Date(course.end_date).toLocaleDateString()]] : []),
+                  ...(course?.count_student ? [[lang === "ar" ? "عدد الطلاب" : "Students", Number(course.count_student).toLocaleString()]] : []),
+                  ...(Number(course?.star) > 0 ? [[lang === "ar" ? "التقييم" : "Rating", String(course.star)]] : []),
+                ].filter(([, value]) => value).map(([label, value]) => (
+                  <div key={label} className="rounded-xl bg-secondary/40 border border-border p-3">
+                    <p className="text-xs text-foreground/50">{label}</p>
+                    <p className="font-semibold mt-1">{value}</p>
+                  </div>
+                ))}
+              </div>
+
+              {course?.offer_discount && Number(course.offer_discount) > 0 && (course.offer_start_date || course.offer_end_date) && (
+                <p className="mt-3 text-sm text-foreground/60">
+                  {lang === "ar" ? "فترة العرض: " : "Offer period: "}
+                  {course.offer_start_date ? new Date(course.offer_start_date).toLocaleDateString() : ""}
+                  {course.offer_start_date && course.offer_end_date ? " - " : ""}
+                  {course.offer_end_date ? new Date(course.offer_end_date).toLocaleDateString() : ""}
+                </p>
+              )}
             </motion.div>
 
             {/* Lessons List */}
@@ -386,9 +458,11 @@ const CourseDetail = () => {
 // 🟢 Updated Lesson Card Component
 const LessonCard = ({ lesson, index, lang, slug, isAuthenticated, hasPurchasedFullCourse, onBuy, onWatch, isBuying }: any) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const lessonTitle = lang === "ar" && lesson.title_ar ? lesson.title_ar : lesson.title;
+  const lessonTitle = lang === "ar"
+    ? lesson.titles_ar?.[0] || lesson.title_ar || lesson.titles?.[0] || lesson.title
+    : lesson.titles?.[0] || lesson.title || lesson.titles_ar?.[0] || lesson.title_ar;
   const lessonDesc = lang === "ar" && lesson.description_ar ? lesson.description_ar : lesson.description;
-  const isFree = parseFloat(lesson.price) === 0;
+  const isFree = Number(lesson.price) === 0;
   const isPurchased = hasPurchasedFullCourse || lesson.attended;
   
   return (
@@ -406,6 +480,7 @@ const LessonCard = ({ lesson, index, lang, slug, isAuthenticated, hasPurchasedFu
             <div className="flex items-center gap-3 text-xs text-foreground/50 mt-1">
               <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{new Date(lesson.lession_date).toLocaleDateString()}</span>
               <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{lesson.lession_time}</span>
+              <span>{lang === "ar" ? "سعر الدرس:" : "Lesson price:"} {Number(lesson.price).toFixed(2)} EGP</span>
             </div>
           </div>
         </div>
@@ -438,7 +513,33 @@ const LessonCard = ({ lesson, index, lang, slug, isAuthenticated, hasPurchasedFu
       </div>
       
       {isExpanded && (
-        <div className="p-4 pt-0 border-t border-border mt-2">
+        <div className="p-4 pt-3 border-t border-border mt-2">
+          <div className="flex flex-col sm:flex-row gap-4">
+            {(lesson.image?.fullUrl || lesson.imageUrl) && (
+              <img
+                src={lesson.image?.fullUrl || lesson.imageUrl}
+                alt={lessonTitle || ""}
+                className="w-full sm:w-40 h-28 object-cover rounded-xl"
+                loading="lazy"
+              />
+            )}
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <p className="text-xs text-foreground/50">{lang === "ar" ? "رقم الدرس" : "Lesson ID"}</p>
+                <p className="font-semibold">{lesson.id}</p>
+              </div>
+              {lesson.createdAt && (
+                <div>
+                  <p className="text-xs text-foreground/50">{lang === "ar" ? "تاريخ الإضافة" : "Added on"}</p>
+                  <p className="font-semibold">{lesson.createdAt}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-xs text-foreground/50">{lang === "ar" ? "السعر" : "Price"}</p>
+                <p className="font-semibold">{Number(lesson.price).toFixed(2)} EGP</p>
+              </div>
+            </div>
+          </div>
           {lessonDesc && <p className="text-sm text-foreground/60 mb-3">{lessonDesc}</p>}
           {lesson.must_pass_to_unlock && !isPurchased && (
             <div className="mt-3 flex items-center gap-2 text-amber-600 text-sm">

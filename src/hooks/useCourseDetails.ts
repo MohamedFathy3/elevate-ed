@@ -49,54 +49,75 @@ export interface CourseDetail {
 }
 
 interface CourseDetailsResponse {
-  result: string;
+  result?: unknown;
   message: string;
   status: number;
-  data: {
-    id: number;
-    isPurchased?: boolean;
-    title: string;
-    title_ar: string;
-    description: string;
-    description_ar: string;
-    about: string;
-    about_ar: string;
-    price: string;
-    discount: string;
-    price_before_discount: number;
-    type: string;
-    imageUrl: string;
-    image: any;
-    stage: {
-      id: number;
-      name: string;
-      name_ar: string;
-    };
-    subject: {
-      id: number;
-      name: string;
-      name_ar: string;
-    };
-    semester: {
-      id: number;
-      name: string;
-      name_ar: string;
-      price: string;
-      discount: string;
-    };
-    hour_time_course: string;
-    count_student: number;
-    start_date: string;
-    end_date: string;
-    details: {
-      id: number;
-      is_purchased: boolean; // ✅ هنا is_purchased
-      // ... باقي الحقول
-    }[];
-    students: any[];
-    teacher: any;
-  };
+  data?: unknown;
 }
+
+interface CourseDetailsData {
+  id: number;
+  isPurchased?: boolean;
+  stage_id?: number;
+  stage_name_ar?: string | null;
+  stage_name_en?: string | null;
+  stage_name_er?: string | null;
+  subject_id?: number;
+  subject_name_ar?: string | null;
+  subject_name_en?: string | null;
+  subject_name_er?: string | null;
+  semester_id?: number;
+  semester_name_ar?: string | null;
+  semester_name_en?: string | null;
+  semester_name_er?: string | null;
+  title?: string;
+  title_ar?: string;
+  description?: string | null;
+  description_ar?: string | null;
+  about?: string | null;
+  about_ar?: string | null;
+  price?: string | number;
+  original_price?: string | number;
+  discount?: string | number;
+  offer_discount?: string | number;
+  offer_start_date?: string | null;
+  offer_end_date?: string | null;
+  price_before_discount?: number;
+  type?: string;
+  imageUrl?: string;
+  image?: any;
+  stage?: { id: number; name: string; name_ar: string };
+  subject?: { id: number; name: string; name_ar: string };
+  semester?: { id: number; name: string; name_ar: string; price?: string; discount?: string };
+  hour_time_course?: string | null;
+  count_student?: number;
+  star?: number;
+  start_date?: string | null;
+  end_date?: string | null;
+  details?: CourseDetail[];
+  students?: any[];
+  teacher?: any;
+  link_video?: string | null;
+  time_duration?: string | null;
+  createdAt?: string;
+}
+
+const isCourseDetailsData = (value: unknown): value is CourseDetailsData =>
+  typeof value === "object" &&
+  value !== null &&
+  "id" in value &&
+  typeof value.id === "number" &&
+  "details" in value &&
+  Array.isArray(value.details);
+
+const findCourseDetailsData = (value: unknown, depth = 0): CourseDetailsData | null => {
+  if (depth > 3 || typeof value !== "object" || value === null) return null;
+  if (isCourseDetailsData(value)) return value;
+
+  const record = value as Record<string, unknown>;
+  return findCourseDetailsData(record.data, depth + 1)
+    || findCourseDetailsData(record.result, depth + 1);
+};
 
 export interface StudentCourse {
   id: number;
@@ -211,12 +232,38 @@ export const useCourseDetails = (courseId: number) => {
   const token = Cookies.get('student_token');
   
   return useQuery({
-    queryKey: ['course-details', courseId],
+    queryKey: ['front-end-course', courseId],
     queryFn: async () => {
       if (!courseId || courseId === 0) return null;
       
-      const { data } = await api.get<CourseDetailsResponse>(`/course/${courseId}`);
-      return data;
+      const { data: response } = await api.get<CourseDetailsResponse>(`/front-end-course/${courseId}`);
+      const course = findCourseDetailsData(response);
+
+      if (!course) {
+        throw new Error("Course details response did not contain a result");
+      }
+
+      return {
+        ...response,
+        data: {
+          ...course,
+          stage: course.stage || {
+            id: course.stage_id || 0,
+            name: course.stage_name_en || course.stage_name_er || "",
+            name_ar: course.stage_name_ar || "",
+          },
+          subject: course.subject || {
+            id: course.subject_id || 0,
+            name: course.subject_name_en || course.subject_name_er || "",
+            name_ar: course.subject_name_ar || "",
+          },
+          semester: course.semester || {
+            id: course.semester_id || 0,
+            name: course.semester_name_en || course.semester_name_er || "",
+            name_ar: course.semester_name_ar || "",
+          },
+        },
+      };
     },
     enabled: !!courseId && courseId !== 0,
     staleTime: 5 * 60 * 1000, // 5 minutes

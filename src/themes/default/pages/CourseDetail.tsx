@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useParams, Link, Navigate, useNavigate } from "react-router-dom";
 import { useLang } from "@/i18n/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
-import { useCourseDetails, useStudentCourses } from "@/hooks/useCourseDetails";
+import { useCourseDetails } from "@/hooks/useCourseDetails";
 import { useBuyCourse } from "@/hooks/useEnroll";
 import { useStudentAuth } from "@/context/StudentAuthContext";
 import {
@@ -269,7 +269,6 @@ const CourseDetail = () => {
   const { courseId } = useParams();
   const courseIdNum = parseInt(courseId || '0');
 
-  const { data: studentCourses, isLoading: coursesLoading } = useStudentCourses();
   const { data: courseApiData, isLoading: detailsLoading, refetch: refetchDetails } = useCourseDetails(courseIdNum);
   const { buyCourse, buyLesson, isLoading: buying } = useBuyCourse();
 
@@ -329,25 +328,9 @@ const CourseDetail = () => {
   }, []);
 
   useEffect(() => {
-    if (courseFromApi?.isPurchased === true) {
-      setHasPurchasedFullCourse(true);
-      return;
-    }
-
-    if (studentCourses && studentCourses.length > 0 && courseIdNum) {
-      const isEnrolled = studentCourses.some((course: any) => (
-        course.id === courseIdNum && (course.isPurchased === true || course.isPurchased === undefined)
-      ));
-      setHasPurchasedFullCourse(isEnrolled);
-    }
-
-    if (!hasPurchasedFullCourse && lessons.length > 0) {
-      const hasAttendedLesson = lessons.some((lesson: any) => lesson.attended === true);
-      if (hasAttendedLesson) {
-        setHasPurchasedFullCourse(true);
-      }
-    }
-  }, [courseFromApi?.isPurchased, studentCourses, courseIdNum, lessons, hasPurchasedFullCourse]);
+    const hasPurchasedLesson = lessons.some((lesson: any) => lesson.attended === true);
+    setHasPurchasedFullCourse(courseFromApi?.isPurchased === true || hasPurchasedLesson);
+  }, [courseFromApi?.isPurchased, lessons]);
 
   // ✅ تعديل: التعامل مع intro فيديو كـ array
   const defaultContent = useMemo(() => {
@@ -573,7 +556,7 @@ const CourseDetail = () => {
     }
   };
 
-  const isLoading = detailsLoading || coursesLoading || authLoading;
+  const isLoading = detailsLoading || authLoading;
 
   if (!authLoading && !isAuthenticated) {
     return (
